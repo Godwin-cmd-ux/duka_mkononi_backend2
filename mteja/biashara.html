@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Biashara - Dukamkononi Mteja</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        /* Main layout wrapper - sidebar + content */
+        .mteja-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* SIDEBAR - Persistent navigation */
+        .sidebar {
+            width: 280px;
+            background-color: #ffffff;
+            border-right: 1px solid #ecf0f1;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 100;
+            transition: transform 0.3s ease;
+            box-shadow: 2px 0 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .sidebar-header {
+            padding: 30px 24px;
+            border-bottom: 1px solid #ecf0f1;
+            margin-bottom: 20px;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .logo-text h2 {
+            font-size: 18px;
+            font-weight: 800;
+            color: #2c3e50;
+        }
+
+        .logo-text p {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+
+        /* Navigation items */
+        .nav-items {
+            flex: 1;
+            padding: 0 16px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 18px;
+            margin-bottom: 8px;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #5d6d7e;
+            font-weight: 500;
+            text-decoration: none;
+        }
+
+        .nav-item:hover {
+            background-color: #ede7f6;
+        }
+
+        .nav-item.active {
+            background-color: #ede7f6;
+            color: #667eea;
+        }
+
+        .nav-icon {
+            font-size: 22px;
+            width: 28px;
+        }
+
+        .nav-label {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        /* Sidebar footer */
+        .sidebar-footer {
+            padding: 20px 16px;
+            border-top: 1px solid #ecf0f1;
+            margin-top: auto;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .user-avatar {
+            width: 45px;
+            height: 45px;
+            background-color: #ede7f6;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #667eea;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .user-details {
+            flex: 1;
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .user-role {
+            font-size: 12px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            background-color: #f8f9fa;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #e74c3c;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .logout-btn:hover {
+            background-color: #fdeaea;
+        }
+
+        /* MAIN CONTENT AREA */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            min-height: 100vh;
+            background-color: #f8f9fa;
+            padding: 24px 32px;
+        }
+
+        /* Mobile menu toggle */
+        .mobile-menu-toggle {
+            display: none;
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            z-index: 200;
+            background: white;
+            padding: 12px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            cursor: pointer;
+        }
+
+        /* Page content */
+        .page-container {
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Search Container */
+        .search-container {
+            margin-bottom: 24px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 14px 18px;
+            font-size: 15px;
+            border: 1px solid #ddd;
+            border-radius: 14px;
+            font-family: 'Inter', sans-serif;
+            background: white;
+            transition: all 0.2s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        /* Section Title */
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        /* Business Card */
+        .business-card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s;
+        }
+
+        .business-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .business-name {
+            font-size: 20px;
+            font-weight: 800;
+            color: #2c3e50;
+            flex: 1;
+        }
+
+        .contact-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 10px 20px;
+            border-radius: 12px;
+            border: none;
+            color: white;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+        }
+
+        .contact-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Details */
+        .details-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #34495e;
+        }
+
+        .detail-value {
+            font-size: 14px;
+            color: #7f8c8d;
+            text-align: right;
+            word-break: break-word;
+            max-width: 60%;
+        }
+
+        .phone-link {
+            color: #667eea;
+            font-weight: 600;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        .approved-text {
+            color: #27ae60;
+            font-weight: 700;
+        }
+
+        /* Empty State */
+        .empty-container {
+            text-align: center;
+            padding: 50px 20px;
+            background: white;
+            border-radius: 20px;
+        }
+
+        .empty-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .empty-text {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .refresh-btn {
+            background: #667eea;
+            padding: 12px 24px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+        }
+
+        /* Loading */
+        .loading-container {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid #e0e0e0;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        /* Contact Modal */
+        .contact-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .contact-modal-content {
+            background: white;
+            border-radius: 28px;
+            width: 85%;
+            max-width: 340px;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .contact-modal-title {
+            font-size: 18px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .contact-modal-sub {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-bottom: 20px;
+        }
+
+        .contact-modal-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .contact-call-btn, .contact-sms-btn, .contact-cancel-btn {
+            padding: 14px;
+            border-radius: 40px;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+        }
+
+        .contact-call-btn {
+            background: #27ae60;
+            color: white;
+        }
+
+        .contact-sms-btn {
+            background: #3498db;
+            color: white;
+        }
+
+        .contact-cancel-btn {
+            background: #95a5a6;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 20px 16px;
+                padding-top: 70px;
+            }
+            .mobile-menu-toggle {
+                display: block;
+            }
+            .detail-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .detail-value {
+                text-align: left;
+                max-width: 100%;
+            }
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .contact-btn {
+                align-self: stretch;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Mobile menu toggle -->
+    <div class="mobile-menu-toggle" id="mobileMenuToggle">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#667eea" stroke-width="2">
+            <path d="M3 12H21M3 6H21M3 18H21"/>
+        </svg>
+    </div>
+
+    <div class="mteja-layout">
+        <!-- SIDEBAR - Persistent navigation -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-area">
+                    <div class="logo-icon">D</div>
+                    <div class="logo-text">
+                        <h2>DukaMkononi</h2>
+                        <p>Mteja Portal</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="nav-items">
+                <a href="biashara.html" class="nav-item active">
+                    <div class="nav-icon">🏪</div>
+                    <span class="nav-label">Biashara</span>
+                </a>
+                <a href="matangazo.html" class="nav-item">
+                    <div class="nav-icon">📢</div>
+                    <span class="nav-label">Matangazo</span>
+                </a>
+                <a href="profaili.html" class="nav-item">
+                    <div class="nav-icon">👤</div>
+                    <span class="nav-label">Profaili</span>
+                </a>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">M</div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">Mteja</div>
+                        <div class="user-role">Mteja</div>
+                    </div>
+                </div>
+                <div class="logout-btn" id="logoutBtn">
+                    <span>🚪</span>
+                    <span>Ondoka</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <div class="page-container" id="biasharaContent">
+                <div class="loading-container">
+                    <div class="loading-spinner"></div>
+                    <div class="loading-text">Inapakua orodha ya biashara...</div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Contact Modal -->
+    <div id="contactModal" class="contact-modal">
+        <div class="contact-modal-content">
+            <div class="contact-modal-title" id="modalBusinessName">Wasiliana na Biashara</div>
+            <div class="contact-modal-sub">Chagua njia ya kuwasiliana</div>
+            <div class="contact-modal-buttons">
+                <button class="contact-call-btn" id="callBtn">📞 Piga Simu</button>
+                <button class="contact-sms-btn" id="smsBtn">💬 Tuma Ujumbe</button>
+                <button class="contact-cancel-btn" id="cancelModalBtn">Ghairi</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // BIASHARA SCREEN - Mteja Web Replica
+        // With Sidebar Integration
+        // ============================================
+        
+        const API_BASE_URL = 'https://duka-mkononi-backend-4476.onrender.com';
+        
+        let businesses = [];
+        let searchQuery = '';
+        let loading = true;
+        let currentBusiness = null;
+
+        // DOM Elements
+        const container = document.getElementById('biasharaContent');
+        const contactModal = document.getElementById('contactModal');
+        const modalBusinessName = document.getElementById('modalBusinessName');
+        const callBtn = document.getElementById('callBtn');
+        const smsBtn = document.getElementById('smsBtn');
+        const cancelModalBtn = document.getElementById('cancelModalBtn');
+
+        // Get current user from localStorage
+        function getCurrentUser() {
+            const token = localStorage.getItem('userToken');
+            const userData = localStorage.getItem('userData');
+            if (token && userData) {
+                try {
+                    return JSON.parse(userData);
+                } catch(e) {
+                    return null;
+                }
+            }
+            return null;
+        }
+
+        // Update sidebar user info
+        function updateSidebarUser() {
+            const user = getCurrentUser();
+            if (user) {
+                const displayName = user.full_name || user.email?.split('@')[0] || 'Mteja';
+                document.getElementById('userName').innerHTML = escapeHtml(displayName);
+                document.getElementById('userAvatar').innerHTML = displayName.charAt(0).toUpperCase();
+            }
+        }
+
+        // Check authentication
+        function checkAuth() {
+            const user = getCurrentUser();
+            if (!user) {
+                window.location.href = '/login.html?role=mteja';
+                return false;
+            }
+            const userRole = user.role || '';
+            if (userRole !== 'customer' && userRole !== 'client' && userRole !== 'mteja') {
+                alert('Huna ruhusa ya kuingia kwenye eneo la Mteja.');
+                window.location.href = '/home.html';
+                return false;
+            }
+            return true;
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        function formatPhoneNumber(phone) {
+            if (!phone || phone === 'null' || phone === 'undefined' || phone === 'Haijajazwa') {
+                return null;
+            }
+            let clean = phone.replace(/[\s\-\(\)]/g, '');
+            if (!clean.startsWith('+255') && !clean.startsWith('255')) {
+                if (clean.length === 9) {
+                    clean = `255${clean}`;
+                } else if (clean.length === 10 && clean.startsWith('0')) {
+                    clean = `255${clean.substring(1)}`;
+                }
+            }
+            return clean;
+        }
+
+        function makePhoneCall(phoneNumber) {
+            const formatted = formatPhoneNumber(phoneNumber);
+            if (!formatted) {
+                alert('Hakuna namba ya simu inayopatikana kwa biashara hii.');
+                return;
+            }
+            window.location.href = `tel:${formatted}`;
+        }
+
+        function sendSMS(phoneNumber, businessName) {
+            const formatted = formatPhoneNumber(phoneNumber);
+            if (!formatted) {
+                alert('Hakuna namba ya simu inayopatikana kwa biashara hii.');
+                return;
+            }
+            const message = `Habari ${businessName}, naomba kufahamu zaidi kuhusu huduma zako.`;
+            window.location.href = `sms:${formatted}?body=${encodeURIComponent(message)}`;
+        }
+
+        function showContactModal(business) {
+            currentBusiness = business;
+            modalBusinessName.textContent = `Wasiliana na ${business.business_name || 'Biashara'}`;
+            contactModal.style.display = 'flex';
+        }
+
+        function hideContactModal() {
+            contactModal.style.display = 'none';
+            currentBusiness = null;
+        }
+
+        function handleCall() {
+            if (currentBusiness) {
+                makePhoneCall(currentBusiness.phone);
+            }
+            hideContactModal();
+        }
+
+        function handleSMS() {
+            if (currentBusiness) {
+                sendSMS(currentBusiness.phone, currentBusiness.business_name || 'Biashara');
+            }
+            hideContactModal();
+        }
+
+        // Fetch businesses from API
+        async function fetchBusinesses() {
+            loading = true;
+            render();
+            
+            try {
+                console.log('🔍 Inatafuta biashara...');
+                const response = await fetch(`${API_BASE_URL}/api/businesses`);
+                
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        throw new Error('Endpoint ya biashara haipo kwenye server');
+                    }
+                    throw new Error(`Server error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                businesses = data || [];
+                console.log(`🏢 Biashara zilizopatikana: ${businesses.length}`);
+                
+            } catch (error) {
+                console.error('❌ Hitilafu:', error);
+                alert(`Imeshindwa kuleta biashara:\n\n${error.message}\n\nTafadhali jaribu tena.`);
+                businesses = [];
+            } finally {
+                loading = false;
+                render();
+            }
+        }
+
+        // Filter businesses based on search query
+        function getFilteredBusinesses() {
+            if (!searchQuery.trim()) return businesses;
+            
+            const query = searchQuery.toLowerCase();
+            return businesses.filter(business => 
+                (business.business_name && business.business_name.toLowerCase().includes(query)) ||
+                (business.business_location && business.business_location.toLowerCase().includes(query)) ||
+                (business.full_name && business.full_name.toLowerCase().includes(query)) ||
+                (business.phone && business.phone.includes(query)) ||
+                (business.email && business.email.toLowerCase().includes(query))
+            );
+        }
+
+        // Render the UI
+        function render() {
+            if (loading) {
+                container.innerHTML = `
+                    <div class="loading-container">
+                        <div class="loading-spinner"></div>
+                        <div class="loading-text">Inapakua orodha ya biashara...</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            const filtered = getFilteredBusinesses();
+            
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="search-container">
+                        <input type="text" id="searchInput" class="search-input" placeholder="Tafuta biashara... (jina, eneo, au namba ya simu)" value="${escapeHtml(searchQuery)}">
+                    </div>
+                    <div class="empty-container">
+                        <div class="empty-title">
+                            ${searchQuery ? 'Hakuna Biashara Iliyopatikana' : 'Hakuna Biashara Zilizosajiliwa'}
+                        </div>
+                        <div class="empty-text">
+                            ${searchQuery 
+                                ? `Hakuna biashara iliyo na "${escapeHtml(searchQuery)}".\nTafadhali jaribu neno tofauti.`
+                                : 'Hakuna biashara zilizosajiliwa bado.\n\nMsimamizi anahitaji kujisajili kwanza.'
+                            }
+                        </div>
+                        <button class="refresh-btn" id="refreshBtn">Pakia Upya</button>
+                    </div>
+                `;
+                
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput) {
+                    searchInput.addEventListener('input', (e) => {
+                        searchQuery = e.target.value;
+                        render();
+                    });
+                }
+                
+                const refreshBtn = document.getElementById('refreshBtn');
+                if (refreshBtn) {
+                    refreshBtn.addEventListener('click', () => fetchBusinesses());
+                }
+                return;
+            }
+            
+            // Render businesses list
+            const businessesHtml = filtered.map(business => `
+                <div class="business-card" data-business-id="${business.id}">
+                    <div class="card-header">
+                        <div class="business-name">${escapeHtml(business.business_name || 'Biashara Bila Jina')}</div>
+                        <button class="contact-btn" data-id="${business.id}" data-phone="${escapeHtml(business.phone || '')}" data-name="${escapeHtml(business.business_name || 'Biashara')}">Wasiliana</button>
+                    </div>
+                    <div class="details-container">
+                        <div class="detail-row">
+                            <span class="detail-label">Jina la Msimamizi:</span>
+                            <span class="detail-value">${escapeHtml(business.full_name || 'Haijajazwa')}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Eneo la Biashara:</span>
+                            <span class="detail-value">${escapeHtml(business.business_location || 'Haijajazwa')}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Namba ya Simu:</span>
+                            <span class="detail-value phone-link" data-phone="${escapeHtml(business.phone || '')}">${escapeHtml(business.phone || 'Haijajazwa')}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Barua Pepe:</span>
+                            <span class="detail-value">${escapeHtml(business.email || 'Haijajazwa')}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Hali:</span>
+                            <span class="detail-value approved-text">✅ Imethibitishwa</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = `
+                <div class="search-container">
+                    <input type="text" id="searchInput" class="search-input" placeholder="Tafuta biashara... (jina, eneo, au namba ya simu)" value="${escapeHtml(searchQuery)}">
+                </div>
+                <div class="section-title">Biashara Zilizosajiliwa (${filtered.length})</div>
+                ${businessesHtml}
+            `;
+            
+            // Attach search event
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    searchQuery = e.target.value;
+                    render();
+                });
+            }
+            
+            // Attach contact button events
+            document.querySelectorAll('.contact-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = parseInt(btn.getAttribute('data-id'));
+                    const business = businesses.find(b => b.id === id);
+                    if (business) {
+                        showContactModal(business);
+                    }
+                });
+            });
+            
+            // Attach phone number click events
+            document.querySelectorAll('.phone-link').forEach(phoneEl => {
+                phoneEl.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const phone = phoneEl.getAttribute('data-phone');
+                    const parentCard = phoneEl.closest('.business-card');
+                    if (parentCard && phone && phone !== 'Haijajazwa') {
+                        const id = parseInt(parentCard.getAttribute('data-business-id'));
+                        const business = businesses.find(b => b.id === id);
+                        if (business) {
+                            makePhoneCall(business.phone);
+                        }
+                    }
+                });
+            });
+        }
+
+        // Sidebar functions
+        function setupSidebar() {
+            const toggle = document.getElementById('mobileMenuToggle');
+            const sidebar = document.getElementById('sidebar');
+            if (toggle && sidebar) {
+                toggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+            }
+            
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', () => {
+                    localStorage.clear();
+                    window.location.href = '/login.html?role=mteja';
+                });
+            }
+            
+            // Close sidebar when clicking outside on mobile
+            document.addEventListener('click', (e) => {
+                if (window.innerWidth <= 768) {
+                    const sidebar = document.getElementById('sidebar');
+                    const toggle = document.getElementById('mobileMenuToggle');
+                    if (sidebar && sidebar.classList.contains('open') && 
+                        !sidebar.contains(e.target) && 
+                        toggle && !toggle.contains(e.target)) {
+                        sidebar.classList.remove('open');
+                    }
+                }
+            });
+        }
+
+        // Modal event listeners
+        function setupModal() {
+            if (callBtn) callBtn.addEventListener('click', handleCall);
+            if (smsBtn) smsBtn.addEventListener('click', handleSMS);
+            if (cancelModalBtn) cancelModalBtn.addEventListener('click', hideContactModal);
+            
+            // Close modal when clicking outside
+            contactModal.addEventListener('click', (e) => {
+                if (e.target === contactModal) {
+                    hideContactModal();
+                }
+            });
+        }
+
+        // Initialize
+        async function init() {
+            if (!checkAuth()) return;
+            updateSidebarUser();
+            setupSidebar();
+            setupModal();
+            await fetchBusinesses();
+        }
+        
+        init();
+        
+        // Expose for any external use
+        window.refreshBusinesses = fetchBusinesses;
+    </script>
+</body>
+</html>

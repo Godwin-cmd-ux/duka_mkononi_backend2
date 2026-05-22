@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Bidhaa Mpya - Dukamkononi Msimamizi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        /* Main layout wrapper - sidebar + content */
+        .msimamizi-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* SIDEBAR - Persistent navigation */
+        .sidebar {
+            width: 280px;
+            background-color: #ffffff;
+            border-right: 1px solid #ecf0f1;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 100;
+            transition: transform 0.3s ease;
+            box-shadow: 2px 0 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .sidebar-header {
+            padding: 30px 24px;
+            border-bottom: 1px solid #ecf0f1;
+            margin-bottom: 20px;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .logo-text h2 {
+            font-size: 18px;
+            font-weight: 800;
+            color: #2c3e50;
+        }
+
+        .logo-text p {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+
+        /* Navigation items */
+        .nav-items {
+            flex: 1;
+            padding: 0 16px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 18px;
+            margin-bottom: 8px;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #5d6d7e;
+            font-weight: 500;
+            text-decoration: none;
+        }
+
+        .nav-item:hover {
+            background-color: #fdeaea;
+        }
+
+        .nav-item.active {
+            background-color: #fdeaea;
+            color: #e74c3c;
+        }
+
+        .nav-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .nav-label {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        /* Sidebar footer */
+        .sidebar-footer {
+            padding: 20px 16px;
+            border-top: 1px solid #ecf0f1;
+            margin-top: auto;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .user-avatar {
+            width: 45px;
+            height: 45px;
+            background-color: #fdeaea;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #e74c3c;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .user-details {
+            flex: 1;
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .user-role {
+            font-size: 12px;
+            color: #e74c3c;
+            font-weight: 600;
+        }
+
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            background-color: #f8f9fa;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #e74c3c;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .logout-btn:hover {
+            background-color: #fdeaea;
+        }
+
+        /* MAIN CONTENT AREA */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            min-height: 100vh;
+            background-color: #f8f9fa;
+            padding: 20px 24px 40px;
+        }
+
+        /* Mobile menu toggle */
+        .mobile-menu-toggle {
+            display: none;
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            z-index: 200;
+            background: white;
+            padding: 12px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            cursor: pointer;
+        }
+
+        /* Bidhaa Mpya specific styles */
+        .bidhaa-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .form-card {
+            background: white;
+            border-radius: 24px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+        }
+
+        .input-group {
+            margin-bottom: 24px;
+        }
+        
+        .label {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 15px;
+            border: 1px solid #ddd;
+            border-radius: 14px;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #e74c3c;
+            box-shadow: 0 0 0 3px rgba(231,76,60,0.1);
+        }
+        
+        .price-container {
+            position: relative;
+        }
+        
+        .price-preview {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            text-align: right;
+        }
+        
+        .categories-scroll {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        
+        .category-chip {
+            background: white;
+            border: 1px solid #ddd;
+            padding: 8px 18px;
+            border-radius: 30px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        
+        .category-chip.selected {
+            background: #e74c3c;
+            border-color: #c0392b;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            border-radius: 16px;
+            border: none;
+            font-weight: 800;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .existing-card {
+            background: white;
+            border-radius: 20px;
+            padding: 18px;
+            margin-bottom: 24px;
+            border: 2px dashed #fdeaea;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .selected-banner {
+            background: #fdeaea;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 20px;
+            border-left: 5px solid #e74c3c;
+        }
+        
+        .preview-card {
+            background: #fdeaea;
+            border-radius: 20px;
+            padding: 20px;
+            margin-top: 24px;
+        }
+        
+        .preview-inner {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.6s linear infinite;
+        }
+        
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 20px 16px;
+                padding-top: 70px;
+            }
+            .mobile-menu-toggle {
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="mobile-menu-toggle" id="mobileMenuToggle">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2">
+            <path d="M3 12H21M3 6H21M3 18H21"/>
+        </svg>
+    </div>
+
+    <div class="msimamizi-layout">
+        <!-- SIDEBAR - Persistent navigation with correct relative paths -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-area">
+                    <div class="logo-icon">D</div>
+                    <div class="logo-text">
+                        <h2>DukaMkononi</h2>
+                        <p>Msimamizi Portal</p>
+                    </div>
+                </div>
+            </div>
+            <div class="nav-items">
+                <a href="index.html" class="nav-item">
+                    <div class="nav-icon">🏠</div>
+                    <span class="nav-label">Nyumbani</span>
+                </a>
+                <a href="ripoti.html" class="nav-item">
+                    <div class="nav-icon">📊</div>
+                    <span class="nav-label">Ripoti</span>
+                </a>
+                <a href="preview.html" class="nav-item">
+                    <div class="nav-icon">📅</div>
+                    <span class="nav-label">Rejea</span>
+                </a>
+                <a href="bidhaa-mpya.html" class="nav-item active">
+                    <div class="nav-icon">➕</div>
+                    <span class="nav-label">Bidhaa Mpya</span>
+                </a>
+                <a href="tangaza.html" class="nav-item">
+                    <div class="nav-icon">📢</div>
+                    <span class="nav-label">Tangaza</span>
+                </a>
+            </div>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">M</div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">Msimamizi</div>
+                        <div class="user-role">Msimamizi</div>
+                    </div>
+                </div>
+                <div class="logout-btn" id="logoutBtn">
+                    <span>🚪</span>
+                    <span>Ondoka</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <div class="bidhaa-container" id="bidhaaContainer">
+                <div style="text-align: center; padding: 60px;">Loading...</div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // ============================================
+        // BIDHAA MPYA PAGE - With Sidebar
+        // ============================================
+        
+        const API_BASE_URL = 'https://duka-mkononi-backend-4476.onrender.com';
+        
+        const categories = [
+            'Vyakula', 'Vinywaji', 'Matunda', 'Mboga', 'Nguo', 'Viatu',
+            'Vifaa vya Nyumbani', 'Vifaa vya Umeme', 'Simu na Vifaa', 'Matibabu',
+            'Vifaa vya Usafi', 'Engine', 'Sehemu za Gari', 'Vifaa vya Ujenzi',
+            'Vifaa vya Kilimo', 'Vifaa vya Ofisi', 'Vitabu na Vifaa vya Kuelimisha',
+            'Bidhaa za Watoto', 'Bidhaa za Urembo', 'Bidhaa za Kijamii',
+            'Michezo na Burudani', 'Wanyama wa Kufugwa', 'Vifaa vya Kusafiri',
+            'Vifaa vya Teknolojia', 'Vifaa vya Kudumisha Usalama', 'Vifaa vya Redio na TV',
+            'Vifaa vya Muziki', 'Vifaa vya Pikipiki', 'Vifaa vya Baiskeli',
+            'Vifaa vya Ushonaji', 'Vifaa vya Uchoraji', 'Vifaa vya Ufundi',
+            'Vifaa vya Umeme wa Nyumbani', 'Vifaa vya Jikoni', 'Vifaa vya Kupimia',
+            'Vifaa vya Kukarabati', 'Vifaa vya Usalama', 'Vifaa vya Biashara',
+            'Vifaa vya Hotelini', 'Vifaa vya Huduma', 'Vifaa vya Viwanda', 'Nyingine'
+        ];
+
+        let userData = null;
+        let token = null;
+        let loading = false;
+
+        let formData = {
+            name: '',
+            category: '',
+            price: '',
+            expected_selling_price: '',
+            stock: ''
+        };
+        let showCustomCategory = false;
+        let customCategory = '';
+
+        function showAlert(title, message, onOk = null) {
+            const existing = document.querySelector('.custom-alert');
+            if (existing) existing.remove();
+            const overlay = document.createElement('div');
+            overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:2000;';
+            const box = document.createElement('div');
+            box.style.cssText = 'background:white;border-radius:28px;width:85%;max-width:320px;padding:24px 20px;text-align:center;';
+            box.innerHTML = `
+                <div style="font-size:20px;font-weight:800;margin-bottom:12px;">${escapeHtml(title)}</div>
+                <div style="font-size:14px;color:#5d6d7e;margin-bottom:24px;">${escapeHtml(message)}</div>
+                <div style="background:#e74c3c;padding:12px;border-radius:40px;color:white;font-weight:700;cursor:pointer;">Sawa</div>
+            `;
+            const btn = box.querySelector('div:last-child');
+            btn.onclick = () => { overlay.remove(); if(onOk) onOk(); };
+            overlay.appendChild(box);
+            document.body.appendChild(overlay);
+        }
+
+        function loadUserData() {
+            token = localStorage.getItem('userToken');
+            const userStr = localStorage.getItem('userData');
+            if (!token || !userStr) {
+                showAlert('Hitilafu', 'Tafadhali ingia tena', () => { window.location.href = '../login.html?role=msimamizi'; });
+                return false;
+            }
+            userData = JSON.parse(userStr);
+            
+            // Update sidebar user info
+            const userName = userData.full_name || userData.email?.split('@')[0] || 'Msimamizi';
+            document.getElementById('userName').innerHTML = escapeHtml(userName);
+            document.getElementById('userAvatar').innerHTML = userName.charAt(0).toUpperCase();
+            
+            return true;
+        }
+
+        async function createNewProduct(data) {
+            const res = await fetch(`${API_BASE_URL}/api/products`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(data)
+            });
+            return res.ok;
+        }
+
+        function validateForm() {
+            if (!formData.name.trim()) return 'Jina la bidhaa linahitajika';
+            if (!formData.category) return 'Kategoria ya bidhaa inahitajika';
+            if (!formData.price || parseFloat(formData.price) <= 0) return 'Bei ya bidhaa inahitajika';
+            if (!formData.expected_selling_price || parseFloat(formData.expected_selling_price) <= 0) return 'Bei ya kuuzia inahitajika';
+            if (!formData.stock || parseInt(formData.stock) < 0) return 'Idadi ya bidhaa inahitajika';
+            if (parseFloat(formData.expected_selling_price) < parseFloat(formData.price)) {
+                return 'Bei ya kuuzia haiwezi kuwa ndogo kuliko bei ya sasa';
+            }
+            return null;
+        }
+
+        async function handleSubmit() {
+            const error = validateForm();
+            if (error) { showAlert('Hitilafu', error); return; }
+            if (loading) return;
+            loading = true;
+            renderUI();
+
+            try {
+                const productData = {
+                    name: formData.name.trim(),
+                    category: formData.category,
+                    price: parseFloat(formData.price),
+                    stock: parseInt(formData.stock),
+                    expected_selling_price: parseFloat(formData.expected_selling_price)
+                };
+                const success = await createNewProduct(productData);
+                if (success) {
+                    showAlert('Mafanikio!', `Bidhaa "${formData.name}" imeongezwa`);
+                    resetForm();
+                } else {
+                    showAlert('Hitilafu', 'Imeshindwa kuongeza bidhaa');
+                }
+            } catch(e) { showAlert('Hitilafu', e.message); }
+            loading = false;
+            renderUI();
+        }
+
+        function resetForm() {
+            formData = { name: '', category: '', price: '', expected_selling_price: '', stock: '' };
+            customCategory = '';
+            showCustomCategory = false;
+            renderUI();
+        }
+
+        function formatCurrency(amount) { return `TZS ${parseInt(amount || 0).toLocaleString()}`; }
+        
+        function escapeHtml(str) { 
+            if(!str) return ''; 
+            return str.replace(/[&<>]/g, function(m){ 
+                return {'&':'&amp;','<':'&lt;','>':'&gt;'}[m]; 
+            }); 
+        }
+
+        function renderUI() {
+            const container = document.getElementById('bidhaaContainer');
+            const isFormValid = formData.name && formData.category && formData.price && formData.expected_selling_price && formData.stock;
+
+            const categoriesHtml = categories.map(cat => `
+                <div class="category-chip ${formData.category === cat ? 'selected' : ''}" data-cat="${cat}">${escapeHtml(cat)}</div>
+            `).join('');
+
+            container.innerHTML = `
+                <div class="form-card">
+                    <div style="margin-bottom: 20px;">
+                        <h2 style="color:#2c3e50;">➕ Ongeza Bidhaa Mpya</h2>
+                        <p style="color:#7f8c8d; margin-top: 8px;">Jaza taarifa za bidhaa unayotaka kuongeza kwenye duka lako</p>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label class="label">Jina la Bidhaa *</label>
+                        <input type="text" id="productName" placeholder="Weka jina kamili la bidhaa" value="${escapeHtml(formData.name)}">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label class="label">Kategoria ya Bidhaa *</label>
+                        <div class="categories-scroll" id="categoriesList">${categoriesHtml}</div>
+                        ${showCustomCategory ? `
+                            <div style="margin-top:12px;padding:12px;background:#fdeaea;border-radius:14px;">
+                                <input type="text" id="customCategory" placeholder="Andika kategoria yako" value="${escapeHtml(customCategory)}">
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="input-group">
+                        <label class="label">Bei ya Bidhaa (Sasa) *</label>
+                        <div class="price-container">
+                            <input type="number" id="currentPrice" placeholder="Bei ya sasa" value="${formData.price}">
+                            ${formData.price ? `<div class="price-preview"><small>TZS</small> <strong>${parseInt(formData.price).toLocaleString()}</strong></div>` : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label class="label">Bei ya Kuuzia *</label>
+                        <div class="price-container">
+                            <input type="number" id="expectedPrice" placeholder="Bei unayotaka kauzia" value="${formData.expected_selling_price}">
+                            ${formData.expected_selling_price ? `<div class="price-preview"><small>TZS</small> <strong>${parseInt(formData.expected_selling_price).toLocaleString()}</strong></div>` : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label class="label">Idadi ya Bidhaa *</label>
+                        <input type="number" id="stockInput" placeholder="Weka idadi" value="${formData.stock}">
+                    </div>
+                    
+                    <button id="submitBtn" class="submit-btn" ${!isFormValid ? 'disabled style="opacity:0.6;"' : ''}>
+                        ${loading ? '<div class="loading-spinner"></div>' : '➕ ONGEZA BIDHAA'}
+                    </button>
+                </div>
+                
+                ${(formData.name || formData.price || formData.expected_selling_price) ? `
+                    <div class="preview-card">
+                        <div class="preview-inner">
+                            <div style="font-weight:700;margin-bottom:12px;">📋 Hakiki ya Bidhaa:</div>
+                            <div><strong>${escapeHtml(formData.name || 'Jina la Bidhaa')}</strong></div>
+                            <div style="font-size:13px;color:#7f8c8d;">Kategoria: ${escapeHtml(formData.category || 'Hajachaguliwa')}</div>
+                            <div style="display:flex;justify-content:space-between;margin-top:10px;">
+                                <div>Bei Sasa: <strong style="color:#3498db;">${formatCurrency(formData.price)}</strong></div>
+                                <div>Bei Kuuzia: <strong style="color:#27ae60;">${formatCurrency(formData.expected_selling_price)}</strong></div>
+                            </div>
+                            <div style="margin-top:8px;">Idadi: ${formData.stock || 0} vipande</div>
+                        </div>
+                    </div>
+                ` : ''}
+            `;
+
+            document.getElementById('submitBtn')?.addEventListener('click', handleSubmit);
+            document.getElementById('productName')?.addEventListener('input', (e) => { formData.name = e.target.value; renderUI(); });
+            document.getElementById('currentPrice')?.addEventListener('input', (e) => { formData.price = e.target.value.replace(/[^0-9]/g, ''); renderUI(); });
+            document.getElementById('expectedPrice')?.addEventListener('input', (e) => { formData.expected_selling_price = e.target.value.replace(/[^0-9]/g, ''); renderUI(); });
+            document.getElementById('stockInput')?.addEventListener('input', (e) => { formData.stock = e.target.value.replace(/[^0-9]/g, ''); renderUI(); });
+            
+            if (document.getElementById('customCategory')) {
+                document.getElementById('customCategory').addEventListener('input', (e) => { customCategory = e.target.value; formData.category = customCategory; renderUI(); });
+            }
+            
+            document.querySelectorAll('.category-chip').forEach(el => {
+                el.addEventListener('click', () => {
+                    const cat = el.getAttribute('data-cat');
+                    if (cat === 'Nyingine') {
+                        showCustomCategory = true;
+                        formData.category = '';
+                    } else {
+                        showCustomCategory = false;
+                        formData.category = cat;
+                    }
+                    renderUI();
+                });
+            });
+        }
+
+        // Sidebar functions
+        function setupSidebar() {
+            const toggle = document.getElementById('mobileMenuToggle');
+            const sidebar = document.getElementById('sidebar');
+            if (toggle && sidebar) {
+                toggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+            }
+            
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', () => {
+                    localStorage.clear();
+                    window.location.href = '../login.html?role=msimamizi';
+                });
+            }
+        }
+
+        function init() {
+            setupSidebar();
+            if (!loadUserData()) return;
+            renderUI();
+        }
+        
+        init();
+    </script>
+</body>
+</html>

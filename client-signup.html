@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+    <title>Dukamkononi | Usajili Mteja</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #ffffff;
+            overflow-x: hidden;
+        }
+
+        .keyboard-avoid {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .scroll-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 0 25px;
+            padding-top: 60px;
+            padding-bottom: 40px;
+            min-height: 100vh;
+        }
+
+        .content {
+            width: 100%;
+            max-width: 550px;
+            margin: 0 auto;
+        }
+
+        /* Header styles */
+        .header-container {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header {
+            font-size: 28px;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 10px;
+            color: #3498db;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .sub-header {
+            font-size: 16px;
+            color: #7f8c8d;
+            text-align: center;
+        }
+
+        /* Form styles */
+        .form-container {
+            width: 100%;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            margin-left: 5px;
+            display: block;
+        }
+
+        .input-field {
+            width: 100%;
+            height: 56px;
+            background-color: #f8f9fa;
+            border-radius: 12px;
+            padding: 0 20px;
+            font-size: 16px;
+            font-family: 'Inter', sans-serif;
+            border: 1px solid #e0e0e0;
+            transition: all 0.2s ease;
+            color: #2c3e50;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+            background-color: #ffffff;
+        }
+
+        .input-field::placeholder {
+            color: #95a5a6;
+        }
+
+        /* Signup button */
+        .signup-btn {
+            width: 100%;
+            height: 58px;
+            background-color: #3498db;
+            border-radius: 12px;
+            justify-content: center;
+            align-items: center;
+            display: flex;
+            margin-top: 10px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .signup-btn:active {
+            transform: scale(0.97);
+            opacity: 0.9;
+        }
+
+        .signup-btn.disabled {
+            background-color: #85c1e9;
+            opacity: 0.8;
+            transform: none;
+            cursor: not-allowed;
+        }
+
+        .signup-btn-text {
+            font-size: 18px;
+            font-weight: 800;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Terms text */
+        .terms-container {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .terms-text {
+            font-size: 12px;
+            color: #7f8c8d;
+            line-height: 18px;
+        }
+
+        /* Back button */
+        .back-btn {
+            width: 100%;
+            padding: 15px 0;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .back-btn:active {
+            opacity: 0.7;
+        }
+
+        .back-btn-text {
+            font-size: 16px;
+            font-weight: 600;
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        /* Footer info card */
+        .footer-info {
+            background-color: #f0f8ff;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+
+        .footer-text {
+            font-size: 16px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .footer-bullet {
+            font-size: 14px;
+            color: #3498db;
+            margin-left: 10px;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .loader {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 550px) {
+            .scroll-container {
+                padding: 40px 20px;
+                padding-top: 50px;
+            }
+            .header {
+                font-size: 24px;
+            }
+        }
+
+        /* Custom Alert Modal (replaces RN Alert) */
+        .custom-alert {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(2px);
+        }
+        .alert-box {
+            background: white;
+            border-radius: 28px;
+            width: 85%;
+            max-width: 340px;
+            padding: 24px 20px 20px;
+            text-align: center;
+            box-shadow: 0 20px 35px rgba(0,0,0,0.2);
+        }
+        .alert-title {
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            color: #2c3e50;
+        }
+        .alert-message {
+            font-size: 15px;
+            color: #5d6d7e;
+            margin-bottom: 24px;
+            line-height: 1.4;
+        }
+        .alert-btn {
+            background-color: #3498db;
+            padding: 12px;
+            border-radius: 40px;
+            font-weight: 700;
+            color: white;
+            text-align: center;
+            cursor: pointer;
+        }
+        .alert-btn-success {
+            background-color: #27ae60;
+        }
+    </style>
+</head>
+<body>
+<div class="keyboard-avoid">
+    <div class="scroll-container">
+        <div class="content">
+            <!-- Header -->
+            <div class="header-container">
+                <h1 class="header">JISAJILI KAMA MTEJA</h1>
+                <p class="sub-header">Unda akaunti yako ya Mteja</p>
+            </div>
+
+            <!-- Form Container -->
+            <div class="form-container">
+                <!-- Jina Kamili -->
+                <div class="input-group">
+                    <label class="label">Jina Kamili *</label>
+                    <input type="text" class="input-field" id="full_name" placeholder="Andika jina lako kamili" autocomplete="name">
+                </div>
+
+                <!-- Barua Pepe -->
+                <div class="input-group">
+                    <label class="label">Barua Pepe *</label>
+                    <input type="email" class="input-field" id="email" placeholder="example@email.com" autocomplete="email">
+                </div>
+
+                <!-- Namba ya Simu -->
+                <div class="input-group">
+                    <label class="label">Namba ya Simu (Si lazima)</label>
+                    <input type="tel" class="input-field" id="phone" placeholder="07XXXXXXXX" autocomplete="tel">
+                </div>
+
+                <!-- Nenosiri -->
+                <div class="input-group">
+                    <label class="label">Nenosiri *</label>
+                    <input type="password" class="input-field" id="password" placeholder="Andika nenosiri lako (herufi 6 au zaidi)" autocomplete="new-password">
+                </div>
+
+                <!-- Rudia Nenosiri -->
+                <div class="input-group">
+                    <label class="label">Rudia Nenosiri *</label>
+                    <input type="password" class="input-field" id="confirmPassword" placeholder="Andika nenosiri tena" autocomplete="off">
+                </div>
+
+                <!-- Signup Button -->
+                <div id="signupBtn" class="signup-btn">
+                    <span id="signupBtnText" class="signup-btn-text">JISAJILI SASA</span>
+                    <div id="loaderSpinner" style="display: none;" class="loader"></div>
+                </div>
+
+                <!-- Terms & Conditions -->
+                <div class="terms-container">
+                    <p class="terms-text">
+                        Kwa kubonyeza "Jisajili Sasa", unakubali Sheria na Masharti yetu
+                    </p>
+                </div>
+
+                <!-- Back to Login -->
+                <div id="backBtn" class="back-btn">
+                    <span class="back-btn-text">← Rudi kwenye Ukurasa wa Kuingia</span>
+                </div>
+            </div>
+
+            <!-- Footer Info -->
+            <div class="footer-info">
+                <p class="footer-text">Akaunti ya Mteja inakuruhusu:</p>
+                <span class="footer-bullet">• Kuangalia matangazo ya bidhaa</span>
+                <span class="footer-bullet">• Kuwasiliana na wauzaji</span>
+                <span class="footer-bullet">• Kupata huduma kwa urahisi</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ------------------------------
+    // DUKAMKONONI: ClientSignup (Mteja) web replica
+    // Exact behavior: validation, API registration with role 'customer', loading states, alert handling
+    const API_BASE_URL = 'https://duka-mkononi-backend-4476.onrender.com';
+
+    // DOM elements
+    const fullNameInput = document.getElementById('full_name');
+    const emailInput = document.getElementById('email');
+    const phoneInput = document.getElementById('phone');
+    const passwordInput = document.getElementById('password');
+    const confirmPasswordInput = document.getElementById('confirmPassword');
+    const signupBtn = document.getElementById('signupBtn');
+    const signupBtnTextSpan = document.getElementById('signupBtnText');
+    const loaderSpinner = document.getElementById('loaderSpinner');
+    const backBtn = document.getElementById('backBtn');
+
+    let loading = false;
+
+    // Helper: Show custom alert (mimics Alert.alert)
+    function showAlert(title, message, onOkCallback = null, isSuccessWithNavigate = false) {
+        const existingAlert = document.querySelector('.custom-alert');
+        if (existingAlert) existingAlert.remove();
+
+        const overlay = document.createElement('div');
+        overlay.className = 'custom-alert';
+        
+        const alertBox = document.createElement('div');
+        alertBox.className = 'alert-box';
+        
+        const titleEl = document.createElement('div');
+        titleEl.className = 'alert-title';
+        titleEl.innerText = title;
+        
+        const msgEl = document.createElement('div');
+        msgEl.className = 'alert-message';
+        msgEl.innerText = message;
+        
+        const okBtn = document.createElement('div');
+        okBtn.className = 'alert-btn';
+        okBtn.innerText = 'Sawa';
+        
+        alertBox.appendChild(titleEl);
+        alertBox.appendChild(msgEl);
+        alertBox.appendChild(okBtn);
+        
+        // For success case that navigates to login with role=mteja
+        if (isSuccessWithNavigate) {
+            okBtn.innerText = 'Ingia Sasa';
+            okBtn.classList.add('alert-btn-success');
+            okBtn.addEventListener('click', () => {
+                overlay.remove();
+                // Navigate to login with role parameter (same as router.push with params)
+                window.location.href = '/login.html?role=mteja';
+                if (onOkCallback) onOkCallback();
+            });
+        } else {
+            okBtn.addEventListener('click', () => {
+                overlay.remove();
+                if (onOkCallback) onOkCallback();
+            });
+        }
+        
+        overlay.appendChild(alertBox);
+        document.body.appendChild(overlay);
+    }
+
+    function showNetworkError() {
+        showAlert('Hitilafu ya Mtandao', 'Hakuna muunganisho wa mtandao. Tafadhali hakikisha umeunganishwa kwenye internet.');
+    }
+
+    function getFormValues() {
+        return {
+            full_name: fullNameInput.value.trim(),
+            email: emailInput.value.trim(),
+            phone: phoneInput.value.trim(),
+            password: passwordInput.value,
+            confirmPassword: confirmPasswordInput.value
+        };
+    }
+
+    // Complete validation from original TSX
+    function validateForm(form) {
+        if (!form.email || !form.password || !form.full_name) {
+            showAlert('Hitilafu', 'Tafadhali jaza sehemu zote zinazohitajika');
+            return false;
+        }
+        
+        if (form.password !== form.confirmPassword) {
+            showAlert('Hitilafu', 'Nenosiri hazifanani');
+            return false;
+        }
+        
+        if (form.password.length < 6) {
+            showAlert('Hitilafu', 'Nenosiri lazima liwe na herufi 6 au zaidi');
+            return false;
+        }
+        
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(form.email)) {
+            showAlert('Hitilafu', 'Tafadhali ingiza barua pepe sahihi');
+            return false;
+        }
+        
+        return true;
+    }
+
+    // Reset form fields after successful signup
+    function resetForm() {
+        fullNameInput.value = '';
+        emailInput.value = '';
+        phoneInput.value = '';
+        passwordInput.value = '';
+        confirmPasswordInput.value = '';
+    }
+
+    // Core signup handler - mirrors handleSignup exactly from ClientSignup
+    async function handleSignup() {
+        if (loading) return;
+
+        const form = getFormValues();
+        if (!validateForm(form)) return;
+
+        loading = true;
+        signupBtn.classList.add('disabled');
+        signupBtnTextSpan.style.display = 'none';
+        loaderSpinner.style.display = 'inline-block';
+
+        try {
+            console.log('📤 Sending registration request to:', `${API_BASE_URL}/api/register`);
+            console.log('Registration data:', {
+                email: form.email,
+                role: 'customer',
+                full_name: form.full_name,
+                phone: form.phone
+            });
+
+            const response = await fetch(`${API_BASE_URL}/api/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'ngrok-skip-browser-warning': 'true'
+                },
+                body: JSON.stringify({
+                    email: form.email,
+                    password: form.password,
+                    role: 'customer',
+                    full_name: form.full_name,
+                    phone: form.phone || null
+                }),
+            });
+
+            console.log('Response status:', response.status);
+
+            const data = await response.json();
+            console.log('Response data:', data);
+
+            if (response.ok) {
+                // Success! Show success alert and navigate to login with role=mteja
+                loading = false;
+                signupBtn.classList.remove('disabled');
+                signupBtnTextSpan.style.display = 'inline-block';
+                loaderSpinner.style.display = 'none';
+                
+                resetForm();
+                
+                // Show success alert with "Ingia Sasa" button
+                const overlay = document.createElement('div');
+                overlay.className = 'custom-alert';
+                const alertBox = document.createElement('div');
+                alertBox.className = 'alert-box';
+                const titleEl = document.createElement('div');
+                titleEl.className = 'alert-title';
+                titleEl.innerText = 'Mafanikio!';
+                const msgEl = document.createElement('div');
+                msgEl.className = 'alert-message';
+                msgEl.innerText = 'Akaunti ya Mteja imeundwa kikamilifu! Sasa unaweza kuingia.';
+                const loginBtn = document.createElement('div');
+                loginBtn.className = 'alert-btn alert-btn-success';
+                loginBtn.innerText = 'Ingia Sasa';
+                alertBox.appendChild(titleEl);
+                alertBox.appendChild(msgEl);
+                alertBox.appendChild(loginBtn);
+                overlay.appendChild(alertBox);
+                document.body.appendChild(overlay);
+                
+                loginBtn.addEventListener('click', () => {
+                    overlay.remove();
+                    // Navigate to login with customer role
+                    window.location.href = '/login.html?role=mteja';
+                });
+                return;
+            } else {
+                // Handle error messages
+                let errorMessage = data.error || 'Hitilafu imetokea wakati wa kujisajili';
+                
+                if (errorMessage.includes('tayari ipo') || errorMessage.includes('already exists')) {
+                    errorMessage = 'Akaunti na barua pepe hii tayari ipo. Tafadhali tumia barua pepe nyingine.';
+                } else if (errorMessage.includes('Email')) {
+                    errorMessage = 'Barua pepe si sahihi';
+                }
+                
+                showAlert('Hitilafu', errorMessage);
+            }
+        } catch (error) {
+            console.error('❌ Signup error:', error);
+            
+            let errorMessage = 'Hitilafu imetokea wakati wa kujisajili';
+            
+            if (error.message && error.message.includes('Network request failed')) {
+                errorMessage = 'Hitilafu ya mtandao. Hakikisha umeunganishwa kwenye internet.';
+            } else if (error.message && error.message.includes('timeout')) {
+                errorMessage = 'Muda wa kusubiri umeisha. Tafadhali jaribu tena.';
+            } else if (error.message && error.message.includes('fetch')) {
+                errorMessage = 'Hitilafu ya mtandao. Hakikisha umeunganishwa kwenye internet.';
+            }
+            
+            showAlert('Hitilafu', errorMessage);
+        } finally {
+            if (loading) {
+                loading = false;
+                signupBtn.classList.remove('disabled');
+                signupBtnTextSpan.style.display = 'inline-block';
+                loaderSpinner.style.display = 'none';
+            }
+        }
+    }
+
+    // Navigate back to login with role=mteja (matches handleBack in original)
+    function goBackToLogin() {
+        window.location.href = '/login.html?role=mteja';
+    }
+
+    // Attach event listeners
+    signupBtn.addEventListener('click', handleSignup);
+    backBtn.addEventListener('click', goBackToLogin);
+
+    // Enter key submission on any input
+    const inputs = [fullNameInput, emailInput, phoneInput, passwordInput, confirmPasswordInput];
+    inputs.forEach(input => {
+        if (input) {
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleSignup();
+                }
+            });
+        }
+    });
+
+    // Auto-focus first field for better UX
+    if (fullNameInput) fullNameInput.focus();
+
+    console.log('ClientSignup (Mteja) ready — Web version matches Dukamkononi mobile behavior');
+</script>
+</body>
+</html>

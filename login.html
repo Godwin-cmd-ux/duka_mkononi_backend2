@@ -2,16 +2,10 @@
 <html lang="sw">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ingia Kwenye Akaunti - Dukamkononi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+    <title>Dukamkononi | Ingia</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --color-mteja: #3498db;
-            --color-muuzaji: #2ecc71;
-            --color-msimamizi: #e74c3c;
-            --color-lipia: #9b59b6;
-        }
-
         * {
             margin: 0;
             padding: 0;
@@ -19,118 +13,112 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #ffffff;
+            overflow-x: hidden;
+        }
+
+        .keyboard-avoid {
             min-height: 100vh;
             display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
+            flex-direction: column;
+        }
+
+        .scroll-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
 
         .container {
-            width: 100%;
-            max-width: 420px;
-            background: white;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            animation: slideUp 0.5s ease;
+            flex: 1;
+            background-color: #ffffff;
+            min-height: 800px;
+            display: flex;
+            flex-direction: column;
         }
 
-        @keyframes slideUp {
-            from {
-                transform: translateY(30px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
+        /* Header Section */
         .header-section {
-            background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
-            padding: 20px;
-            border-bottom: 1px solid #eee;
-        }
-
-        .header-top {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            padding: 60px 20px 20px 20px;
         }
 
-        .back-button {
+        .back-btn {
             width: 40px;
             height: 40px;
-            display: flex;
-            align-items: center;
             justify-content: center;
-            background: #f5f5f5;
+            align-items: center;
             border-radius: 20px;
+            background-color: #f5f5f5;
+            display: flex;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s;
         }
 
-        .back-button:hover {
-            background: #e0e0e0;
-            transform: translateX(-2px);
+        .back-btn:active {
+            opacity: 0.7;
+            transform: scale(0.95);
         }
 
         .role-badge {
-            padding: 8px 15px;
-            background: #f5f5f5;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            padding: 8px 18px;
+            border-radius: 30px;
+            background-color: #f5f5f5;
         }
 
+        .role-badge-text {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        /* Main Content */
+        .content {
+            flex: 1;
+            padding: 20px 25px 30px;
+        }
+
+        /* Avatar */
         .avatar-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 30px 20px;
+            text-align: center;
+            margin-bottom: 40px;
         }
 
         .avatar {
             width: 80px;
             height: 80px;
             border-radius: 50%;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
             margin-bottom: 15px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
         .welcome-text {
             font-size: 28px;
-            font-weight: bold;
+            font-weight: 800;
             color: #2c3e50;
             margin-bottom: 8px;
-            text-align: center;
         }
 
         .role-description {
             font-size: 16px;
             color: #7f8c8d;
-            text-align: center;
-            line-height: 1.5;
+            line-height: 1.4;
         }
 
-        .content {
-            padding: 0 25px 30px;
-        }
-
+        /* Form */
         .form-container {
             width: 100%;
+            margin-bottom: 30px;
         }
 
-        .input-container {
+        .input-group {
             margin-bottom: 20px;
         }
 
@@ -147,29 +135,30 @@
             margin-left: 8px;
         }
 
-        .input {
+        .input-field {
             width: 100%;
             height: 56px;
+            background-color: #f8f9fa;
+            border-radius: 14px;
             padding: 0 20px;
-            background: #f8f9fa;
-            border: 1px solid #e0e0e0;
-            border-radius: 12px;
             font-size: 16px;
+            font-family: 'Inter', sans-serif;
+            border: 1px solid #e0e0e0;
+            transition: all 0.2s;
             color: #2c3e50;
-            transition: all 0.3s ease;
         }
 
-        .input:focus {
+        .input-field:focus {
             outline: none;
             border-color: #3498db;
-            background: white;
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+            background-color: #ffffff;
+            box-shadow: 0 0 0 3px rgba(52,152,219,0.1);
         }
 
-        .input-error {
+        .input-field.error {
             border-color: #e74c3c;
             border-width: 2px;
-            background: #fff5f5;
+            background-color: #fff5f5;
         }
 
         .error-text {
@@ -177,34 +166,32 @@
             color: #e74c3c;
             margin-top: 5px;
             margin-left: 5px;
-            display: none;
         }
 
-        .password-container {
+        .password-wrapper {
             position: relative;
         }
 
-        .eye-button {
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: #7f8c8d;
-            cursor: pointer;
-            font-size: 18px;
-            padding: 5px;
+        .password-input {
+            padding-right: 50px;
         }
 
-        .remember-forgot-container {
+        .eye-btn {
+            position: absolute;
+            right: 15px;
+            top: 17px;
+            cursor: pointer;
+        }
+
+        /* Remember & Forgot */
+        .row-buttons {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 25px;
         }
 
-        .remember-me-button {
+        .remember-btn {
             display: flex;
             align-items: center;
             cursor: pointer;
@@ -219,938 +206,597 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.3s ease;
+            transition: all 0.2s;
         }
 
         .checkbox.checked {
-            background: #3498db;
+            background-color: #3498db;
             border-color: #3498db;
         }
 
-        .remember-me-text {
+        .remember-text {
             font-size: 14px;
             color: #2c3e50;
         }
 
-        .forgot-password-text {
+        .forgot-link {
             font-size: 14px;
             font-weight: 600;
+            text-decoration: none;
             cursor: pointer;
-            transition: color 0.3s ease;
         }
 
-        .forgot-password-text:hover {
-            text-decoration: underline;
-        }
-
-        .login-button {
+        /* Login Button */
+        .login-btn {
             width: 100%;
             height: 58px;
             display: flex;
             align-items: center;
             justify-content: center;
+            gap: 10px;
+            border-radius: 14px;
             border: none;
-            border-radius: 12px;
-            font-size: 18px;
-            font-weight: bold;
-            color: white;
-            cursor: pointer;
-            transition: all 0.3s ease;
             margin-bottom: 20px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
 
-        .login-button:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        .login-btn:active {
+            transform: scale(0.97);
+            opacity: 0.9;
         }
 
-        .login-button:disabled {
+        .login-btn.disabled {
             opacity: 0.7;
+            transform: none;
             cursor: not-allowed;
         }
 
-        .login-button-text {
-            margin-left: 10px;
+        .login-btn-text {
+            font-size: 18px;
+            font-weight: 800;
+            color: white;
             letter-spacing: 0.5px;
         }
 
-        .signup-container {
+        /* Signup */
+        .signup-row {
             display: flex;
             justify-content: center;
             align-items: center;
             margin-bottom: 30px;
+            gap: 5px;
         }
 
         .signup-text {
             font-size: 15px;
             color: #7f8c8d;
-            margin-right: 5px;
         }
 
         .signup-link {
             font-size: 15px;
             font-weight: 600;
+            text-decoration: none;
             cursor: pointer;
-            transition: color 0.3s ease;
         }
 
-        .signup-link:hover {
-            text-decoration: underline;
-        }
-
-        .security-info {
+        /* Security Info */
+        .security-box {
             display: flex;
             align-items: center;
             justify-content: center;
+            gap: 10px;
             padding: 15px;
-            background: #f0f8ff;
-            border-radius: 12px;
-            margin-bottom: 30px;
+            background-color: #f0f8ff;
+            border-radius: 14px;
+            margin-top: 10px;
         }
 
         .security-text {
             font-size: 14px;
             color: #3498db;
-            margin-left: 10px;
         }
 
-        .loading-spinner {
-            display: none;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
+        .loader {
+            display: inline-block;
+            width: 22px;
+            height: 22px;
+            border: 2px solid rgba(255,255,255,0.3);
             border-radius: 50%;
             border-top-color: white;
-            animation: spin 1s linear infinite;
+            animation: spin 0.7s linear infinite;
         }
 
         @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
+            to { transform: rotate(360deg); }
         }
 
-        .role-selector {
+        /* Custom Alert */
+        .custom-alert {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
             display: flex;
+            align-items: center;
             justify-content: center;
-            gap: 10px;
-            margin-bottom: 20px;
-            padding: 0 20px;
+            z-index: 1000;
         }
-
-        .role-option {
-            padding: 8px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 20px;
+        .alert-box {
             background: white;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            text-transform: capitalize;
+            border-radius: 28px;
+            width: 85%;
+            max-width: 320px;
+            padding: 24px 20px 20px;
+            text-align: center;
         }
-
-        .role-option.active {
-            color: white;
-            border-color: transparent;
+        .alert-title {
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 12px;
         }
-
-        .message-container {
-            margin-bottom: 20px;
-            padding: 0 20px;
-        }
-
         .alert-message {
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            animation: fadeIn 0.3s ease;
+            font-size: 14px;
+            color: #5d6d7e;
+            margin-bottom: 24px;
+            line-height: 1.4;
         }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border-left: 4px solid #28a745;
-        }
-
-        .alert-error {
-            background: #fee;
-            color: #e74c3c;
-            border-left: 4px solid #e74c3c;
-        }
-
-        .alert-info {
-            background: #d1ecf1;
-            color: #0c5460;
-            border-left: 4px solid #17a2b8;
-        }
-
-        /* Home Navigation Button */
-        .home-container {
-            padding: 0 20px;
-            margin-bottom: 20px;
-        }
-
-        .home-button {
-            width: 100%;
-            height: 56px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: #667eea;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: bold;
-            color: white;
+        .alert-btn {
+            padding: 12px;
+            border-radius: 40px;
+            font-weight: 700;
+            text-align: center;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-            text-decoration: none;
+            color: white;
         }
 
-        .home-button:hover {
-            background-color: #5a67d8;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-        }
-
-        .home-button-icon {
-            margin-right: 10px;
-            font-size: 18px;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 480px) {
-            .container {
-                max-width: 100%;
-                border-radius: 0;
-            }
-
-            body {
-                padding: 0;
-            }
-
+        @media (max-width: 550px) {
             .content {
-                padding: 0 20px 20px;
+                padding: 20px 18px 30px;
             }
-
             .welcome-text {
                 font-size: 24px;
             }
-
-            .role-option {
-                padding: 6px 12px;
-                font-size: 13px;
-            }
         }
     </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 </head>
 <body>
-    <div class="container">
-        <!-- Home Navigation Button -->
-        <div class="home-container">
-            <a href="home.html" class="home-button">
-                <i class="fas fa-home home-button-icon"></i>
-                RUDI NYUMBANI
-            </a>
-        </div>
-
-        <!-- Role Selector -->
-        <div class="role-selector" id="roleSelector">
-            <div class="role-option active" data-role="mteja">Mteja</div>
-            <div class="role-option" data-role="muuzaji">Muuzaji</div>
-            <div class="role-option" data-role="msimamizi">Msimamizi</div>
-        </div>
-
-        <div class="header-section">
-            <div class="header-top">
-                <div class="back-button" id="backButton">
-                    <i class="fas fa-arrow-left"></i>
+<div class="keyboard-avoid">
+    <div class="scroll-container">
+        <div class="container">
+            <!-- Header -->
+            <div class="header-section">
+                <div id="backBtn" class="back-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M15 18L9 12L15 6" stroke="#2c3e50" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
                 </div>
-                <div class="role-badge" id="roleBadge">MTEJA</div>
+                <div class="role-badge">
+                    <span id="roleBadgeText" class="role-badge-text">MTEJA</span>
+                </div>
             </div>
 
-            <div class="avatar-container">
-                <div class="avatar" id="avatar" style="background-color: var(--color-mteja);">
-                    <i class="fas fa-user" style="font-size: 30px; color: white;"></i>
-                </div>
-                <h1 class="welcome-text">Karibu Tena!</h1>
-                <p class="role-description" id="roleDescription">Ninaomba huduma au bidhaa</p>
-            </div>
-        </div>
-
-        <div class="content">
-            <!-- Message Container -->
-            <div class="message-container" id="messageContainer"></div>
-
-            <!-- Login Form -->
-            <div class="form-container">
-                <div class="input-container">
-                    <div class="input-label">
-                        <i class="fas fa-envelope"></i>
-                        <span class="label-text">Barua Pepe</span>
+            <!-- Content -->
+            <div class="content">
+                <div class="avatar-container">
+                    <div id="avatarCircle" class="avatar" style="background-color: #3498db;">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5">
+                            <path d="M20 21V19C20 16.8 18.2 15 16 15H8C5.8 15 4 16.8 4 19V21" stroke="white"/>
+                            <circle cx="12" cy="7" r="4" stroke="white"/>
+                        </svg>
                     </div>
-                    <input 
-                        type="email" 
-                        class="input" 
-                        id="emailInput" 
-                        placeholder="example@email.com"
-                        required
-                    >
-                    <div class="error-text" id="emailError">Barua pepe inahitajika</div>
+                    <div class="welcome-text">Karibu Tena!</div>
+                    <div id="roleDescription" class="role-description">Ninaomba huduma au bidhaa</div>
                 </div>
 
-                <div class="input-container">
-                    <div class="input-label">
-                        <i class="fas fa-lock"></i>
-                        <span class="label-text">Nenosiri</span>
-                    </div>
-                    <div class="password-container">
-                        <input 
-                            type="password" 
-                            class="input" 
-                            id="passwordInput" 
-                            placeholder="••••••••"
-                            required
-                        >
-                        <button type="button" class="eye-button" id="togglePassword">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </div>
-                    <div class="error-text" id="passwordError">Nenosiri linahitajika</div>
-                </div>
-
-                <div class="remember-forgot-container">
-                    <div class="remember-me-button" id="rememberMeButton">
-                        <div class="checkbox" id="rememberCheckbox">
-                            <i class="fas fa-check" style="color: white; font-size: 12px; display: none;"></i>
+                <div class="form-container">
+                    <!-- Email -->
+                    <div class="input-group">
+                        <div class="input-label">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7f8c8d">
+                                <path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z" stroke-width="1.5"/>
+                                <path d="M22 6L12 13L2 6" stroke-width="1.5"/>
+                            </svg>
+                            <span class="label-text">Barua Pepe</span>
                         </div>
-                        <span class="remember-me-text">Nikumbuke</span>
+                        <input type="email" id="emailInput" class="input-field" placeholder="example@email.com" autocomplete="email">
+                        <div id="emailError" class="error-text" style="display: none;"></div>
                     </div>
-                    <div class="forgot-password-text" id="forgotPassword" style="color: var(--color-mteja);">
-                        Umesahau nenosiri?
+
+                    <!-- Password -->
+                    <div class="input-group">
+                        <div class="input-label">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7f8c8d">
+                                <path d="M12 2C8.13 2 5 5.13 5 9V12C3.9 12 3 12.9 3 14V20C3 21.1 3.9 22 5 22H19C20.1 22 21 21.1 21 20V14C21 12.9 20.1 12 19 12V9C19 5.13 15.87 2 12 2Z" stroke-width="1.5"/>
+                                <path d="M12 17V15" stroke-width="1.5"/>
+                            </svg>
+                            <span class="label-text">Nenosiri</span>
+                        </div>
+                        <div class="password-wrapper">
+                            <input type="password" id="passwordInput" class="input-field password-input" placeholder="••••••••" autocomplete="current-password">
+                            <div id="togglePassword" class="eye-btn">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7f8c8d">
+                                    <path d="M1 12C1 12 5 4 12 4C19 4 23 12 23 12C23 12 19 20 12 20C5 20 1 12 1 12Z" stroke-width="1.5"/>
+                                    <circle cx="12" cy="12" r="3" stroke-width="1.5"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div id="passwordError" class="error-text" style="display: none;"></div>
+                    </div>
+
+                    <!-- Remember & Forgot -->
+                    <div class="row-buttons">
+                        <div id="rememberBtn" class="remember-btn">
+                            <div id="checkbox" class="checkbox"></div>
+                            <span class="remember-text">Nikumbuke</span>
+                        </div>
+                        <div id="forgotLink" class="forgot-link" style="color: #3498db;">Umesahau nenosiri?</div>
+                    </div>
+
+                    <!-- Login Button -->
+                    <button id="loginBtn" class="login-btn" style="background-color: #3498db;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8">
+                            <path d="M15 3H19C20.1 3 21 3.9 21 5V19C21 20.1 20.1 21 19 21H15"/>
+                            <path d="M10 17L15 12L10 7"/>
+                            <path d="M15 12H3"/>
+                        </svg>
+                        <span class="login-btn-text">INGIA</span>
+                    </button>
+
+                    <!-- Signup -->
+                    <div class="signup-row">
+                        <span class="signup-text">Huna akaunti?</span>
+                        <span id="signupLink" class="signup-link" style="color: #3498db;">Jisajili kama Mteja</span>
                     </div>
                 </div>
 
-                <button class="login-button" id="loginButton" style="background-color: var(--color-mteja);">
-                    <div class="loading-spinner" id="loadingSpinner"></div>
-                    <i class="fas fa-sign-in-alt" id="loginIcon"></i>
-                    <span class="login-button-text" id="loginButtonText">INGIA</span>
-                </button>
-
-                <div class="signup-container">
-                    <span class="signup-text">Huna akaunti?</span>
-                    <div class="signup-link" id="signupLink" style="color: var(--color-mteja);">
-                        Jisajili kama Mteja
-                    </div>
+                <!-- Security Info -->
+                <div class="security-box">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3498db">
+                        <path d="M12 3L3 9L12 15L21 9L12 3Z" stroke-width="1.5"/>
+                        <path d="M5 12L12 17.5L19 12" stroke-width="1.5"/>
+                        <path d="M5 16L12 21.5L19 16" stroke-width="1.5"/>
+                    </svg>
+                    <span class="security-text">Taarifa zako zinalindwa kwa usalama wa juu</span>
                 </div>
-            </div>
-
-            <div class="security-info">
-                <i class="fas fa-shield-alt"></i>
-                <span class="security-text">Taarifa zako zinalindwa kwa usalama wa juu</span>
             </div>
         </div>
     </div>
+</div>
 
-    <script>
-        // API Configuration
-        const API_BASE_URL = 'https://dukamkononi.com';
+<script>
+    // ------------------------------
+    // DUKAMKONONI: LoginScreen web replica
+    // Role-based login, remember-me (localStorage), AsyncStorage simulation, navigation
+    const API_BASE_URL = 'https://duka-mkononi-backend-4476.onrender.com';
+
+    // Get role from URL (default mteja)
+    const urlParams = new URLSearchParams(window.location.search);
+    let role = urlParams.get('role') || 'mteja';
+
+    // Role mappings
+    function getBackendRole(frontendRole) {
+        const map = { 'mteja': 'customer', 'muuzaji': 'seller', 'msimamizi': 'admin', 'washa': 'customer' };
+        return map[frontendRole] || frontendRole;
+    }
+
+    function getDashboardRoute(userRole) {
+        const map = { 'customer': '/mteja/index.html', 'seller': '/muuzaji/index.html', 'admin': '/msimamizi/index.html' };
+        return map[userRole] || '/home.html';
+    }
+
+    function getSignupRoute(r) {
+        const map = { 'mteja': 'client-signup.html', 'muuzaji': '/cashier-signup.html', 'msimamizi': '/admin-signup.html', 'washa': 'client-signup.html' };
+        return map[r] || 'client-signup.html';
+    }
+
+    function getRoleColor() {
+        const colors = { 'mteja': '#3498db', 'muuzaji': '#2ecc71', 'msimamizi': '#e74c3c', 'washa': '#9b59b6' };
+        return colors[role] || '#2c3e50';
+    }
+
+    function getRoleTitle() {
+        const titles = { 'mteja': 'MTEJA', 'muuzaji': 'MUUZAJI', 'msimamizi': 'MSIMAMIZI', 'washa': 'WASHA' };
+        return titles[role] || 'USER';
+    }
+
+    function getRoleDescription() {
+        const desc = { 'mteja': 'Ninaomba huduma au bidhaa', 'muuzaji': 'Ninauzia bidhaa na huduma', 'msimamizi': 'Ninafanya usimamizi wa duka', 'washa': 'Ninafanya malipo ya haraka' };
+        return desc[role] || 'Ingia kwenye akaunti yako';
+    }
+
+    function getAvatarIcon() {
+        const icons = { 'mteja': 'person', 'muuzaji': 'cart', 'msimamizi': 'shield', 'washa': 'flash' };
+        return icons[role] || 'person';
+    }
+
+    // DOM Elements
+    let email = '';
+    let password = '';
+    let rememberMe = false;
+    let loading = false;
+    let showPassword = false;
+
+    const emailInput = document.getElementById('emailInput');
+    const passwordInput = document.getElementById('passwordInput');
+    const emailErrorDiv = document.getElementById('emailError');
+    const passwordErrorDiv = document.getElementById('passwordError');
+    const loginBtn = document.getElementById('loginBtn');
+    const checkbox = document.getElementById('checkbox');
+    const rememberBtn = document.getElementById('rememberBtn');
+    const forgotLink = document.getElementById('forgotLink');
+    const signupLink = document.getElementById('signupLink');
+    const backBtn = document.getElementById('backBtn');
+    const togglePassword = document.getElementById('togglePassword');
+    const avatarCircle = document.getElementById('avatarCircle');
+    const roleBadgeText = document.getElementById('roleBadgeText');
+    const roleDescriptionSpan = document.getElementById('roleDescription');
+
+    // Apply theme
+    function applyTheme() {
+        const color = getRoleColor();
+        loginBtn.style.backgroundColor = color;
+        forgotLink.style.color = color;
+        signupLink.style.color = color;
+        roleBadgeText.style.color = color;
+        roleBadgeText.textContent = getRoleTitle();
+        roleDescriptionSpan.textContent = getRoleDescription();
+        avatarCircle.style.backgroundColor = color;
         
-        // State Variables
-        let currentRole = 'mteja';
-        let rememberMe = false;
-        let showPassword = false;
-        let isLoading = false;
-
-        // DOM Elements
-        const roleSelector = document.getElementById('roleSelector');
-        const roleOptions = document.querySelectorAll('.role-option');
-        const roleBadge = document.getElementById('roleBadge');
-        const avatar = document.getElementById('avatar');
-        const roleDescription = document.getElementById('roleDescription');
-        const emailInput = document.getElementById('emailInput');
-        const passwordInput = document.getElementById('passwordInput');
-        const emailError = document.getElementById('emailError');
-        const passwordError = document.getElementById('passwordError');
-        const togglePassword = document.getElementById('togglePassword');
-        const rememberMeButton = document.getElementById('rememberMeButton');
-        const rememberCheckbox = document.getElementById('rememberCheckbox');
-        const forgotPassword = document.getElementById('forgotPassword');
-        const loginButton = document.getElementById('loginButton');
-        const loginButtonText = document.getElementById('loginButtonText');
-        const loginIcon = document.getElementById('loginIcon');
-        const loadingSpinner = document.getElementById('loadingSpinner');
-        const signupLink = document.getElementById('signupLink');
-        const backButton = document.getElementById('backButton');
-        const messageContainer = document.getElementById('messageContainer');
-
-        // Color mapping for roles
-        const roleColors = {
-            'mteja': '#3498db',
-            'muuzaji': '#2ecc71',
-            'msimamizi': '#e74c3c'
+        // Update avatar SVG based on role
+        const iconMap = {
+            'mteja': '<path d="M20 21V19C20 16.8 18.2 15 16 15H8C5.8 15 4 16.8 4 19V21" stroke="white"/><circle cx="12" cy="7" r="4" stroke="white"/>',
+            'muuzaji': '<path d="M6.5 9L9 4H15L17.5 9" stroke="white"/><path d="M3 9H21V19C21 20.1 20.1 21 19 21H5C3.9 21 3 20.1 3 19V9Z" stroke="white"/><circle cx="9" cy="14" r="2" fill="white"/><circle cx="15" cy="14" r="2" fill="white"/>',
+            'msimamizi': '<path d="M12 3L3 9L12 15L21 9L12 3Z" stroke="white"/><path d="M5 12L12 17.5L19 12" stroke="white"/><path d="M5 16L12 21.5L19 16" stroke="white"/>',
+            'washa': '<path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" stroke="white"/>'
         };
+        const svgPath = iconMap[role] || iconMap['mteja'];
+        avatarCircle.innerHTML = `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5">${svgPath}</svg>`;
+    }
 
-        // Role descriptions
-        const roleDescriptions = {
-            'mteja': 'Ninaomba huduma au bidhaa',
-            'muuzaji': 'Ninauzia bidhaa na huduma',
-            'msimamizi': 'Ninafanya usimamizi wa duka'
+    // Storage keys (simulate AsyncStorage with localStorage)
+    function getStorageKeys() {
+        return {
+            savedEmail: `savedEmail_${role}`,
+            savedPassword: `savedPassword_${role}`,
+            rememberMe: `rememberMe_${role}`
         };
+    }
 
-        // Role titles
-        const roleTitles = {
-            'mteja': 'MTEJA',
-            'muuzaji': 'MUUZAJI',
-            'msimamizi': 'MSIMAMIZI'
+    function loadSavedCredentials() {
+        const keys = getStorageKeys();
+        const savedEmail = localStorage.getItem(keys.savedEmail);
+        const savedPassword = localStorage.getItem(keys.savedPassword);
+        const savedRemember = localStorage.getItem(keys.rememberMe);
+        
+        if (savedRemember === 'true' && savedEmail && savedPassword) {
+            emailInput.value = savedEmail;
+            passwordInput.value = savedPassword;
+            rememberMe = true;
+            checkbox.classList.add('checked');
+            checkbox.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M20 6L9 17L4 12"/></svg>';
+        }
+    }
+
+    function saveCredentials() {
+        const keys = getStorageKeys();
+        if (rememberMe) {
+            localStorage.setItem(keys.savedEmail, email);
+            localStorage.setItem(keys.savedPassword, password);
+            localStorage.setItem(keys.rememberMe, 'true');
+        } else {
+            localStorage.removeItem(keys.savedEmail);
+            localStorage.removeItem(keys.savedPassword);
+            localStorage.removeItem(keys.rememberMe);
+        }
+    }
+
+    // Alert helper
+    function showAlert(title, message, onOk = null) {
+        const existing = document.querySelector('.custom-alert');
+        if (existing) existing.remove();
+        const overlay = document.createElement('div');
+        overlay.className = 'custom-alert';
+        const box = document.createElement('div');
+        box.className = 'alert-box';
+        const titleEl = document.createElement('div');
+        titleEl.className = 'alert-title';
+        titleEl.innerText = title;
+        const msgEl = document.createElement('div');
+        msgEl.className = 'alert-message';
+        msgEl.innerText = message;
+        const btn = document.createElement('div');
+        btn.className = 'alert-btn';
+        btn.innerText = 'Sawa';
+        btn.style.backgroundColor = getRoleColor();
+        btn.onclick = () => {
+            overlay.remove();
+            if (onOk) onOk();
         };
+        box.appendChild(titleEl);
+        box.appendChild(msgEl);
+        box.appendChild(btn);
+        overlay.appendChild(box);
+        document.body.appendChild(overlay);
+    }
 
-        // Signup button texts
-        const signupButtonTexts = {
-            'mteja': 'Jisajili kama Mteja',
-            'muuzaji': 'Jisajili kama Muuzaji',
-            'msimamizi': 'Jisajili kama Msimamizi'
-        };
+    function validateEmail(emailStr) {
+        const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return regex.test(emailStr);
+    }
 
-        // Role icons
-        const roleIcons = {
-            'mteja': 'fa-user',
-            'muuzaji': 'fa-cart-shopping',
-            'msimamizi': 'fa-shield'
-        };
+    function sanitizeInput(str) {
+        return str.trim().replace(/[<>]/g, '');
+    }
 
-        // Initialize the app
-        function init() {
-            // Check if user came from home.html
-            checkHomePageSelection();
-            
-            // Get role from URL parameter
-            const urlParams = new URLSearchParams(window.location.search);
-            const roleParam = urlParams.get('role');
-            
-            if (roleParam && roleColors[roleParam]) {
-                currentRole = roleParam;
-                updateRoleUI();
-            }
-
-            loadSavedCredentials();
-            setupEventListeners();
-            emailInput.focus();
+    function validateForm() {
+        let isValid = true;
+        const emailVal = emailInput.value.trim();
+        const passVal = passwordInput.value;
+        
+        emailErrorDiv.style.display = 'none';
+        passwordErrorDiv.style.display = 'none';
+        emailInput.classList.remove('error');
+        passwordInput.classList.remove('error');
+        
+        if (!emailVal) {
+            emailErrorDiv.textContent = 'Barua pepe inahitajika';
+            emailErrorDiv.style.display = 'block';
+            emailInput.classList.add('error');
+            isValid = false;
+        } else if (!validateEmail(emailVal)) {
+            emailErrorDiv.textContent = 'Andika barua pepe sahihi';
+            emailErrorDiv.style.display = 'block';
+            emailInput.classList.add('error');
+            isValid = false;
         }
-
-        // Check if user came from home.html with role selection
-        function checkHomePageSelection() {
-            try {
-                // Check URL parameters first
-                const urlParams = new URLSearchParams(window.location.search);
-                const roleParam = urlParams.get('role');
-                
-                // Then check localStorage for home page selection
-                const homePageRole = localStorage.getItem('userRole');
-                
-                // Use role from URL if available, otherwise from localStorage
-                if (roleParam && roleColors[roleParam]) {
-                    currentRole = roleParam;
-                } else if (homePageRole && roleColors[homePageRole]) {
-                    currentRole = homePageRole;
-                    // Clear the stored role after using it
-                    localStorage.removeItem('userRole');
-                }
-                
-                updateRoleUI();
-            } catch (error) {
-                console.error('Error checking home page selection:', error);
-            }
+        
+        if (!passVal) {
+            passwordErrorDiv.textContent = 'Nenosiri linahitajika';
+            passwordErrorDiv.style.display = 'block';
+            passwordInput.classList.add('error');
+            isValid = false;
+        } else if (passVal.length < 6) {
+            passwordErrorDiv.textContent = 'Nenosiri lazima liwe na herufi 6 au zaidi';
+            passwordErrorDiv.style.display = 'block';
+            passwordInput.classList.add('error');
+            isValid = false;
         }
+        
+        return isValid;
+    }
 
-        // Update UI based on selected role
-        function updateRoleUI() {
-            const color = roleColors[currentRole];
-            
-            // Update role badge
-            roleBadge.textContent = roleTitles[currentRole];
-            roleBadge.style.color = color;
-            
-            // Update role selector
-            roleOptions.forEach(option => {
-                const optionRole = option.dataset.role;
-                option.classList.toggle('active', optionRole === currentRole);
-                option.style.backgroundColor = optionRole === currentRole ? color : '';
-                option.style.borderColor = optionRole === currentRole ? color : '#e0e0e0';
+    async function handleLogin() {
+        if (loading) return;
+        if (!validateForm()) return;
+        
+        email = sanitizeInput(emailInput.value.trim());
+        password = passwordInput.value;
+        
+        loading = true;
+        const originalBtnHtml = loginBtn.innerHTML;
+        loginBtn.innerHTML = '<div class="loader"></div>';
+        loginBtn.classList.add('disabled');
+        
+        try {
+            const backendRole = getBackendRole(role);
+            const response = await fetch(`${API_BASE_URL}/api/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ email, password, role: backendRole })
             });
             
-            // Update avatar
-            avatar.style.backgroundColor = color;
-            const iconClass = roleIcons[currentRole];
-            avatar.innerHTML = `<i class="fas ${iconClass}" style="font-size: 30px; color: white;"></i>`;
-            
-            // Update role description
-            roleDescription.textContent = roleDescriptions[currentRole];
-            
-            // Update forgot password link color
-            forgotPassword.style.color = color;
-            
-            // Update login button color
-            loginButton.style.backgroundColor = color;
-            
-            // Update signup link
-            signupLink.textContent = signupButtonTexts[currentRole];
-            signupLink.style.color = color;
-        }
-
-        // Load saved credentials from localStorage
-        function loadSavedCredentials() {
-            try {
-                const savedEmail = localStorage.getItem(`savedEmail_${currentRole}`);
-                const savedPassword = localStorage.getItem(`savedPassword_${currentRole}`);
-                const savedRememberMe = localStorage.getItem(`rememberMe_${currentRole}`);
-                
-                if (savedRememberMe === 'true' && savedEmail && savedPassword) {
-                    emailInput.value = savedEmail;
-                    passwordInput.value = savedPassword;
-                    rememberMe = true;
-                    rememberCheckbox.classList.add('checked');
-                    rememberCheckbox.querySelector('i').style.display = 'block';
-                    console.log(`Loaded saved credentials for ${currentRole}`);
-                }
-            } catch (error) {
-                console.error('Error loading saved credentials:', error);
-                clearLoginData();
-            }
-        }
-
-        // Clear login data from localStorage
-        function clearLoginData() {
-            try {
-                const keys = Object.keys(localStorage);
-                keys.forEach(key => {
-                    if (key.includes('savedEmail_') || key.includes('savedPassword_') || key.includes('rememberMe_')) {
-                        localStorage.removeItem(key);
-                    }
-                });
-                console.log('Cleared all login data');
-            } catch (error) {
-                console.error('Error clearing login data:', error);
-            }
-        }
-
-        // Setup event listeners
-        function setupEventListeners() {
-            // Role selector
-            roleOptions.forEach(option => {
-                option.addEventListener('click', () => {
-                    currentRole = option.dataset.role;
-                    updateRoleUI();
-                    loadSavedCredentials();
-                });
-            });
-
-            // Password toggle
-            togglePassword.addEventListener('click', () => {
-                showPassword = !showPassword;
-                passwordInput.type = showPassword ? 'text' : 'password';
-                togglePassword.innerHTML = showPassword 
-                    ? '<i class="fas fa-eye-slash"></i>' 
-                    : '<i class="fas fa-eye"></i>';
-            });
-
-            // Remember me
-            rememberMeButton.addEventListener('click', () => {
-                rememberMe = !rememberMe;
-                rememberCheckbox.classList.toggle('checked', rememberMe);
-                const checkIcon = rememberCheckbox.querySelector('i');
-                checkIcon.style.display = rememberMe ? 'block' : 'none';
-            });
-
-            // Forgot password
-            forgotPassword.addEventListener('click', () => {
-                window.location.href = `forgot.html?role=${currentRole}`;
-            });
-
-            // Signup link
-            signupLink.addEventListener('click', () => {
-                const signupRoutes = {
-                    'mteja': 'client_signup.html',
-                    'muuzaji': 'cashier_signup.html',
-                    'msimamizi': 'admin_signup.html'
-                };
-                window.location.href = `${signupRoutes[currentRole]}?role=${currentRole}`;
-            });
-
-            // Back button - goes back to home page
-            backButton.addEventListener('click', () => {
-                window.location.href = 'home.html';
-            });
-
-            // Login button
-            loginButton.addEventListener('click', handleLogin);
-
-            // Enter key for login
-            document.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    handleLogin();
-                }
-            });
-
-            // Real-time validation
-            emailInput.addEventListener('input', () => {
-                if (emailError.style.display === 'block') {
-                    validateEmail();
-                }
-            });
-
-            passwordInput.addEventListener('input', () => {
-                if (passwordError.style.display === 'block') {
-                    validatePassword();
-                }
-            });
-        }
-
-        // Validate email
-        function validateEmail() {
-            const email = emailInput.value.trim();
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            
-            if (!email) {
-                emailError.textContent = 'Barua pepe inahitajika';
-                emailError.style.display = 'block';
-                emailInput.classList.add('input-error');
-                return false;
-            } else if (!emailRegex.test(email)) {
-                emailError.textContent = 'Andika barua pepe sahihi';
-                emailError.style.display = 'block';
-                emailInput.classList.add('input-error');
-                return false;
-            } else {
-                emailError.style.display = 'none';
-                emailInput.classList.remove('input-error');
-                return true;
-            }
-        }
-
-        // Validate password
-        function validatePassword() {
-            const password = passwordInput.value;
-            
-            if (!password) {
-                passwordError.textContent = 'Nenosiri linahitajika';
-                passwordError.style.display = 'block';
-                passwordInput.classList.add('input-error');
-                return false;
-            } else if (password.length < 6) {
-                passwordError.textContent = 'Nenosiri lazima liwe na herufi 6 au zaidi';
-                passwordError.style.display = 'block';
-                passwordInput.classList.add('input-error');
-                return false;
-            } else {
-                passwordError.style.display = 'none';
-                passwordInput.classList.remove('input-error');
-                return true;
-            }
-        }
-
-        // Validate form
-        function validateForm() {
-            const isEmailValid = validateEmail();
-            const isPasswordValid = validatePassword();
-            return isEmailValid && isPasswordValid;
-        }
-
-        // Show message/alert
-        function showMessage(message, type = 'error') {
-            messageContainer.innerHTML = '';
-            
-            const alertDiv = document.createElement('div');
-            alertDiv.className = `alert-message alert-${type}`;
-            
-            const icon = type === 'success' ? 'fa-check-circle' : 
-                        type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle';
-            
-            alertDiv.innerHTML = `
-                <i class="fas ${icon}" style="margin-right: 10px;"></i>
-                <span>${message}</span>
-            `;
-            
-            messageContainer.appendChild(alertDiv);
-            
-            // Auto-remove error messages after 5 seconds
-            if (type === 'error') {
-                setTimeout(() => {
-                    if (alertDiv.parentNode === messageContainer) {
-                        messageContainer.removeChild(alertDiv);
-                    }
-                }, 5000);
-            }
-        }
-
-        // Convert frontend role to backend role
-        function getBackendRole(frontendRole) {
-            switch (frontendRole) {
-                case 'mteja': return 'customer';
-                case 'muuzaji': return 'seller';
-                case 'msimamizi': return 'admin';
-                default: return frontendRole;
-            }
-        }
-
-        // Get dashboard route
-        function getDashboardRoute(backendRole) {
-            switch (backendRole) {
-                case 'customer': return 'biashara.html';
-                case 'seller': return 'bidhaa-mpya.html';
-                case 'admin': return 'profaili3.html';
-                default: return 'home.html';
-            }
-        }
-
-        // Check user approval status
-        function checkUserApprovalStatus(user) {
-            console.log('Checking user approval status:', user);
-            
-            const statusValue = user.status || user.is_approved || user.verified || user.account_status;
-            
-            if (statusValue === undefined || statusValue === null) {
-                console.log('No explicit status field found');
-                
-                if (user.role === 'seller') {
-                    return {
-                        approved: false,
-                        message: 'Akaunti ya muuzaji haijaidhinishwa. Tafadhali wasiliana na msimamizi.'
-                    };
-                }
-                
-                return {
-                    approved: true,
-                    message: ''
-                };
+            if (!response.ok) {
+                let errMsg = 'Hitilafu imetokea';
+                try {
+                    const errData = await response.json();
+                    errMsg = errData.error || `Hitilafu: ${response.status}`;
+                } catch { errMsg = `Hitilafu ya server: ${response.status}`; }
+                throw new Error(errMsg);
             }
             
-            const statusStr = String(statusValue).toLowerCase().trim();
+            const data = await response.json();
+            if (!data.token || !data.user) throw new Error('Jibu lisilo sahihi kutoka kwa server');
             
-            const approvedStatuses = [
-                'approved', 'active', 'verified', 'confirmed', 'valid',
-                'true', '1', 'yes', 'enabled', 'activated'
-            ];
+            const user = data.user;
+            const token = data.token;
             
-            const pendingStatuses = [
-                'pending', 'waiting', 'review', 'processing', 'in_review'
-            ];
-            
-            const rejectedStatuses = [
-                'rejected', 'denied', 'suspended', 'blocked', 'banned',
-                'false', '0', 'no', 'disabled', 'inactive'
-            ];
-            
-            if (approvedStatuses.includes(statusStr)) {
-                return {
-                    approved: true,
-                    message: ''
-                };
-            }
-            
-            if (pendingStatuses.includes(statusStr)) {
-                return {
-                    approved: false,
-                    message: 'Akaunti yako bado haijaidhinishwa. Subiri msimamizi akuidhinishe.'
-                };
-            }
-            
-            if (rejectedStatuses.includes(statusStr)) {
-                return {
-                    approved: false,
-                    message: 'Akaunti yako imekataliwa. Tafadhali wasiliana na msimamizi.'
-                };
-            }
-            
-            if (statusValue === true || statusValue === 1) {
-                return {
-                    approved: true,
-                    message: ''
-                };
-            }
-            
-            if (statusValue === false || statusValue === 0) {
-                return {
-                    approved: false,
-                    message: 'Akaunti yako haijaidhinishwa. Tafadhali wasiliana na msimamizi.'
-                };
-            }
-            
-            console.warn(`Unknown status value: ${statusValue}`);
-            return {
-                approved: false,
-                message: `Akaunti yako ina hali isiyojulikana (${statusValue}). Tafadhali wasiliana na msimamizi.`
-            };
-        }
-
-        // Main login function
-        async function handleLogin() {
-            // Clear previous messages
-            messageContainer.innerHTML = '';
-            
-            // Validate form
-            if (!validateForm()) {
+            // Check user status
+            if (user.status && user.status !== 'approved') {
+                let statusMsg = user.status === 'pending' ? 'Akaunti yako bado haijaidhinishwa. Subiri msimamizi akuidhinishe.' : 'Akaunti yako imekataliwa. Tafadhali wasiliana na msimamizi.';
+                showAlert('Akaunti Haijaidhinishwa', statusMsg);
+                loading = false;
+                loginBtn.innerHTML = originalBtnHtml;
+                loginBtn.classList.remove('disabled');
                 return;
             }
-
-            // Set loading state
-            isLoading = true;
-            loginButton.disabled = true;
-            loginButtonText.style.display = 'none';
-            loginIcon.style.display = 'none';
-            loadingSpinner.style.display = 'block';
-
-            const email = emailInput.value.trim();
-            const password = passwordInput.value;
-            const backendRole = getBackendRole(currentRole);
-
-            try {
-                console.log('Sending login request:', {
-                    email: email,
-                    role: backendRole,
-                    endpoint: `${API_BASE_URL}/api/login`
-                });
-
-                const response = await fetch(`${API_BASE_URL}/api/login`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        email: email,
-                        password: password,
-                        role: backendRole
-                    }),
-                });
-
-                // Reset loading state
-                isLoading = false;
-                loginButton.disabled = false;
-                loginButtonText.style.display = 'inline';
-                loginIcon.style.display = 'inline';
-                loadingSpinner.style.display = 'none';
-
-                if (!response.ok) {
-                    let errorMessage = 'Hitilafu imetokea';
-                    
-                    try {
-                        const errorData = await response.json();
-                        errorMessage = errorData.error || errorData.message || `Hitilafu: ${response.status}`;
-                        
-                        if (errorData.error === 'Invalid credentials') {
-                            errorMessage = 'Barua pepe au nenosiri si sahihi.';
-                        } else if (errorData.error === 'Account not found') {
-                            errorMessage = 'Akaunti haipo. Tafadhali jisajili kwanza.';
-                        } else if (errorData.error === 'Account not approved') {
-                            errorMessage = 'Akaunti yako haijaidhinishwa. Tafadhali wasiliana na msimamizi.';
-                        }
-                    } catch {
-                        errorMessage = `Hitilafu ya server: ${response.status}`;
-                    }
-                    
-                    throw new Error(errorMessage);
-                }
-
-                const data = await response.json();
-                console.log('Login response:', data);
-
-                if (!data.token || !data.user) {
-                    throw new Error('Jibu lisilo sahihi kutoka kwa server');
-                }
-
-                const user = data.user;
-                const token = data.token;
-                
-                // Check user approval status
-                const approvalCheck = checkUserApprovalStatus(user);
-                if (!approvalCheck.approved) {
-                    showMessage(approvalCheck.message, 'error');
-                    return;
-                }
-
-                // Save user data to localStorage
-                const userDataToSave = {
-                    userToken: token,
-                    userData: JSON.stringify(user),
-                    userId: String(user.id),
-                    userEmail: user.email,
-                    userRole: user.role,
-                    userStatus: user.status || 'approved',
-                    userName: user.full_name || user.email.split('@')[0],
-                    ...(user.business_name && { userBusiness: user.business_name })
-                };
-
-                // Save all data
-                Object.entries(userDataToSave).forEach(([key, value]) => {
-                    localStorage.setItem(key, value);
-                });
-
-                // Handle remember me
-                if (rememberMe) {
-                    localStorage.setItem(`savedEmail_${currentRole}`, email);
-                    localStorage.setItem(`savedPassword_${currentRole}`, password);
-                    localStorage.setItem(`rememberMe_${currentRole}`, 'true');
-                } else {
-                    localStorage.removeItem(`savedEmail_${currentRole}`);
-                    localStorage.removeItem(`savedPassword_${currentRole}`);
-                    localStorage.removeItem(`rememberMe_${currentRole}`);
-                }
-
-                // Determine dashboard route
-                const dashboardRoute = getDashboardRoute(user.role);
-
-                const userName = user.full_name || user.business_name || user.email.split('@')[0];
-
-                // Show success message
-                showMessage(`Karibu ${userName}! Umefanikiwa kuingia.`, 'success');
-
-                // Redirect after delay
-                setTimeout(() => {
-                    window.location.href = dashboardRoute;
-                }, 1500);
-
-            } catch (error) {
-                console.error('Login Error:', error);
-                
-                // Reset loading state
-                isLoading = false;
-                loginButton.disabled = false;
-                loginButtonText.style.display = 'inline';
-                loginIcon.style.display = 'inline';
-                loadingSpinner.style.display = 'none';
-                
-                let errorMessage = error.message || 'Hitilafu imetokea wakati wa kuingia';
-                
-                // Network error handling
-                if (error.name === 'TypeError' && error.message.includes('fetch')) {
-                    errorMessage = 'Hitilafu ya mtandao. Hakikisha umeunganishwa kwenye internet.';
-                }
-                
-                showMessage(errorMessage, 'error');
-            }
+            
+            // Save user data to localStorage (simulate AsyncStorage)
+            localStorage.setItem('userToken', token);
+            localStorage.setItem('userData', JSON.stringify(user));
+            localStorage.setItem('userId', String(user.id));
+            localStorage.setItem('userEmail', user.email);
+            localStorage.setItem('userRole', user.role);
+            localStorage.setItem('userStatus', user.status || 'approved');
+            localStorage.setItem('userName', user.full_name || user.email.split('@')[0]);
+            if (user.business_name) localStorage.setItem('userBusiness', user.business_name);
+            
+            // Save credentials if remember me
+            saveCredentials();
+            
+            const dashboardRoute = getDashboardRoute(user.role);
+            const userName = user.full_name || user.business_name || user.email.split('@')[0];
+            
+            showAlert('Mafanikio!', `Karibu ${userName}! Umefanikiwa kuingia.`, () => {
+                window.location.href = dashboardRoute;
+            });
+            
+        } catch (err) {
+            let errMsg = 'Hitilafu imetokea wakati wa kuingia';
+            if (err.message.includes('401') || err.message.includes('sahihi')) errMsg = 'Barua pepe au nenosiri si sahihi.';
+            else if (err.message.includes('network')) errMsg = 'Hitilafu ya mtandao. Hakikisha umeunganishwa kwenye internet.';
+            else errMsg = err.message;
+            showAlert('Hitilafu', errMsg);
+        } finally {
+            loading = false;
+            loginBtn.innerHTML = originalBtnHtml;
+            loginBtn.classList.remove('disabled');
         }
+    }
 
-        // Initialize the app when DOM is loaded
-        document.addEventListener('DOMContentLoaded', init);
-    </script>
+    // Event listeners
+    loginBtn.addEventListener('click', handleLogin);
+    
+    rememberBtn.addEventListener('click', () => {
+        rememberMe = !rememberMe;
+        if (rememberMe) {
+            checkbox.classList.add('checked');
+            checkbox.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M20 6L9 17L4 12"/></svg>';
+        } else {
+            checkbox.classList.remove('checked');
+            checkbox.innerHTML = '';
+        }
+    });
+    
+    forgotLink.addEventListener('click', () => {
+        window.location.href = `forgot.html?role=${role}`;
+    });
+    
+    signupLink.addEventListener('click', () => {
+        const signupRoute = getSignupRoute(role);
+        window.location.href = signupRoute;
+    });
+    
+    backBtn.addEventListener('click', () => {
+        window.location.href = '/home.html';
+    });
+    
+    togglePassword.addEventListener('click', () => {
+        showPassword = !showPassword;
+        passwordInput.type = showPassword ? 'text' : 'password';
+        const eyeSvg = togglePassword.querySelector('svg');
+        if (showPassword) {
+            eyeSvg.innerHTML = '<path d="M1 12C1 12 5 4 12 4C19 4 23 12 23 12C23 12 19 20 12 20C5 20 1 12 1 12Z" stroke-width="1.5"/><circle cx="12" cy="12" r="3" stroke-width="1.5"/><path d="M2 2L22 22" stroke-width="1.5"/>';
+        } else {
+            eyeSvg.innerHTML = '<path d="M1 12C1 12 5 4 12 4C19 4 23 12 23 12C23 12 19 20 12 20C5 20 1 12 1 12Z" stroke-width="1.5"/><circle cx="12" cy="12" r="3" stroke-width="1.5"/>';
+        }
+    });
+    
+    // Enter key submit
+    [emailInput, passwordInput].forEach(input => {
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleLogin();
+        });
+    });
+    
+    // Initialize
+    applyTheme();
+    loadSavedCredentials();
+    
+    console.log('LoginScreen ready for role:', role);
+</script>
 </body>
 </html>

@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Profaili - Dukamkononi Mteja</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        /* Main layout wrapper - sidebar + content */
+        .mteja-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* SIDEBAR - Persistent navigation */
+        .sidebar {
+            width: 280px;
+            background-color: #ffffff;
+            border-right: 1px solid #ecf0f1;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 100;
+            transition: transform 0.3s ease;
+            box-shadow: 2px 0 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .sidebar-header {
+            padding: 30px 24px;
+            border-bottom: 1px solid #ecf0f1;
+            margin-bottom: 20px;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .logo-text h2 {
+            font-size: 18px;
+            font-weight: 800;
+            color: #2c3e50;
+        }
+
+        .logo-text p {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+
+        .nav-items {
+            flex: 1;
+            padding: 0 16px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 18px;
+            margin-bottom: 8px;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #5d6d7e;
+            font-weight: 500;
+            text-decoration: none;
+        }
+
+        .nav-item:hover {
+            background-color: #ede7f6;
+        }
+
+        .nav-item.active {
+            background-color: #ede7f6;
+            color: #667eea;
+        }
+
+        .nav-icon {
+            font-size: 22px;
+            width: 28px;
+        }
+
+        .nav-label {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .sidebar-footer {
+            padding: 20px 16px;
+            border-top: 1px solid #ecf0f1;
+            margin-top: auto;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .user-avatar {
+            width: 45px;
+            height: 45px;
+            background-color: #ede7f6;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #667eea;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .user-details {
+            flex: 1;
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .user-role {
+            font-size: 12px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            background-color: #f8f9fa;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #e74c3c;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .logout-btn:hover {
+            background-color: #fdeaea;
+        }
+
+        /* MAIN CONTENT AREA */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            min-height: 100vh;
+            background-color: #f8f9fa;
+            padding: 24px 32px;
+        }
+
+        /* Mobile menu toggle */
+        .mobile-menu-toggle {
+            display: none;
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            z-index: 200;
+            background: white;
+            padding: 12px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            cursor: pointer;
+        }
+
+        /* Page container */
+        .page-container {
+            max-width: 700px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Profile Styles */
+        .profile-header {
+            background: white;
+            padding: 30px;
+            border-radius: 24px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .avatar {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+
+        .avatar-text {
+            color: white;
+            font-size: 38px;
+            font-weight: 700;
+        }
+
+        .greeting {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 6px;
+        }
+
+        .role {
+            font-size: 15px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        /* Section */
+        .section {
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 12px;
+        }
+
+        .info-card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .field {
+            margin-bottom: 18px;
+        }
+
+        .label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #7f8c8d;
+            margin-bottom: 4px;
+        }
+
+        .value {
+            font-size: 15px;
+            color: #2c3e50;
+            padding: 6px 0;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .role-badge {
+            background: #e3f2fd;
+            color: #1976d2;
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .status-approved {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status-pending {
+            background: #fff3e0;
+            color: #ef6c00;
+        }
+
+        .status-inactive {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        /* Setting Row */
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .setting-info {
+            flex: 1;
+            margin-right: 15px;
+        }
+
+        .setting-label {
+            font-size: 15px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 4px;
+        }
+
+        .setting-description {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+
+        /* Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.3s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #667eea;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+
+        /* Buttons */
+        .button-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .btn-edit {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-cancel {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-save {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-logout {
+            background: #e74c3c;
+            color: white;
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .footer-text {
+            font-size: 12px;
+            color: #95a5a6;
+        }
+
+        .loading-container {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid #e0e0e0;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #7f8c8d;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 20px 16px;
+                padding-top: 70px;
+            }
+            .mobile-menu-toggle {
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Mobile menu toggle -->
+    <div class="mobile-menu-toggle" id="mobileMenuToggle">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#667eea" stroke-width="2">
+            <path d="M3 12H21M3 6H21M3 18H21"/>
+        </svg>
+    </div>
+
+    <div class="mteja-layout">
+        <!-- SIDEBAR - Persistent navigation -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-area">
+                    <div class="logo-icon">D</div>
+                    <div class="logo-text">
+                        <h2>DukaMkononi</h2>
+                        <p>Mteja Portal</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="nav-items">
+                <a href="biashara.html" class="nav-item">
+                    <div class="nav-icon">🏪</div>
+                    <span class="nav-label">Biashara</span>
+                </a>
+                <a href="matangazo.html" class="nav-item">
+                    <div class="nav-icon">📢</div>
+                    <span class="nav-label">Matangazo</span>
+                </a>
+                <a href="profaili.html" class="nav-item active">
+                    <div class="nav-icon">👤</div>
+                    <span class="nav-label">Profaili</span>
+                </a>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">M</div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">Mteja</div>
+                        <div class="user-role">Mteja</div>
+                    </div>
+                </div>
+                <div class="logout-btn" id="logoutBtn">
+                    <span>🚪</span>
+                    <span>Ondoka</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <div class="page-container" id="profileContent">
+                <div class="loading-container">
+                    <div class="loading-spinner"></div>
+                    <div class="loading-text">Inapakua wasifu...</div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // ============================================
+        // PROFAILI SCREEN - Mteja Web Replica
+        // With Sidebar Integration
+        // ============================================
+        
+        const API_BASE_URL = 'https://duka-mkononi-backend-4476.onrender.com';
+        
+        let profile = null;
+        let loading = true;
+        let editing = false;
+        let saving = false;
+        let notifications = true;
+        let formData = { full_name: '', phone: '' };
+
+        // DOM Elements
+        const container = document.getElementById('profileContent');
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return 'Haipatikani';
+            try {
+                return new Date(dateStr).toLocaleDateString('sw-TZ', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            } catch {
+                return dateStr;
+            }
+        }
+
+        function getRoleName(role) {
+            if (role === 'customer') return 'Mteja';
+            if (role === 'admin') return 'Msimamizi';
+            return role || 'Mtumiaji';
+        }
+
+        function getStatusName(status) {
+            if (status === 'approved') return 'imeidhinishwa';
+            if (status === 'pending') return 'inasubiri';
+            return status || 'inasubiri';
+        }
+
+        function getStatusClass(status) {
+            if (status === 'approved') return 'status-approved';
+            if (status === 'pending') return 'status-pending';
+            return 'status-inactive';
+        }
+
+        // Get current user from localStorage
+        function getCurrentUser() {
+            const token = localStorage.getItem('userToken');
+            const userData = localStorage.getItem('userData');
+            if (token && userData) {
+                try {
+                    return JSON.parse(userData);
+                } catch(e) {
+                    return null;
+                }
+            }
+            return null;
+        }
+
+        // Update sidebar user info
+        function updateSidebarUser() {
+            const user = getCurrentUser();
+            if (user) {
+                const displayName = user.full_name || user.email?.split('@')[0] || 'Mteja';
+                document.getElementById('userName').innerHTML = escapeHtml(displayName);
+                document.getElementById('userAvatar').innerHTML = displayName.charAt(0).toUpperCase();
+            }
+        }
+
+        // Check authentication
+        function checkAuth() {
+            const user = getCurrentUser();
+            if (!user) {
+                window.location.href = '/login.html?role=mteja';
+                return false;
+            }
+            const userRole = user.role || '';
+            if (userRole !== 'customer' && userRole !== 'client' && userRole !== 'mteja') {
+                alert('Huna ruhusa ya kuingia kwenye eneo la Mteja.');
+                window.location.href = '/home.html';
+                return false;
+            }
+            return true;
+        }
+
+        // Load notification settings
+        function loadNotificationSettings() {
+            try {
+                const settings = localStorage.getItem('notificationSettings');
+                if (settings) {
+                    notifications = JSON.parse(settings);
+                }
+            } catch (error) {
+                console.error('Error loading notification settings:', error);
+            }
+        }
+
+        function saveNotificationSettings(value) {
+            try {
+                localStorage.setItem('notificationSettings', JSON.stringify(value));
+            } catch (error) {
+                console.error('Error saving notification settings:', error);
+            }
+        }
+
+        // Load user profile
+        async function loadUserProfile() {
+            const token = localStorage.getItem('userToken');
+            
+            if (!token) {
+                alert('Tafadhali ingia kwenye akaunti yako kuona wasifu');
+                loading = false;
+                render();
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/user/profile`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                });
+
+                if (response.ok) {
+                    const userData = await response.json();
+                    profile = userData;
+                    formData = {
+                        full_name: userData.full_name || '',
+                        phone: userData.phone || ''
+                    };
+                    
+                    // Update localStorage with latest info
+                    if (userData.full_name) {
+                        localStorage.setItem('userName', userData.full_name);
+                    }
+                } else {
+                    throw new Error('Imeshindwa kupakua wasifu');
+                }
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                alert('Imeshindwa kupakua taarifa za wasifu');
+            } finally {
+                loading = false;
+                render();
+            }
+        }
+
+        function validateForm() {
+            if (!formData.full_name.trim()) {
+                alert('Jina kamili linahitajika');
+                return false;
+            }
+            if (formData.phone && !/^[0-9+\-\s()]{10,}$/.test(formData.phone)) {
+                alert('Tafadhali weka nambari ya simu sahihi');
+                return false;
+            }
+            return true;
+        }
+
+        async function handleSaveProfile() {
+            if (!validateForm()) return;
+
+            saving = true;
+            render();
+
+            const token = localStorage.getItem('userToken');
+            
+            if (!token) {
+                alert('Tafadhali ingia kwenye akaunti yako kusasisha wasifu');
+                saving = false;
+                render();
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/user/profile`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(formData),
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    profile = result.user;
+                    editing = false;
+                    alert('Wasifu umesasishwa kikamilifu!');
+                    
+                    if (result.user.full_name) {
+                        localStorage.setItem('userName', result.user.full_name);
+                        updateSidebarUser();
+                    }
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || 'Imeshindwa kusasisha wasifu');
+                }
+            } catch (error) {
+                console.error('Error updating profile:', error);
+                alert(error.message || 'Imeshindwa kusasisha wasifu');
+            } finally {
+                saving = false;
+                render();
+            }
+        }
+
+        function handleEditToggle() {
+            if (editing) {
+                formData = {
+                    full_name: profile?.full_name || '',
+                    phone: profile?.phone || ''
+                };
+            }
+            editing = !editing;
+            render();
+        }
+
+        function toggleNotifications(value) {
+            notifications = value;
+            saveNotificationSettings(value);
+            render();
+        }
+
+        function handleLogout() {
+            if (confirm('Una uhakika unataka kutoka?')) {
+                localStorage.removeItem('userToken');
+                localStorage.removeItem('userData');
+                localStorage.removeItem('userId');
+                localStorage.removeItem('userEmail');
+                localStorage.removeItem('userRole');
+                localStorage.removeItem('userName');
+                localStorage.removeItem('userBusiness');
+                localStorage.removeItem('notificationSettings');
+                window.location.href = '/login.html?role=mteja';
+            }
+        }
+
+        // Render the UI
+        function render() {
+            if (loading) {
+                container.innerHTML = `
+                    <div class="loading-container">
+                        <div class="loading-spinner"></div>
+                        <div class="loading-text">Inapakua wasifu...</div>
+                    </div>
+                `;
+                return;
+            }
+
+            if (!profile) {
+                container.innerHTML = `
+                    <div class="loading-container">
+                        <div class="loading-text">Hakuna taarifa za wasifu</div>
+                        <button onclick="location.reload()" style="margin-top:20px;padding:10px 20px;background:#667eea;color:white;border:none;border-radius:10px;cursor:pointer;">Jaribu Tena</button>
+                    </div>
+                `;
+                return;
+            }
+
+            const displayName = profile.full_name || profile.email?.split('@')[0] || 'Mtumiaji';
+            const initial = (profile.full_name?.charAt(0) || profile.email?.charAt(0) || 'U').toUpperCase();
+            const roleName = getRoleName(profile.role);
+            const statusName = getStatusName(profile.status);
+            const statusClass = getStatusClass(profile.status);
+            const createdAt = formatDate(profile.created_at);
+
+            container.innerHTML = `
+                <div class="profile-header">
+                    <div class="avatar">
+                        <div class="avatar-text">${escapeHtml(initial)}</div>
+                    </div>
+                    <div class="greeting">Habari, ${escapeHtml(displayName)}!</div>
+                    <div class="role">${escapeHtml(roleName)}</div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Taarifa za Wasifu</div>
+                    <div class="info-card">
+                        <div class="field">
+                            <div class="label">Jina Kamili</div>
+                            ${editing ? 
+                                `<input type="text" id="fullNameInput" class="input-field" value="${escapeHtml(formData.full_name)}" placeholder="Weka jina lako kamili">` :
+                                `<div class="value">${escapeHtml(profile.full_name || 'Haijawekwa')}</div>`
+                            }
+                        </div>
+
+                        <div class="field">
+                            <div class="label">Barua Pepe</div>
+                            <div class="value">${escapeHtml(profile.email)}</div>
+                        </div>
+
+                        <div class="field">
+                            <div class="label">Nambari ya Simu</div>
+                            ${editing ? 
+                                `<input type="tel" id="phoneInput" class="input-field" value="${escapeHtml(formData.phone)}" placeholder="Weka nambari yako ya simu">` :
+                                `<div class="value">${escapeHtml(profile.phone || 'Haijawekwa')}</div>`
+                            }
+                        </div>
+
+                        <div class="field">
+                            <div class="label">Wadhifa</div>
+                            <div><span class="role-badge">${escapeHtml(roleName)}</span></div>
+                        </div>
+
+                        <div class="field">
+                            <div class="label">Hali</div>
+                            <div><span class="status-badge ${statusClass}">${escapeHtml(statusName)}</span></div>
+                        </div>
+
+                        <div class="field">
+                            <div class="label">Mwanachama Tangu</div>
+                            <div class="value">${escapeHtml(createdAt)}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Mipangilio</div>
+                    <div class="info-card">
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <div class="setting-label">Arifa za Kujiongeza</div>
+                                <div class="setting-description">Pokewa taarifa kuhusu matangazo mapya na promosheni</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="notificationSwitch" ${notifications ? 'checked' : ''}>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="button-row">
+                            <button class="btn ${editing ? 'btn-cancel' : 'btn-edit'}" id="editBtn">
+                                ${editing ? 'Ghairi' : 'Hariri Wasifu'}
+                            </button>
+                            ${editing ? `
+                                <button class="btn btn-save" id="saveBtn" ${saving ? 'disabled' : ''}>
+                                    ${saving ? 'Inahifadhi...' : 'Hifadhi'}
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Vitendo vya Akaunti</div>
+                    <div class="info-card">
+                        <button class="btn-logout" id="logoutAccountBtn">🚪 Toka kwenye Akaunti</button>
+                    </div>
+                </div>
+
+                <div class="footer">
+                    <div class="footer-text">Duka Mkononi © 2026</div>
+                    <div class="footer-text" style="font-size: 11px;">Toleo 1.0.0</div>
+                </div>
+            `;
+
+            // Attach event listeners
+            if (editing) {
+                const fullNameInput = document.getElementById('fullNameInput');
+                const phoneInput = document.getElementById('phoneInput');
+                if (fullNameInput) {
+                    fullNameInput.addEventListener('input', (e) => { formData.full_name = e.target.value; });
+                }
+                if (phoneInput) {
+                    phoneInput.addEventListener('input', (e) => { formData.phone = e.target.value; });
+                }
+            }
+
+            const editBtn = document.getElementById('editBtn');
+            if (editBtn) editBtn.addEventListener('click', handleEditToggle);
+
+            const saveBtn = document.getElementById('saveBtn');
+            if (saveBtn) saveBtn.addEventListener('click', handleSaveProfile);
+
+            const notificationSwitch = document.getElementById('notificationSwitch');
+            if (notificationSwitch) {
+                notificationSwitch.addEventListener('change', (e) => toggleNotifications(e.target.checked));
+            }
+
+            const logoutAccountBtn = document.getElementById('logoutAccountBtn');
+            if (logoutAccountBtn) logoutAccountBtn.addEventListener('click', handleLogout);
+        }
+
+        // Sidebar functions
+        function setupSidebar() {
+            const toggle = document.getElementById('mobileMenuToggle');
+            const sidebar = document.getElementById('sidebar');
+            if (toggle && sidebar) {
+                toggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+            }
+            
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', handleLogout);
+            }
+            
+            document.addEventListener('click', (e) => {
+                if (window.innerWidth <= 768) {
+                    const sidebar = document.getElementById('sidebar');
+                    const toggle = document.getElementById('mobileMenuToggle');
+                    if (sidebar && sidebar.classList.contains('open') && 
+                        !sidebar.contains(e.target) && 
+                        toggle && !toggle.contains(e.target)) {
+                        sidebar.classList.remove('open');
+                    }
+                }
+            });
+        }
+
+        // Initialize
+        async function init() {
+            if (!checkAuth()) return;
+            updateSidebarUser();
+            setupSidebar();
+            loadNotificationSettings();
+            await loadUserProfile();
+        }
+        
+        init();
+    </script>
+</body>
+</html>

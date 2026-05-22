@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+    <title>Dukamkononi | Usajili Msimamizi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #f8f9fa;
+            overflow-x: hidden;
+        }
+
+        /* KeyboardAvoidingView equivalent - just full view */
+        .keyboard-avoid {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .scroll-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        .content {
+            width: 100%;
+            max-width: 550px;
+            margin: 0 auto;
+        }
+
+        /* Header styles */
+        .header {
+            font-size: 24px;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 8px;
+            color: #e74c3c;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .subtitle {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        /* Form container */
+        .form-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        /* Input fields match RN styles: white background, border, shadow */
+        .input-field {
+            width: 100%;
+            height: 50px;
+            background-color: white;
+            border-radius: 12px;
+            padding: 0 16px;
+            font-size: 16px;
+            font-family: 'Inter', monospace;
+            border: 1px solid #e0e0e0;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #e74c3c;
+            box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+        }
+
+        /* Buttons */
+        .signup-btn {
+            width: 100%;
+            height: 60px;
+            background-color: #e74c3c;
+            border-radius: 12px;
+            justify-content: center;
+            align-items: center;
+            display: flex;
+            margin-top: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .signup-btn:active {
+            transform: scale(0.97);
+            opacity: 0.9;
+        }
+
+        .signup-btn.disabled {
+            opacity: 0.7;
+            transform: none;
+            cursor: not-allowed;
+        }
+
+        .signup-btn-text {
+            font-size: 18px;
+            font-weight: 800;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .back-btn {
+            width: 100%;
+            height: 50px;
+            background-color: transparent;
+            border: 2px solid #3498db;
+            border-radius: 12px;
+            justify-content: center;
+            align-items: center;
+            display: flex;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 8px;
+        }
+
+        .back-btn:active {
+            transform: scale(0.97);
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+
+        .back-btn-text {
+            font-size: 16px;
+            font-weight: 700;
+            color: #3498db;
+            text-transform: uppercase;
+        }
+
+        /* Info card (like the RN infoContainer) */
+        .info-card {
+            margin-top: 28px;
+            padding: 18px 20px;
+            background-color: #fdeaea;
+            border-radius: 16px;
+            width: 100%;
+            border-left: 4px solid #e74c3c;
+        }
+
+        .info-title {
+            font-size: 14px;
+            font-weight: 800;
+            color: #e74c3c;
+            margin-bottom: 12px;
+        }
+
+        .info-point {
+            font-size: 12px;
+            color: #c0392b;
+            margin-bottom: 8px;
+            line-height: 1.45;
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+        }
+
+        .info-point::before {
+            content: "•";
+            font-weight: bold;
+            font-size: 14px;
+            margin-right: 4px;
+        }
+
+        .loader {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Utility & responsiveness */
+        @media (max-width: 550px) {
+            .scroll-container {
+                padding: 30px 16px;
+            }
+            .header {
+                font-size: 22px;
+            }
+        }
+
+        /* Alert modal styling (uses custom modal but keeps browser native fallback) */
+        .custom-alert {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(2px);
+        }
+        .alert-box {
+            background: white;
+            border-radius: 28px;
+            width: 85%;
+            max-width: 320px;
+            padding: 24px 20px 20px;
+            text-align: center;
+            box-shadow: 0 20px 35px rgba(0,0,0,0.2);
+        }
+        .alert-title {
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            color: #2c3e50;
+        }
+        .alert-message {
+            font-size: 15px;
+            color: #5d6d7e;
+            margin-bottom: 24px;
+            line-height: 1.4;
+        }
+        .alert-btn {
+            background-color: #e74c3c;
+            padding: 12px;
+            border-radius: 40px;
+            font-weight: 700;
+            color: white;
+            text-align: center;
+            cursor: pointer;
+        }
+        .alert-btn-secondary {
+            background-color: #3498db;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="keyboard-avoid">
+    <div class="scroll-container">
+        <div class="content">
+            <h1 class="header">JISAJILI KAMA MSIMAMIZI</h1>
+            <p class="subtitle">* Inamaanisha sehemu inayohitajika</p>
+
+            <div class="form-container">
+                <input type="text" class="input-field" id="full_name" placeholder="Jina Kamili *" autocomplete="name">
+                <input type="text" class="input-field" id="business_name" placeholder="Jina la Biashara *" autocomplete="organization">
+                <input type="text" class="input-field" id="business_location" placeholder="Mahali pa Biashara *" autocomplete="address-line1">
+                <input type="email" class="input-field" id="email" placeholder="Barua Pepe *" autocomplete="email">
+                <input type="tel" class="input-field" id="phone" placeholder="Namba ya Simu" autocomplete="tel">
+                <input type="password" class="input-field" id="adminCode" placeholder="Admin Code *">
+                <input type="password" class="input-field" id="password" placeholder="Nenosiri *" autocomplete="new-password">
+                <input type="password" class="input-field" id="confirmPassword" placeholder="Rudia Nenosiri *" autocomplete="off">
+            </div>
+
+            <div id="signupBtn" class="signup-btn">
+                <span id="signupBtnText" class="signup-btn-text">JISAJILI SASA</span>
+                <div id="loaderSpinner" style="display: none;" class="loader"></div>
+            </div>
+
+            <div id="backBtn" class="back-btn">
+                <span class="back-btn-text">RUDI NYUMA</span>
+            </div>
+
+            <div class="info-card">
+                <div class="info-title">🔑 Maelezo muhimu kwa Msimamizi:</div>
+                <div class="info-point">Jina la biashara lazima liwe la kipekee na halijasajiliwa</div>
+                <div class="info-point">Utakuwa na mamlaka kamili ya kuidhinisha wateja na wauzaji</div>
+                <div class="info-point">Unaweza kuanza kutumia mfumo mara moja baada ya kujisajili</div>
+                <div class="info-point">Admin Code: ADMIN2024</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ------------------------------
+    // DUKAMKONONI: AdminSignup web replica
+    // Exact behavior: validation, API call, loading state, alert handling, navigation
+    // API Base URL
+    const API_BASE_URL = 'https://duka-mkononi-backend-4476.onrender.com';
+
+    // DOM elements
+    const fullNameInput = document.getElementById('full_name');
+    const businessNameInput = document.getElementById('business_name');
+    const businessLocationInput = document.getElementById('business_location');
+    const emailInput = document.getElementById('email');
+    const phoneInput = document.getElementById('phone');
+    const adminCodeInput = document.getElementById('adminCode');
+    const passwordInput = document.getElementById('password');
+    const confirmPasswordInput = document.getElementById('confirmPassword');
+    const signupBtn = document.getElementById('signupBtn');
+    const signupBtnTextSpan = document.getElementById('signupBtnText');
+    const loaderSpinner = document.getElementById('loaderSpinner');
+    const backBtn = document.getElementById('backBtn');
+
+    let loading = false;
+
+    // Helper: Show custom alert (mimics Alert.alert from RN)
+    function showAlert(title, message, onOkCallback = null, successWithNavigate = false) {
+        // remove any existing alert overlay
+        const existingAlert = document.querySelector('.custom-alert');
+        if (existingAlert) existingAlert.remove();
+
+        const overlay = document.createElement('div');
+        overlay.className = 'custom-alert';
+        
+        const alertBox = document.createElement('div');
+        alertBox.className = 'alert-box';
+        
+        const titleEl = document.createElement('div');
+        titleEl.className = 'alert-title';
+        titleEl.innerText = title;
+        
+        const msgEl = document.createElement('div');
+        msgEl.className = 'alert-message';
+        msgEl.innerText = message;
+        
+        const okBtn = document.createElement('div');
+        okBtn.className = 'alert-btn';
+        okBtn.innerText = 'Sawa';
+        
+        alertBox.appendChild(titleEl);
+        alertBox.appendChild(msgEl);
+        alertBox.appendChild(okBtn);
+        
+        // If success with "Ingia Sasa" button (like original: after success we give two options? Actually original only shows OK with onPress: router.replace)
+        // but we match the exact: success alert with "Ingia Sasa" that navigates to login, exactly like RN.
+        // The original: Alert.alert('Mafanikio', 'Akaunti...', [{ text: 'Ingia Sasa', onPress: () => router.replace('/login') }])
+        // So we need to handle it differently if success flow.
+        if (successWithNavigate) {
+            const loginBtn = document.createElement('div');
+            loginBtn.className = 'alert-btn alert-btn-secondary';
+            loginBtn.innerText = 'Ingia Sasa';
+            loginBtn.style.marginTop = '10px';
+            loginBtn.style.backgroundColor = '#2ecc71';
+            alertBox.appendChild(loginBtn);
+            
+            loginBtn.addEventListener('click', () => {
+                overlay.remove();
+                window.location.href = '/login.html';
+            });
+        }
+        
+        okBtn.addEventListener('click', () => {
+            overlay.remove();
+            if (onOkCallback) onOkCallback();
+        });
+        
+        overlay.appendChild(alertBox);
+        document.body.appendChild(overlay);
+    }
+
+    // Show network/progress alert uses standard function. Edge case: network error.
+    function showNetworkError() {
+        showAlert('Hitilafu ya Mtandao', 'Hakuna muunganisho wa mtandao. Tafadhali hakikisha umeunganishwa kwenye internet.');
+    }
+
+    // Helper to get trimmed values
+    function getFormValues() {
+        return {
+            full_name: fullNameInput.value.trim(),
+            business_name: businessNameInput.value.trim(),
+            business_location: businessLocationInput.value.trim(),
+            email: emailInput.value.trim(),
+            phone: phoneInput.value.trim(),
+            adminCode: adminCodeInput.value.trim(),
+            password: passwordInput.value,
+            confirmPassword: confirmPasswordInput.value
+        };
+    }
+
+    // Validation logic identical
+    function validateForm(form) {
+        if (!form.email || !form.password || !form.full_name || !form.business_name || !form.business_location || !form.adminCode) {
+            showAlert('Hitilafu', 'Tafadhali jaza sehemu zote required');
+            return false;
+        }
+        // email regex
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(form.email)) {
+            showAlert('Hitilafu', 'Tafadhali ingiza barua pepe sahihi');
+            return false;
+        }
+        if (form.password !== form.confirmPassword) {
+            showAlert('Hitilafu', 'Nenosiri hazifanani');
+            return false;
+        }
+        if (form.password.length < 6) {
+            showAlert('Hitilafu', 'Nenosiri lazima liwe na herufi 6 au zaidi');
+            return false;
+        }
+        if (form.adminCode !== 'ADMIN2024') {
+            showAlert('Hitilafu', 'Admin code si sahihi');
+            return false;
+        }
+        return true;
+    }
+
+    // Signup handler mirrors handleSignup exactly
+    async function handleSignup() {
+        if (loading) return;
+
+        const form = getFormValues();
+        if (!validateForm(form)) return;
+
+        // set loading state
+        loading = true;
+        signupBtn.classList.add('disabled');
+        signupBtnTextSpan.style.display = 'none';
+        loaderSpinner.style.display = 'inline-block';
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email: form.email,
+                    password: form.password,
+                    role: 'admin',
+                    full_name: form.full_name,
+                    phone: form.phone || '',
+                    business_name: form.business_name,
+                    business_location: form.business_location
+                }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Success: show Alert with 'Ingia Sasa' navigation as per original
+                //  Mafanikio + button that does router.replace('/login')
+                loading = false;
+                signupBtn.classList.remove('disabled');
+                signupBtnTextSpan.style.display = 'inline-block';
+                loaderSpinner.style.display = 'none';
+                
+                // Create custom alert that mimics success with 'Ingia Sasa' (replace login)
+                const overlay = document.createElement('div');
+                overlay.className = 'custom-alert';
+                const alertBox = document.createElement('div');
+                alertBox.className = 'alert-box';
+                const titleEl = document.createElement('div');
+                titleEl.className = 'alert-title';
+                titleEl.innerText = 'Mafanikio';
+                const msgEl = document.createElement('div');
+                msgEl.className = 'alert-message';
+                msgEl.innerText = 'Akaunti ya Msimamizi imeundwa kikamilifu! Sasa unaweza kuingia na kuanza kusimamia biashara yako.';
+                const loginBtn = document.createElement('div');
+                loginBtn.className = 'alert-btn';
+                loginBtn.innerText = 'Ingia Sasa';
+                loginBtn.style.backgroundColor = '#27ae60';
+                loginBtn.style.marginTop = '10px';
+                alertBox.appendChild(titleEl);
+                alertBox.appendChild(msgEl);
+                alertBox.appendChild(loginBtn);
+                overlay.appendChild(alertBox);
+                document.body.appendChild(overlay);
+                
+                loginBtn.addEventListener('click', () => {
+                    overlay.remove();
+                    window.location.href = '/login.html';
+                });
+                return;
+            } else {
+                // error from server
+                showAlert('Hitilafu', data.error || 'Hitilafu imetokea wakati wa kujisajili');
+            }
+        } catch (error) {
+            console.error('Signup error:', error);
+            // Check network failure message
+            if (error.message && error.message.includes('Network request failed') || error.message.includes('fetch')) {
+                showNetworkError();
+            } else if (error instanceof TypeError && error.message.includes('NetworkError')) {
+                showNetworkError();
+            } else {
+                showAlert('Hitilafu', 'Hitilafu imetokea. Tafadhali jaribu tena.');
+            }
+        } finally {
+            loading = false;
+            signupBtn.classList.remove('disabled');
+            signupBtnTextSpan.style.display = 'inline-block';
+            loaderSpinner.style.display = 'none';
+        }
+    }
+
+    // Back navigation (router.back)
+    function goBack() {
+        if (document.referrer && (document.referrer.includes(window.location.host) || window.location.pathname !== '/')) {
+            window.history.back();
+        } else {
+            // fallback: go to home.html
+            window.location.href = '/home.html';
+        }
+    }
+
+    // Attach listeners
+    signupBtn.addEventListener('click', handleSignup);
+    backBtn.addEventListener('click', goBack);
+
+    // also enable enter key on inputs to submit (good usability)
+    const inputs = [fullNameInput, businessNameInput, businessLocationInput, emailInput, phoneInput, adminCodeInput, passwordInput, confirmPasswordInput];
+    inputs.forEach(input => {
+        if (input) {
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleSignup();
+                }
+            });
+        }
+    });
+
+    // Additional style to match visual shadow and hover
+    // Disable right click / no extra modifications, keep exact form.
+    // ensure that the loader icon small appears exactly like activity indicator.
+    // Adjust gradient/colored border to match RN design. Admin code is ADMIN2024 fixed.
+    // Also phone optional but sent accordingly.
+    console.log('AdminSignup ready — Web version matches Dukamkononi mobile behavior');
+</script>
+</body>
+</html>

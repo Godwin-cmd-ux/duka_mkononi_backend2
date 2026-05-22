@@ -487,28 +487,87 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // =============================================
 app.use(express.static(__dirname));
 
-// Serve HTML files for all routes
+// =============================================
+// ✅ STATIC FILE SERVING - NEW FOLDER STRUCTURE
+// =============================================
+
+// Root level routes
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
-app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
-app.get('/admin_signup', (req, res) => res.sendFile(path.join(__dirname, 'admin_signup.html')));
-app.get('/cashier_signup', (req, res) => res.sendFile(path.join(__dirname, 'cashier_signup.html')));
-app.get('/client_signup', (req, res) => res.sendFile(path.join(__dirname, 'client_signup.html')));
-app.get('/forgot', (req, res) => res.sendFile(path.join(__dirname, 'forgot.html')));
 app.get('/home', (req, res) => res.sendFile(path.join(__dirname, 'home.html')));
-app.get('/biashara', (req, res) => res.sendFile(path.join(__dirname, 'biashara.html')));
-app.get('/bidhaa-mpya', (req, res) => res.sendFile(path.join(__dirname, 'bidhaa-mpya.html')));
-app.get('/mauzo', (req, res) => res.sendFile(path.join(__dirname, 'mauzo.html')));
-app.get('/uza', (req, res) => res.sendFile(path.join(__dirname, 'uza.html')));
-app.get('/matangazo', (req, res) => res.sendFile(path.join(__dirname, 'matangazo.html')));
-app.get('/tangaza', (req, res) => res.sendFile(path.join(__dirname, 'tangaza.html')));
-app.get('/ripoti', (req, res) => res.sendFile(path.join(__dirname, 'ripoti.html')));
+app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
+app.get('/forgot', (req, res) => res.sendFile(path.join(__dirname, 'forgot.html')));
+app.get('/admin-signup', (req, res) => res.sendFile(path.join(__dirname, 'admin-signup.html')));
+app.get('/cashier-signup', (req, res) => res.sendFile(path.join(__dirname, 'cashier-signup.html')));
+app.get('/client-signup', (req, res) => res.sendFile(path.join(__dirname, 'client-signup.html')));
+
+// ============================================
+// MSIMAMIZI (Manager) Routes
+// ============================================
+app.get('/msimamizi', (req, res) => res.sendFile(path.join(__dirname, 'msimamizi', 'index.html')));
+app.get('/msimamizi/index', (req, res) => res.sendFile(path.join(__dirname, 'msimamizi', 'index.html')));
+app.get('/msimamizi/index.html', (req, res) => res.sendFile(path.join(__dirname, 'msimamizi', 'index.html')));
+app.get('/msimamizi/bidhaa-mpya', (req, res) => res.sendFile(path.join(__dirname, 'msimamizi', 'bidhaa-mpya.html')));
+app.get('/msimamizi/bidhaa-mpya.html', (req, res) => res.sendFile(path.join(__dirname, 'msimamizi', 'bidhaa-mpya.html')));
+app.get('/msimamizi/ripoti', (req, res) => res.sendFile(path.join(__dirname, 'msimamizi', 'ripoti.html')));
+app.get('/msimamizi/ripoti.html', (req, res) => res.sendFile(path.join(__dirname, 'msimamizi', 'ripoti.html')));
+app.get('/msimamizi/preview', (req, res) => res.sendFile(path.join(__dirname, 'msimamizi', 'preview.html')));
+app.get('/msimamizi/preview.html', (req, res) => res.sendFile(path.join(__dirname, 'msimamizi', 'preview.html')));
+app.get('/msimamizi/tangaza', (req, res) => res.sendFile(path.join(__dirname, 'msimamizi', 'tangaza.html')));
+app.get('/msimamizi/tangaza.html', (req, res) => res.sendFile(path.join(__dirname, 'msimamizi', 'tangaza.html')));
+
+// ============================================
+// MTEJA (Customer) Routes
+// ============================================
+app.get('/mteja', (req, res) => res.sendFile(path.join(__dirname, 'mteja', 'biashara.html')));
+app.get('/mteja/biashara', (req, res) => res.sendFile(path.join(__dirname, 'mteja', 'biashara.html')));
+app.get('/mteja/biashara.html', (req, res) => res.sendFile(path.join(__dirname, 'mteja', 'biashara.html')));
+app.get('/mteja/matangazo', (req, res) => res.sendFile(path.join(__dirname, 'mteja', 'matangazo.html')));
+app.get('/mteja/matangazo.html', (req, res) => res.sendFile(path.join(__dirname, 'mteja', 'matangazo.html')));
+app.get('/mteja/profaili', (req, res) => res.sendFile(path.join(__dirname, 'mteja', 'profaili.html')));
+app.get('/mteja/profaili.html', (req, res) => res.sendFile(path.join(__dirname, 'mteja', 'profaili.html')));
+
+// ============================================
+// MUUZAJI (Seller) Routes
+// ============================================
+app.get('/muuzaji', (req, res) => res.sendFile(path.join(__dirname, 'muuzaji', 'profaili.html')));
+app.get('/muuzaji/profaili', (req, res) => res.sendFile(path.join(__dirname, 'muuzaji', 'profaili.html')));
+app.get('/muuzaji/profaili.html', (req, res) => res.sendFile(path.join(__dirname, 'muuzaji', 'profaili.html')));
+app.get('/muuzaji/mauzo', (req, res) => res.sendFile(path.join(__dirname, 'muuzaji', 'mauzo.html')));
+app.get('/muuzaji/mauzo.html', (req, res) => res.sendFile(path.join(__dirname, 'muuzaji', 'mauzo.html')));
+app.get('/muuzaji/matumizi', (req, res) => res.sendFile(path.join(__dirname, 'muuzaji', 'matumizi.html')));
+app.get('/muuzaji/matumizi.html', (req, res) => res.sendFile(path.join(__dirname, 'muuzaji', 'matumizi.html')));
+app.get('/muuzaji/uza', (req, res) => res.sendFile(path.join(__dirname, 'muuzaji', 'uza.html')));
+app.get('/muuzaji/uza.html', (req, res) => res.sendFile(path.join(__dirname, 'muuzaji', 'uza.html')));
+
+// ============================================
+// SYSTEM ADMIN Routes
+// ============================================
+app.get('/system_admin', (req, res) => res.sendFile(path.join(__dirname, 'system_admin', 'index.html')));
+app.get('/system_admin/index', (req, res) => res.sendFile(path.join(__dirname, 'system_admin', 'index.html')));
+app.get('/system_admin/index.html', (req, res) => res.sendFile(path.join(__dirname, 'system_admin', 'index.html')));
+app.get('/system_admin/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'system_admin', 'dashboard.html')));
+app.get('/system_admin/dashboard.html', (req, res) => res.sendFile(path.join(__dirname, 'system_admin', 'dashboard.html')));
+app.get('/system_admin/notify', (req, res) => res.sendFile(path.join(__dirname, 'system_admin', 'notify.html')));
+app.get('/system_admin/notify.html', (req, res) => res.sendFile(path.join(__dirname, 'system_admin', 'notify.html')));
+
+// ============================================
+// BACKWARD COMPATIBILITY (Redirect old URLs)
+// ============================================
+app.get('/bidhaa-mpya', (req, res) => res.redirect('/msimamizi/bidhaa-mpya.html'));
+app.get('/ripoti', (req, res) => res.redirect('/msimamizi/ripoti.html'));
+app.get('/preview', (req, res) => res.redirect('/msimamizi/preview.html'));
+app.get('/tangaza', (req, res) => res.redirect('/msimamizi/tangaza.html'));
+app.get('/biashara', (req, res) => res.redirect('/mteja/biashara.html'));
+app.get('/matangazo', (req, res) => res.redirect('/mteja/matangazo.html'));
+app.get('/mauzo', (req, res) => res.redirect('/muuzaji/mauzo.html'));
+app.get('/uza', (req, res) => res.redirect('/muuzaji/uza.html'));
+app.get('/matumizi', (req, res) => res.redirect('/muuzaji/matumizi.html'));
+app.get('/profaili', (req, res) => res.redirect('/muuzaji/profaili.html'));
+
+// Legacy routes (keep if needed)
 app.get('/upload', (req, res) => res.sendFile(path.join(__dirname, 'upload.html')));
-app.get('/preview', (req, res) => res.sendFile(path.join(__dirname, 'preview.html')));
-app.get('/profaili', (req, res) => res.sendFile(path.join(__dirname, 'profaili.html')));
-app.get('/profaili2', (req, res) => res.sendFile(path.join(__dirname, 'profaili2.html')));
-app.get('/profaili3', (req, res) => res.sendFile(path.join(__dirname, 'profaili3.html')));
-app.get('/layout', (req, res) => res.sendFile(path.join(__dirname, 'layout.html')));
 app.get('/malipo', (req, res) => res.sendFile(path.join(__dirname, 'malipo.html')));
+app.get('/layout', (req, res) => res.sendFile(path.join(__dirname, 'layout.html')));
 
 // =============================================
 // ✅ SUPABASE CONFIGURATION
