@@ -484,12 +484,21 @@
         return map[frontendRole] || frontendRole;
     }
 
+    // ✅ UPDATED: Correct dashboard routes based on user role from backend
     function getDashboardRoute(userRole) {
         const map = { 
-            'customer': '/mteja/index.html', 
-            'seller': '/muuzaji/index.html', 
-            'admin': '/msimamizi/index.html' 
+            'customer': '/mteja/biashara.html',
+            'client': '/mteja/biashara.html',     // Alternative role name
+            'seller': '/muuzaji/profaili.html',
+            'muuzaji': '/muuzaji/profaili.html',
+            'admin': '/msimamizi/index.html',
+            'msimamizi': '/msimamizi/index.html'
         };
+        // Also handle if userRole is from frontend mapping
+        if (userRole === 'mteja') return '/mteja/biashara.html';
+        if (userRole === 'muuzaji') return '/muuzaji/profaili.html';
+        if (userRole === 'msimamizi') return '/msimamizi/index.html';
+        
         return map[userRole] || '/home.html';
     }
 
@@ -738,8 +747,12 @@
             // Save credentials if remember me
             saveCredentials();
             
+            // ✅ UPDATED: Get correct dashboard route based on user's role from backend
             const dashboardRoute = getDashboardRoute(user.role);
             const userName = user.full_name || user.business_name || user.email.split('@')[0];
+            
+            console.log('✅ Login successful! Redirecting to:', dashboardRoute);
+            console.log('User role:', user.role);
             
             showAlert('Mafanikio!', `Karibu ${userName}! Umefanikiwa kuingia.`, () => {
                 window.location.href = dashboardRoute;
