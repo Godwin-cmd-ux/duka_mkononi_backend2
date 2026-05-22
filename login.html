@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
     <title>Dukamkononi | Ingia</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -471,7 +471,8 @@
     // ------------------------------
     // DUKAMKONONI: LoginScreen web replica
     // Role-based login, remember-me (localStorage), AsyncStorage simulation, navigation
-    const API_BASE_URL = 'http://localhost:10000';
+    // API_BASE_URL is empty - uses same origin (backend and frontend on same server)
+    const API_BASE_URL = '';
 
     // Get role from URL (default mteja)
     const urlParams = new URLSearchParams(window.location.search);
@@ -484,12 +485,21 @@
     }
 
     function getDashboardRoute(userRole) {
-        const map = { 'customer': '/mteja/index.html', 'seller': '/muuzaji/index.html', 'admin': '/msimamizi/index.html' };
+        const map = { 
+            'customer': '/mteja/index.html', 
+            'seller': '/muuzaji/index.html', 
+            'admin': '/msimamizi/index.html' 
+        };
         return map[userRole] || '/home.html';
     }
 
     function getSignupRoute(r) {
-        const map = { 'mteja': 'client-signup.html', 'muuzaji': '/cashier-signup.html', 'msimamizi': '/admin-signup.html', 'washa': 'client-signup.html' };
+        const map = { 
+            'mteja': 'client-signup.html', 
+            'muuzaji': 'cashier-signup.html', 
+            'msimamizi': 'admin-signup.html', 
+            'washa': 'client-signup.html' 
+        };
         return map[r] || 'client-signup.html';
     }
 
@@ -504,13 +514,13 @@
     }
 
     function getRoleDescription() {
-        const desc = { 'mteja': 'Ninaomba huduma au bidhaa', 'muuzaji': 'Ninauzia bidhaa na huduma', 'msimamizi': 'Ninafanya usimamizi wa duka', 'washa': 'Ninafanya malipo ya haraka' };
+        const desc = { 
+            'mteja': 'Ninaomba huduma au bidhaa', 
+            'muuzaji': 'Ninauzia bidhaa na huduma', 
+            'msimamizi': 'Ninafanya usimamizi wa duka', 
+            'washa': 'Ninafanya malipo ya haraka' 
+        };
         return desc[role] || 'Ingia kwenye akaunti yako';
-    }
-
-    function getAvatarIcon() {
-        const icons = { 'mteja': 'person', 'muuzaji': 'cart', 'msimamizi': 'shield', 'washa': 'flash' };
-        return icons[role] || 'person';
     }
 
     // DOM Elements
@@ -683,7 +693,8 @@
         
         try {
             const backendRole = getBackendRole(role);
-            const response = await fetch(`${API_BASE_URL}/api/login`, {
+            // Use relative path - same origin
+            const response = await fetch(`/api/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                 body: JSON.stringify({ email, password, role: backendRole })
@@ -737,7 +748,7 @@
         } catch (err) {
             let errMsg = 'Hitilafu imetokea wakati wa kuingia';
             if (err.message.includes('401') || err.message.includes('sahihi')) errMsg = 'Barua pepe au nenosiri si sahihi.';
-            else if (err.message.includes('network')) errMsg = 'Hitilafu ya mtandao. Hakikisha umeunganishwa kwenye internet.';
+            else if (err.message.includes('network') || err.message.includes('Failed to fetch')) errMsg = 'Hitilafu ya mtandao. Hakikisha umeunganishwa kwenye internet.';
             else errMsg = err.message;
             showAlert('Hitilafu', errMsg);
         } finally {
@@ -771,7 +782,7 @@
     });
     
     backBtn.addEventListener('click', () => {
-        window.location.href = '/home.html';
+        window.location.href = 'home.html';
     });
     
     togglePassword.addEventListener('click', () => {
@@ -797,6 +808,7 @@
     loadSavedCredentials();
     
     console.log('LoginScreen ready for role:', role);
+    console.log('API_BASE_URL set to same origin (empty string)');
 </script>
 </body>
 </html>
