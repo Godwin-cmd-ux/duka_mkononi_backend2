@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcryptjs');
 const cors = require('cors');
@@ -7,26 +7,28 @@ const path = require('path');
 const WebSocket = require('ws');
 const http = require('http');
 const crypto = require('crypto');
+const fs = require('fs');
+const cloudinary = require('cloudinary').v2;
 const app = express();
 const server = http.createServer(app);
 
-// ✅ JWT SECRET DEFINITION (ADD THIS!)
+// âœ… JWT SECRET DEFINITION (ADD THIS!)
 // =============================================
 const JWT_SECRET = process.env.JWT_SECRET || '419a2994t-default-secret-key-for-development';
-console.log('🔑 JWT_SECRET initialized');
+console.log('ðŸ”‘ JWT_SECRET initialized');
 
 
 // =============================================
-// ✅ EMAIL CONFIGURATION FOR NODEMAILER
+// âœ… EMAIL CONFIGURATION FOR NODEMAILER
 // =============================================
 // =============================================
-// ✅ EMAIL CONFIGURATION FOR NODEMAILER
+// âœ… EMAIL CONFIGURATION FOR NODEMAILER
 // =============================================
 const nodemailer = require('nodemailer');
 
 // Email configuration from environment variables
 // =============================================
-// ✅ EMAIL CONFIGURATION FIX
+// âœ… EMAIL CONFIGURATION FIX
 // =============================================
 const EMAIL_CONFIG = {
     service: 'gmail',
@@ -52,10 +54,10 @@ const emailTransporter = nodemailer.createTransport({
 // Test email configuration on startup
 emailTransporter.verify(function(error, success) {
     if (error) {
-        console.error('❌ EMAIL CONFIGURATION ERROR:', error.message);
-        console.log('⚠️ Email functionality may not work. Please check your email configuration.');
+        console.error('âŒ EMAIL CONFIGURATION ERROR:', error.message);
+        console.log('âš ï¸ Email functionality may not work. Please check your email configuration.');
     } else {
-        console.log('✅ Email server is ready to send messages');
+        console.log('âœ… Email server is ready to send messages');
     }
 });
 
@@ -71,17 +73,17 @@ async function sendEmail(to, subject, htmlContent) {
         };
 
         const info = await emailTransporter.sendMail(mailOptions);
-        console.log('📧 Email sent:', info.messageId);
+        console.log('ðŸ“§ Email sent:', info.messageId);
         return { success: true, messageId: info.messageId };
     } catch (error) {
-        console.error('❌ ERROR sending email:', error.message);
+        console.error('âŒ ERROR sending email:', error.message);
         return { success: false, error: error.message };
     }
 }
 // =============================================
-// ✅ WEB SOCKET SERVER FOR REAL-TIME TRACKING
+// âœ… WEB SOCKET SERVER FOR REAL-TIME TRACKING
 // =============================================
-console.log('🔄 Initializing WebSocket server...');
+console.log('ðŸ”„ Initializing WebSocket server...');
 
 // Store connected users and admin connections
 const connectedUsers = new Map();
@@ -113,7 +115,7 @@ const wss = new WebSocket.Server({
 const HEARTBEAT_INTERVAL = 25000; // 25 seconds
 const CONNECTION_TIMEOUT = 60000; // 60 seconds
 
-console.log('✅ WebSocket server initialized on /ws');
+console.log('âœ… WebSocket server initialized on /ws');
 
 // WebSocket connection handler
 wss.on('connection', async (ws, req) => {
@@ -158,7 +160,7 @@ wss.on('connection', async (ws, req) => {
         const userRole = user.role;
         const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         
-        console.log(`✅ User ${userId} (${user.email}) connected to WebSocket`);
+        console.log(`âœ… User ${userId} (${user.email}) connected to WebSocket`);
         
         // Store connection
         const connection = {
@@ -184,7 +186,7 @@ wss.on('connection', async (ws, req) => {
         // Add to admin connections if user is admin
         if (userRole === 'admin') {
             adminConnections.add(ws);
-            console.log(`👨‍💼 Admin ${userId} connected to real-time monitoring`);
+            console.log(`ðŸ‘¨â€ðŸ’¼ Admin ${userId} connected to real-time monitoring`);
         }
         
         // Send welcome message
@@ -282,7 +284,7 @@ wss.on('connection', async (ws, req) => {
         
         // Handle disconnection
         ws.on('close', async (code, reason) => {
-            console.log(`❌ User ${userId} disconnected: ${code} - ${reason}`);
+            console.log(`âŒ User ${userId} disconnected: ${code} - ${reason}`);
             
             // Clear heartbeat interval
             clearInterval(heartbeatInterval);
@@ -348,7 +350,7 @@ async function updateUserPresence(userId, isOnline, sessionId, supabase) {
         
         if (userError) throw userError;
         
-        console.log(`✅ User ${userId} marked as ${isOnline ? 'online' : 'offline'}`);
+        console.log(`âœ… User ${userId} marked as ${isOnline ? 'online' : 'offline'}`);
         
     } catch (error) {
         console.error('Error updating user presence:', error);
@@ -420,7 +422,7 @@ setInterval(() => {
     
     connectedUsers.forEach(async (connection, userId) => {
         if (now - connection.lastHeartbeat > CONNECTION_TIMEOUT) {
-            console.log(`🔄 Removing stale connection for user ${userId}`);
+            console.log(`ðŸ”„ Removing stale connection for user ${userId}`);
             
             try {
                 connection.ws.close(1001, 'Connection timeout');
@@ -467,10 +469,10 @@ setInterval(() => {
     });
 }, 10000); // Every 10 seconds
 
-console.log('✅ WebSocket cleanup and heartbeat services started');
+console.log('âœ… WebSocket cleanup and heartbeat services started');
 
 // =============================================
-// ✅ MIDDLEWARE YA MSINGI
+// âœ… MIDDLEWARE YA MSINGI
 // =============================================
 app.use(cors({
     origin: ['http://localhost:19006', 'exp://localhost:19000', 'your-app-scheme://'], // React Native dev servers
@@ -483,12 +485,12 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // =============================================
-// ✅ STATIC FILES SERVING
+// âœ… STATIC FILES SERVING
 // =============================================
 app.use(express.static(__dirname));
 
 // =============================================
-// ✅ STATIC FILE SERVING - NEW FOLDER STRUCTURE
+// âœ… STATIC FILE SERVING - NEW FOLDER STRUCTURE
 // =============================================
 
 // Root level routes
@@ -570,56 +572,56 @@ app.get('/malipo', (req, res) => res.sendFile(path.join(__dirname, 'malipo.html'
 app.get('/layout', (req, res) => res.sendFile(path.join(__dirname, 'layout.html')));
 
 // =============================================
-// ✅ SUPABASE CONFIGURATION
+// âœ… SUPABASE CONFIGURATION
 // =============================================
 // =============================================
-// ✅ SUPABASE CONFIGURATION - FORCE CORRECT URL
+// âœ… SUPABASE CONFIGURATION - FORCE CORRECT URL
 // =============================================
 const supabaseUrl = 'https://qqyihfswnuglnyqvjyrs.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxeWloZnN3bnVnbG55cXZqeXJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwMjY3OTMsImV4cCI6MjA4MDYwMjc5M30.ULkn9XOW6_-APvA-2JYGxo7X0X-CtsGkK9Duf0-xOY8';
 const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxeWloZnN3bnVnbG55cXZqeXJzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NTAyNjc5MywiZXhwIjoyMDgwNjAyNzkzfQ.OwMCapsxey2LV_iW4vnfSuH174ipi-k9MyoXlgTa1zE';
 
-console.log('✅ FORCED SUPABASE URL:', supabaseUrl);
-console.log('✅ URL length:', supabaseUrl.length);
-console.log('✅ Expected: qqyihfswnuglnyqvjyrs.supabase.co');
+console.log('âœ… FORCED SUPABASE URL:', supabaseUrl);
+console.log('âœ… URL length:', supabaseUrl.length);
+console.log('âœ… Expected: qqyihfswnuglnyqvjyrs.supabase.co');
 
 // Validate Supabase configuration
 if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
-    console.error('❌ SUPABASE CREDENTIALS MISSING! Please check your .env file');
+    console.error('âŒ SUPABASE CREDENTIALS MISSING! Please check your .env file');
     console.error('Required: SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_KEY');
     process.exit(1);
 }
 
-console.log('🔧 Supabase Configuration Loaded');
-console.log('📍 URL:', supabaseUrl);
-console.log('🔑 Anon Key:', supabaseAnonKey ? '✓ Loaded' : '✗ Missing');
-console.log('🔑 Service Key:', supabaseServiceKey ? '✓ Loaded' : '✗ Missing');
+console.log('ðŸ”§ Supabase Configuration Loaded');
+console.log('ðŸ“ URL:', supabaseUrl);
+console.log('ðŸ”‘ Anon Key:', supabaseAnonKey ? 'âœ“ Loaded' : 'âœ— Missing');
+console.log('ðŸ”‘ Service Key:', supabaseServiceKey ? 'âœ“ Loaded' : 'âœ— Missing');
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
 // =============================================
-// ✅ HELPER FUNCTIONS
+// âœ… HELPER FUNCTIONS
 // =============================================
 const handleSupabaseError = (error, res) => {
-    console.error('❌ SUPABASE ERROR:', error.message);
+    console.error('âŒ SUPABASE ERROR:', error.message);
     return res.status(500).json({ 
         error: 'Hitilafu ya ndani ya server', 
         details: error.message 
     });
 };
 
-// ✅ LOGGING FUNCTION - Stores logs to user_logs table
-// ✅ FIXED LOGGING FUNCTION
+// âœ… LOGGING FUNCTION - Stores logs to user_logs table
+// âœ… FIXED LOGGING FUNCTION
 const logUserAction = async (user_id, action, endpoint, details = {}, ip_address = null, status = 'success') => {
     const logId = `log_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
     
     // FALLBACK 1: Always log to console
-    const consoleMessage = `📝 [${logId}] ${action} - ${endpoint} - ${status} - User: ${user_id || 'Guest'} - IP: ${ip_address}`;
+    const consoleMessage = `ðŸ“ [${logId}] ${action} - ${endpoint} - ${status} - User: ${user_id || 'Guest'} - IP: ${ip_address}`;
     console.log(consoleMessage);
     
     if (details && Object.keys(details).length > 0) {
-        console.log(`📋 Details:`, details);
+        console.log(`ðŸ“‹ Details:`, details);
     }
     
     // FALLBACK 2: Try database logging with timeout
@@ -650,7 +652,7 @@ const logUserAction = async (user_id, action, endpoint, details = {}, ip_address
         const { error } = await Promise.race([loggingPromise, timeoutPromise]);
         
         if (error) {
-            console.warn(`⚠️ [${logId}] Database logging warning: ${error.message}`);
+            console.warn(`âš ï¸ [${logId}] Database logging warning: ${error.message}`);
             // Store in memory cache if database fails
             const memoryLog = {
                 ...logData,
@@ -665,18 +667,18 @@ const logUserAction = async (user_id, action, endpoint, details = {}, ip_address
                 global.failedLogs.shift();
             }
         } else {
-            console.log(`✅ [${logId}] Log saved to database`);
+            console.log(`âœ… [${logId}] Log saved to database`);
         }
         
     } catch (error) {
         // FALLBACK 3: If all else fails, just console.error with context
-        console.error(`❌ [${logId}] LOGGING SYSTEM ERROR: ${error.message}`);
+        console.error(`âŒ [${logId}] LOGGING SYSTEM ERROR: ${error.message}`);
         console.error(`   Action: ${action}, Endpoint: ${endpoint}, User: ${user_id}`);
     }
 };
 
 // =============================================
-// ✅ EMERGENCY EMAIL FALLBACK
+// âœ… EMERGENCY EMAIL FALLBACK
 // =============================================
 async function sendEmailWithFallback(to, subject, htmlContent) {
     try {
@@ -688,7 +690,7 @@ async function sendEmailWithFallback(to, subject, htmlContent) {
         }
         
         // If failed, try emergency method
-        console.log('⚠️ Main email failed, trying emergency method...');
+        console.log('âš ï¸ Main email failed, trying emergency method...');
         
         // Simple direct SMTP without service configuration
         const emergencyTransporter = nodemailer.createTransport({
@@ -710,11 +712,11 @@ async function sendEmailWithFallback(to, subject, htmlContent) {
         };
         
         const info = await emergencyTransporter.sendMail(mailOptions);
-        console.log('📧 Emergency email sent:', info.messageId);
+        console.log('ðŸ“§ Emergency email sent:', info.messageId);
         return { success: true, messageId: info.messageId, emergency: true };
         
     } catch (error) {
-        console.error('❌ All email methods failed:', error.message);
+        console.error('âŒ All email methods failed:', error.message);
         
         // Store email content in database as backup
         try {
@@ -740,7 +742,7 @@ async function sendEmailWithFallback(to, subject, htmlContent) {
     }
 }
 
-// ✅ REQUEST LOGGING MIDDLEWARE
+// âœ… REQUEST LOGGING MIDDLEWARE
 app.use((req, res, next) => {
     const startTime = Date.now();
     const originalSend = res.send;
@@ -748,7 +750,7 @@ app.use((req, res, next) => {
     
     res.send = function(data) {
         const duration = Date.now() - startTime;
-        console.log(`🌐 ${req.method} ${req.originalUrl} - ${res.statusCode} - ${duration}ms - IP: ${ip}`);
+        console.log(`ðŸŒ ${req.method} ${req.originalUrl} - ${res.statusCode} - ${duration}ms - IP: ${ip}`);
         
         return originalSend.call(this, data);
     };
@@ -787,13 +789,13 @@ const authenticateToken = async (req, res, next) => {
         
         next();
     } catch (error) {
-        console.error('❌ AUTH ERROR:', error.message);
+        console.error('âŒ AUTH ERROR:', error.message);
         await logUserAction(null, 'AUTH_FAILED', req.originalUrl, { reason: error.message }, ip, 'failed');
         return res.status(401).json({ error: 'Token si sahihi au imekwisha' });
     }
 };
 
-// ✅ FUNCTION: GENERATE INVOICE NUMBER
+// âœ… FUNCTION: GENERATE INVOICE NUMBER
 const generateInvoiceNumber = async (seller_id = null) => {
     try {
         const yearSuffix = new Date().getFullYear().toString().slice(-2);
@@ -811,7 +813,7 @@ const generateInvoiceNumber = async (seller_id = null) => {
         const { data: lastSales, error } = await query;
         
         if (error) {
-            console.error('❌ Database error generating invoice:', error.message);
+            console.error('âŒ Database error generating invoice:', error.message);
             return `${yearSuffix}-0001`;
         }
         
@@ -838,7 +840,7 @@ const generateInvoiceNumber = async (seller_id = null) => {
         return newInvoiceNumber;
         
     } catch (error) {
-        console.error('❌ ERROR generating invoice number:', error.message);
+        console.error('âŒ ERROR generating invoice number:', error.message);
         const yearSuffix = new Date().getFullYear().toString().slice(-2);
         const timestamp = Date.now().toString().slice(-4);
         return `${yearSuffix}-${timestamp}`;
@@ -846,7 +848,16 @@ const generateInvoiceNumber = async (seller_id = null) => {
 };
 
 // =============================================
-// ✅ PESAPAL CONFIGURATION
+// âœ… CLOUDINARY CONFIGURATION
+// =============================================
+const CLOUDINARY_CONFIG = {
+    cloudName: 'dooidwbgt',
+    uploadPreset: 'react_native_uploads',
+};
+console.log('â˜ï¸ Cloudinary configured for backup uploads');
+
+// =============================================
+// âœ… PESAPAL CONFIGURATION
 // =============================================
 const PESAPAL_CONFIG = {
     baseUrl: process.env.PESAPAL_ENV === 'live' 
@@ -859,7 +870,7 @@ const PESAPAL_CONFIG = {
     ipnUrl: process.env.PESAPAL_IPN_URL || 'https://your-backend-url/api/payments/pesapal-ipn'
 };
 
-// ✅ PESAPAL HELPER FUNCTIONS
+// âœ… PESAPAL HELPER FUNCTIONS
 async function getPesapalAccessToken() {
     try {
         const auth = Buffer.from(`${PESAPAL_CONFIG.consumerKey}:${PESAPAL_CONFIG.consumerSecret}`).toString('base64');
@@ -884,7 +895,7 @@ async function getPesapalAccessToken() {
         const data = await response.json();
         return data.token;
     } catch (error) {
-        console.error('❌ PESAPAL ACCESS TOKEN ERROR:', error.message);
+        console.error('âŒ PESAPAL ACCESS TOKEN ERROR:', error.message);
         throw error;
     }
 }
@@ -908,7 +919,7 @@ async function submitPesapalOrder(orderData, accessToken) {
         const data = await response.json();
         return data;
     } catch (error) {
-        console.error('❌ PESAPAL SUBMIT ORDER ERROR:', error.message);
+        console.error('âŒ PESAPAL SUBMIT ORDER ERROR:', error.message);
         throw error;
     }
 }
@@ -933,13 +944,13 @@ async function getPesapalOrderStatus(orderTrackingId, accessToken) {
         const data = await response.json();
         return data;
     } catch (error) {
-        console.error('❌ PESAPAL ORDER STATUS ERROR:', error.message);
+        console.error('âŒ PESAPAL ORDER STATUS ERROR:', error.message);
         throw error;
     }
 }
 
 // =============================================
-// ✅ REAL-TIME ENDPOINTS FOR ADMIN DASHBOARD
+// âœ… REAL-TIME ENDPOINTS FOR ADMIN DASHBOARD
 // =============================================
 
 // GET ONLINE USERS (HTTP API for backup/initial load)
@@ -955,7 +966,7 @@ app.get('/api/admin/online-users', authenticateToken, async (req, res) => {
             return res.status(403).json({ error: 'Unauthorized' });
         }
         
-        console.log(`👥 Admin ${adminId} fetching online users via HTTP`);
+        console.log(`ðŸ‘¥ Admin ${adminId} fetching online users via HTTP`);
         
         // Get users who have been active in the last 5 minutes
         const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
@@ -999,7 +1010,7 @@ app.get('/api/admin/online-users', authenticateToken, async (req, res) => {
         });
         
     } catch (error) {
-        console.error('❌ ERROR fetching online users:', error.message);
+        console.error('âŒ ERROR fetching online users:', error.message);
         await logUserAction(req.user?.id, 'ONLINE_USERS_ERROR', '/api/admin/online-users', { error: error.message }, req.user_ip, 'failed');
         res.status(500).json({ error: 'Failed to fetch online users' });
     }
@@ -1038,7 +1049,7 @@ app.post('/api/admin/migrate/password-reset', authenticateToken, async (req, res
             return res.status(403).json({ error: 'Unauthorized' });
         }
         
-        console.log('🔧 Running password reset database migration...');
+        console.log('ðŸ”§ Running password reset database migration...');
         
         const migrations = [
             // Create password_reset_codes table
@@ -1076,7 +1087,7 @@ app.post('/api/admin/migrate/password-reset', authenticateToken, async (req, res
             }
         }
         
-        console.log('✅ Password reset database migration completed');
+        console.log('âœ… Password reset database migration completed');
         
         await logUserAction(adminId, 'DATABASE_MIGRATION', '/api/admin/migrate/password-reset', { 
             migrations: results.length,
@@ -1090,7 +1101,7 @@ app.post('/api/admin/migrate/password-reset', authenticateToken, async (req, res
         });
         
     } catch (error) {
-        console.error('❌ Database migration error:', error.message);
+        console.error('âŒ Database migration error:', error.message);
         await logUserAction(req.user?.id, 'DATABASE_MIGRATION_ERROR', '/api/admin/migrate/password-reset', { error: error.message }, req.user_ip, 'failed');
         res.status(500).json({ 
             error: 'Database migration failed',
@@ -1100,15 +1111,15 @@ app.post('/api/admin/migrate/password-reset', authenticateToken, async (req, res
 });
 
 // =============================================
-// ✅ PASSWORD RESET WITH EMAIL VERIFICATION
+// âœ… PASSWORD RESET WITH EMAIL VERIFICATION
 // =============================================
 
 // =============================================
-// ✅ CREATE PASSWORD RESET TABLE IF NOT EXISTS
+// âœ… CREATE PASSWORD RESET TABLE IF NOT EXISTS
 // =============================================
 app.post('/api/setup/password-reset-table', async (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    console.log('🔧 Setting up password_reset_codes table...');
+    console.log('ðŸ”§ Setting up password_reset_codes table...');
     
     try {
         // Create table SQL
@@ -1139,7 +1150,7 @@ app.post('/api/setup/password-reset-table', async (req, res) => {
         
         if (tableError) {
             // If exec_sql function doesn't exist, create it first
-            console.log('⚠️ exec_sql function not found, creating it...');
+            console.log('âš ï¸ exec_sql function not found, creating it...');
             
             const createFunctionSQL = `
                 CREATE OR REPLACE FUNCTION exec_sql(query text)
@@ -1154,19 +1165,19 @@ app.post('/api/setup/password-reset-table', async (req, res) => {
                 // Try to create function directly
                 const { error: funcError } = await supabaseAdmin.rpc('exec_sql', { query: createFunctionSQL });
                 if (funcError) {
-                    console.log('⚠️ Cannot create function via RPC, trying SQL...');
+                    console.log('âš ï¸ Cannot create function via RPC, trying SQL...');
                     // Try alternative approach
                     await supabaseAdmin.from('users').select('id').limit(1); // Just to test connection
                     
                     // For now, we'll handle table creation in the endpoint itself
-                    console.log('ℹ️ Will handle table creation within endpoint logic');
+                    console.log('â„¹ï¸ Will handle table creation within endpoint logic');
                 }
             } catch (funcError) {
-                console.log('⚠️ Function creation failed, continuing with fallback');
+                console.log('âš ï¸ Function creation failed, continuing with fallback');
             }
             
             // Try direct SQL approach
-            console.log('🔄 Trying direct table creation...');
+            console.log('ðŸ”„ Trying direct table creation...');
             
             // Create table using direct query (might not work with Supabase RLS)
             const { error: directTableError } = await supabaseAdmin
@@ -1175,7 +1186,7 @@ app.post('/api/setup/password-reset-table', async (req, res) => {
                 .limit(1);
             
             if (directTableError) {
-                console.error('❌ Cannot execute SQL directly:', directTableError);
+                console.error('âŒ Cannot execute SQL directly:', directTableError);
                 throw new Error('Database permissions issue. Please create table manually.');
             }
         }
@@ -1185,11 +1196,11 @@ app.post('/api/setup/password-reset-table', async (req, res) => {
             try {
                 await supabaseAdmin.rpc('exec_sql', { query: indexSQL });
             } catch (indexError) {
-                console.warn(`⚠️ Could not create index: ${indexError.message}`);
+                console.warn(`âš ï¸ Could not create index: ${indexError.message}`);
             }
         }
         
-        console.log('✅ password_reset_codes table setup completed');
+        console.log('âœ… password_reset_codes table setup completed');
         
         // Log the action
         await logUserAction(null, 'SETUP_PASSWORD_RESET_TABLE', '/api/setup/password-reset-table', {
@@ -1205,7 +1216,7 @@ app.post('/api/setup/password-reset-table', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('❌ ERROR setting up password_reset_codes table:', error.message);
+        console.error('âŒ ERROR setting up password_reset_codes table:', error.message);
         
         await logUserAction(null, 'SETUP_PASSWORD_RESET_TABLE_ERROR', '/api/setup/password-reset-table', {
             error: error.message
@@ -1242,11 +1253,11 @@ CREATE INDEX idx_password_reset_codes_expires_at ON password_reset_codes(expires
 });
 
 // =============================================
-// ✅ CHECK IF PASSWORD RESET TABLE EXISTS
+// âœ… CHECK IF PASSWORD RESET TABLE EXISTS
 // =============================================
 app.get('/api/check/password-reset-table', async (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    console.log('🔍 Checking password_reset_codes table...');
+    console.log('ðŸ” Checking password_reset_codes table...');
     
     try {
         // Try to query the table
@@ -1271,7 +1282,7 @@ app.get('/api/check/password-reset-table', async (req, res) => {
             throw error;
         }
         
-        console.log('✅ password_reset_codes table exists');
+        console.log('âœ… password_reset_codes table exists');
         
         await logUserAction(null, 'CHECK_PASSWORD_RESET_TABLE', '/api/check/password-reset-table', {
             exists: true,
@@ -1285,7 +1296,7 @@ app.get('/api/check/password-reset-table', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('❌ ERROR checking password_reset_codes table:', error.message);
+        console.error('âŒ ERROR checking password_reset_codes table:', error.message);
         
         await logUserAction(null, 'CHECK_PASSWORD_RESET_TABLE_ERROR', '/api/check/password-reset-table', {
             error: error.message
@@ -1300,7 +1311,7 @@ app.get('/api/check/password-reset-table', async (req, res) => {
 
 app.post('/api/password-reset/request', async (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    console.log('📨 PASSWORD RESET REQUEST:', req.body.email, 'Role:', req.body.role, 'IP:', ip);
+    console.log('ðŸ“¨ PASSWORD RESET REQUEST:', req.body.email, 'Role:', req.body.role, 'IP:', ip);
     
     const { email, role } = req.body;
 
@@ -1315,9 +1326,9 @@ app.post('/api/password-reset/request', async (req, res) => {
     }
 
     try {
-        // ✅ FIX: Adjust role before querying
+        // âœ… FIX: Adjust role before querying
         const adjustedRole = adjustRoleForDatabase(role);
-        console.log(`🔄 Adjusted role: '${role}' → '${adjustedRole}'`);
+        console.log(`ðŸ”„ Adjusted role: '${role}' â†’ '${adjustedRole}'`);
         
         // First, check if table exists
         let tableExists = false;
@@ -1329,10 +1340,10 @@ app.post('/api/password-reset/request', async (req, res) => {
             
             if (!tableCheckError) {
                 tableExists = true;
-                console.log('✅ password_reset_codes table exists');
+                console.log('âœ… password_reset_codes table exists');
             }
         } catch (tableError) {
-            console.log('⚠️ Table check failed:', tableError.message);
+            console.log('âš ï¸ Table check failed:', tableError.message);
             tableExists = false;
         }
         
@@ -1344,7 +1355,7 @@ app.post('/api/password-reset/request', async (req, res) => {
             .eq('role', adjustedRole);
 
         if (userCheckError) {
-            console.error('❌ Database error checking user:', userCheckError);
+            console.error('âŒ Database error checking user:', userCheckError);
             throw userCheckError;
         }
 
@@ -1370,10 +1381,10 @@ app.post('/api/password-reset/request', async (req, res) => {
         // Generate 6-digit verification code
         const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
         
-        // ✅✅✅ DEVELOPMENT MODE CHECK - RETURN CODE DIRECTLY ✅✅✅
+        // âœ…âœ…âœ… DEVELOPMENT MODE CHECK - RETURN CODE DIRECTLY âœ…âœ…âœ…
         // =============================================================
         if (process.env.NODE_ENV === 'development' || process.env.ENABLE_TEST_MODE === 'true') {
-            console.log(`🎯 DEVELOPMENT MODE: Password reset code for ${email}: ${resetCode}`);
+            console.log(`ðŸŽ¯ DEVELOPMENT MODE: Password reset code for ${email}: ${resetCode}`);
             
             // Hifadhi code kwenye database kama inawezekana
             if (tableExists) {
@@ -1392,9 +1403,9 @@ app.post('/api/password-reset/request', async (req, res) => {
                         .from('password_reset_codes')
                         .insert([resetCodeData]);
                     
-                    console.log('✅ Code saved to database (development mode)');
+                    console.log('âœ… Code saved to database (development mode)');
                 } catch (dbError) {
-                    console.warn('⚠️ Could not save code to database:', dbError.message);
+                    console.warn('âš ï¸ Could not save code to database:', dbError.message);
                 }
             }
             
@@ -1407,7 +1418,7 @@ app.post('/api/password-reset/request', async (req, res) => {
             return res.json({
                 success: true,
                 message: 'Development mode: Tumia msimbo huu wa kubadilisha nenosiri',
-                resetCode: resetCode, // 🔥 Tunareta code moja kwa moja!
+                resetCode: resetCode, // ðŸ”¥ Tunareta code moja kwa moja!
                 email: email,
                 userId: user.id,
                 role: role,
@@ -1420,9 +1431,9 @@ app.post('/api/password-reset/request', async (req, res) => {
         // =============================================================
         
         if (!tableExists) {
-            console.log('⚠️ password_reset_codes table does not exist, using fallback system');
+            console.log('âš ï¸ password_reset_codes table does not exist, using fallback system');
             
-            console.log('✅ Password reset code generated (fallback):', resetCode);
+            console.log('âœ… Password reset code generated (fallback):', resetCode);
             
             // Store in memory (TEMPORARY - will be lost on server restart)
             if (!global.tempResetCodes) {
@@ -1449,14 +1460,14 @@ app.post('/api/password-reset/request', async (req, res) => {
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                     <h2 style="color: #2c3e50;">Habari ${user.full_name || 'Mteja'}!</h2>
                     <p>Umeomba kubadilisha nenosiri lako la akaunti ya DukaMkononi.</p>
-                    <p><strong style="color: #e74c3c;">⚠️ KUMBUKA: Hii ni mfumo wa dharura. Wasiliana na msimamizi kuhusu kusanidi database.</strong></p>
+                    <p><strong style="color: #e74c3c;">âš ï¸ KUMBUKA: Hii ni mfumo wa dharura. Wasiliana na msimamizi kuhusu kusanidi database.</strong></p>
                     <p>Msimbo wako wa uthibitishaji ni:</p>
                     <div style="background-color: #f8f9fa; padding: 20px; text-align: center; border-radius: 10px; margin: 20px 0;">
                         <h1 style="font-size: 32px; color: #2c3e50; letter-spacing: 5px; margin: 0;">${resetCode}</h1>
                     </div>
                     <p><strong>Msimbo huu utaisha muda wake ndani ya dakika 15.</strong></p>
                     <p style="color: #e74c3c; font-weight: bold;">
-                        ⚠️ KUMBUKA: Hii ni mfumo wa dharura. Msimbo huu utapotea server ikizima upya.
+                        âš ï¸ KUMBUKA: Hii ni mfumo wa dharura. Msimbo huu utapotea server ikizima upya.
                     </p>
                     <p>Ikiwa hukuomba kubadilisha nenosiri, unaweza kupuuza barua pepe hii.</p>
                     <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
@@ -1467,14 +1478,14 @@ app.post('/api/password-reset/request', async (req, res) => {
                 </div>
             `;
 
-            // ✅ IMPROVED EMAIL SENDING WITH FALLBACK
+            // âœ… IMPROVED EMAIL SENDING WITH FALLBACK
             const emailResult = await sendEmailWithRetry(email, emailSubject, emailHtml);
             
             if (!emailResult.success) {
-                console.error('❌ Failed to send email:', emailResult.error);
+                console.error('âŒ Failed to send email:', emailResult.error);
                 
                 // DEVELOPMENT FALLBACK: Return code directly if email fails
-                console.log('⚠️ Email failed, returning code in response as fallback');
+                console.log('âš ï¸ Email failed, returning code in response as fallback');
                 
                 await logUserAction(user.id, 'PASSWORD_RESET_EMAIL_FAILED', '/api/password-reset/request', { 
                     error: emailResult.error,
@@ -1485,7 +1496,7 @@ app.post('/api/password-reset/request', async (req, res) => {
                 return res.json({
                     success: true,
                     message: 'Msimbo wa kubadilisha nenosiri (email imeshindikana):',
-                    resetCode: resetCode, // 🔥 Return code kama fallback
+                    resetCode: resetCode, // ðŸ”¥ Return code kama fallback
                     email: email,
                     userId: user.id,
                     role: role,
@@ -1496,7 +1507,7 @@ app.post('/api/password-reset/request', async (req, res) => {
                 });
             }
 
-            console.log('✅ Password reset code sent (fallback):', email, 'Code:', resetCode);
+            console.log('âœ… Password reset code sent (fallback):', email, 'Code:', resetCode);
             
             await logUserAction(user.id, 'PASSWORD_RESET_REQUEST_FALLBACK', '/api/password-reset/request', { 
                 code_sent: true,
@@ -1521,7 +1532,7 @@ app.post('/api/password-reset/request', async (req, res) => {
             });
         }
         
-        // ✅ NORMAL FLOW - TABLE EXISTS
+        // âœ… NORMAL FLOW - TABLE EXISTS
         
         // Expires in 15 minutes
         const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
@@ -1535,13 +1546,13 @@ app.post('/api/password-reset/request', async (req, res) => {
             .gt('expires_at', new Date().toISOString());
         
         if (existingError) {
-            console.error('❌ Error checking existing codes:', existingError);
+            console.error('âŒ Error checking existing codes:', existingError);
             throw existingError;
         }
         
         // If there are unused codes, invalidate them
         if (existingCodes && existingCodes.length > 0) {
-            console.log(`🔄 Invalidating ${existingCodes.length} unused codes for user ${user.id}`);
+            console.log(`ðŸ”„ Invalidating ${existingCodes.length} unused codes for user ${user.id}`);
             try {
                 await supabaseAdmin
                     .from('password_reset_codes')
@@ -1567,14 +1578,14 @@ app.post('/api/password-reset/request', async (req, res) => {
             updated_at: new Date().toISOString()
         };
 
-        console.log('💾 Saving reset code to database:', { ...resetCodeData, reset_code: '***' }); // Hide code in logs
+        console.log('ðŸ’¾ Saving reset code to database:', { ...resetCodeData, reset_code: '***' }); // Hide code in logs
 
         const { error: insertError } = await supabaseAdmin
             .from('password_reset_codes')
             .insert([resetCodeData]);
         
         if (insertError) {
-            console.error('❌ Error inserting reset code:', insertError);
+            console.error('âŒ Error inserting reset code:', insertError);
             throw insertError;
         }
         
@@ -1601,10 +1612,10 @@ app.post('/api/password-reset/request', async (req, res) => {
         const emailResult = await sendEmailWithRetry(email, emailSubject, emailHtml);
         
         if (!emailResult.success) {
-            console.error('❌ Failed to send email:', emailResult.error);
+            console.error('âŒ Failed to send email:', emailResult.error);
             
             // PRODUCTION FALLBACK: Return partial success with code in response
-            console.log('⚠️ Email failed in production, returning partial success');
+            console.log('âš ï¸ Email failed in production, returning partial success');
             
             await logUserAction(user.id, 'PASSWORD_RESET_EMAIL_FAILED', '/api/password-reset/request', { 
                 error: emailResult.error,
@@ -1615,7 +1626,7 @@ app.post('/api/password-reset/request', async (req, res) => {
             return res.json({
                 success: true,
                 message: 'Msimbo wa kubadilisha nenosiri umehifadhiwa kwenye mfumo lakini imeshindikana kutumwa kwenye barua pepe.',
-                resetCode: resetCode, // 🔥 Optional: Return code for admin/testing
+                resetCode: resetCode, // ðŸ”¥ Optional: Return code for admin/testing
                 email: email,
                 userId: user.id,
                 role: role,
@@ -1627,7 +1638,7 @@ app.post('/api/password-reset/request', async (req, res) => {
             });
         }
 
-        console.log('✅ Password reset code sent to:', email, 'Code:', resetCode, 'Adjusted role:', adjustedRole);
+        console.log('âœ… Password reset code sent to:', email, 'Code:', resetCode, 'Adjusted role:', adjustedRole);
         
         await logUserAction(user.id, 'PASSWORD_RESET_REQUEST', '/api/password-reset/request', { 
             code_sent: true,
@@ -1650,7 +1661,7 @@ app.post('/api/password-reset/request', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('❌ PASSWORD RESET REQUEST ERROR:', error.message);
+        console.error('âŒ PASSWORD RESET REQUEST ERROR:', error.message);
         
         const logDetails = { 
             error: error.message,
@@ -1680,13 +1691,13 @@ app.post('/api/password-reset/request', async (req, res) => {
         });
     }
 });
- // ✅ IMPROVED EMAIL FUNCTION WITH RETRY
+ // âœ… IMPROVED EMAIL FUNCTION WITH RETRY
 async function sendEmailWithRetry(to, subject, htmlContent, maxRetries = 2) {
     let lastError;
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-            console.log(`📧 Attempt ${attempt} to send email to ${to}`);
+            console.log(`ðŸ“§ Attempt ${attempt} to send email to ${to}`);
             
             const mailOptions = {
                 from: EMAIL_CONFIG.from,
@@ -1697,12 +1708,12 @@ async function sendEmailWithRetry(to, subject, htmlContent, maxRetries = 2) {
             };
 
             const info = await emailTransporter.sendMail(mailOptions);
-            console.log(`✅ Email sent (attempt ${attempt}):`, info.messageId);
+            console.log(`âœ… Email sent (attempt ${attempt}):`, info.messageId);
             return { success: true, messageId: info.messageId, attempt: attempt };
             
         } catch (error) {
             lastError = error;
-            console.error(`❌ Email attempt ${attempt} failed:`, error.message);
+            console.error(`âŒ Email attempt ${attempt} failed:`, error.message);
             
             // Wait before retry (1 second, then 2 seconds)
             if (attempt < maxRetries) {
@@ -1712,14 +1723,14 @@ async function sendEmailWithRetry(to, subject, htmlContent, maxRetries = 2) {
     }
     
     // All attempts failed
-    console.error(`❌ All ${maxRetries} email attempts failed for ${to}`);
+    console.error(`âŒ All ${maxRetries} email attempts failed for ${to}`);
     return { success: false, error: lastError.message, attempts: maxRetries };
 }
 
-// ✅ SIMPLE TEST EMAIL FUNCTION
+// âœ… SIMPLE TEST EMAIL FUNCTION
 async function sendTestEmail() {
     try {
-        console.log('🧪 Testing email configuration...');
+        console.log('ðŸ§ª Testing email configuration...');
         
         const testTransporter = nodemailer.createTransport({
             service: 'gmail',
@@ -1730,7 +1741,7 @@ async function sendTestEmail() {
         });
         
         await testTransporter.verify();
-        console.log('✅ Email connection verified');
+        console.log('âœ… Email connection verified');
         
         const info = await testTransporter.sendMail({
             from: process.env.EMAIL_USER,
@@ -1739,22 +1750,22 @@ async function sendTestEmail() {
             text: `Test email sent at ${new Date().toISOString()}\nServer: ${process.env.NODE_ENV || 'development'}\nEmail configured correctly!`
         });
         
-        console.log('✅ Test email sent:', info.messageId);
+        console.log('âœ… Test email sent:', info.messageId);
         return { success: true, messageId: info.messageId };
         
     } catch (error) {
-        console.error('❌ Email test failed:', error.message);
+        console.error('âŒ Email test failed:', error.message);
         return { success: false, error: error.message };
     }
 }
-// ✅ PASSWORD RESET WITH EMAIL VERIFICATION (FIXED FOR CLIENT → CUSTOMER)
+// âœ… PASSWORD RESET WITH EMAIL VERIFICATION (FIXED FOR CLIENT â†’ CUSTOMER)
 // =============================================
 
 // Helper function to adjust role for database queries
 function adjustRoleForDatabase(role) {
     // Convert 'client' to 'customer' since database uses 'customer'
     if (role === 'client') {
-        console.log(`🔄 Adjusting role from '${role}' to 'customer' for database query`);
+        console.log(`ðŸ”„ Adjusting role from '${role}' to 'customer' for database query`);
         return 'customer';
     }
     return role;
@@ -1764,7 +1775,7 @@ function adjustRoleForDatabase(role) {
 
 app.post('/api/password-reset/verify-code', async (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    console.log('🔍 VERIFYING RESET CODE from IP:', ip);
+    console.log('ðŸ” VERIFYING RESET CODE from IP:', ip);
     
     const { email, role, resetCode } = req.body;
 
@@ -1777,16 +1788,16 @@ app.post('/api/password-reset/verify-code', async (req, res) => {
     }
 
     try {
-        // ✅ FIX: Adjust role before querying
+        // âœ… FIX: Adjust role before querying
         const adjustedRole = adjustRoleForDatabase(role);
-        console.log(`🔄 Verify: Adjusted role '${role}' → '${adjustedRole}'`);
+        console.log(`ðŸ”„ Verify: Adjusted role '${role}' â†’ '${adjustedRole}'`);
         
         // Find user - USE ADJUSTED ROLE
         const { data: users, error: userError } = await supabaseAdmin
             .from('users')
             .select('id')
             .eq('email', email)
-            .eq('role', adjustedRole); // ← USE adjustedRole HERE
+            .eq('role', adjustedRole); // â† USE adjustedRole HERE
 
         if (userError) throw userError;
 
@@ -1855,7 +1866,7 @@ app.post('/api/password-reset/verify-code', async (req, res) => {
             { expiresIn: '10m' } // Short expiration for security
         );
 
-        console.log('✅ Reset code verified successfully for:', email, 'Role:', role, '(Adjusted:', adjustedRole, ')');
+        console.log('âœ… Reset code verified successfully for:', email, 'Role:', role, '(Adjusted:', adjustedRole, ')');
         
         await logUserAction(user.id, 'RESET_CODE_VERIFIED', '/api/password-reset/verify-code', { 
             code_id: codeRecord.id,
@@ -1873,7 +1884,7 @@ app.post('/api/password-reset/verify-code', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('❌ VERIFY RESET CODE ERROR:', error.message);
+        console.error('âŒ VERIFY RESET CODE ERROR:', error.message);
         await logUserAction(null, 'RESET_CODE_VERIFY_ERROR', '/api/password-reset/verify-code', { 
             error: error.message,
             role: role || 'unknown',
@@ -1889,7 +1900,7 @@ app.post('/api/password-reset/verify-code', async (req, res) => {
 // Step 3: Reset password with new password - FIXED
 app.post('/api/password-reset/confirm', async (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    console.log('🔑 CONFIRMING PASSWORD RESET from IP:', ip);
+    console.log('ðŸ”‘ CONFIRMING PASSWORD RESET from IP:', ip);
     
     const { verificationToken, newPassword, confirmPassword } = req.body;
 
@@ -1936,7 +1947,7 @@ app.post('/api/password-reset/confirm', async (req, res) => {
         const originalRole = decoded.role;
         const adjustedRole = decoded.adjustedRole || adjustRoleForDatabase(originalRole);
         
-        console.log(`🔄 Confirm: User ${userId}, Original role: ${originalRole}, Adjusted: ${adjustedRole}`);
+        console.log(`ðŸ”„ Confirm: User ${userId}, Original role: ${originalRole}, Adjusted: ${adjustedRole}`);
         
         // Verify that the code was actually used
         if (decoded.codeId) {
@@ -2008,7 +2019,7 @@ app.post('/api/password-reset/confirm', async (req, res) => {
             await sendEmail(user.email, emailSubject, emailHtml);
         }
 
-        console.log('✅ Password reset completed for user:', userId, 'Role:', user?.role || 'unknown');
+        console.log('âœ… Password reset completed for user:', userId, 'Role:', user?.role || 'unknown');
         
         await logUserAction(userId, 'PASSWORD_RESET_COMPLETED', '/api/password-reset/confirm', { 
             reset_successful: true,
@@ -2039,7 +2050,7 @@ app.post('/api/password-reset/confirm', async (req, res) => {
             return res.status(400).json({ error: 'Token si sahihi' });
         }
         
-        console.error('❌ CONFIRM PASSWORD RESET ERROR:', error.message);
+        console.error('âŒ CONFIRM PASSWORD RESET ERROR:', error.message);
         await logUserAction(null, 'PASSWORD_RESET_CONFIRM_ERROR', '/api/password-reset/confirm', { 
             error: error.message 
         }, ip, 'failed');
@@ -2061,15 +2072,15 @@ app.post('/api/password-reset/check-status', async (req, res) => {
             return res.status(400).json({ error: 'Email na role zinahitajika' });
         }
 
-        // ✅ FIX: Adjust role before querying
+        // âœ… FIX: Adjust role before querying
         const adjustedRole = adjustRoleForDatabase(role);
-        console.log(`🔄 Check status: Adjusted role '${role}' → '${adjustedRole}'`);
+        console.log(`ðŸ”„ Check status: Adjusted role '${role}' â†’ '${adjustedRole}'`);
         
         const { data: users, error: userError } = await supabaseAdmin
             .from('users')
             .select('id')
             .eq('email', email)
-            .eq('role', adjustedRole); // ← USE adjustedRole HERE
+            .eq('role', adjustedRole); // â† USE adjustedRole HERE
 
         if (userError) throw userError;
 
@@ -2108,7 +2119,7 @@ app.post('/api/password-reset/check-status', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('❌ CHECK RESET STATUS ERROR:', error.message);
+        console.error('âŒ CHECK RESET STATUS ERROR:', error.message);
         res.status(500).json({ 
             error: 'Hitilafu ya ndani ya server' 
         });
@@ -2128,7 +2139,7 @@ app.get('/api/admin/real-time-stats', authenticateToken, async (req, res) => {
             return res.status(403).json({ error: 'Unauthorized' });
         }
         
-        console.log(`📊 Admin ${adminId} fetching real-time stats`);
+        console.log(`ðŸ“Š Admin ${adminId} fetching real-time stats`);
         
         // Get today's date
         const today = new Date().toISOString().split('T')[0];
@@ -2212,7 +2223,7 @@ app.get('/api/admin/real-time-stats', authenticateToken, async (req, res) => {
         res.json(stats);
         
     } catch (error) {
-        console.error('❌ ERROR fetching real-time stats:', error.message);
+        console.error('âŒ ERROR fetching real-time stats:', error.message);
         await logUserAction(req.user?.id, 'REAL_TIME_STATS_ERROR', '/api/admin/real-time-stats', { error: error.message }, req.user_ip, 'failed');
         res.status(500).json({ error: 'Failed to fetch real-time stats' });
     }
@@ -2232,7 +2243,7 @@ app.get('/api/admin/user/:id/presence-history', authenticateToken, async (req, r
             return res.status(403).json({ error: 'Unauthorized' });
         }
         
-        console.log(`📋 Admin ${adminId} fetching presence history for user ${userId}`);
+        console.log(`ðŸ“‹ Admin ${adminId} fetching presence history for user ${userId}`);
         
         // Get user details
         const { data: user, error: userError } = await supabaseAdmin
@@ -2299,7 +2310,7 @@ app.get('/api/admin/user/:id/presence-history', authenticateToken, async (req, r
         res.json(response);
         
     } catch (error) {
-        console.error('❌ ERROR fetching presence history:', error.message);
+        console.error('âŒ ERROR fetching presence history:', error.message);
         await logUserAction(req.user?.id, 'PRESENCE_HISTORY_ERROR', `/api/admin/user/${req.params.id}/presence-history`, { 
             error: error.message,
             user_id: req.params.id 
@@ -2331,7 +2342,7 @@ app.put('/api/admin/user/:id/presence', authenticateToken, async (req, res) => {
             return res.status(400).json({ error: 'is_online must be boolean' });
         }
         
-        console.log(`🔄 Admin ${adminId} updating presence for user ${userId} to ${is_online}`);
+        console.log(`ðŸ”„ Admin ${adminId} updating presence for user ${userId} to ${is_online}`);
         
         const now = new Date().toISOString();
         
@@ -2374,7 +2385,7 @@ app.put('/api/admin/user/:id/presence', authenticateToken, async (req, res) => {
         });
         
     } catch (error) {
-        console.error('❌ ERROR updating user presence:', error.message);
+        console.error('âŒ ERROR updating user presence:', error.message);
         await logUserAction(req.user?.id, 'UPDATE_PRESENCE_ERROR', `/api/admin/user/${req.params.id}/presence`, { 
             error: error.message,
             user_id: req.params.id 
@@ -2421,14 +2432,14 @@ app.get('/api/admin/ws-status', authenticateToken, async (req, res) => {
         res.json(wsStatus);
         
     } catch (error) {
-        console.error('❌ ERROR fetching WebSocket status:', error.message);
+        console.error('âŒ ERROR fetching WebSocket status:', error.message);
         await logUserAction(req.user?.id, 'WS_STATUS_ERROR', '/api/admin/ws-status', { error: error.message }, req.user_ip, 'failed');
         res.status(500).json({ error: 'Failed to fetch WebSocket status' });
     }
 });
 
 // =============================================
-// ✅ DATABASE MIGRATION ENDPOINTS
+// âœ… DATABASE MIGRATION ENDPOINTS
 // =============================================
 
 // ADD REAL-TIME COLUMNS TO USERS TABLE
@@ -2440,7 +2451,7 @@ app.post('/api/admin/migrate/realtime', authenticateToken, async (req, res) => {
             return res.status(403).json({ error: 'Unauthorized' });
         }
         
-        console.log('🔧 Running real-time database migration...');
+        console.log('ðŸ”§ Running real-time database migration...');
         
         // Add columns to users table if they don't exist
         const migrations = [
@@ -2519,7 +2530,7 @@ app.post('/api/admin/migrate/realtime', authenticateToken, async (req, res) => {
             console.log('Note: exec_sql function already exists or cannot be created');
         }
         
-        console.log('✅ Database migration completed');
+        console.log('âœ… Database migration completed');
         
         await logUserAction(adminId, 'DATABASE_MIGRATION', '/api/admin/migrate/realtime', { 
             migrations: results.length,
@@ -2533,7 +2544,7 @@ app.post('/api/admin/migrate/realtime', authenticateToken, async (req, res) => {
         });
         
     } catch (error) {
-        console.error('❌ Database migration error:', error.message);
+        console.error('âŒ Database migration error:', error.message);
         await logUserAction(req.user?.id, 'DATABASE_MIGRATION_ERROR', '/api/admin/migrate/realtime', { error: error.message }, req.user_ip, 'failed');
         res.status(500).json({ 
             error: 'Database migration failed',
@@ -2551,7 +2562,7 @@ app.get('/api/admin/database-info', authenticateToken, async (req, res) => {
             return res.status(403).json({ error: 'Unauthorized' });
         }
         
-        console.log('🔍 Getting database schema info...');
+        console.log('ðŸ” Getting database schema info...');
         
         // Check if real-time columns exist
         const { data: columns, error } = await supabaseAdmin
@@ -2590,23 +2601,23 @@ app.get('/api/admin/database-info', authenticateToken, async (req, res) => {
         res.json(schemaInfo);
         
     } catch (error) {
-        console.error('❌ ERROR getting database info:', error.message);
+        console.error('âŒ ERROR getting database info:', error.message);
         await logUserAction(req.user?.id, 'DATABASE_INFO_ERROR', '/api/admin/database-info', { error: error.message }, req.user_ip, 'failed');
         res.status(500).json({ error: 'Failed to get database info' });
     }
 });
 
 // =============================================
-// ✅ BASIC ENDPOINTS (Updated with real-time info)
+// âœ… BASIC ENDPOINTS (Updated with real-time info)
 // =============================================
 app.get('/api/test', (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    console.log('✅ Test endpoint accessed from IP:', ip);
+    console.log('âœ… Test endpoint accessed from IP:', ip);
     
     logUserAction(null, 'TEST_ENDPOINT', '/api/test', {}, ip, 'success');
     
     res.json({ 
-        message: '✅ Backend inafanya kazi kikamilifu!', 
+        message: 'âœ… Backend inafanya kazi kikamilifu!', 
         timestamp: new Date().toISOString(),
         database: 'Supabase PostgreSQL',
         server: 'Running successfully',
@@ -2623,7 +2634,7 @@ app.get('/api/test', (req, res) => {
 
 app.get('/api/health', async (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    console.log('🏥 Health check requested from IP:', ip);
+    console.log('ðŸ¥ Health check requested from IP:', ip);
     
     try {
         const { data, error } = await supabaseAdmin
@@ -2665,13 +2676,13 @@ app.get('/api/health', async (req, res) => {
 });
 
 // =============================================
-// ✅ AUTH ENDPOINTS (Updated with real-time features)
+// âœ… AUTH ENDPOINTS (Updated with real-time features)
 // =============================================
 app.post('/api/register', async (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    console.log('📨 REGISTER REQUEST:', req.body, 'IP:', ip);
+    console.log('ðŸ“¨ REGISTER REQUEST:', req.body, 'IP:', ip);
     
-    const { email, password, role, full_name, phone, business_name, business_location } = req.body;
+    const { email, password, role, full_name, phone, business_name, business_location, language } = req.body;
 
     if (!email || !password || !role) {
         await logUserAction(null, 'REGISTER_FAILED', '/api/register', { reason: 'Missing required fields', email, role }, ip, 'failed');
@@ -2770,6 +2781,7 @@ app.post('/api/register', async (req, res) => {
             phone: phone || null,
             business_name: business_name || null,
             business_location: business_location || null,
+            language: language || 'sw',
             status: userStatus,
             is_online: false,
             last_seen: new Date().toISOString(),
@@ -2785,7 +2797,7 @@ app.post('/api/register', async (req, res) => {
         
         if (insertError) throw insertError;
 
-        console.log('✅ USER REGISTERED:', { 
+        console.log('âœ… USER REGISTERED:', { 
             id: newUser.id, 
             email: newUser.email, 
             role: newUser.role,
@@ -2816,7 +2828,7 @@ app.post('/api/register', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('❌ REGISTRATION ERROR:', error.message);
+        console.error('âŒ REGISTRATION ERROR:', error.message);
         await logUserAction(null, 'REGISTER_ERROR', '/api/register', { error: error.message, email, role }, ip, 'failed');
         res.status(500).json({ error: 'Hitilafu ya ndani ya server: ' + error.message });
     }
@@ -2824,9 +2836,9 @@ app.post('/api/register', async (req, res) => {
 
 app.post('/api/login', async (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    console.log('📨 LOGIN REQUEST:', req.body.email, 'Role:', req.body.role, 'IP:', ip);
+    console.log('ðŸ“¨ LOGIN REQUEST:', req.body.email, 'Role:', req.body.role, 'IP:', ip);
     
-    const { email, password, role } = req.body;
+    const { email, password, role, language } = req.body;
 
     if (!email || !password || !role) {
         await logUserAction(null, 'LOGIN_FAILED', '/api/login', { reason: 'Missing fields', email, role }, ip, 'failed');
@@ -2867,6 +2879,14 @@ app.post('/api/login', async (req, res) => {
             return res.status(401).json({ error: 'Akaunti bado haijaidhinishwa.' });
         }
 
+        // Save language preference if provided
+        if (language) {
+            await supabaseAdmin
+                .from('users')
+                .update({ language: language })
+                .eq('id', user.id);
+        }
+
         // Update user as online in database
         const now = new Date().toISOString();
         await supabaseAdmin
@@ -2884,7 +2904,7 @@ app.post('/api/login', async (req, res) => {
             { expiresIn: '24h' }
         );
 
-        console.log('✅ LOGIN SUCCESSFUL:', user.email);
+        console.log('âœ… LOGIN SUCCESSFUL:', user.email);
         
         await logUserAction(user.id, 'LOGIN_SUCCESS', '/api/login', { 
             role: user.role, 
@@ -2904,25 +2924,26 @@ app.post('/api/login', async (req, res) => {
                 business_location: user.business_location,
                 phone: user.phone,
                 status: user.status,
+                language: user.language || 'sw',
                 is_online: true,
                 last_seen: now
             }
         });
 
     } catch (error) {
-        console.error('❌ LOGIN ERROR:', error.message);
+        console.error('âŒ LOGIN ERROR:', error.message);
         await logUserAction(null, 'LOGIN_ERROR', '/api/login', { error: error.message, email, role }, ip, 'failed');
         res.status(500).json({ error: 'Hitilafu ya ndani ya server: ' + error.message });
     }
 });
 
 // =============================================
-// ✅ USER PROFILE ENDPOINTS (Updated with last_seen)
+// âœ… USER PROFILE ENDPOINTS (Updated with last_seen)
 // =============================================
 app.get('/api/user/profile', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
-        console.log('👤 Profile requested for user:', userId);
+        console.log('ðŸ‘¤ Profile requested for user:', userId);
         
         const { data: user, error } = await supabase
             .from('users')
@@ -2946,7 +2967,7 @@ app.put('/api/user/profile', authenticateToken, async (req, res) => {
         const userId = req.user.id;
         const { full_name, phone, business_name, business_location } = req.body;
         
-        console.log('✏️ Profile update for user:', userId, 'Data:', req.body);
+        console.log('âœï¸ Profile update for user:', userId, 'Data:', req.body);
 
         if (!full_name) {
             await logUserAction(userId, 'PROFILE_UPDATE_FAILED', '/api/user/profile', { reason: 'Full name required' }, req.user_ip, 'failed');
@@ -2970,7 +2991,7 @@ app.put('/api/user/profile', authenticateToken, async (req, res) => {
 
         if (error) throw error;
 
-        console.log('✅ User profile updated:', userId);
+        console.log('âœ… User profile updated:', userId);
         
         const { data: updatedUser, error: fetchError } = await supabase
             .from('users')
@@ -2996,7 +3017,7 @@ app.put('/api/user/profile', authenticateToken, async (req, res) => {
 });
 
 // =============================================
-// ✅ PRODUCT ENDPOINTS (WITH EXPECTED_SELLING_PRICE AUTO-FILL)
+// âœ… PRODUCT ENDPOINTS (WITH EXPECTED_SELLING_PRICE AUTO-FILL)
 // =============================================
 app.get('/api/products/my', authenticateToken, async (req, res) => {
     try {
@@ -3004,7 +3025,7 @@ app.get('/api/products/my', authenticateToken, async (req, res) => {
         const userRole = req.user.role;
         const businessName = req.user.business_name;
         
-        console.log(`📦 Loading products for user ${userId} (${userRole}) in business: ${businessName}`);
+        console.log(`ðŸ“¦ Loading products for user ${userId} (${userRole}) in business: ${businessName}`);
         
         // Update user's last seen
         await supabase
@@ -3022,7 +3043,7 @@ app.get('/api/products/my', authenticateToken, async (req, res) => {
             
             if (error) throw error;
             
-            console.log(`✅ Admin loaded ${products?.length || 0} personal products`);
+            console.log(`âœ… Admin loaded ${products?.length || 0} personal products`);
             
             const processedProducts = (products || []).map(product => ({
                 ...product,
@@ -3047,7 +3068,7 @@ app.get('/api/products/my', authenticateToken, async (req, res) => {
                 .single();
             
             if (adminError) {
-                console.error('❌ Admin not found:', adminError.message);
+                console.error('âŒ Admin not found:', adminError.message);
                 return res.json([]);
             }
             
@@ -3059,14 +3080,14 @@ app.get('/api/products/my', authenticateToken, async (req, res) => {
                 .eq('status', 'approved');
             
             if (usersError) {
-                console.error('❌ Error fetching business users:', usersError.message);
+                console.error('âŒ Error fetching business users:', usersError.message);
                 return res.json([]);
             }
             
             const sellerIds = businessUsers?.map(user => user.id) || [];
             
             if (sellerIds.length === 0) {
-                console.log('⚠️ No sellers found in business');
+                console.log('âš ï¸ No sellers found in business');
                 return res.json([]);
             }
             
@@ -3079,7 +3100,7 @@ app.get('/api/products/my', authenticateToken, async (req, res) => {
             
             if (productsError) throw productsError;
             
-            console.log(`✅ Seller loaded ${allProducts?.length || 0} products from business ${businessName}`);
+            console.log(`âœ… Seller loaded ${allProducts?.length || 0} products from business ${businessName}`);
             
             const processedProducts = (allProducts || []).map(product => ({
                 ...product,
@@ -3117,7 +3138,7 @@ app.get('/api/products/my', authenticateToken, async (req, res) => {
         }
         
     } catch (error) {
-        console.error('❌ ERROR in /api/products/my:', error.message);
+        console.error('âŒ ERROR in /api/products/my:', error.message);
         await logUserAction(req.user?.id, 'PRODUCTS_VIEW_ERROR', '/api/products/my', { error: error.message }, req.user_ip, 'failed');
         
         res.status(500).json({ 
@@ -3129,14 +3150,14 @@ app.get('/api/products/my', authenticateToken, async (req, res) => {
 });
 
 // =============================================
-// ✅ PRODUCTS DUMMY ENDPOINT FOR TESTING
+// âœ… PRODUCTS DUMMY ENDPOINT FOR TESTING
 // =============================================
 app.get('/api/products/dummy', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
         const userRole = req.user.role;
         
-        console.log('🧪 Generating dummy products for user:', userId);
+        console.log('ðŸ§ª Generating dummy products for user:', userId);
         
         // Update user's last seen
         await supabase
@@ -3198,7 +3219,7 @@ app.get('/api/products/dummy', authenticateToken, async (req, res) => {
             }
         ];
         
-        console.log(`✅ Generated ${dummyProducts.length} dummy products`);
+        console.log(`âœ… Generated ${dummyProducts.length} dummy products`);
         
         await logUserAction(userId, 'DUMMY_PRODUCTS', '/api/products/dummy', { 
             count: dummyProducts.length 
@@ -3207,7 +3228,7 @@ app.get('/api/products/dummy', authenticateToken, async (req, res) => {
         res.json(dummyProducts);
         
     } catch (error) {
-        console.error('❌ ERROR in dummy endpoint:', error.message);
+        console.error('âŒ ERROR in dummy endpoint:', error.message);
         await logUserAction(req.user?.id, 'DUMMY_PRODUCTS_ERROR', '/api/products/dummy', { error: error.message }, req.user_ip, 'failed');
         res.status(500).json({ 
             error: 'Hitilafu ya ndani ya server',
@@ -3217,14 +3238,14 @@ app.get('/api/products/dummy', authenticateToken, async (req, res) => {
 });
 
 // =============================================
-// ✅ CREATE PRODUCT WITH EXPECTED_SELLING_PRICE (REQUIRED)
+// âœ… CREATE PRODUCT WITH EXPECTED_SELLING_PRICE (REQUIRED)
 // =============================================
 app.post('/api/products', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
         const { name, category, price, stock, description, cost_price, expected_selling_price } = req.body;
         
-        console.log('📨 Creating new product for user:', userId, 'Data:', req.body);
+        console.log('ðŸ“¨ Creating new product for user:', userId, 'Data:', req.body);
         
         // Update user's last seen
         await supabase
@@ -3304,7 +3325,7 @@ app.post('/api/products', authenticateToken, async (req, res) => {
             updated_at: new Date().toISOString()
         };
 
-        console.log('💾 Saving product data:', productData);
+        console.log('ðŸ’¾ Saving product data:', productData);
 
         const { data: newProduct, error } = await supabase
             .from('products')
@@ -3313,7 +3334,7 @@ app.post('/api/products', authenticateToken, async (req, res) => {
             .single();
         
         if (error) {
-            console.error('❌ Database error creating product:', error);
+            console.error('âŒ Database error creating product:', error);
             
             if (error.code === '23505') {
                 await logUserAction(userId, 'PRODUCT_CREATE_FAILED', '/api/products', { 
@@ -3330,7 +3351,7 @@ app.post('/api/products', authenticateToken, async (req, res) => {
             throw error;
         }
         
-        console.log('✅ Product created successfully:', {
+        console.log('âœ… Product created successfully:', {
             id: newProduct.id,
             name: newProduct.name,
             price: newProduct.price,
@@ -3353,7 +3374,7 @@ app.post('/api/products', authenticateToken, async (req, res) => {
         });
         
     } catch (error) {
-        console.error('❌ ERROR creating product:', error.message);
+        console.error('âŒ ERROR creating product:', error.message);
         await logUserAction(req.user?.id, 'PRODUCT_CREATE_ERROR', '/api/products', { error: error.message }, req.user_ip, 'failed');
         handleSupabaseError(error, res);
     }
@@ -3365,7 +3386,7 @@ app.put('/api/products/:id', authenticateToken, async (req, res) => {
         const userId = req.user.id;
         const { name, category, price, stock, description, cost_price, expected_selling_price } = req.body;
         
-        console.log(`✏️ Updating product ${productId} by user ${userId}, Data:`, req.body);
+        console.log(`âœï¸ Updating product ${productId} by user ${userId}, Data:`, req.body);
         
         // Update user's last seen
         await supabase
@@ -3443,7 +3464,7 @@ app.put('/api/products/:id', authenticateToken, async (req, res) => {
         };
         
         if (product.expected_selling_price !== expectedPriceValue) {
-            console.log(`💰 Price change for product ${productId}: ${product.expected_selling_price} → ${expectedPriceValue}`);
+            console.log(`ðŸ’° Price change for product ${productId}: ${product.expected_selling_price} â†’ ${expectedPriceValue}`);
         }
 
         const { data: updatedProduct, error } = await supabase
@@ -3455,7 +3476,7 @@ app.put('/api/products/:id', authenticateToken, async (req, res) => {
         
         if (error) throw error;
         
-        console.log('✅ Product updated:', productId);
+        console.log('âœ… Product updated:', productId);
         
         await logUserAction(userId, 'PRODUCT_UPDATE', '/api/products/:id', { 
             product_id: productId,
@@ -3473,7 +3494,7 @@ app.put('/api/products/:id', authenticateToken, async (req, res) => {
         });
         
     } catch (error) {
-        console.error('❌ ERROR updating product:', error.message);
+        console.error('âŒ ERROR updating product:', error.message);
         await logUserAction(req.user?.id, 'PRODUCT_UPDATE_ERROR', '/api/products/:id', { 
             error: error.message,
             product_id: req.params.id 
@@ -3487,7 +3508,7 @@ app.delete('/api/products/:id', authenticateToken, async (req, res) => {
         const productId = req.params.id;
         const userId = req.user.id;
         
-        console.log(`🗑️ Deleting product ${productId} by user ${userId}`);
+        console.log(`ðŸ—‘ï¸ Deleting product ${productId} by user ${userId}`);
         
         // Update user's last seen
         await supabase
@@ -3532,7 +3553,7 @@ app.delete('/api/products/:id', authenticateToken, async (req, res) => {
         
         if (error) throw error;
         
-        console.log('✅ Product deactivated:', productId);
+        console.log('âœ… Product deactivated:', productId);
         
         await logUserAction(userId, 'PRODUCT_DELETE', '/api/products/:id', { 
             product_id: productId,
@@ -3554,12 +3575,12 @@ app.delete('/api/products/:id', authenticateToken, async (req, res) => {
 });
 
 // =============================================
-// ✅ SALE ENDPOINTS (WITH INVOICE NUMBER & UNIT_PRICE)
+// âœ… SALE ENDPOINTS (WITH INVOICE NUMBER & UNIT_PRICE)
 // =============================================
 app.get('/api/sales/my', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
-        console.log(`💰 Loading sales for user ${userId}`);
+        console.log(`ðŸ’° Loading sales for user ${userId}`);
         
         // Update user's last seen
         await supabase
@@ -3575,7 +3596,7 @@ app.get('/api/sales/my', authenticateToken, async (req, res) => {
         
         if (error) throw error;
         
-        console.log(`✅ Sales loaded for user ${userId}:`, sales?.length || 0);
+        console.log(`âœ… Sales loaded for user ${userId}:`, sales?.length || 0);
         
         await logUserAction(userId, 'SALES_VIEW', '/api/sales/my', { 
             count: sales?.length || 0 
@@ -3594,8 +3615,8 @@ app.post('/api/sales', authenticateToken, async (req, res) => {
         const userId = req.user.id;
         const { customer_id, sale_date, payment_method, notes, items } = req.body;
         
-        console.log('📨 NEW SALE REQUEST from user:', userId);
-        console.log('📦 Request details:', { items_count: items?.length || 0, customer_id, payment_method });
+        console.log('ðŸ“¨ NEW SALE REQUEST from user:', userId);
+        console.log('ðŸ“¦ Request details:', { items_count: items?.length || 0, customer_id, payment_method });
         
         // Update user's last seen
         await supabase
@@ -3647,7 +3668,7 @@ app.post('/api/sales', authenticateToken, async (req, res) => {
             });
         }
         
-        console.log(`💰 Total amount: ${total_amount}`);
+        console.log(`ðŸ’° Total amount: ${total_amount}`);
 
         const stockIssues = [];
         for (const item of items) {
@@ -3721,7 +3742,7 @@ app.post('/api/sales', authenticateToken, async (req, res) => {
         }
 
         const invoice_number = await generateInvoiceNumber(userId);
-        console.log(`🧾 Invoice number generated: ${invoice_number}`);
+        console.log(`ðŸ§¾ Invoice number generated: ${invoice_number}`);
 
         const saleData = {
             seller_id: userId,
@@ -3742,7 +3763,7 @@ app.post('/api/sales', authenticateToken, async (req, res) => {
             .single();
         
         if (saleError) {
-            console.error('❌ Database error saving sale:', saleError);
+            console.error('âŒ Database error saving sale:', saleError);
             
             await logUserAction(userId, 'SALE_CREATE_FAILED', '/api/sales', { 
                 reason: 'Database error',
@@ -3766,14 +3787,14 @@ app.post('/api/sales', authenticateToken, async (req, res) => {
             created_at: new Date().toISOString()
         }));
 
-        console.log('🛒 Sale items to insert:', saleItems.length);
+        console.log('ðŸ›’ Sale items to insert:', saleItems.length);
 
         const { error: itemsError } = await supabase
             .from('sale_items')
             .insert(saleItems);
         
         if (itemsError) {
-            console.error('❌ Error saving sale items:', itemsError);
+            console.error('âŒ Error saving sale items:', itemsError);
             await supabase.from('sales').delete().eq('id', newSale.id);
             
             await logUserAction(userId, 'SALE_CREATE_FAILED', '/api/sales', { 
@@ -3848,7 +3869,7 @@ app.post('/api/sales', authenticateToken, async (req, res) => {
             .eq('id', newSale.id)
             .single();
         
-        console.log(`✅ Sale completed successfully! Invoice: ${invoice_number}, ID: ${newSale.id}`);
+        console.log(`âœ… Sale completed successfully! Invoice: ${invoice_number}, ID: ${newSale.id}`);
         
         await logUserAction(userId, 'SALE_CREATE', '/api/sales', { 
             sale_id: newSale.id,
@@ -3868,7 +3889,7 @@ app.post('/api/sales', authenticateToken, async (req, res) => {
         });
 
     } catch (error) {
-        console.error('❌ UNEXPECTED ERROR creating sale:', error.message);
+        console.error('âŒ UNEXPECTED ERROR creating sale:', error.message);
         
         await logUserAction(req.user?.id, 'SALE_CREATE_ERROR', '/api/sales', { 
             error: error.message,
@@ -3899,12 +3920,12 @@ app.post('/api/sales', authenticateToken, async (req, res) => {
 });
 
 // =============================================
-// ✅ CUSTOMER ENDPOINTS
+// âœ… CUSTOMER ENDPOINTS
 // =============================================
 app.get('/api/customers/my', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
-        console.log(`👥 Loading customers for user ${userId}`);
+        console.log(`ðŸ‘¥ Loading customers for user ${userId}`);
         
         // Update user's last seen
         await supabase
@@ -3920,7 +3941,7 @@ app.get('/api/customers/my', authenticateToken, async (req, res) => {
         
         if (error) throw error;
         
-        console.log(`✅ Customers loaded for user ${userId}:`, customers?.length || 0);
+        console.log(`âœ… Customers loaded for user ${userId}:`, customers?.length || 0);
         
         await logUserAction(userId, 'CUSTOMERS_VIEW', '/api/customers/my', { 
             count: customers?.length || 0 
@@ -3939,7 +3960,7 @@ app.post('/api/customers', authenticateToken, async (req, res) => {
         const userId = req.user.id;
         const { name, phone, email } = req.body;
         
-        console.log('📨 Creating new customer for user:', userId, 'Data:', req.body);
+        console.log('ðŸ“¨ Creating new customer for user:', userId, 'Data:', req.body);
         
         // Update user's last seen
         await supabase
@@ -3972,7 +3993,7 @@ app.post('/api/customers', authenticateToken, async (req, res) => {
         
         if (error) throw error;
 
-        console.log('✅ Customer created:', newCustomer.id);
+        console.log('âœ… Customer created:', newCustomer.id);
         
         await logUserAction(userId, 'CUSTOMER_CREATE', '/api/customers', { 
             customer_id: newCustomer.id,
@@ -3996,7 +4017,7 @@ app.put('/api/customers/:id', authenticateToken, async (req, res) => {
         const userId = req.user.id;
         const { name, phone, email } = req.body;
         
-        console.log(`✏️ Updating customer ${customerId} by user ${userId}`);
+        console.log(`âœï¸ Updating customer ${customerId} by user ${userId}`);
         
         // Update user's last seen
         await supabase
@@ -4047,7 +4068,7 @@ app.put('/api/customers/:id', authenticateToken, async (req, res) => {
         
         if (error) throw error;
         
-        console.log('✅ Customer updated:', customerId);
+        console.log('âœ… Customer updated:', customerId);
         
         await logUserAction(userId, 'CUSTOMER_UPDATE', '/api/customers/:id', { 
             customer_id: customerId,
@@ -4069,7 +4090,7 @@ app.put('/api/customers/:id', authenticateToken, async (req, res) => {
 });
 
 // =============================================
-// ✅ MATANGAZO ENDPOINTS
+// âœ… MATANGAZO ENDPOINTS
 // =============================================
 async function getReactionCountsForMatangazo(matangazoIds) {
     try {
@@ -4109,7 +4130,7 @@ async function getReactionCountsForMatangazo(matangazoIds) {
 
 app.get('/api/matangazo', async (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    console.log('📨 GET /api/matangazo request IP:', ip);
+    console.log('ðŸ“¨ GET /api/matangazo request IP:', ip);
     
     try {
         const { data: matangazo, error } = await supabase
@@ -4130,7 +4151,7 @@ app.get('/api/matangazo', async (req, res) => {
             report_count: reactionCounts[m.id]?.report_count || 0
         })) || [];
         
-        console.log('📤 Sending matangazo data:', matangazoWithCounts?.length || 0);
+        console.log('ðŸ“¤ Sending matangazo data:', matangazoWithCounts?.length || 0);
         
         await logUserAction(null, 'MATANGAZO_VIEW_PUBLIC', '/api/matangazo', { 
             count: matangazoWithCounts.length 
@@ -4139,7 +4160,7 @@ app.get('/api/matangazo', async (req, res) => {
         res.json(matangazoWithCounts);
         
     } catch (error) {
-        console.error('❌ ERROR in /api/matangazo:', error.message);
+        console.error('âŒ ERROR in /api/matangazo:', error.message);
         await logUserAction(null, 'MATANGAZO_VIEW_ERROR', '/api/matangazo', { error: error.message }, ip, 'failed');
         res.status(500).json({ error: error.message });
     }
@@ -4148,7 +4169,7 @@ app.get('/api/matangazo', async (req, res) => {
 app.get('/api/matangazo/my', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
-        console.log(`📊 Loading matangazo for user ${userId}`);
+        console.log(`ðŸ“Š Loading matangazo for user ${userId}`);
         
         // Update user's last seen
         await supabase
@@ -4163,7 +4184,7 @@ app.get('/api/matangazo/my', authenticateToken, async (req, res) => {
             .order('created_at', { ascending: false });
         
         if (error) {
-            console.error('❌ Database error in matangazo/my:', error);
+            console.error('âŒ Database error in matangazo/my:', error);
             throw error;
         }
         
@@ -4176,7 +4197,7 @@ app.get('/api/matangazo/my', authenticateToken, async (req, res) => {
             report_count: reactionCounts[m.id]?.report_count || 0
         })) || [];
         
-        console.log(`✅ Matangazo loaded for user ${userId}:`, matangazoWithCounts?.length || 0);
+        console.log(`âœ… Matangazo loaded for user ${userId}:`, matangazoWithCounts?.length || 0);
         
         await logUserAction(userId, 'MATANGAZO_VIEW_MY', '/api/matangazo/my', { 
             count: matangazoWithCounts.length 
@@ -4185,7 +4206,7 @@ app.get('/api/matangazo/my', authenticateToken, async (req, res) => {
         res.json(matangazoWithCounts);
         
     } catch (error) {
-        console.error('❌ ERROR fetching user matangazo:', error.message);
+        console.error('âŒ ERROR fetching user matangazo:', error.message);
         await logUserAction(req.user?.id, 'MATANGAZO_VIEW_ERROR', '/api/matangazo/my', { error: error.message }, req.user_ip, 'failed');
         res.status(500).json({ 
             error: 'Hitilafu ya kupakia matangazo',
@@ -4199,7 +4220,7 @@ app.post('/api/matangazo', authenticateToken, async (req, res) => {
         const userId = req.user.id;
         const { description, media_url, media_type, thumbnail_url, expires_at } = req.body;
         
-        console.log('📨 Creating matangazo for user:', userId, 'Data:', req.body);
+        console.log('ðŸ“¨ Creating matangazo for user:', userId, 'Data:', req.body);
         
         // Update user's last seen
         await supabase
@@ -4250,7 +4271,7 @@ app.post('/api/matangazo', authenticateToken, async (req, res) => {
             .single();
         
         if (error) {
-            console.error('❌ Database error:', error);
+            console.error('âŒ Database error:', error);
             throw error;
         }
         
@@ -4260,7 +4281,7 @@ app.post('/api/matangazo', authenticateToken, async (req, res) => {
             report_count: 0
         };
         
-        console.log('✅ Tangazo created:', newMatangazo.id);
+        console.log('âœ… Tangazo created:', newMatangazo.id);
         
         await logUserAction(userId, 'MATANGAZO_CREATE', '/api/matangazo', { 
             matangazo_id: newMatangazo.id,
@@ -4274,7 +4295,7 @@ app.post('/api/matangazo', authenticateToken, async (req, res) => {
         });
         
     } catch (error) {
-        console.error('❌ ERROR adding matangazo:', error.message);
+        console.error('âŒ ERROR adding matangazo:', error.message);
         await logUserAction(req.user?.id, 'MATANGAZO_CREATE_ERROR', '/api/matangazo', { error: error.message }, req.user_ip, 'failed');
         res.status(500).json({ 
             error: 'Hitilafu katika kuongeza matangazo',
@@ -4288,7 +4309,7 @@ app.delete('/api/matangazo/:id', authenticateToken, async (req, res) => {
         const matangazoId = req.params.id;
         const userId = req.user.id;
         
-        console.log(`🗑️ Deleting matangazo ${matangazoId} by user ${userId}`);
+        console.log(`ðŸ—‘ï¸ Deleting matangazo ${matangazoId} by user ${userId}`);
         
         // Update user's last seen
         await supabase
@@ -4333,7 +4354,7 @@ app.delete('/api/matangazo/:id', authenticateToken, async (req, res) => {
         
         if (error) throw error;
         
-        console.log('✅ Tangazo deleted:', matangazoId);
+        console.log('âœ… Tangazo deleted:', matangazoId);
         
         await logUserAction(userId, 'MATANGAZO_DELETE', '/api/matangazo/:id', { 
             matangazo_id: matangazoId,
@@ -4346,7 +4367,7 @@ app.delete('/api/matangazo/:id', authenticateToken, async (req, res) => {
         });
         
     } catch (error) {
-        console.error('❌ ERROR deleting matangazo:', error.message);
+        console.error('âŒ ERROR deleting matangazo:', error.message);
         await logUserAction(req.user?.id, 'MATANGAZO_DELETE_ERROR', '/api/matangazo/:id', { 
             error: error.message,
             matangazo_id: req.params.id 
@@ -4356,12 +4377,12 @@ app.delete('/api/matangazo/:id', authenticateToken, async (req, res) => {
 });
 
 // =============================================
-// ✅ REACTION ENDPOINTS
+// âœ… REACTION ENDPOINTS
 // =============================================
 app.get('/api/reactions/user/likes', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
-        console.log(`❤️ Loading likes for user ${userId}`);
+        console.log(`â¤ï¸ Loading likes for user ${userId}`);
         
         // Update user's last seen
         await supabase
@@ -4398,7 +4419,7 @@ app.post('/api/reactions/like', authenticateToken, async (req, res) => {
         const userId = req.user.id;
         const { matangazo_id } = req.body;
         
-        console.log(`❤️ Like action for matangazo ${matangazo_id} by user ${userId}`);
+        console.log(`â¤ï¸ Like action for matangazo ${matangazo_id} by user ${userId}`);
         
         // Update user's last seen
         await supabase
@@ -4435,7 +4456,7 @@ app.post('/api/reactions/like', authenticateToken, async (req, res) => {
             if (deleteError) throw deleteError;
             
             liked = false;
-            console.log('✅ Like removed:', { userId, matangazo_id });
+            console.log('âœ… Like removed:', { userId, matangazo_id });
         } else {
             const reactionData = {
                 user_id: userId,
@@ -4451,7 +4472,7 @@ app.post('/api/reactions/like', authenticateToken, async (req, res) => {
             if (insertError) throw insertError;
             
             liked = true;
-            console.log('✅ Like added:', { userId, matangazo_id });
+            console.log('âœ… Like added:', { userId, matangazo_id });
         }
 
         const { count: likeCount, error: countError } = await supabase
@@ -4493,14 +4514,14 @@ app.post('/api/reactions/like', authenticateToken, async (req, res) => {
 });
 
 // =============================================
-// ✅ NOTIFICATION SYSTEM ENDPOINTS
+// âœ… NOTIFICATION SYSTEM ENDPOINTS
 // =============================================
 
 // Create notifications table
 app.post('/api/admin/setup/notifications', async (req, res) => {
     try {
         const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-        console.log('🔧 Setting up notifications system...');
+        console.log('ðŸ”§ Setting up notifications system...');
         
         const createTableSQL = `
             CREATE TABLE IF NOT EXISTS notifications (
@@ -4529,7 +4550,7 @@ app.post('/api/admin/setup/notifications', async (req, res) => {
         const { error } = await supabaseAdmin.rpc('exec_sql', { query: createTableSQL });
         
         if (error) {
-            console.warn('⚠️ Table creation failed, trying alternative...');
+            console.warn('âš ï¸ Table creation failed, trying alternative...');
             
             // Fallback: Try direct insert to see if table exists
             const { error: testError } = await supabaseAdmin
@@ -4554,7 +4575,7 @@ app.post('/api/admin/setup/notifications', async (req, res) => {
             }
         }
         
-        console.log('✅ Notifications system setup completed');
+        console.log('âœ… Notifications system setup completed');
         
         await logUserAction(null, 'SETUP_NOTIFICATIONS', '/api/admin/setup/notifications', {
             success: true
@@ -4567,7 +4588,7 @@ app.post('/api/admin/setup/notifications', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('❌ ERROR setting up notifications:', error.message);
+        console.error('âŒ ERROR setting up notifications:', error.message);
         res.status(500).json({
             error: 'Failed to setup notifications system',
             details: error.message
@@ -4579,7 +4600,7 @@ app.post('/api/admin/setup/notifications', async (req, res) => {
 app.post('/api/admin/notifications', authenticateToken, async (req, res) => {
     try {
         const adminId = req.user.id;
-        const { title, message, notification_type, recipient_ids = [], delivery_method = 'email' } = req.body;
+        const { translations, notification_type, recipient_ids = [], delivery_method = 'email' } = req.body;
         
         if (req.user.role !== 'admin') {
             await logUserAction(adminId, 'SEND_NOTIFICATION_UNAUTHORIZED', '/api/admin/notifications', {
@@ -4588,9 +4609,10 @@ app.post('/api/admin/notifications', authenticateToken, async (req, res) => {
             return res.status(403).json({ error: 'Unauthorized' });
         }
         
-        console.log('📨 Admin sending notification:', { title, notification_type, delivery_method });
+        const langCount = translations ? Object.keys(translations).length : 0;
+        console.log('ðŸ“¨ Admin sending notification:', { languages: langCount, notification_type, delivery_method });
         
-        if (!title || !message || !notification_type) {
+        if (!translations || typeof translations !== 'object' || Object.keys(translations).length < 6) {
             await logUserAction(adminId, 'SEND_NOTIFICATION_FAILED', '/api/admin/notifications', {
                 reason: 'Missing required fields'
             }, req.user_ip, 'failed');
@@ -4716,14 +4738,14 @@ app.post('/api/admin/notifications', authenticateToken, async (req, res) => {
         
         if (saveError) throw saveError;
         
-        console.log(`📝 Notification saved to database: ${savedNotification.id}`);
+        console.log(`ðŸ“ Notification saved to database: ${savedNotification.id}`);
         
         // Send emails if delivery_method includes email
         let emailResults = { success: 0, failed: 0 };
         let pushResults = { success: 0, failed: 0 };
         
         if (delivery_method === 'email' || delivery_method === 'both') {
-            console.log(`📧 Sending emails to ${recipients.length} recipients...`);
+            console.log(`ðŸ“§ Sending emails to ${recipients.length} recipients...`);
             
             for (const recipient of recipients) {
                 try {
@@ -4745,13 +4767,13 @@ app.post('/api/admin/notifications', authenticateToken, async (req, res) => {
                                 </p>
                                 <div style="margin-top: 20px; padding: 15px; background-color: #e8f4fc; border-radius: 8px; border-left: 4px solid #3498db;">
                                     <p style="margin: 0; color: #2c3e50; font-size: 14px;">
-                                        <strong>🔔 Kumbuka:</strong> Hii ni taarifa rasmi kutoka kwa msimamizi wa mfumo wa DukaMkononi. 
+                                        <strong>ðŸ”” Kumbuka:</strong> Hii ni taarifa rasmi kutoka kwa msimamizi wa mfumo wa DukaMkononi. 
                                         Ikiwa hukutarajia taarifa hii, tafadhali wasiliana na msimamizi.
                                     </p>
                                 </div>
                             </div>
                             <div style="text-align: center; padding: 20px; color: #95a5a6; font-size: 12px; border-top: 1px solid #e0e0e0;">
-                                <p>© ${new Date().getFullYear()} DukaMkononi. Haki zote zimehifadhiwa.</p>
+                                <p>Â© ${new Date().getFullYear()} DukaMkononi. Haki zote zimehifadhiwa.</p>
                                 <p>Hii ni barua pepe ya kiotomatiki. Tafadhali usijibu.</p>
                             </div>
                         </div>
@@ -4761,15 +4783,15 @@ app.post('/api/admin/notifications', authenticateToken, async (req, res) => {
                     
                     if (emailResult.success) {
                         emailResults.success++;
-                        console.log(`✅ Email sent to ${recipient.email}`);
+                        console.log(`âœ… Email sent to ${recipient.email}`);
                     } else {
                         emailResults.failed++;
-                        console.error(`❌ Failed to send email to ${recipient.email}: ${emailResult.error}`);
+                        console.error(`âŒ Failed to send email to ${recipient.email}: ${emailResult.error}`);
                     }
                     
                 } catch (emailError) {
                     emailResults.failed++;
-                    console.error(`❌ Error sending email to ${recipient.email}:`, emailError.message);
+                    console.error(`âŒ Error sending email to ${recipient.email}:`, emailError.message);
                 }
             }
             
@@ -4794,7 +4816,7 @@ app.post('/api/admin/notifications', authenticateToken, async (req, res) => {
             })
             .eq('id', savedNotification.id);
         
-        console.log(`✅ Notification sent: ${emailResults.success} emails successful, ${emailResults.failed} failed`);
+        console.log(`âœ… Notification sent: ${emailResults.success} emails successful, ${emailResults.failed} failed`);
         
         await logUserAction(adminId, 'NOTIFICATION_SENT', '/api/admin/notifications', {
             notification_id: savedNotification.id,
@@ -4821,7 +4843,7 @@ app.post('/api/admin/notifications', authenticateToken, async (req, res) => {
         });
         
     } catch (error) {
-        console.error('❌ ERROR sending notification:', error.message);
+        console.error('âŒ ERROR sending notification:', error.message);
         
         await logUserAction(req.user?.id, 'NOTIFICATION_ERROR', '/api/admin/notifications', {
             error: error.message,
@@ -4862,7 +4884,7 @@ app.get('/api/admin/notifications', authenticateToken, async (req, res) => {
         res.json(notifications || []);
         
     } catch (error) {
-        console.error('❌ ERROR getting notifications:', error.message);
+        console.error('âŒ ERROR getting notifications:', error.message);
         
         await logUserAction(req.user?.id, 'GET_NOTIFICATIONS_ERROR', '/api/admin/notifications', {
             error: error.message
@@ -4929,7 +4951,7 @@ app.get('/api/admin/notifications/stats', authenticateToken, async (req, res) =>
         res.json(stats);
         
     } catch (error) {
-        console.error('❌ ERROR getting notification stats:', error.message);
+        console.error('âŒ ERROR getting notification stats:', error.message);
         
         await logUserAction(req.user?.id, 'NOTIFICATION_STATS_ERROR', '/api/admin/notifications/stats', {
             error: error.message
@@ -4946,7 +4968,7 @@ app.get('/api/admin/notifications/stats', authenticateToken, async (req, res) =>
 app.get('/api/admin/notifications/check', async (req, res) => {
     try {
         const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-        console.log('🔍 Checking notifications system...');
+        console.log('ðŸ” Checking notifications system...');
         
         // Check if table exists
         const { data, error } = await supabaseAdmin
@@ -4955,7 +4977,7 @@ app.get('/api/admin/notifications/check', async (req, res) => {
             .limit(1);
         
         if (error && error.code === '42P01') {
-            console.log('⚠️ Notifications table does not exist');
+            console.log('âš ï¸ Notifications table does not exist');
             return res.json({
                 exists: false,
                 message: 'Notifications table does not exist',
@@ -4963,7 +4985,7 @@ app.get('/api/admin/notifications/check', async (req, res) => {
             });
         }
         
-        console.log('✅ Notifications system is ready');
+        console.log('âœ… Notifications system is ready');
         
         await logUserAction(null, 'CHECK_NOTIFICATIONS', '/api/admin/notifications/check', {
             exists: true,
@@ -4977,7 +4999,7 @@ app.get('/api/admin/notifications/check', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('❌ ERROR checking notifications system:', error.message);
+        console.error('âŒ ERROR checking notifications system:', error.message);
         
         await logUserAction(null, 'CHECK_NOTIFICATIONS_ERROR', '/api/admin/notifications/check', {
             error: error.message
@@ -5005,19 +5027,19 @@ app.post('/api/admin/notifications/test', authenticateToken, async (req, res) =>
             return res.status(400).json({ error: 'Email is required for test' });
         }
         
-        console.log(`🧪 Sending test notification to ${email}`);
+        console.log(`ðŸ§ª Sending test notification to ${email}`);
         
-        const testSubject = '✅ Test Notification - DukaMkononi System';
+        const testSubject = 'âœ… Test Notification - DukaMkononi System';
         const testMessage = `
             Hii ni taarifa ya majaribio kutoka kwenye mfumo wa DukaMkononi.
             
             Ikiwa unapokea barua pepe hii, inamaanisha mfumo wa kutuma taarifa unafanya kazi kikamilifu!
             
             Mambo yanayojaribiwa:
-            1. ✅ Usafiri wa barua pepe
-            2. ✅ Ujumbe wa HTML
-            3. ✅ Uunganisho na mfumo
-            4. ✅ Kasi ya kutuma
+            1. âœ… Usafiri wa barua pepe
+            2. âœ… Ujumbe wa HTML
+            3. âœ… Uunganisho na mfumo
+            4. âœ… Kasi ya kutuma
             
             Tarehe: ${new Date().toLocaleString('sw-TZ')}
             Mfumo: DukaMkononi Backend v2.0
@@ -5027,7 +5049,7 @@ app.post('/api/admin/notifications/test', authenticateToken, async (req, res) =>
         const emailHtml = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 15px 15px 0 0; text-align: center;">
-                    <h1 style="margin: 0; font-size: 28px;">✅ TEST SUCCESSFUL</h1>
+                    <h1 style="margin: 0; font-size: 28px;">âœ… TEST SUCCESSFUL</h1>
                     <p style="margin: 10px 0 0; opacity: 0.9;">DukaMkononi Notification System</p>
                 </div>
                 <div style="padding: 40px; background-color: #f8f9fa; border-radius: 0 0 15px 15px;">
@@ -5039,24 +5061,24 @@ app.post('/api/admin/notifications/test', authenticateToken, async (req, res) =>
                     
                     <div style="margin-top: 30px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
                         <div style="background-color: #e8f6ef; padding: 15px; border-radius: 8px; border-left: 4px solid #27ae60;">
-                            <div style="font-weight: bold; color: #27ae60; margin-bottom: 5px;">✓ Email Delivery</div>
+                            <div style="font-weight: bold; color: #27ae60; margin-bottom: 5px;">âœ“ Email Delivery</div>
                             <div style="font-size: 12px; color: #666;">Working perfectly</div>
                         </div>
                         <div style="background-color: #e3f2fd; padding: 15px; border-radius: 8px; border-left: 4px solid #2196f3;">
-                            <div style="font-weight: bold; color: #2196f3; margin-bottom: 5px;">✓ System Integration</div>
+                            <div style="font-weight: bold; color: #2196f3; margin-bottom: 5px;">âœ“ System Integration</div>
                             <div style="font-size: 12px; color: #666;">Backend connected</div>
                         </div>
                     </div>
                     
                     <div style="margin-top: 30px; padding: 20px; background-color: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
                         <p style="margin: 0; color: #856404; font-size: 14px;">
-                            <strong>💡 Kumbuka:</strong> Hii ni barua pepe ya majaribio tu. 
+                            <strong>ðŸ’¡ Kumbuka:</strong> Hii ni barua pepe ya majaribio tu. 
                             Ikiwa umepokea hii, mfumo wako wa taarifa unafanya kazi vizuri!
                         </p>
                     </div>
                 </div>
                 <div style="text-align: center; padding: 25px; color: #95a5a6; font-size: 12px; border-top: 1px solid #e0e0e0; background-color: white;">
-                    <p>© ${new Date().getFullYear()} DukaMkononi - Test Email System</p>
+                    <p>Â© ${new Date().getFullYear()} DukaMkononi - Test Email System</p>
                     <p style="font-size: 11px; margin-top: 5px;">Timestamp: ${new Date().toISOString()}</p>
                 </div>
             </div>
@@ -5065,7 +5087,7 @@ app.post('/api/admin/notifications/test', authenticateToken, async (req, res) =>
         const emailResult = await sendEmail(email, testSubject, emailHtml);
         
         if (emailResult.success) {
-            console.log(`✅ Test email sent successfully to ${email}`);
+            console.log(`âœ… Test email sent successfully to ${email}`);
             
             await logUserAction(adminId, 'TEST_NOTIFICATION_SENT', '/api/admin/notifications/test', {
                 recipient: email,
@@ -5081,7 +5103,7 @@ app.post('/api/admin/notifications/test', authenticateToken, async (req, res) =>
                 timestamp: new Date().toISOString()
             });
         } else {
-            console.error(`❌ Test email failed to ${email}:`, emailResult.error);
+            console.error(`âŒ Test email failed to ${email}:`, emailResult.error);
             
             await logUserAction(adminId, 'TEST_NOTIFICATION_FAILED', '/api/admin/notifications/test', {
                 recipient: email,
@@ -5098,7 +5120,7 @@ app.post('/api/admin/notifications/test', authenticateToken, async (req, res) =>
         }
         
     } catch (error) {
-        console.error('❌ ERROR in test notification:', error.message);
+        console.error('âŒ ERROR in test notification:', error.message);
         
         await logUserAction(req.user?.id, 'TEST_NOTIFICATION_ERROR', '/api/admin/notifications/test', {
             error: error.message
@@ -5116,7 +5138,7 @@ app.get('/api/reactions/matangazo/:matangazoId/counts', async (req, res) => {
         const matangazoId = req.params.matangazoId;
         const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
         
-        console.log(`📊 Getting reaction counts for matangazo ${matangazoId} from IP:`, ip);
+        console.log(`ðŸ“Š Getting reaction counts for matangazo ${matangazoId} from IP:`, ip);
         
         const { count: likeCount, error: likeError } = await supabase
             .from('reactions')
@@ -5160,7 +5182,7 @@ app.post('/api/reactions/report', authenticateToken, async (req, res) => {
         const userId = req.user.id;
         const { matangazo_id } = req.body;
         
-        console.log(`🚨 Report action for matangazo ${matangazo_id} by user ${userId}`);
+        console.log(`ðŸš¨ Report action for matangazo ${matangazo_id} by user ${userId}`);
         
         // Update user's last seen
         await supabase
@@ -5206,7 +5228,7 @@ app.post('/api/reactions/report', authenticateToken, async (req, res) => {
         
         if (insertError) throw insertError;
         
-        console.log('✅ Report added:', { userId, matangazo_id });
+        console.log('âœ… Report added:', { userId, matangazo_id });
 
         const { count: reportCount, error: countError } = await supabase
             .from('reactions')
@@ -5245,12 +5267,12 @@ app.post('/api/reactions/report', authenticateToken, async (req, res) => {
 });
 
 // =============================================
-// ✅ REVENUE ENDPOINTS
+// âœ… REVENUE ENDPOINTS
 // =============================================
 app.get('/api/revenue/my', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
-        console.log(`💰 Loading revenue for user ${userId}`);
+        console.log(`ðŸ’° Loading revenue for user ${userId}`);
         
         // Update user's last seen
         await supabase
@@ -5330,7 +5352,7 @@ app.get('/api/revenue/my', authenticateToken, async (req, res) => {
 });
 
 // =============================================
-// ✅ ADMIN USERS ENDPOINT (WITH STATS IN RESPONSE)
+// âœ… ADMIN USERS ENDPOINT (WITH STATS IN RESPONSE)
 // =============================================
 app.get('/api/admin/users', authenticateToken, async (req, res) => {
     try {
@@ -5344,7 +5366,7 @@ app.get('/api/admin/users', authenticateToken, async (req, res) => {
             return res.status(403).json({ error: 'Unauthorized' });
         }
         
-        console.log(`👥 Admin ${userId} viewing all users`);
+        console.log(`ðŸ‘¥ Admin ${userId} viewing all users`);
         
         // 1. GET ALL USERS
         const { data: users, error } = await supabaseAdmin
@@ -5396,8 +5418,8 @@ app.get('/api/admin/users', authenticateToken, async (req, res) => {
             };
         });
         
-        console.log('📊 Users data sent:', usersWithRealTime.length, 'users');
-        console.log('📈 Stats calculated:', stats);
+        console.log('ðŸ“Š Users data sent:', usersWithRealTime.length, 'users');
+        console.log('ðŸ“ˆ Stats calculated:', stats);
         
         await logUserAction(userId, 'ADMIN_USERS_VIEW', '/api/admin/users', { 
             count: usersWithRealTime.length,
@@ -5438,7 +5460,7 @@ app.get('/api/admin/products', authenticateToken, async (req, res) => {
             return res.status(403).json({ error: 'Unauthorized' });
         }
         
-        console.log(`📦 Admin ${userId} viewing all products`);
+        console.log(`ðŸ“¦ Admin ${userId} viewing all products`);
         
         const { data: products, error } = await supabaseAdmin
             .from('products')
@@ -5447,7 +5469,7 @@ app.get('/api/admin/products', authenticateToken, async (req, res) => {
         
         if (error) throw error;
         
-        console.log('📦 All products sent:', products?.length || 0);
+        console.log('ðŸ“¦ All products sent:', products?.length || 0);
         
         await logUserAction(userId, 'ADMIN_PRODUCTS_VIEW', '/api/admin/products', { 
             count: products?.length || 0 
@@ -5472,7 +5494,7 @@ app.get('/api/admin/sales', authenticateToken, async (req, res) => {
             return res.status(403).json({ error: 'Unauthorized' });
         }
         
-        console.log(`💰 Admin ${userId} viewing all sales`);
+        console.log(`ðŸ’° Admin ${userId} viewing all sales`);
         
         const { data: sales, error } = await supabaseAdmin
             .from('sales')
@@ -5481,7 +5503,7 @@ app.get('/api/admin/sales', authenticateToken, async (req, res) => {
         
         if (error) throw error;
         
-        console.log('💰 All sales sent:', sales?.length || 0);
+        console.log('ðŸ’° All sales sent:', sales?.length || 0);
         
         await logUserAction(userId, 'ADMIN_SALES_VIEW', '/api/admin/sales', { 
             count: sales?.length || 0 
@@ -5506,7 +5528,7 @@ app.get('/api/admin/customers', authenticateToken, async (req, res) => {
             return res.status(403).json({ error: 'Unauthorized' });
         }
         
-        console.log(`👥 Admin ${userId} viewing all customers`);
+        console.log(`ðŸ‘¥ Admin ${userId} viewing all customers`);
         
         const { data: customers, error } = await supabaseAdmin
             .from('customers')
@@ -5515,7 +5537,7 @@ app.get('/api/admin/customers', authenticateToken, async (req, res) => {
         
         if (error) throw error;
         
-        console.log('👥 All customers sent:', customers?.length || 0);
+        console.log('ðŸ‘¥ All customers sent:', customers?.length || 0);
         
         await logUserAction(userId, 'ADMIN_CUSTOMERS_VIEW', '/api/admin/customers', { 
             count: customers?.length || 0 
@@ -5540,7 +5562,7 @@ app.get('/api/admin/stats', authenticateToken, async (req, res) => {
             return res.status(403).json({ error: 'Unauthorized' });
         }
 
-        console.log(`📊 Admin ${userId} viewing stats`);
+        console.log(`ðŸ“Š Admin ${userId} viewing stats`);
 
         const { count: totalUsers, error: usersError } = await supabaseAdmin
             .from('users')
@@ -5623,7 +5645,7 @@ app.get('/api/admin/stats', authenticateToken, async (req, res) => {
             serverTime: new Date().toISOString()
         };
 
-        console.log('✅ Admin stats retrieved with real-time data');
+        console.log('âœ… Admin stats retrieved with real-time data');
         
         await logUserAction(userId, 'ADMIN_STATS_VIEW', '/api/admin/stats', stats, req.user_ip, 'success');
         
@@ -5635,7 +5657,7 @@ app.get('/api/admin/stats', authenticateToken, async (req, res) => {
 });
 
 // =============================================
-// ✅ DELETE USER COMPLETELY (HARD DELETE)
+// âœ… DELETE USER COMPLETELY (HARD DELETE)
 // =============================================
 app.delete('/api/admin/users/:id', authenticateToken, async (req, res) => {
     try {
@@ -5651,7 +5673,7 @@ app.delete('/api/admin/users/:id', authenticateToken, async (req, res) => {
             return res.status(403).json({ error: 'Unauthorized' });
         }
 
-        console.log(`🗑️ Admin ${adminId} deleting user ${userId}`);
+        console.log(`ðŸ—‘ï¸ Admin ${adminId} deleting user ${userId}`);
         
         if (userId === adminId) {
             await logUserAction(adminId, 'ADMIN_SELF_DELETE_ATTEMPT', '/api/admin/users/:id', { 
@@ -5687,7 +5709,7 @@ app.delete('/api/admin/users/:id', authenticateToken, async (req, res) => {
         
         if (deleteError) throw deleteError;
 
-        console.log('✅ User deleted completely:', userId);
+        console.log('âœ… User deleted completely:', userId);
         
         await logUserAction(adminId, 'ADMIN_USER_DELETE', '/api/admin/users/:id', { 
             target_user_id: userId,
@@ -5709,7 +5731,7 @@ app.delete('/api/admin/users/:id', authenticateToken, async (req, res) => {
         });
 
     } catch (error) {
-        console.error('❌ ERROR deleting user:', error.message);
+        console.error('âŒ ERROR deleting user:', error.message);
         await logUserAction(req.user?.id, 'ADMIN_USER_DELETE_ERROR', '/api/admin/users/:id', { 
             error: error.message,
             target_user_id: req.params.id 
@@ -5737,7 +5759,7 @@ app.put('/api/admin/users/:id/status', authenticateToken, async (req, res) => {
             return res.status(403).json({ error: 'Unauthorized' });
         }
 
-        console.log(`🔄 Admin ${adminId} updating user ${userId} status to ${status}`);
+        console.log(`ðŸ”„ Admin ${adminId} updating user ${userId} status to ${status}`);
 
         if (!['pending', 'approved', 'rejected'].includes(status)) {
             await logUserAction(adminId, 'ADMIN_STATUS_UPDATE_FAILED', `/api/admin/users/${userId}/status`, { 
@@ -5752,7 +5774,7 @@ app.put('/api/admin/users/:id/status', authenticateToken, async (req, res) => {
         // Pata taarifa za user (sasa na previous_status column)
         const { data: targetUser, error: fetchError } = await supabaseAdmin
             .from('users')
-            .select('email, role, status, previous_status')  // ← SASA INA COLUMN
+            .select('email, role, status, previous_status')  // â† SASA INA COLUMN
             .eq('id', userId)
             .single();
         
@@ -5765,14 +5787,14 @@ app.put('/api/admin/users/:id/status', authenticateToken, async (req, res) => {
             .from('users')
             .update({ 
                 status,
-                previous_status: currentStatus,  // ← Hifadhi status ya sasa
+                previous_status: currentStatus,  // â† Hifadhi status ya sasa
                 updated_at: new Date().toISOString()
             })
             .eq('id', userId);
 
         if (error) throw error;
 
-        console.log('✅ User status updated:', userId, 
+        console.log('âœ… User status updated:', userId, 
             'from', currentStatus, 'to', status);
         
         await logUserAction(adminId, 'ADMIN_STATUS_UPDATE', 
@@ -5782,14 +5804,14 @@ app.put('/api/admin/users/:id/status', authenticateToken, async (req, res) => {
                 target_role: targetUser?.role,
                 old_status: currentStatus,
                 new_status: status,
-                previous_status_saved: true  // ← Mpya
+                previous_status_saved: true  // â† Mpya
             }, req.user_ip, 'success');
         
         res.json({
             message: 'Status imesasishwa kikamilifu!',
             userId: userId,
             status: status,
-            previous_status: currentStatus  // ← Rudisha kwenye response
+            previous_status: currentStatus  // â† Rudisha kwenye response
         });
 
     } catch (error) {
@@ -5803,11 +5825,11 @@ app.put('/api/admin/users/:id/status', authenticateToken, async (req, res) => {
 });
 
 // =============================================
-// ✅ PASSWORD RESET ENDPOINTS
+// âœ… PASSWORD RESET ENDPOINTS
 // =============================================
 app.post('/api/forgot-password', async (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    console.log('📨 FORGOT PASSWORD REQUEST:', req.body.email, 'Role:', req.body.role, 'IP:', ip);
+    console.log('ðŸ“¨ FORGOT PASSWORD REQUEST:', req.body.email, 'Role:', req.body.role, 'IP:', ip);
     
     const { email, role } = req.body;
 
@@ -5853,7 +5875,7 @@ app.post('/api/forgot-password', async (req, res) => {
             { expiresIn: '1h' }
         );
 
-        console.log('✅ Password reset token generated:', user.email);
+        console.log('âœ… Password reset token generated:', user.email);
         
         await logUserAction(user.id, 'FORGOT_PASSWORD_REQUEST', '/api/forgot-password', { 
             token_generated: true 
@@ -5866,7 +5888,7 @@ app.post('/api/forgot-password', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('❌ FORGOT PASSWORD ERROR:', error.message);
+        console.error('âŒ FORGOT PASSWORD ERROR:', error.message);
         await logUserAction(null, 'FORGOT_PASSWORD_ERROR', '/api/forgot-password', { 
             error: error.message,
             email: email,
@@ -5879,7 +5901,7 @@ app.post('/api/forgot-password', async (req, res) => {
 
 app.post('/api/reset-password', async (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    console.log('📨 RESET PASSWORD REQUEST IP:', ip);
+    console.log('ðŸ“¨ RESET PASSWORD REQUEST IP:', ip);
     
     const { token, newPassword } = req.body;
 
@@ -5925,7 +5947,7 @@ app.post('/api/reset-password', async (req, res) => {
 
         if (error) throw error;
 
-        console.log('✅ Password reset successful:', decoded.email);
+        console.log('âœ… Password reset successful:', decoded.email);
         
         await logUserAction(userId, 'PASSWORD_RESET', '/api/reset-password', { 
             reset_successful: true 
@@ -5951,7 +5973,7 @@ app.post('/api/reset-password', async (req, res) => {
             return res.status(400).json({ error: 'Token si sahihi' });
         }
         
-        console.error('❌ RESET PASSWORD ERROR:', error.message);
+        console.error('âŒ RESET PASSWORD ERROR:', error.message);
         await logUserAction(null, 'RESET_PASSWORD_ERROR', '/api/reset-password', { 
             error: error.message 
         }, ip, 'failed');
@@ -5961,14 +5983,14 @@ app.post('/api/reset-password', async (req, res) => {
 });
 
 // =============================================
-// ✅ PESAPAL PAYMENT ENDPOINTS
+// âœ… PESAPAL PAYMENT ENDPOINTS
 // =============================================
 app.post('/api/payments/pesapal/initiate', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
         const { amount, description, matangazo_id, phone, email, name } = req.body;
         
-        console.log('💰 Initiating PesaPal payment for user:', userId, 'Amount:', amount);
+        console.log('ðŸ’° Initiating PesaPal payment for user:', userId, 'Amount:', amount);
         
         // Update user's last seen
         await supabase
@@ -6045,7 +6067,7 @@ app.post('/api/payments/pesapal/initiate', authenticateToken, async (req, res) =
         
         if (paymentError) throw paymentError;
 
-        console.log('✅ PesaPal payment initiated:', {
+        console.log('âœ… PesaPal payment initiated:', {
             order_tracking_id,
             amount,
             user_id: userId,
@@ -6072,7 +6094,7 @@ app.post('/api/payments/pesapal/initiate', authenticateToken, async (req, res) =
         });
         
     } catch (error) {
-        console.error('❌ ERROR initiating PesaPal payment:', error.message);
+        console.error('âŒ ERROR initiating PesaPal payment:', error.message);
         await logUserAction(req.user?.id, 'PAYMENT_INITIATE_ERROR', '/api/payments/pesapal/initiate', { 
             error: error.message 
         }, req.user_ip, 'failed');
@@ -6089,7 +6111,7 @@ app.get('/api/payments/pesapal/status/:order_tracking_id', authenticateToken, as
         const order_tracking_id = req.params.order_tracking_id;
         const userId = req.user.id;
         
-        console.log(`🔍 Checking PesaPal status for order: ${order_tracking_id} by user: ${userId}`);
+        console.log(`ðŸ” Checking PesaPal status for order: ${order_tracking_id} by user: ${userId}`);
         
         // Update user's last seen
         await supabase
@@ -6209,7 +6231,7 @@ app.get('/api/payments/pesapal/status/:order_tracking_id', authenticateToken, as
             });
             
         } catch (pesapalError) {
-            console.error('❌ PesaPal status check failed:', pesapalError.message);
+            console.error('âŒ PesaPal status check failed:', pesapalError.message);
             
             await logUserAction(userId, 'PAYMENT_STATUS_CHECK_ERROR', `/api/payments/pesapal/status/${order_tracking_id}`, { 
                 order_tracking_id: order_tracking_id,
@@ -6224,7 +6246,7 @@ app.get('/api/payments/pesapal/status/:order_tracking_id', authenticateToken, as
         }
         
     } catch (error) {
-        console.error('❌ ERROR checking PesaPal status:', error.message);
+        console.error('âŒ ERROR checking PesaPal status:', error.message);
         
         await logUserAction(req.user?.id, 'PAYMENT_STATUS_CHECK_ERROR', `/api/payments/pesapal/status/${req.params.order_tracking_id}`, { 
             error: error.message 
@@ -6239,12 +6261,12 @@ app.get('/api/payments/pesapal/status/:order_tracking_id', authenticateToken, as
 
 app.post('/api/payments/pesapal-ipn', async (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    console.log('📢 PESA PAL IPN RECEIVED from IP:', ip, 'Body:', req.body);
+    console.log('ðŸ“¢ PESA PAL IPN RECEIVED from IP:', ip, 'Body:', req.body);
     
     try {
         const { OrderTrackingId, OrderNotificationType, OrderMerchantReference, Status } = req.body;
         
-        console.log('🔍 IPN Details:', {
+        console.log('ðŸ” IPN Details:', {
             OrderTrackingId,
             OrderNotificationType,
             OrderMerchantReference,
@@ -6252,7 +6274,7 @@ app.post('/api/payments/pesapal-ipn', async (req, res) => {
         });
 
         if (!OrderTrackingId) {
-            console.log('⚠️ IPN without OrderTrackingId');
+            console.log('âš ï¸ IPN without OrderTrackingId');
             
             await logUserAction(null, 'PESAPAL_IPN_FAILED', '/api/payments/pesapal-ipn', { 
                 reason: 'Missing OrderTrackingId' 
@@ -6279,7 +6301,7 @@ app.post('/api/payments/pesapal-ipn', async (req, res) => {
                 else if (Status === 'FAILED') paymentStatus = 'failed';
                 else if (Status === 'PENDING') paymentStatus = 'pending';
 
-                console.log(`🔄 Processing IPN for ${OrderTrackingId}: ${paymentStatus}`);
+                console.log(`ðŸ”„ Processing IPN for ${OrderTrackingId}: ${paymentStatus}`);
 
                 const { data: payment, error: paymentError } = await supabaseAdmin
                     .from('payments')
@@ -6288,7 +6310,7 @@ app.post('/api/payments/pesapal-ipn', async (req, res) => {
                     .single();
                 
                 if (paymentError) {
-                    console.error('❌ Payment not found:', paymentError.message);
+                    console.error('âŒ Payment not found:', paymentError.message);
                     return;
                 }
 
@@ -6307,9 +6329,9 @@ app.post('/api/payments/pesapal-ipn', async (req, res) => {
                     .eq('order_tracking_id', OrderTrackingId);
                 
                 if (updateError) {
-                    console.error('❌ Error updating payment:', updateError.message);
+                    console.error('âŒ Error updating payment:', updateError.message);
                 } else {
-                    console.log(`✅ Payment updated: ${OrderTrackingId} -> ${paymentStatus}`);
+                    console.log(`âœ… Payment updated: ${OrderTrackingId} -> ${paymentStatus}`);
                     
                     await logUserAction(payment.user_id, 'PAYMENT_STATUS_UPDATED_IPN', 'IPN_PROCESSING', { 
                         order_tracking_id: OrderTrackingId,
@@ -6330,19 +6352,19 @@ app.post('/api/payments/pesapal-ipn', async (req, res) => {
                         .eq('id', payment.matangazo_id);
                     
                     if (matangazoError) {
-                        console.error('❌ Error updating matangazo:', matangazoError.message);
+                        console.error('âŒ Error updating matangazo:', matangazoError.message);
                     } else {
-                        console.log(`✅ Matangazo updated: ${payment.matangazo_id} -> paid`);
+                        console.log(`âœ… Matangazo updated: ${payment.matangazo_id} -> paid`);
                     }
                 }
 
             } catch (asyncError) {
-                console.error('❌ ASYNC IPN PROCESSING ERROR:', asyncError.message);
+                console.error('âŒ ASYNC IPN PROCESSING ERROR:', asyncError.message);
             }
         }, 1000);
         
     } catch (error) {
-        console.error('❌ IPN PROCESSING ERROR:', error.message);
+        console.error('âŒ IPN PROCESSING ERROR:', error.message);
         
         await logUserAction(null, 'PESAPAL_IPN_ERROR', '/api/payments/pesapal-ipn', { 
             error: error.message 
@@ -6357,13 +6379,13 @@ app.post('/api/payments/pesapal-ipn', async (req, res) => {
 
 app.post('/api/payments/pesapal-callback', async (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    console.log('🔄 PESA PAL CALLBACK RECEIVED from IP:', ip, 'Body:', req.body);
+    console.log('ðŸ”„ PESA PAL CALLBACK RECEIVED from IP:', ip, 'Body:', req.body);
     
     try {
         const { OrderTrackingId, OrderMerchantReference, Status } = req.body;
         
         if (OrderTrackingId) {
-            console.log('✅ Callback processed for:', OrderTrackingId, 'Status:', Status);
+            console.log('âœ… Callback processed for:', OrderTrackingId, 'Status:', Status);
             
             let paymentStatus = 'pending';
             if (Status === 'COMPLETED') paymentStatus = 'completed';
@@ -6412,7 +6434,7 @@ app.post('/api/payments/pesapal-callback', async (req, res) => {
                     }, ip, 'success');
                 }
                 
-                console.log('✅ Payment completed:', OrderTrackingId);
+                console.log('âœ… Payment completed:', OrderTrackingId);
             }
         }
         
@@ -6429,7 +6451,7 @@ app.post('/api/payments/pesapal-callback', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('❌ CALLBACK ERROR:', error.message);
+        console.error('âŒ CALLBACK ERROR:', error.message);
         
         await logUserAction(null, 'PESAPAL_CALLBACK_ERROR', '/api/payments/pesapal-callback', { 
             error: error.message 
@@ -6444,12 +6466,12 @@ app.post('/api/payments/pesapal-callback', async (req, res) => {
 });
 
 // =============================================
-// ✅ PAYMENT ENDPOINTS
+// âœ… PAYMENT ENDPOINTS
 // =============================================
 app.get('/api/payments/my', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
-        console.log(`💰 Loading payments for user ${userId}`);
+        console.log(`ðŸ’° Loading payments for user ${userId}`);
         
         // Update user's last seen
         await supabase
@@ -6465,7 +6487,7 @@ app.get('/api/payments/my', authenticateToken, async (req, res) => {
         
         if (error) throw error;
         
-        console.log(`✅ Payments loaded for user ${userId}:`, payments?.length || 0);
+        console.log(`âœ… Payments loaded for user ${userId}:`, payments?.length || 0);
         
         await logUserAction(userId, 'PAYMENTS_VIEW_MY', '/api/payments/my', { 
             count: payments?.length || 0 
@@ -6484,7 +6506,7 @@ app.get('/api/payments/:id', authenticateToken, async (req, res) => {
         const paymentId = req.params.id;
         const userId = req.user.id;
         
-        console.log(`🔍 Getting payment ${paymentId} for user ${userId}`);
+        console.log(`ðŸ” Getting payment ${paymentId} for user ${userId}`);
         
         // Update user's last seen
         await supabase
@@ -6546,7 +6568,7 @@ app.get('/api/admin/payments', authenticateToken, async (req, res) => {
             return res.status(403).json({ error: 'Unauthorized' });
         }
         
-        console.log(`💰 Admin ${userId} viewing all payments`);
+        console.log(`ðŸ’° Admin ${userId} viewing all payments`);
         
         const { data: payments, error } = await supabaseAdmin
             .from('payments')
@@ -6555,7 +6577,7 @@ app.get('/api/admin/payments', authenticateToken, async (req, res) => {
         
         if (error) throw error;
         
-        console.log('💰 All payments sent:', payments?.length || 0);
+        console.log('ðŸ’° All payments sent:', payments?.length || 0);
         
         await logUserAction(userId, 'ADMIN_PAYMENTS_VIEW', '/api/admin/payments', { 
             count: payments?.length || 0 
@@ -6571,7 +6593,7 @@ app.get('/api/admin/payments', authenticateToken, async (req, res) => {
 
 app.post('/api/payments/simulate', async (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    console.log('🎭 Simulating payment from IP:', ip, 'Body:', req.body);
+    console.log('ðŸŽ­ Simulating payment from IP:', ip, 'Body:', req.body);
     
     try {
         const { order_tracking_id, status } = req.body;
@@ -6626,7 +6648,7 @@ app.post('/api/payments/simulate', async (req, res) => {
                 .eq('id', payment.matangazo_id);
         }
 
-        console.log(`✅ Payment simulated: ${order_tracking_id} -> ${status}`);
+        console.log(`âœ… Payment simulated: ${order_tracking_id} -> ${status}`);
         
         await logUserAction(payment.user_id, 'PAYMENT_SIMULATED', '/api/payments/simulate', { 
             order_tracking_id: order_tracking_id,
@@ -6643,7 +6665,7 @@ app.post('/api/payments/simulate', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('❌ ERROR simulating payment:', error.message);
+        console.error('âŒ ERROR simulating payment:', error.message);
         
         await logUserAction(null, 'PAYMENT_SIMULATE_ERROR', '/api/payments/simulate', { 
             error: error.message 
@@ -6661,7 +6683,7 @@ app.post('/api/payments/record', authenticateToken, async (req, res) => {
         const userId = req.user.id;
         const { order_tracking_id, amount, status, description, matangazo_id } = req.body;
         
-        console.log('📝 Recording payment for user:', userId, 'Data:', req.body);
+        console.log('ðŸ“ Recording payment for user:', userId, 'Data:', req.body);
         
         // Update user's last seen
         await supabase
@@ -6688,7 +6710,7 @@ app.post('/api/payments/record', authenticateToken, async (req, res) => {
         
         if (error) throw error;
         
-        console.log('✅ Payment record saved:', order_tracking_id);
+        console.log('âœ… Payment record saved:', order_tracking_id);
         
         await logUserAction(userId, 'PAYMENT_RECORDED', '/api/payments/record', { 
             order_tracking_id: order_tracking_id,
@@ -6709,7 +6731,7 @@ app.get('/api/payments/status/:order_tracking_id', authenticateToken, async (req
         const order_tracking_id = req.params.order_tracking_id;
         const userId = req.user.id;
         
-        console.log(`🔍 Checking payment status for: ${order_tracking_id} by user: ${userId}`);
+        console.log(`ðŸ” Checking payment status for: ${order_tracking_id} by user: ${userId}`);
         
         // Update user's last seen
         await supabase
@@ -6752,11 +6774,11 @@ app.get('/api/payments/status/:order_tracking_id', authenticateToken, async (req
 
 
 // =============================================
-// ✅ BUSINESS ENDPOINTS (PUBLIC)
+// âœ… BUSINESS ENDPOINTS (PUBLIC)
 // =============================================
 app.get('/api/businesses', async (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    console.log('📨 GET /api/businesses request IP:', ip);
+    console.log('ðŸ“¨ GET /api/businesses request IP:', ip);
     
     try {
         const { data: users, error } = await supabase
@@ -6767,7 +6789,7 @@ app.get('/api/businesses', async (req, res) => {
             .order('created_at', { ascending: false });
         
         if (error) {
-            console.error('❌ Database error:', error);
+            console.error('âŒ Database error:', error);
             
             await logUserAction(null, 'BUSINESSES_VIEW_ERROR', '/api/businesses', { 
                 error: error.message 
@@ -6779,7 +6801,7 @@ app.get('/api/businesses', async (req, res) => {
             });
         }
         
-        console.log('🏢 Businesses found:', users?.length || 0);
+        console.log('ðŸ¢ Businesses found:', users?.length || 0);
         
         await logUserAction(null, 'BUSINESSES_VIEW', '/api/businesses', { 
             count: users?.length || 0 
@@ -6788,7 +6810,7 @@ app.get('/api/businesses', async (req, res) => {
         res.json(users || []);
         
     } catch (error) {
-        console.error('❌ ERROR in /api/businesses:', error.message);
+        console.error('âŒ ERROR in /api/businesses:', error.message);
         await logUserAction(null, 'BUSINESSES_VIEW_ERROR', '/api/businesses', { error: error.message }, ip, 'failed');
         
         res.status(500).json({ 
@@ -6802,7 +6824,7 @@ app.get('/api/businesses/:businessId/products', async (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     const businessId = req.params.businessId;
     
-    console.log(`📦 Getting products for business ID: ${businessId} from IP:`, ip);
+    console.log(`ðŸ“¦ Getting products for business ID: ${businessId} from IP:`, ip);
     
     try {
         const { data: business, error: businessError } = await supabase
@@ -6814,7 +6836,7 @@ app.get('/api/businesses/:businessId/products', async (req, res) => {
             .single();
         
         if (businessError || !business) {
-            console.log('⚠️ Business not found or not approved');
+            console.log('âš ï¸ Business not found or not approved');
             
             await logUserAction(null, 'BUSINESS_PRODUCTS_FAILED', `/api/businesses/${businessId}/products`, { 
                 reason: 'Business not found or not approved',
@@ -6832,7 +6854,7 @@ app.get('/api/businesses/:businessId/products', async (req, res) => {
             .order('name', { ascending: true });
         
         if (productsError) {
-            console.error('❌ Error fetching products:', productsError);
+            console.error('âŒ Error fetching products:', productsError);
             
             await logUserAction(null, 'BUSINESS_PRODUCTS_ERROR', `/api/businesses/${businessId}/products`, { 
                 error: productsError.message,
@@ -6842,7 +6864,7 @@ app.get('/api/businesses/:businessId/products', async (req, res) => {
             return res.json([]);
         }
         
-        console.log(`✅ Found ${products?.length || 0} products for business ${business.business_name}`);
+        console.log(`âœ… Found ${products?.length || 0} products for business ${business.business_name}`);
         
         await logUserAction(null, 'BUSINESS_PRODUCTS_VIEW', `/api/businesses/${businessId}/products`, { 
             business_id: businessId,
@@ -6853,7 +6875,7 @@ app.get('/api/businesses/:businessId/products', async (req, res) => {
         res.json(products || []);
         
     } catch (error) {
-        console.error('❌ ERROR getting business products:', error.message);
+        console.error('âŒ ERROR getting business products:', error.message);
         
         await logUserAction(null, 'BUSINESS_PRODUCTS_ERROR', `/api/businesses/${businessId}/products`, { 
             error: error.message,
@@ -6869,7 +6891,7 @@ app.get('/api/businesses/:businessId/products', async (req, res) => {
 
 app.get('/api/test/businesses', async (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    console.log('🧪 Testing businesses endpoint from IP:', ip);
+    console.log('ðŸ§ª Testing businesses endpoint from IP:', ip);
     
     try {
         const { data: allAdmins, error: countError } = await supabase
@@ -6878,7 +6900,7 @@ app.get('/api/test/businesses', async (req, res) => {
             .eq('role', 'admin');
         
         if (countError) {
-            console.error('❌ Count error:', countError);
+            console.error('âŒ Count error:', countError);
             
             await logUserAction(null, 'TEST_BUSINESSES_ERROR', '/api/test/businesses', { 
                 error: countError.message 
@@ -6894,7 +6916,7 @@ app.get('/api/test/businesses', async (req, res) => {
             .eq('status', 'approved');
         
         if (approvedError) {
-            console.error('❌ Approved error:', approvedError);
+            console.error('âŒ Approved error:', approvedError);
             
             await logUserAction(null, 'TEST_BUSINESSES_ERROR', '/api/test/businesses', { 
                 error: approvedError.message 
@@ -6918,7 +6940,7 @@ app.get('/api/test/businesses', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('❌ TEST ERROR:', error.message);
+        console.error('âŒ TEST ERROR:', error.message);
         
         await logUserAction(null, 'TEST_BUSINESSES_ERROR', '/api/test/businesses', { 
             error: error.message 
@@ -6936,7 +6958,7 @@ app.get('/api/check-business-name', async (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     const { business_name } = req.query;
     
-    console.log(`🔍 Checking business name: "${business_name}" from IP:`, ip);
+    console.log(`ðŸ” Checking business name: "${business_name}" from IP:`, ip);
     
     try {
         if (!business_name) {
@@ -6974,7 +6996,7 @@ app.get('/api/check-business-name', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('❌ ERROR checking business name:', error.message);
+        console.error('âŒ ERROR checking business name:', error.message);
         
         await logUserAction(null, 'CHECK_BUSINESS_NAME_ERROR', '/api/check-business-name', { 
             error: error.message,
@@ -6992,7 +7014,7 @@ app.get('/api/businesses/:id', async (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     const businessId = req.params.id;
     
-    console.log(`🏢 Getting business with ID: ${businessId} from IP:`, ip);
+    console.log(`ðŸ¢ Getting business with ID: ${businessId} from IP:`, ip);
     
     try {
         const { data: business, error } = await supabase
@@ -7020,7 +7042,7 @@ app.get('/api/businesses/:id', async (req, res) => {
         res.json(business);
         
     } catch (error) {
-        console.error('❌ ERROR getting business:', error.message);
+        console.error('âŒ ERROR getting business:', error.message);
         
         await logUserAction(null, 'BUSINESS_VIEW_ERROR', `/api/businesses/${businessId}`, { 
             error: error.message,
@@ -7038,7 +7060,7 @@ app.get('/api/businesses/search/:query', async (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     const { query } = req.params;
     
-    console.log(`🔍 Searching businesses for: "${query}" from IP:`, ip);
+    console.log(`ðŸ” Searching businesses for: "${query}" from IP:`, ip);
     
     try {
         const { data: businesses, error } = await supabase
@@ -7051,7 +7073,7 @@ app.get('/api/businesses/search/:query', async (req, res) => {
         
         if (error) throw error;
         
-        console.log(`🔍 Found ${businesses?.length || 0} businesses for search: ${query}`);
+        console.log(`ðŸ” Found ${businesses?.length || 0} businesses for search: ${query}`);
         
         await logUserAction(null, 'BUSINESS_SEARCH', `/api/businesses/search/${query}`, { 
             search_query: query,
@@ -7061,7 +7083,7 @@ app.get('/api/businesses/search/:query', async (req, res) => {
         res.json(businesses || []);
         
     } catch (error) {
-        console.error('❌ ERROR searching businesses:', error.message);
+        console.error('âŒ ERROR searching businesses:', error.message);
         
         await logUserAction(null, 'BUSINESS_SEARCH_ERROR', `/api/businesses/search/${query}`, { 
             error: error.message,
@@ -7077,7 +7099,7 @@ app.get('/api/businesses/search/:query', async (req, res) => {
 
 app.post('/api/check-business', async (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    console.log('📨 CHECK BUSINESS REQUEST from IP:', ip, 'Body:', req.body);
+    console.log('ðŸ“¨ CHECK BUSINESS REQUEST from IP:', ip, 'Body:', req.body);
     
     try {
         const { business_name } = req.body;
@@ -7098,7 +7120,7 @@ app.post('/api/check-business', async (req, res) => {
             .eq('status', 'approved');
 
         if (adminError) {
-            console.error('❌ Database error checking business:', adminError);
+            console.error('âŒ Database error checking business:', adminError);
             
             await logUserAction(null, 'CHECK_BUSINESS_ERROR', '/api/check-business', { 
                 error: adminError.message,
@@ -7114,7 +7136,7 @@ app.post('/api/check-business', async (req, res) => {
         const hasApprovedAdmin = adminUsers && adminUsers.length > 0;
         
         if (hasApprovedAdmin) {
-            console.log(`✅ Business exists with approved admin: "${business_name}"`);
+            console.log(`âœ… Business exists with approved admin: "${business_name}"`);
             
             await logUserAction(null, 'CHECK_BUSINESS_SUCCESS', '/api/check-business', { 
                 business_name: business_name,
@@ -7138,7 +7160,7 @@ app.post('/api/check-business', async (req, res) => {
             .in('role', ['admin', 'seller']);
 
         if (businessError) {
-            console.error('❌ Database error checking business users:', businessError);
+            console.error('âŒ Database error checking business users:', businessError);
             
             await logUserAction(null, 'CHECK_BUSINESS_ERROR', '/api/check-business', { 
                 error: businessError.message,
@@ -7154,7 +7176,7 @@ app.post('/api/check-business', async (req, res) => {
         const businessExists = anyBusinessUsers && anyBusinessUsers.length > 0;
         
         if (businessExists) {
-            console.log(`⚠️ Business exists but no approved admin: "${business_name}"`);
+            console.log(`âš ï¸ Business exists but no approved admin: "${business_name}"`);
             
             await logUserAction(null, 'CHECK_BUSINESS_SUCCESS', '/api/check-business', { 
                 business_name: business_name,
@@ -7171,7 +7193,7 @@ app.post('/api/check-business', async (req, res) => {
             });
         }
 
-        console.log(`❌ Business doesn't exist: "${business_name}"`);
+        console.log(`âŒ Business doesn't exist: "${business_name}"`);
         
         await logUserAction(null, 'CHECK_BUSINESS_SUCCESS', '/api/check-business', { 
             business_name: business_name,
@@ -7186,7 +7208,7 @@ app.post('/api/check-business', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('❌ ERROR in /api/check-business:', error.message);
+        console.error('âŒ ERROR in /api/check-business:', error.message);
         
         await logUserAction(null, 'CHECK_BUSINESS_ERROR', '/api/check-business', { 
             error: error.message,
@@ -7204,7 +7226,7 @@ app.get('/api/business/by-name/:business_name', async (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     const { business_name } = req.params;
     
-    console.log(`🔍 Looking for business: "${business_name}" from IP:`, ip);
+    console.log(`ðŸ” Looking for business: "${business_name}" from IP:`, ip);
     
     try {
         const decodedBusinessName = decodeURIComponent(business_name);
@@ -7218,7 +7240,7 @@ app.get('/api/business/by-name/:business_name', async (req, res) => {
             .order('created_at', { ascending: false });
 
         if (error) {
-            console.error('❌ Database error:', error);
+            console.error('âŒ Database error:', error);
             
             await logUserAction(null, 'BUSINESS_BY_NAME_ERROR', `/api/business/by-name/${business_name}`, { 
                 error: error.message,
@@ -7233,7 +7255,7 @@ app.get('/api/business/by-name/:business_name', async (req, res) => {
 
         const businessExists = businesses && businesses.length > 0;
         
-        console.log(`🏪 Business "${decodedBusinessName}" exists: ${businessExists}`);
+        console.log(`ðŸª Business "${decodedBusinessName}" exists: ${businessExists}`);
         
         if (!businessExists) {
             await logUserAction(null, 'BUSINESS_BY_NAME_NOT_FOUND', `/api/business/by-name/${business_name}`, { 
@@ -7265,7 +7287,7 @@ app.get('/api/business/by-name/:business_name', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('❌ ERROR getting business by name:', error.message);
+        console.error('âŒ ERROR getting business by name:', error.message);
         
         await logUserAction(null, 'BUSINESS_BY_NAME_ERROR', `/api/business/by-name/${business_name}`, { 
             error: error.message,
@@ -7280,14 +7302,14 @@ app.get('/api/business/by-name/:business_name', async (req, res) => {
 });
 
 // =============================================
-// ✅ NEW ENDPOINT: GET ALL BUSINESS PRODUCTS
+// âœ… NEW ENDPOINT: GET ALL BUSINESS PRODUCTS
 // =============================================
 app.get('/api/business/:businessName/all-products', authenticateToken, async (req, res) => {
   try {
     const { businessName } = req.params;
     const userId = req.user.id;
     
-    console.log(`📦 Loading ALL products for business: "${businessName}" requested by user: ${userId}`);
+    console.log(`ðŸ“¦ Loading ALL products for business: "${businessName}" requested by user: ${userId}`);
     
     const { data: businessUsers, error: usersError } = await supabase
       .from('users')
@@ -7297,12 +7319,12 @@ app.get('/api/business/:businessName/all-products', authenticateToken, async (re
       .eq('status', 'approved');
     
     if (usersError) {
-      console.error('❌ Error fetching business users:', usersError);
+      console.error('âŒ Error fetching business users:', usersError);
       throw usersError;
     }
     
     if (!businessUsers || businessUsers.length === 0) {
-      console.log(`⚠️ No approved users found for business: "${businessName}"`);
+      console.log(`âš ï¸ No approved users found for business: "${businessName}"`);
       
       await logUserAction(userId, 'BUSINESS_PRODUCTS_FAILED', `/api/business/${businessName}/all-products`, { 
         reason: 'No approved users found',
@@ -7313,7 +7335,7 @@ app.get('/api/business/:businessName/all-products', authenticateToken, async (re
     }
     
     const sellerIds = businessUsers.map(user => user.id);
-    console.log(`👥 Found ${businessUsers.length} users in business ${businessName}`);
+    console.log(`ðŸ‘¥ Found ${businessUsers.length} users in business ${businessName}`);
     
     const { data: allProducts, error: productsError } = await supabase
       .from('products')
@@ -7323,11 +7345,11 @@ app.get('/api/business/:businessName/all-products', authenticateToken, async (re
       .order('name', { ascending: true });
     
     if (productsError) {
-      console.error('❌ Error fetching business products:', productsError);
+      console.error('âŒ Error fetching business products:', productsError);
       throw productsError;
     }
     
-    console.log(`✅ Found ${allProducts?.length || 0} active products in business ${businessName}`);
+    console.log(`âœ… Found ${allProducts?.length || 0} active products in business ${businessName}`);
     
     const productsWithSellerInfo = (allProducts || []).map(product => {
       const seller = businessUsers.find(user => user.id === product.seller_id);
@@ -7348,7 +7370,7 @@ app.get('/api/business/:businessName/all-products', authenticateToken, async (re
     res.json(productsWithSellerInfo);
     
   } catch (error) {
-    console.error('❌ ERROR in /api/business/:businessName/all-products:', error.message);
+    console.error('âŒ ERROR in /api/business/:businessName/all-products:', error.message);
     
     await logUserAction(req.user?.id, 'BUSINESS_PRODUCTS_ERROR', `/api/business/${req.params.businessName}/all-products`, { 
       error: error.message,
@@ -7378,7 +7400,7 @@ app.get('/api/business/:businessName/all-products', authenticateToken, async (re
           .order('name', { ascending: true });
         
         if (!adminProductsError && adminProducts) {
-          console.log(`✅ Fallback: Found ${adminProducts.length} admin products`);
+          console.log(`âœ… Fallback: Found ${adminProducts.length} admin products`);
           
           const productsWithSellerInfo = (adminProducts || []).map(product => ({
             ...product,
@@ -7396,7 +7418,7 @@ app.get('/api/business/:businessName/all-products', authenticateToken, async (re
         }
       }
     } catch (fallbackError) {
-      console.error('❌ Fallback also failed:', fallbackError.message);
+      console.error('âŒ Fallback also failed:', fallbackError.message);
     }
     
     res.status(500).json({ 
@@ -7407,7 +7429,7 @@ app.get('/api/business/:businessName/all-products', authenticateToken, async (re
 });
 
 // =============================================
-// ✅ USER LOGS ENDPOINTS (ADMIN ONLY)
+// âœ… USER LOGS ENDPOINTS (ADMIN ONLY)
 // =============================================
 app.get('/api/admin/logs', authenticateToken, async (req, res) => {
     try {
@@ -7421,7 +7443,7 @@ app.get('/api/admin/logs', authenticateToken, async (req, res) => {
             return res.status(403).json({ error: 'Unauthorized' });
         }
         
-        console.log(`📋 Admin ${adminId} viewing logs`);
+        console.log(`ðŸ“‹ Admin ${adminId} viewing logs`);
         
         const { data: logs, error } = await supabaseAdmin
             .from('user_logs')
@@ -7456,7 +7478,7 @@ app.get('/api/admin/logs/search', authenticateToken, async (req, res) => {
             return res.status(403).json({ error: 'Unauthorized' });
         }
         
-        console.log(`🔍 Admin ${adminId} searching logs with filters:`, req.query);
+        console.log(`ðŸ” Admin ${adminId} searching logs with filters:`, req.query);
         
         let query = supabaseAdmin
             .from('user_logs')
@@ -7520,7 +7542,7 @@ app.delete('/api/admin/logs/cleanup', authenticateToken, async (req, res) => {
             return res.status(403).json({ error: 'Unauthorized' });
         }
         
-        console.log(`🧹 Admin ${adminId} cleaning up logs older than ${days} days`);
+        console.log(`ðŸ§¹ Admin ${adminId} cleaning up logs older than ${days} days`);
         
         const cutoffDate = new Date();
         cutoffDate.setDate(cutoffDate.getDate() - parseInt(days));
@@ -7541,7 +7563,7 @@ app.delete('/api/admin/logs/cleanup', authenticateToken, async (req, res) => {
         
         const deletedCount = logsToDelete?.length || 0;
         
-        console.log(`✅ Cleaned up ${deletedCount} log entries`);
+        console.log(`âœ… Cleaned up ${deletedCount} log entries`);
         
         await logUserAction(adminId, 'ADMIN_LOGS_CLEANUP', '/api/admin/logs/cleanup', { 
             deleted_count: deletedCount,
@@ -7570,12 +7592,12 @@ app.delete('/api/admin/logs/cleanup', authenticateToken, async (req, res) => {
 });
 
 // =============================================
-// ✅ USER ACTIVITY ENDPOINTS
+// âœ… USER ACTIVITY ENDPOINTS
 // =============================================
 app.get('/api/user/activity', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
-        console.log(`📊 Loading activity for user ${userId}`);
+        console.log(`ðŸ“Š Loading activity for user ${userId}`);
         
         const { data: activities, error } = await supabase
             .from('user_logs')
@@ -7599,7 +7621,7 @@ app.get('/api/user/activity', authenticateToken, async (req, res) => {
 });
 
 // =============================================
-// ✅ SAFE ADDITION: OFFICE EXPENSES (MATUMIZI YA OFISI) - NEW FEATURE
+// âœ… SAFE ADDITION: OFFICE EXPENSES (MATUMIZI YA OFISI) - NEW FEATURE
 // =============================================
 
 // GET today's expenses (IMPROVED)
@@ -7624,7 +7646,7 @@ app.get('/api/office-expenses/today', authenticateToken, async (req, res) => {
         
         const businessName = user.business_name;
         
-        console.log(`💰 Getting today's expenses for business: ${businessName}`);
+        console.log(`ðŸ’° Getting today's expenses for business: ${businessName}`);
         
         const { data: expenses, error } = await supabase
             .from('office_expenses')
@@ -7659,7 +7681,7 @@ app.get('/api/office-expenses/today', authenticateToken, async (req, res) => {
         });
         
     } catch (error) {
-        console.error('❌ Error getting today\'s expenses:', error.message);
+        console.error('âŒ Error getting today\'s expenses:', error.message);
         res.status(500).json({ 
             success: false,
             error: 'Hitilafu ya kupata matumizi',
@@ -7674,7 +7696,7 @@ app.post('/api/office-expenses', authenticateToken, async (req, res) => {
         const userId = req.user.id;
         const { amount, description, category, notes } = req.body;
         
-        console.log(`📝 Adding expense for user ${userId}`);
+        console.log(`ðŸ“ Adding expense for user ${userId}`);
         
         // Validation
         if (!amount || !description || !category) {
@@ -7728,7 +7750,7 @@ app.post('/api/office-expenses', authenticateToken, async (req, res) => {
             updated_at: new Date().toISOString()
         };
         
-        console.log('💾 Saving expense:', expenseData);
+        console.log('ðŸ’¾ Saving expense:', expenseData);
         
         const { data: newExpense, error } = await supabase
             .from('office_expenses')
@@ -7737,11 +7759,11 @@ app.post('/api/office-expenses', authenticateToken, async (req, res) => {
             .single();
         
         if (error) {
-            console.error('❌ Database error:', error);
+            console.error('âŒ Database error:', error);
             throw error;
         }
         
-        console.log('✅ Expense added:', newExpense.id, 'for business:', businessName);
+        console.log('âœ… Expense added:', newExpense.id, 'for business:', businessName);
         
         // Log the action
         await logUserAction(userId, 'ADD_EXPENSE', '/api/office-expenses', { 
@@ -7768,7 +7790,7 @@ app.post('/api/office-expenses', authenticateToken, async (req, res) => {
         });
         
     } catch (error) {
-        console.error('❌ Error adding expense:', error.message);
+        console.error('âŒ Error adding expense:', error.message);
         await logUserAction(req.user?.id, 'ADD_EXPENSE_ERROR', '/api/office-expenses', { 
             error: error.message 
         }, req.user_ip, 'failed');
@@ -7818,7 +7840,7 @@ app.get('/api/office-expenses/date/:date', authenticateToken, async (req, res) =
             });
         }
         
-        console.log(`💰 Getting expenses for business: ${businessName} on date: ${targetDate}`);
+        console.log(`ðŸ’° Getting expenses for business: ${businessName} on date: ${targetDate}`);
         
         // Get expenses for this business on this specific date
         const { data: expenses, error } = await supabase
@@ -7829,13 +7851,13 @@ app.get('/api/office-expenses/date/:date', authenticateToken, async (req, res) =
             .order('created_at', { ascending: false });
         
         if (error) {
-            console.error('❌ Database error:', error);
+            console.error('âŒ Database error:', error);
             throw error;
         }
         
         const total = expenses?.reduce((sum, exp) => sum + (exp.amount || 0), 0) || 0;
         
-        console.log(`✅ Found ${expenses?.length || 0} expenses for date ${targetDate}, total: ${total}`);
+        console.log(`âœ… Found ${expenses?.length || 0} expenses for date ${targetDate}, total: ${total}`);
         
         // Format expenses to ensure all fields are present
         const formattedExpenses = (expenses || []).map(exp => ({
@@ -7860,7 +7882,7 @@ app.get('/api/office-expenses/date/:date', authenticateToken, async (req, res) =
         });
         
     } catch (error) {
-        console.error('❌ Error getting expenses for date:', error.message);
+        console.error('âŒ Error getting expenses for date:', error.message);
         res.status(500).json({ 
             success: false,
             error: 'Hitilafu ya kupata matumizi',
@@ -7900,7 +7922,7 @@ app.get('/api/office-expenses/range', authenticateToken, async (req, res) => {
         
         const businessName = user.business_name;
         
-        console.log(`📊 Getting expenses for business: ${businessName} from ${start_date} to ${end_date}`);
+        console.log(`ðŸ“Š Getting expenses for business: ${businessName} from ${start_date} to ${end_date}`);
         
         let query = supabase
             .from('office_expenses')
@@ -7920,7 +7942,7 @@ app.get('/api/office-expenses/range', authenticateToken, async (req, res) => {
         
         if (error) throw error;
         
-        console.log(`✅ Found ${expenses?.length || 0} expenses for business ${businessName}`);
+        console.log(`âœ… Found ${expenses?.length || 0} expenses for business ${businessName}`);
         
         const total = expenses?.reduce((sum, exp) => sum + (exp.amount || 0), 0) || 0;
         
@@ -7968,7 +7990,7 @@ app.get('/api/office-expenses/range', authenticateToken, async (req, res) => {
         });
         
     } catch (error) {
-        console.error('❌ Error getting expense range:', error.message);
+        console.error('âŒ Error getting expense range:', error.message);
         res.status(500).json({ 
             success: false,
             error: 'Hitilafu ya kupata matumizi',
@@ -8000,7 +8022,7 @@ app.delete('/api/office-expenses/:id', authenticateToken, async (req, res) => {
         const businessName = user.business_name;
         const userRole = user.role;
         
-        console.log(`🗑️ Deleting expense ${expenseId} from business: ${businessName}`);
+        console.log(`ðŸ—‘ï¸ Deleting expense ${expenseId} from business: ${businessName}`);
         
         // First, get the expense to check business and permissions
         const { data: expense, error: checkError } = await supabase
@@ -8031,7 +8053,7 @@ app.delete('/api/office-expenses/:id', authenticateToken, async (req, res) => {
         
         if (deleteError) throw deleteError;
         
-        console.log('✅ Expense deleted:', expenseId);
+        console.log('âœ… Expense deleted:', expenseId);
         
         await logUserAction(userId, 'DELETE_EXPENSE', `/api/office-expenses/${expenseId}`, { 
             expense_id: expenseId,
@@ -8047,7 +8069,7 @@ app.delete('/api/office-expenses/:id', authenticateToken, async (req, res) => {
         });
         
     } catch (error) {
-        console.error('❌ Error deleting expense:', error.message);
+        console.error('âŒ Error deleting expense:', error.message);
         res.status(500).json({ 
             success: false,
             error: 'Hitilafu ya kufuta matumizi',
@@ -8078,7 +8100,7 @@ app.get('/api/profit/daily/:date?', authenticateToken, async (req, res) => {
         
         const businessName = user.business_name;
         
-        console.log(`📈 Getting daily profit for business: ${businessName} on ${targetDate}`);
+        console.log(`ðŸ“ˆ Getting daily profit for business: ${businessName} on ${targetDate}`);
         
         // Get all users in this business
         const { data: businessUsers, error: usersError } = await supabase
@@ -8170,7 +8192,7 @@ app.get('/api/profit/daily/:date?', authenticateToken, async (req, res) => {
         });
         
     } catch (error) {
-        console.error('❌ Error calculating daily profit:', error.message);
+        console.error('âŒ Error calculating daily profit:', error.message);
         res.status(500).json({ 
             success: false,
             error: 'Hitilafu ya kuhesabu faida ya siku',
@@ -8204,7 +8226,7 @@ app.get('/api/profit/monthly/:year/:month', authenticateToken, async (req, res) 
         const startDate = `${year}-${month.padStart(2, '0')}-01`;
         const endDate = new Date(parseInt(year), parseInt(month), 0).toISOString().split('T')[0];
         
-        console.log(`📊 Getting monthly profit for business: ${businessName} in ${year}-${month}`);
+        console.log(`ðŸ“Š Getting monthly profit for business: ${businessName} in ${year}-${month}`);
         
         // Get all users in this business
         const { data: businessUsers, error: usersError } = await supabase
@@ -8286,7 +8308,7 @@ app.get('/api/profit/monthly/:year/:month', authenticateToken, async (req, res) 
         });
         
     } catch (error) {
-        console.error('❌ Error calculating monthly profit:', error.message);
+        console.error('âŒ Error calculating monthly profit:', error.message);
         res.status(500).json({ 
             success: false,
             error: 'Hitilafu ya kuhesabu faida ya mwezi',
@@ -8318,7 +8340,7 @@ app.get('/api/office-expenses/categories', authenticateToken, async (req, res) =
 });
 
 // =============================================
-// ✅ DEBUG ENDPOINT FOR EXPENSES
+// âœ… DEBUG ENDPOINT FOR EXPENSES
 // =============================================
 app.get('/api/debug/expenses/:date', authenticateToken, async (req, res) => {
     try {
@@ -8338,7 +8360,7 @@ app.get('/api/debug/expenses/:date', authenticateToken, async (req, res) => {
         
         const businessName = user.business_name;
         
-        console.log(`🔍 DEBUG: Getting expenses for user ${userId}, business: ${businessName}, date: ${targetDate}`);
+        console.log(`ðŸ” DEBUG: Getting expenses for user ${userId}, business: ${businessName}, date: ${targetDate}`);
         
         // Get expenses for this business on this date
         const { data: expenses, error } = await supabase
@@ -8396,7 +8418,7 @@ app.get('/api/debug/expenses/:date', authenticateToken, async (req, res) => {
             timestamp: new Date().toISOString()
         };
         
-        console.log('🔍 DEBUG INFO:', JSON.stringify(debugInfo, null, 2));
+        console.log('ðŸ” DEBUG INFO:', JSON.stringify(debugInfo, null, 2));
         
         res.json({
             success: true,
@@ -8404,7 +8426,7 @@ app.get('/api/debug/expenses/:date', authenticateToken, async (req, res) => {
         });
         
     } catch (error) {
-        console.error('❌ Debug error:', error.message);
+        console.error('âŒ Debug error:', error.message);
         res.status(500).json({ 
             success: false,
             error: error.message 
@@ -8413,7 +8435,7 @@ app.get('/api/debug/expenses/:date', authenticateToken, async (req, res) => {
 });
 
 // =============================================
-// ✅ DEBUG ENDPOINT - CHECK BUSINESS NAME
+// âœ… DEBUG ENDPOINT - CHECK BUSINESS NAME
 // =============================================
 app.get('/api/debug/check-business', authenticateToken, async (req, res) => {
     try {
@@ -8466,698 +8488,378 @@ app.get('/api/debug/check-business', authenticateToken, async (req, res) => {
 
 
 // =============================================
-// ✅ DOCUMENT SHARE ENDPOINTS
+
+// ✅ AUTOMATIC DATABASE BACKUP SYSTEM (Cloudinary)
 // =============================================
+let lastBackupTime = null;
+let backupCount = 0;
 
-// Document Share configuration
-const DOCUMENT_SHARE_CONFIG = {
-    CLOUDINARY_CLOUD_NAME: 'dooidwbgt',
-    CLOUDINARY_UPLOAD_PRESET: 'react_native_uploads'
-};
+// In-memory list of recent backup metadata (no local files)
+const backupHistory = [];
 
-// Generate unique access code
-const generateAccessCode = () => {
-    const prefixes = ['FRK', 'DOC', 'SHARE', 'TRAN', 'SEC'];
-    const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
-    const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
-    const suffix = Math.floor(Math.random() * 90 + 10);
-    return `${prefix}-${randomPart}-${suffix}`;
-};
+/**
+ * Escape a string value for SQL (single quotes -> doubled single quotes)
+ */
+function escapeSQLString(val) {
+    if (val === null || val === undefined) return 'NULL';
+    if (typeof val === 'number') return val.toString();
+    if (typeof val === 'boolean') return val ? 'TRUE' : 'FALSE';
+    if (val instanceof Date) {
+        return `'${val.toISOString()}'`;
+    }
+    if (typeof val === 'object') {
+        try {
+            return `'${JSON.stringify(val).replace(/'/g, "''")}'`;
+        } catch (e) {
+            return `'${String(val).replace(/'/g, "''")}'`;
+        }
+    }
+    return `'${String(val).replace(/'/g, "''")}'`;
+}
 
-// Helper function for Supabase REST API calls (Document Share)
-const docShareSupabaseRequest = async (endpoint, options = {}) => {
-    const url = `${supabaseUrl}/rest/v1/${endpoint}`;
-    const headers = {
-        'apikey': supabaseAnonKey,
-        'Authorization': `Bearer ${supabaseServiceKey}`,
-        'Content-Type': 'application/json'
-    };
+/**
+ * Known application tables discovered from the codebase.
+ */
+const KNOWN_TABLES = [
+    'users', 'sales', 'sale_items', 'products', 'customers',
+    'user_logs', 'password_reset_codes', 'pending_emails',
+    'matangazo', 'reactions', 'notifications', 'payments',
+    'expenses', 'user_presence_history', 'active_sessions'
+];
 
+/**
+ * Try to get table names via RPC, otherwise fall back to known table list.
+ */
+async function discoverTableNames() {
     try {
-        const response = await fetch(url, {
-            ...options,
-            headers: { ...headers, ...options.headers }
-        });
-
-        if (response.status === 204) {
-            return { success: true, data: null, status: 204 };
-        }
-
-        if (response.ok) {
-            const text = await response.text();
-            if (text && text.length > 0) {
-                try {
-                    const data = JSON.parse(text);
-                    return { success: true, data: data, status: response.status };
-                } catch (parseError) {
-                    return { success: true, data: null, status: response.status };
-                }
+        const { data, error } = await supabaseAdmin.rpc('get_public_tables');
+        if (!error && data && data.length > 0) {
+            const tables = data.map(t => typeof t === 'string' ? t : t.table_name || t).filter(Boolean);
+            if (tables.length > 0) {
+                console.log('Discovered ' + tables.length + ' tables via RPC');
+                return tables;
             }
-            return { success: true, data: null, status: response.status };
         }
+    } catch (e) {
+        console.log('RPC get_public_tables not available, using fallback');
+    }
+    
+    console.log('Using known table list (' + KNOWN_TABLES.length + ' tables)');
+    const verified = [];
+    for (const tableName of KNOWN_TABLES) {
+        try {
+            const { error } = await supabaseAdmin.from(tableName).select('*').limit(1);
+            if (!error) {
+                verified.push(tableName);
+            } else {
+                console.log('  Table "' + tableName + '" does not exist or has RLS restrictions, skipping');
+            }
+        } catch (e) {
+            console.log('  Table "' + tableName + '" check failed, skipping');
+        }
+    }
+    return verified;
+}
 
+/**
+ * Get column names for a table by fetching a sample row.
+ */
+async function getTableColumns(tableName) {
+    try {
+        const { data, error } = await supabaseAdmin.from(tableName).select('*').limit(1);
+        if (error) throw error;
+        if (data && data.length > 0) {
+            return Object.keys(data[0]);
+        }
+        return [];
+    } catch (error) {
+        throw new Error('Cannot get columns for ' + tableName + ': ' + error.message);
+    }
+}
+
+/**
+ * Upload a buffer/string to Cloudinary as a raw file using unsigned upload.
+ * No API key/secret needed — uses the upload preset only.
+ */
+async function uploadToCloudinary(content, filename) {
+    const cloudinaryUrl = 'https://api.cloudinary.com/v1_1/' + CLOUDINARY_CONFIG.cloudName + '/raw/upload';
+    
+    // Build a Blob from the SQL content
+    const blob = new Blob([content], { type: 'application/sql' });
+    const formData = new FormData();
+    formData.append('file', blob, filename);
+    formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset);
+    formData.append('public_id', 'backups/' + filename.replace('.sql', ''));
+    formData.append('folder', 'duka_mkononi_backups');
+    
+    const response = await fetch(cloudinaryUrl, {
+        method: 'POST',
+        body: formData
+    });
+    
+    if (!response.ok) {
         const errorText = await response.text();
-        console.error('Supabase error:', response.status, errorText);
-        return { success: false, error: errorText, status: response.status };
-        
-    } catch (error) {
-        console.error('Supabase request failed:', error.message);
-        return { success: false, error: error.message };
+        throw new Error('Cloudinary upload failed (' + response.status + '): ' + errorText);
     }
-};
+    
+    const result = await response.json();
+    return result;
+}
 
-// =============================================
-// ✅ DOCUMENT SHARE - RECEIVER ENDPOINTS
-// =============================================
-
-// Generate random access code
-app.post('/api/docshare/generate-code', async (req, res) => {
-    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    console.log('🎲 Generate code endpoint called from IP:', ip);
+/**
+ * Perform a full database backup and upload to Cloudinary:
+ * - Discover tables
+ * - Generate INSERT-only SQL
+ * - Upload the generated SQL to Cloudinary as a raw file
+ */
+async function performDatabaseBackup() {
+    const startTime = Date.now();
     
     try {
-        let isUnique = false;
-        let accessCode;
-        let attempts = 0;
-        const maxAttempts = 10;
+        console.log('Starting automatic database backup (Cloudinary)...');
         
-        while (!isUnique && attempts < maxAttempts) {
-            accessCode = generateAccessCode();
-            attempts++;
-            
-            const result = await docShareSupabaseRequest(
-                `receivers?access_code=eq.${accessCode}&select=access_code`
-            );
-            
-            if (result.success && (!result.data || result.data.length === 0)) {
-                isUnique = true;
+        // 1. Discover table names
+        const tableNames = await discoverTableNames();
+        
+        if (!tableNames || tableNames.length === 0) {
+            console.warn('No accessible tables found to back up');
+            return {
+                success: false,
+                error: 'No accessible tables found'
+            };
+        }
+        
+        console.log('Backing up ' + tableNames.length + ' tables: ' + tableNames.join(', '));
+        
+        // 2. Generate SQL content
+        const lines = [];
+        lines.push('-- ============================================');
+        lines.push('-- DukaMkononi Database Backup (Cloudinary)');
+        lines.push('-- Generated: ' + new Date().toISOString());
+        lines.push('-- Server: ' + supabaseUrl);
+        lines.push('-- Tables: ' + tableNames.join(', '));
+        lines.push('-- ============================================');
+        lines.push('');
+        lines.push('-- INSERT-only backup: preserves existing schema on restore');
+        lines.push('');
+        lines.push('BEGIN;');
+        lines.push('');
+        
+        let totalRows = 0;
+        
+        for (const tableName of tableNames) {
+            try {
+                lines.push('-- ==========================================');
+                lines.push('-- Table: ' + tableName);
+                lines.push('-- ==========================================');
+                
+                let columnNames;
+                try {
+                    columnNames = await getTableColumns(tableName);
+                } catch (colError) {
+                    console.warn('Could not get columns for ' + tableName + ': ' + colError.message);
+                    lines.push('-- Could not get columns: ' + colError.message);
+                    lines.push('');
+                    continue;
+                }
+                
+                const { data: rows, error: dataError } = await supabaseAdmin
+                    .from(tableName)
+                    .select('*')
+                    .limit(1000000);
+                
+                if (dataError) {
+                    console.warn('Could not fetch data from ' + tableName + ': ' + dataError.message);
+                    lines.push('-- Could not fetch data: ' + dataError.message);
+                    lines.push('');
+                    continue;
+                }
+                
+                if (!rows || rows.length === 0) {
+                    lines.push('-- No data in table "' + tableName + '"');
+                    lines.push('');
+                    continue;
+                }
+                
+                const columnList = columnNames.map(c => '"' + c + '"').join(', ');
+                const batchSize = 50;
+                for (let i = 0; i < rows.length; i += batchSize) {
+                    const batch = rows.slice(i, i + batchSize);
+                    const valueStrings = batch.map(row => {
+                        const values = columnNames.map(col => escapeSQLString(row[col]));
+                        return '(' + values.join(', ') + ')';
+                    });
+                    
+                    lines.push('INSERT INTO "' + tableName + '" (' + columnList + ') VALUES');
+                    const valuesStr = valueStrings.join(',\r\n');
+                    lines.push(valuesStr + ';');
+                }
+                
+                totalRows += rows.length;
+                lines.push('');
+                console.log('  ' + tableName + ': ' + rows.length + ' rows backed up');
+                
+            } catch (tableError) {
+                console.warn('Error backing up table ' + tableName + ': ' + tableError.message);
+                lines.push('-- Error backing up table "' + tableName + '": ' + tableError.message);
+                lines.push('');
             }
         }
         
-        res.json({
-            success: true,
-            access_code: accessCode
-        });
+        lines.push('COMMIT;');
+        lines.push('');
+        lines.push('-- ============================================');
+        lines.push('-- Backup completed: ' + new Date().toISOString());
+        lines.push('-- Total tables: ' + tableNames.length + ', Total rows: ' + totalRows);
+        lines.push('-- ============================================');
+        
+        const sqlContent = lines.join('\r\n');
+        
+        // 3. Upload to Cloudinary
+        const timestamp = new Date().toISOString()
+            .replace(/T/, '_')
+            .replace(/:/g, '-')
+            .replace(/\.\d+Z/, '');
+        const filename = 'backup_' + timestamp + '.sql';
+        
+        console.log('Uploading backup to Cloudinary...');
+        const uploadResult = await uploadToCloudinary(sqlContent, filename);
+        
+        lastBackupTime = new Date();
+        backupCount++;
+        
+        const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+        const sizeKB = (Buffer.byteLength(sqlContent, 'utf8') / 1024).toFixed(2);
+        
+        // Track in memory
+        const backupMeta = {
+            filename,
+            cloudinary_url: uploadResult.secure_url,
+            cloudinary_public_id: uploadResult.public_id,
+            tables: tableNames.length,
+            rows: totalRows,
+            sizeKB: parseFloat(sizeKB),
+            duration: parseFloat(duration),
+            timestamp: new Date().toISOString()
+        };
+        backupHistory.unshift(backupMeta);
+        if (backupHistory.length > 20) backupHistory.pop();
+        
+        console.log('Backup #' + backupCount + ' uploaded to Cloudinary: ' + filename);
+        console.log('   Tables: ' + tableNames.length + ', Rows: ' + totalRows + ', Size: ' + sizeKB + ' KB');
+        console.log('   URL: ' + uploadResult.secure_url);
+        console.log('   Duration: ' + duration + 's');
+        
+        return { success: true, ...backupMeta };
         
     } catch (error) {
-        console.error('Generate code error:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Register receiver
-app.post('/api/docshare/register-receiver', async (req, res) => {
-    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    console.log('📝 Register receiver endpoint called from IP:', ip);
-    
-    try {
-        const { accessCode } = req.body;
-        const finalAccessCode = accessCode || generateAccessCode();
-        
-        console.log('Registering receiver with code:', finalAccessCode);
-        
-        // Check if access code already exists
-        const existing = await docShareSupabaseRequest(
-            `receivers?access_code=eq.${finalAccessCode}&select=access_code`
-        );
-        
-        if (existing.success && existing.data && existing.data.length > 0) {
-            return res.status(409).json({ 
-                success: false,
-                error: 'Access code already exists. Please generate a new one.' 
-            });
-        }
-        
-        const cloudinaryUrl = `https://res.cloudinary.com/${DOCUMENT_SHARE_CONFIG.CLOUDINARY_CLOUD_NAME}/raw/upload/${finalAccessCode}`;
-        
-        // Insert into receivers table
-        const insertUrl = `${supabaseUrl}/rest/v1/receivers`;
-        const headers = {
-            'apikey': supabaseServiceKey,
-            'Authorization': `Bearer ${supabaseServiceKey}`,
-            'Content-Type': 'application/json'
+        console.error('Backup failed: ' + error.message);
+        return {
+            success: false,
+            error: error.message,
+            timestamp: new Date().toISOString()
         };
+    }
+}
+
+// =============================================
+// MANUAL BACKUP ENDPOINT
+// =============================================
+app.get('/api/backup', async (req, res) => {
+    try {
+        console.log('Manual backup requested...');
+        const result = await performDatabaseBackup();
         
-        const insertBody = JSON.stringify({
-            access_code: finalAccessCode,
-            cloudinary_url: cloudinaryUrl,
-            status: 'pending',
-            created_at: new Date().toISOString()
-        });
-        
-        console.log('Inserting receiver with data:', insertBody);
-        
-        const insertResponse = await fetch(insertUrl, {
-            method: 'POST',
-            headers: headers,
-            body: insertBody
-        });
-        
-        console.log('Insert response status:', insertResponse.status);
-        
-        if (insertResponse.status >= 200 && insertResponse.status < 300) {
-            console.log('Insert successful, status:', insertResponse.status);
-            
-            // Create session ID
-            const sessionId = crypto.randomBytes(32).toString('hex');
-            const expiresAt = new Date();
-            expiresAt.setHours(expiresAt.getHours() + 24);
-            
-            // Insert session
-            const sessionUrl = `${supabaseUrl}/rest/v1/sessions`;
-            await fetch(sessionUrl, {
-                method: 'POST',
-                headers: headers,
-                body: JSON.stringify({
-                    session_id: sessionId,
-                    access_code: finalAccessCode,
-                    created_at: new Date().toISOString(),
-                    expires_at: expiresAt.toISOString()
-                })
-            }).catch(err => console.log('Session insert error (non-critical):', err.message));
-            
-            // Return success response
-            return res.status(201).json({
+        if (result.success) {
+            res.json({
                 success: true,
-                access_code: finalAccessCode,
-                cloudinary_url: cloudinaryUrl,
-                cloudinary_cloud_name: DOCUMENT_SHARE_CONFIG.CLOUDINARY_CLOUD_NAME,
-                cloudinary_upload_preset: DOCUMENT_SHARE_CONFIG.CLOUDINARY_UPLOAD_PRESET,
-                session_id: sessionId,
-                status: 'pending',
-                message: 'Receiver registered successfully'
+                message: 'Database backup completed successfully and uploaded to Cloudinary',
+                backup: result,
+                backupCount,
+                lastBackup: lastBackupTime?.toISOString() || null
             });
         } else {
-            const errorText = await insertResponse.text();
-            console.error('Insert failed:', errorText);
-            return res.status(500).json({ 
+            res.status(500).json({
                 success: false,
-                error: 'Failed to insert receiver: ' + errorText 
+                error: result.error,
+                message: 'Database backup failed'
             });
         }
-        
     } catch (error) {
-        console.error('Registration error:', error);
-        res.status(500).json({ 
+        console.error('Manual backup error: ' + error.message);
+        res.status(500).json({
             success: false,
-            error: error.message 
+            error: error.message,
+            message: 'Database backup failed'
         });
     }
 });
 
-// Connect sender to receiver
-app.post('/api/docshare/connect-sender', async (req, res) => {
-    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    console.log('🔌 Connect sender endpoint called from IP:', ip);
-    
+// =============================================
+// BACKUP STATUS ENDPOINT (Cloudinary-based)
+// =============================================
+app.get('/api/backup/status', (req, res) => {
     try {
-        const { accessCode } = req.body;
-        console.log('Connecting sender with code:', accessCode);
-        
-        // Find receiver
-        const result = await docShareSupabaseRequest(
-            `receivers?access_code=eq.${accessCode}&select=*`
-        );
-        
-        if (!result.success || !result.data || result.data.length === 0) {
-            return res.status(404).json({ 
-                success: false,
-                error: 'Receiver not found' 
-            });
+        res.json({
+            success: true,
+            backupCount,
+            lastBackup: lastBackupTime?.toISOString() || null,
+            storage: 'Cloudinary',
+            totalFiles: backupHistory.length,
+            recentFiles: backupHistory.slice(0, 10)
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// =============================================
+// DOWNLOAD BACKUP ENDPOINT (proxy from Cloudinary)
+// =============================================
+app.get('/api/backup/download/:index', async (req, res) => {
+    try {
+        const index = parseInt(req.params.index);
+        const backup = backupHistory[index];
+        if (!backup || !backup.cloudinary_url) {
+            return res.status(404).json({ error: 'Backup not found' });
         }
-        
-        const receiver = result.data[0];
-        
-        // Update status to 'connected'
-        const updateUrl = `${supabaseUrl}/rest/v1/receivers?access_code=eq.${accessCode}`;
-        const headers = {
-            'apikey': supabaseServiceKey,
-            'Authorization': `Bearer ${supabaseServiceKey}`,
-            'Content-Type': 'application/json'
-        };
-        
-        await fetch(updateUrl, {
-            method: 'PATCH',
-            headers: headers,
-            body: JSON.stringify({ 
-                status: 'connected',
-                updated_at: new Date().toISOString()
-            })
-        });
-        
-        res.json({
-            success: true,
-            message: 'Connected to receiver',
-            cloudinary_url: receiver.cloudinary_url,
-            access_code: receiver.access_code,
-            status: 'connected'
-        });
-        
+        res.redirect(backup.cloudinary_url);
     } catch (error) {
-        console.error('Connect error:', error);
-        res.status(500).json({ 
-            success: false,
-            error: error.message 
-        });
-    }
-});
-
-// Check receiver status
-app.get('/api/docshare/receiver-status/:accessCode', async (req, res) => {
-    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    console.log(`📊 Check receiver status for: ${req.params.accessCode} from IP:`, ip);
-    
-    try {
-        const { accessCode } = req.params;
-        
-        const result = await docShareSupabaseRequest(
-            `receivers?access_code=eq.${accessCode}&select=*`
-        );
-        
-        if (!result.success || !result.data || result.data.length === 0) {
-            return res.status(404).json({ 
-                success: false,
-                error: 'Receiver not found' 
-            });
-        }
-        
-        const receiver = result.data[0];
-        
-        // Get latest upload
-        const uploadsResult = await docShareSupabaseRequest(
-            `uploads?access_code=eq.${accessCode}&select=*&order=created_at.desc&limit=1`
-        );
-        
-        res.json({
-            success: true,
-            status: receiver.status,
-            cloudinary_url: receiver.cloudinary_url,
-            access_code: receiver.access_code,
-            created_at: receiver.created_at,
-            last_upload: uploadsResult.success && uploadsResult.data && uploadsResult.data.length > 0 
-                ? uploadsResult.data[0] 
-                : null
-        });
-        
-    } catch (error) {
-        console.error('Status check error:', error);
-        res.status(500).json({ 
-            success: false,
-            error: error.message 
-        });
-    }
-});
-
-// Get uploads for receiver
-app.get('/api/docshare/receiver-uploads/:accessCode', async (req, res) => {
-    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    console.log(`📦 Get uploads for: ${req.params.accessCode} from IP:`, ip);
-    
-    try {
-        const { accessCode } = req.params;
-        
-        const result = await docShareSupabaseRequest(
-            `uploads?access_code=eq.${accessCode}&select=*&order=created_at.desc`
-        );
-        
-        res.json({
-            success: true,
-            uploads: result.success && result.data ? result.data : []
-        });
-        
-    } catch (error) {
-        console.error('Get uploads error:', error);
-        res.status(500).json({ 
-            success: false,
-            error: error.message 
-        });
-    }
-});
-
-// Record upload after Cloudinary success
-app.post('/api/docshare/upload-file-record', async (req, res) => {
-    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    console.log('📤 Record upload endpoint called from IP:', ip);
-    
-    try {
-        const { accessCode, fileUrl, fileName, fileSize } = req.body;
-        
-        const headers = {
-            'apikey': supabaseServiceKey,
-            'Authorization': `Bearer ${supabaseServiceKey}`,
-            'Content-Type': 'application/json'
-        };
-        
-        await fetch(`${supabaseUrl}/rest/v1/uploads`, {
-            method: 'POST',
-            headers: headers,
-            body: JSON.stringify({
-                upload_url: fileUrl,
-                access_code: accessCode,
-                file_name: fileName,
-                file_size: fileSize,
-                created_at: new Date().toISOString()
-            })
-        });
-        
-        // Update receiver status to completed
-        await fetch(`${supabaseUrl}/rest/v1/receivers?access_code=eq.${accessCode}`, {
-            method: 'PATCH',
-            headers: headers,
-            body: JSON.stringify({ 
-                status: 'completed',
-                updated_at: new Date().toISOString()
-            })
-        });
-        
-        res.json({ success: true });
-        
-    } catch (error) {
-        console.error('Record upload error:', error);
         res.status(500).json({ error: error.message });
     }
 });
 
-// Disconnect receiver
-app.post('/api/docshare/disconnect-receiver', async (req, res) => {
-    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    console.log('🔌 Disconnect receiver endpoint called from IP:', ip);
-    
-    try {
-        const { accessCode } = req.body;
-        console.log('Disconnecting receiver with code:', accessCode);
-        
-        const headers = {
-            'apikey': supabaseServiceKey,
-            'Authorization': `Bearer ${supabaseServiceKey}`,
-            'Content-Type': 'application/json'
-        };
-        
-        // Update receiver status back to pending
-        await fetch(`${supabaseUrl}/rest/v1/receivers?access_code=eq.${accessCode}`, {
-            method: 'PATCH',
-            headers: headers,
-            body: JSON.stringify({ 
-                status: 'pending',
-                updated_at: new Date().toISOString()
-            })
-        });
-        
-        // Invalidate session
-        await fetch(`${supabaseUrl}/rest/v1/sessions?access_code=eq.${accessCode}`, {
-            method: 'PATCH',
-            headers: headers,
-            body: JSON.stringify({ 
-                status: 'inactive',
-                expires_at: new Date().toISOString()
-            })
-        });
-        
-        res.json({ success: true, message: 'Disconnected successfully' });
-        
-    } catch (error) {
-        console.error('Disconnect error:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
+// =============================================
+// SCHEDULE AUTOMATIC BACKUPS (every 24 hours)
+// =============================================
+setTimeout(() => {
+    console.log('Starting automatic backup schedule (Cloudinary, every 24 hours)...');
+    performDatabaseBackup().catch(err => console.error('Initial backup failed: ' + err.message));
+}, 5000);
 
-// Get Cloudinary config
-app.get('/api/docshare/cloudinary-config', async (req, res) => {
-    res.json({
-        cloud_name: DOCUMENT_SHARE_CONFIG.CLOUDINARY_CLOUD_NAME,
-        upload_preset: DOCUMENT_SHARE_CONFIG.CLOUDINARY_UPLOAD_PRESET
-    });
-});
+setInterval(() => {
+    console.log('Running scheduled backup...');
+    performDatabaseBackup().catch(err => console.error('Scheduled backup failed: ' + err.message));
+}, 24 * 60 * 60 * 1000);
 
-// Health check for document share
-app.get('/api/docshare/health', (req, res) => {
-    res.json({ 
-        status: 'OK', 
-        timestamp: new Date().toISOString(),
-        service: 'Document Share',
-        cloudinary: DOCUMENT_SHARE_CONFIG.CLOUDINARY_CLOUD_NAME
-    });
+console.log('Database backup system (Cloudinary) initialized - backups run every 24 hours');
+
+
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, '0.0.0.0', () => {
+    console.log('============================================');
+    console.log(`ðŸš€ SERVER IMEWASHA KIKAMILIFU!`);
+    console.log(`ðŸ“¡ Port: ${PORT}`);
+    console.log(`ðŸŒ URL: http://localhost:${PORT}`);
+    console.log(`ðŸ”— API: http://localhost:${PORT}/api`);
+    console.log(`ðŸ”Œ WebSocket: ws://localhost:${PORT}/ws`);
+    console.log('============================================');
 });
 
 // =============================================
-// ✅ CREATE DOCUMENT SHARE TABLES (RUN ONCE)
+// âœ… DOCUMENT SHARE ENDPOINTS - REMOVED (test project completed)
 // =============================================
-app.post('/api/docshare/setup-tables', async (req, res) => {
-    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    console.log('🔧 Setting up document share tables from IP:', ip);
-    
-    try {
-        // Create receivers table
-        const createReceiversSQL = `
-            CREATE TABLE IF NOT EXISTS receivers (
-                id SERIAL PRIMARY KEY,
-                access_code VARCHAR(50) UNIQUE NOT NULL,
-                cloudinary_url VARCHAR(500) NOT NULL,
-                status VARCHAR(20) DEFAULT 'pending',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        `;
-        
-        // Create sessions table
-        const createSessionsSQL = `
-            CREATE TABLE IF NOT EXISTS sessions (
-                id SERIAL PRIMARY KEY,
-                session_id VARCHAR(100) UNIQUE NOT NULL,
-                access_code VARCHAR(50) NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                expires_at TIMESTAMP
-            )
-        `;
-        
-        // Create uploads table
-        const createUploadsSQL = `
-            CREATE TABLE IF NOT EXISTS uploads (
-                id SERIAL PRIMARY KEY,
-                upload_url VARCHAR(500) NOT NULL,
-                access_code VARCHAR(50),
-                file_name VARCHAR(255),
-                file_size INTEGER,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        `;
-        
-        // Execute table creation
-        const headers = {
-            'apikey': supabaseServiceKey,
-            'Authorization': `Bearer ${supabaseServiceKey}`,
-            'Content-Type': 'application/json'
-        };
-        
-        // Note: You may need to run these SQL commands manually in Supabase SQL editor
-        // since direct table creation might be restricted
-        
-        res.json({
-            success: true,
-            message: 'Document Share tables setup initiated',
-            instructions: 'Please run the following SQL in Supabase SQL editor:',
-            sql: `
--- Run these SQL commands in your Supabase SQL Editor:
-
-CREATE TABLE IF NOT EXISTS receivers (
-    id SERIAL PRIMARY KEY,
-    access_code VARCHAR(50) UNIQUE NOT NULL,
-    cloudinary_url VARCHAR(500) NOT NULL,
-    status VARCHAR(20) DEFAULT 'pending',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS sessions (
-    id SERIAL PRIMARY KEY,
-    session_id VARCHAR(100) UNIQUE NOT NULL,
-    access_code VARCHAR(50) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    expires_at TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS uploads (
-    id SERIAL PRIMARY KEY,
-    upload_url VARCHAR(500) NOT NULL,
-    access_code VARCHAR(50),
-    file_name VARCHAR(255),
-    file_size INTEGER,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX IF NOT EXISTS idx_receivers_access_code ON receivers(access_code);
-CREATE INDEX IF NOT EXISTS idx_sessions_access_code ON sessions(access_code);
-CREATE INDEX IF NOT EXISTS idx_uploads_access_code ON uploads(access_code);
-            `
-        });
-        
-    } catch (error) {
-        console.error('Setup tables error:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-
-
-// =============================================
-// ✅ CATCH-ALL ROUTE FOR UNDEFINED ENDPOINTS
-// =============================================
-app.use('*', (req, res) => {
-    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    console.log(`❌ Route not found: ${req.originalUrl} - IP: ${ip}`);
-    
-    if (req.originalUrl.startsWith('/api')) {
-        logUserAction(null, 'ROUTE_NOT_FOUND', req.originalUrl, { 
-            method: req.method,
-            url: req.originalUrl 
-        }, ip, 'failed');
-        
-        return res.status(404).json({ 
-            error: `Endpoint ${req.originalUrl} haipo`,
-            method: req.method,
-            availableEndpoints: [
-                '✅ AUTH:',
-                'POST /api/register',
-                'POST /api/login',
-                'POST /api/forgot-password',
-                'POST /api/reset-password',
-                
-                '✅ USER:',
-                'GET  /api/user/profile',
-                'PUT  /api/user/profile',
-                'GET  /api/user/activity',
-                
-                '✅ PRODUCTS:',
-                'GET  /api/products/my',
-                'GET  /api/products/dummy',
-                'POST /api/products',
-                'PUT  /api/products/:id',
-                'DELETE /api/products/:id',
-                
-                '✅ SALES:',
-                'GET  /api/sales/my',
-                'POST /api/sales',
-                
-                '✅ CUSTOMERS:',
-                'GET  /api/customers/my',
-                'POST /api/customers',
-                'PUT  /api/customers/:id',
-                
-                '✅ MATANGAZO:',
-                'GET  /api/matangazo',
-                'GET  /api/matangazo/my',
-                'POST /api/matangazo',
-                'DELETE /api/matangazo/:id',
-                
-                '✅ REACTIONS:',
-                'GET  /api/reactions/user/likes',
-                'POST /api/reactions/like',
-                'GET  /api/reactions/matangazo/:id/counts',
-                'POST /api/reactions/report',
-                
-                '✅ REVENUE:',
-                'GET  /api/revenue/my',
-                
-                '✅ ADMIN:',
-                'GET  /api/admin/users',
-                'GET  /api/admin/products',
-                'GET  /api/admin/sales',
-                'GET  /api/admin/customers',
-                'GET  /api/admin/payments',
-                'GET  /api/admin/stats',
-                'GET  /api/admin/logs',
-                'GET  /api/admin/logs/search',
-                'DELETE /api/admin/logs/cleanup',
-                'PUT  /api/admin/users/:id/status',
-                'DELETE /api/admin/users/:id',
-                
-                '✅ PAYMENTS:',
-                'POST /api/payments/pesapal/initiate',
-                'GET  /api/payments/pesapal/status/:order_tracking_id',
-                'POST /api/payments/pesapal-ipn',
-                'POST /api/payments/pesapal-callback',
-                'POST /api/payments/record',
-                'GET  /api/payments/status/:order_tracking_id',
-                'GET  /api/payments/my',
-                'GET  /api/payments/:id',
-                'GET  /api/admin/payments',
-                'POST /api/payments/simulate',
-                
-                '✅ BUSINESS:',
-                'GET  /api/businesses',
-                'GET  /api/businesses/:id',
-                'GET  /api/businesses/:businessId/products',
-                'GET  /api/businesses/search/:query',
-                'GET  /api/check-business-name',
-                'GET  /api/test/businesses',
-                'GET  /api/business/:businessName/all-products',
-                'POST /api/check-business',
-                'GET  /api/business/by-name/:business_name',
-                
-                '✅ SYSTEM:',
-                'GET  /api/test',
-                'GET  /api/health'
-            ]
-        });
-    }
-    
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-// =============================================
-// ✅ ERROR HANDLER
-// =============================================
-app.use((error, req, res, next) => {
-    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    console.error('❌ UNHANDLED ERROR:', error.message);
-    
-    logUserAction(req.user?.id, 'UNHANDLED_ERROR', req.originalUrl, { 
-        error: error.message,
-        stack: error.stack 
-    }, ip, 'failed');
-    
-    res.status(500).json({
-        error: 'Hitilafu ya ndani ya server',
-        message: error.message,
-        request_id: Date.now().toString(36) + Math.random().toString(36).substr(2)
-    });
-});
-
-// =============================================
-// ✅ START SERVER
-// =============================================
-const PORT = process.env.PORT || 10000;
-
-app.listen(PORT, '0.0.0.0', () => {
-    console.log('\n🎉 DUKA MKONONI BACKEND STARTED!');
-    console.log('=================================');
-    console.log(`📍 Server running on port: ${PORT}`);
-    console.log(`🌍 Open in browser: http://localhost:${PORT}`);
-    console.log(`🏢 Database: ${supabaseUrl}`);
-    console.log('🔐 JWT Authentication: Enabled');
-    console.log('📝 Comprehensive Logging: Enabled');
-    console.log('📊 User Logs Table: Active');
-    console.log('💰 Unit Price Field: Added to sale_items table');
-    console.log('🧾 Invoice Number Generation: Enabled');
-    console.log('💳 PesaPal Integration: Ready');
-    console.log('\n✅ READY TO HANDLE REQUESTS!');
-    console.log('\n📁 Available HTML Pages:');
-    console.log('- /              - Landing Page');
-    console.log('- /login         - Login Page');
-    console.log('- /admin_signup  - Admin Registration');
-    console.log('- /home          - Dashboard');
-    console.log('- /biashara      - Business Page');
-    console.log('- /matangazo     - Announcements');
-    console.log('- /mauzo         - Sales');
-    console.log('- /malipo        - Payments');
-    console.log('\n🔧 Available APIs:');
-    console.log('- GET  /api/test          - Test endpoint');
-    console.log('- GET  /api/health        - Health check');
-    console.log('- POST /api/register      - User registration');
-    console.log('- POST /api/login         - User login');
-    console.log('- GET  /api/user/activity - User activity logs');
-    console.log('- GET  /api/admin/logs    - Admin logs view');
-    console.log('- POST /api/sales         - Record sale (with unit_price)');
-    console.log('- GET  /api/businesses    - Get all businesses');
-    console.log('- POST /api/payments/pesapal/initiate - Initiate PesaPal payment');
-});
+console.log('âœ… Document share endpoints removed (test completed)');
