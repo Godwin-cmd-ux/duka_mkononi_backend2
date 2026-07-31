@@ -2632,6 +2632,18 @@ app.get('/api/test', (req, res) => {
     });
 });
 
+// =============================================
+// SIMPLE HEALTH ENDPOINT (for Render / load balancer health checks)
+// Lightweight - no DB call, always responds fast
+// =============================================
+app.get('/health', (req, res) => {
+    res.status(200).json({ 
+        status: 'ok', 
+        uptime: process.uptime(), 
+        timestamp: new Date().toISOString()
+    });
+});
+
 app.get('/api/health', async (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     console.log('ðŸ¥ Health check requested from IP:', ip);
