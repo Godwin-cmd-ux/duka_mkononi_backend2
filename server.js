@@ -1,4 +1,15 @@
-﻿const express = require('express');
+﻿// Load environment variables from .env (local dev). On Render, env vars come
+// from the dashboard — this is safe to leave enabled everywhere.
+try {
+    require('dotenv').config();
+} catch (e) {
+    if (e && e.code !== 'MODULE_NOT_FOUND') {
+        console.warn('⚠️ dotenv config error:', e.message);
+    }
+    // dotenv not installed — fall back to process.env only
+}
+
+const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcryptjs');
 const cors = require('cors');
@@ -15,6 +26,12 @@ const server = http.createServer(app);
 // âœ… JWT SECRET DEFINITION (ADD THIS!)
 // =============================================
 const JWT_SECRET = process.env.JWT_SECRET || '419a2994t-default-secret-key-for-development';
+
+// Security: the default secret is public (it lives in this repo).
+// Warn loudly in production so it never silently signs real tokens.
+if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+    console.warn('⚠️ WARNING: JWT_SECRET is NOT set! Tokens are signed with the default (public) secret. Set JWT_SECRET in your Render environment to a strong random value.');
+}
 console.log('ðŸ”‘ JWT_SECRET initialized');
 
 
@@ -132,7 +149,7 @@ wss.on('connection', async (ws, req) => {
         // Verify JWT token
         let decoded;
         try {
-            decoded = jwt.verify(token, process.env.JWT_SECRET || '419a2994t');
+            decoded = jwt.verify(token, JWT_SECRET);
         } catch (error) {
             ws.close(1008, 'Invalid token');
             return;
@@ -475,7 +492,14 @@ console.log('âœ… WebSocket cleanup and heartbeat services started');
 // âœ… MIDDLEWARE YA MSINGI
 // =============================================
 app.use(cors({
-    origin: ['http://localhost:19006', 'exp://localhost:19000', 'your-app-scheme://'], // React Native dev servers
+    origin: [
+        'http://localhost:19006',
+        'exp://localhost:19000',
+        'https://www.dukamkononi.com',
+        'https://dukamkononi.com',
+        /^https:\/\/.*\.onrender\.com$/, // Render-hosted domains
+        'your-app-scheme://' // React Native dev servers
+    ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'ngrok-skip-browser-warning'],
     credentials: true
