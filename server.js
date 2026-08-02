@@ -6093,7 +6093,8 @@ app.post('/api/payments/pesapal/initiate', authenticateToken, async (req, res) =
             }, req.user_ip, 'failed');
             
             return res.status(500).json({ 
-                error: 'PesaPal haijasanidiwa. Tafadhali wasiliana na msimamizi.' 
+                error: 'PesaPal haijasanidiwa. Tafadhali wasiliana na msimamizi.',
+                code: 'PESAPAL_NOT_CONFIGURED'
             });
         }
 
