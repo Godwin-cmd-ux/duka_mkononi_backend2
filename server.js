@@ -1,11 +1,29 @@
-// Load environment variables from .env (local dev). On Render, env vars come from the dashboard.
-try {
-    require('dotenv').config();
-} catch (e) {
-    if (e && e.code !== 'MODULE_NOT_FOUND') {
-        console.warn('⚠️ dotenv config error:', e.message);
+// 💾 BUILT-IN .ENV LOADER (no dependency needed)
+// Reads the .env file next to this script and fills in any env vars that are missing or
+// empty. A non-empty value already present in process.env (e.g. set in the Render dashboard)
+// always wins. This removes the dependency on the 'dotenv' package, so the keys load even
+// if npm install was never re-run on the host.
+(function loadEnvFile() {
+    try {
+        const fs = require('fs');
+        const envPath = __dirname + '/.env';
+        if (!fs.existsSync(envPath)) return;
+        const lines = fs.readFileSync(envPath, 'utf8').split(/\r?\n/);
+        for (const rawLine of lines) {
+            const line = rawLine.trim();
+            if (!line || line.startsWith('#')) continue;
+            const eq = line.indexOf('=');
+            if (eq <= 0) continue;
+            const key = line.slice(0, eq).trim();
+            const value = line.slice(eq + 1).trim();
+            if (!process.env[key]) {
+                process.env[key] = value;
+            }
+        }
+    } catch (e) {
+        console.warn('⚠️ Could not read .env file:', e.message);
     }
-}
+})();
 
 const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
@@ -867,6 +885,14 @@ const PESAPAL_CONFIG = {
     callbackUrl: process.env.PESAPAL_CALLBACK_URL || 'https://www.dukamkononi.com/api/payments/pesapal-callback',
     ipnUrl: process.env.PESAPAL_IPN_URL || 'https://www.dukamkononi.com/api/payments/pesapal-ipn'
 };
+
+// ⚠️ Loud startup warning if PesaPal is not configured — so the issue is visible in logs
+if (!PESAPAL_CONFIG.consumerKey || !PESAPAL_CONFIG.consumerSecret) {
+    console.warn('⚠️⚠️⚠️ PESAPAL NOT CONFIGURED: PESAPAL_CONSUMER_KEY / PESAPAL_CONSUMER_SECRET are missing.');
+    console.warn('    Set them in the .env file next to server.js (or in your hosting dashboard) and restart.');
+} else {
+    console.log('✅ PesaPal configured (' + (process.env.PESAPAL_ENV === 'live' ? 'LIVE' : 'sandbox') + ' mode)');
+}
 
 // ✅ MATANGAZO PAYMENT PRICING (TZS 3,000 per 30 days — configurable via env)
 const MATANGAZO_PRICE = parseFloat(process.env.MATANGAZO_PRICE) || 3000;
@@ -6040,6 +6066,19 @@ async function activateMatangazoAfterPayment(matangazoId, orderTrackingId) {
         return null;
     }
 }
+
+// ✅ PESAPAL CONFIGURATION STATUS (public diagnostic — never exposes secrets)
+// Useful to verify the deployed server has loaded the PesaPal credentials.
+app.get('/api/payments/pesapal/config-status', (req, res) => {
+    res.json({
+        configured: !!(PESAPAL_CONFIG.consumerKey && PESAPAL_CONFIG.consumerSecret),
+        env: process.env.PESAPAL_ENV || 'sandbox',
+        baseUrl: PESAPAL_CONFIG.baseUrl,
+        callbackUrl: PESAPAL_CONFIG.callbackUrl,
+        ipnUrl: PESAPAL_CONFIG.ipnUrl,
+        notificationIdSet: !!PESAPAL_CONFIG.notificationId
+    });
+});
 
 // ✅ PESAPAL PAYMENT ENDPOINTS
 // =============================================
