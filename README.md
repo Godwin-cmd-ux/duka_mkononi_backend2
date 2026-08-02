@@ -28,23 +28,20 @@ The full, updated backend server for **DukaMkononi** with real **PesaPal** payme
 
 ## Deploy / Host
 
+> ⚠️ **IMPORTANT:** This server is built for **Express 4** (`package.json` pins `express: ^4.21.2`). Do **not** upgrade to Express 5 — the code uses Express-4 route syntax (e.g. `/api/profit/daily/:date?`) that crashes on Express 5 at startup.
+
+### Option A — Render (recommended)
+
+1. Commit `server.js` + `package.json` to your backend repo and push.
+2. In the **Render dashboard → your Web Service → Environment**, add the variables below (`.env` is git-ignored and will NOT be deployed — dashboard vars are the only way on Render).
+3. Deploy. The server listens on Render's `PORT` automatically.
+
+### Option B — your own server (VPS / local)
+
 1. Put `server.js` into your server directory (the folder that also contains `index.html`, `mteja/`, `muuzaji/`, `msimamizi/`, `admin/` web folders — replace your old `server.js` with this one).
-2. Create a `.env` file from `.env.example` (or set the variables in your hosting dashboard — e.g. Render).
-3. Install dependencies:
-
-   ```bash
-   npm install
-   ```
-
-4. Start:
-
-   ```bash
-   npm start
-   # or
-   node server.js
-   ```
-
-The server listens on `PORT` (default `10000`).
+2. Create a `.env` file from `.env.example` next to `server.js` (the server loads it automatically with its built-in loader — no `dotenv` package needed).
+3. Install dependencies: `npm install`
+4. Start: `npm start` (listens on `PORT`, default `10000`).
 
 ## Required environment variables
 
