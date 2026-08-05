@@ -1,4 +1,4 @@
-// 💾 BUILT-IN .ENV LOADER (no dependency needed)
+﻿// 💾 BUILT-IN .ENV LOADER (no dependency needed)
 // Reads the .env file next to this script and fills in any env vars that are missing or
 // empty. A non-empty value already present in process.env (e.g. set in the Render dashboard)
 // always wins. This removes the dependency on the 'dotenv' package, so the keys load even
@@ -2717,22 +2717,51 @@ app.post('/api/register', async (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     console.log('📨 REGISTER REQUEST:', req.body, 'IP:', ip);
     
-    const { email, password, role, full_name, phone, business_name, business_location, language } = req.body;
+    const { verificationToken } = req.body;
 
-    if (!email || !password || !role) {
-        await logUserAction(null, 'REGISTER_FAILED', '/api/register', { reason: 'Missing required fields', email, role }, ip, 'failed');
-        return res.status(400).json({ error: 'Email, password na role zinahitajika' });
+    // 🔒 EMAIL VERIFICATION IS MANDATORY: this token is minted ONLY by
+    // /api/register/verify-otp after the 6-digit code emailed to the user is
+    // confirmed. Without a valid token, no account can be created — so nobody
+    // can register (or register using someone else's email) without the OTP.
+    if (!verificationToken) {
+        await logUserAction(null, 'REGISTER_FAILED', '/api/register', { reason: 'Missing verification token' }, ip, 'failed');
+        return res.status(400).json({ error: 'Uthibitisho wa barua pepe unahitajika. Tafadhali kamilisha msimbo wa uthibitisho.' });
     }
 
-    if (password.length < 6) {
-        await logUserAction(null, 'REGISTER_FAILED', '/api/register', { reason: 'Password too short', email, role }, ip, 'failed');
-        return res.status(400).json({ error: 'Nenosiri lazima liwe na herufi 6 au zaidi' });
+    let verified;
+    try {
+        verified = jwt.verify(verificationToken, JWT_SECRET);
+        if (!verified || verified.type !== 'registration_verified') {
+            throw new Error('Invalid token type');
+        }
+    } catch (tokenError) {
+        const isExpired = tokenError && tokenError.name === 'TokenExpiredError';
+        console.warn('❌ REGISTER INVALID TOKEN:', tokenError.message);
+        await logUserAction(null, 'REGISTER_FAILED', '/api/register', { reason: 'Invalid verification token', error: tokenError.message, expired: isExpired }, ip, 'failed');
+        return res.status(400).json({
+            // Distinct message when the 10-minute verification session ran out,
+            // so the app can tell the user to simply register again.
+            error: isExpired
+                ? 'Uthibitisho wa barua pepe umeisha muda wake (dakika 10). Tafadhali jisajili tena.'
+                : 'Msimbo wa uthibitisho si sahihi au umeisha muda wake. Tafadhali jisajili tena.',
+            code: isExpired ? 'VERIFICATION_EXPIRED' : 'INVALID_TOKEN'
+        });
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-        await logUserAction(null, 'REGISTER_FAILED', '/api/register', { reason: 'Invalid email format', email }, ip, 'failed');
-        return res.status(400).json({ error: 'Barua pepe si sahihi' });
+    // The verified token payload is the single source of truth for the account
+    const email = verified.email;
+    const role = verified.role;
+    const passwordHash = verified.passwordHash;
+    const full_name = verified.full_name || null;
+    const phone = verified.phone || null;
+    const business_name = verified.business_name || null;
+    const business_location = verified.business_location || null;
+    const language = verified.language || 'sw';
+
+    // Cross-check when the caller also supplies an email (e.g. the legacy web pages)
+    if (req.body.email && String(req.body.email).trim().toLowerCase() !== String(email).trim().toLowerCase()) {
+        await logUserAction(null, 'REGISTER_FAILED', '/api/register', { reason: 'Email mismatch with verified token' }, ip, 'failed');
+        return res.status(400).json({ error: 'Barua pepe hailingani na iliyothibitishwa.' });
     }
 
     try {
@@ -2805,7 +2834,7 @@ app.post('/api/register', async (req, res) => {
             }
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedPassword = passwordHash; // 🔒 Pre-hashed during /api/register/initiate
         const userStatus = (role === 'seller') ? 'pending' : 'approved';
         
         const userData = {
@@ -2865,6 +2894,359 @@ app.post('/api/register', async (req, res) => {
     } catch (error) {
         console.error('❌ REGISTRATION ERROR:', error.message);
         await logUserAction(null, 'REGISTER_ERROR', '/api/register', { error: error.message, email, role }, ip, 'failed');
+        res.status(500).json({ error: 'Hitilafu ya ndani ya server: ' + error.message });
+    }
+});
+
+// =============================================
+// ✅ REGISTRATION EMAIL OTP VERIFICATION
+// =============================================
+// Anyone registering must first verify their email with a 6-digit code that is
+// emailed to them. The account is ONLY created after the code is confirmed via
+// /api/register/verify-otp, which mints a short-lived registration token that
+// /api/register now REQUIRES. This closes the gap where the old /api/register
+// could be called directly to create an account (or take over an email)
+// without any email proof — OTP is now mandatory for every role.
+
+// In-memory pending registrations (short-lived: 10 minutes)
+if (!global.registrationOtps) global.registrationOtps = new Map();
+
+const OTP_EXPIRY_MS = 10 * 60 * 1000;      // 10 minutes
+const OTP_MAX_ATTEMPTS = 5;                // wrong tries before invalidating
+const OTP_RESEND_COOLDOWN_MS = 30 * 1000;  // 30 seconds between resends
+
+const registrationOtpKey = (email, role) => `${(email || '').trim().toLowerCase()}:${role || ''}`;
+
+const generateOtpCode = () => Math.floor(100000 + Math.random() * 900000).toString();
+
+// Periodic cleanup of expired/used pending registrations
+setInterval(() => {
+    const now = Date.now();
+    if (global.registrationOtps) {
+        for (const [key, entry] of global.registrationOtps.entries()) {
+            if (entry.isUsed || now > entry.expiresAt) global.registrationOtps.delete(key);
+        }
+    }
+}, 60 * 1000);
+
+// In development / test mode the OTP is also returned in the response so the
+// flow can be tested without receiving the email (same pattern as password reset).
+const shouldReturnOtpInResponse = () =>
+    process.env.NODE_ENV === 'development' || process.env.ENABLE_TEST_MODE === 'true';
+
+async function sendRegistrationOtpEmail(to, fullName, otpCode) {
+    const subject = 'Msimbo wa Uthibitisho wa Usajili - DukaMkononi / Registration Code';
+    const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #2c3e50;">Habari ${fullName || 'Mteja'}!</h2>
+            <p>Asante kwa kujisajili kwenye DukaMkononi.</p>
+            <p>Msimbo wako wa uthibitisho wa barua pepe ni:</p>
+            <div style="background-color: #f8f9fa; padding: 20px; text-align: center; border-radius: 10px; margin: 20px 0;">
+                <h1 style="font-size: 36px; color: #2c3e50; letter-spacing: 8px; margin: 0;">${otpCode}</h1>
+            </div>
+            <p><strong>Msimbo huu utaisha muda wake ndani ya dakika 10.</strong></p>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+            <p style="font-size: 12px; color: #7f8c8d;">
+                DukaMkononi Team<br>
+                Hii ni barua pepe ya kiotomatiki. Tafadhali usijibu.
+            </p>
+        </div>
+    `;
+    return sendEmailWithRetry(to, subject, html);
+}
+
+// Shared duplicate check used before creating an account
+async function registrationAlreadyExists(email, role) {
+    const { data: existing, error } = await supabaseAdmin
+        .from('users')
+        .select('id')
+        .eq('email', email)
+        .eq('role', role);
+    if (error) throw error;
+    return existing && existing.length > 0;
+}
+
+// Step 1 — validate the form and email an OTP (no account is created yet)
+app.post('/api/register/initiate', async (req, res) => {
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    console.log('📨 REGISTER INITIATE REQUEST:', req.body?.email, 'Role:', req.body?.role, 'IP:', ip);
+
+    const { email, password, role, full_name, phone, business_name, business_location, language } = req.body;
+
+    if (!email || !password || !role) {
+        await logUserAction(null, 'REGISTER_INITIATE_FAILED', '/api/register/initiate', { reason: 'Missing required fields', email, role }, ip, 'failed');
+        return res.status(400).json({ error: 'Email, password na role zinahitajika' });
+    }
+
+    if (password.length < 6) {
+        await logUserAction(null, 'REGISTER_INITIATE_FAILED', '/api/register/initiate', { reason: 'Password too short', email, role }, ip, 'failed');
+        return res.status(400).json({ error: 'Nenosiri lazima liwe na herufi 6 au zaidi' });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        await logUserAction(null, 'REGISTER_INITIATE_FAILED', '/api/register/initiate', { reason: 'Invalid email format', email }, ip, 'failed');
+        return res.status(400).json({ error: 'Barua pepe si sahihi' });
+    }
+
+    try {
+        // Anti-spam: don't allow starting a new OTP for the same email+role too quickly
+        const pendingEntry = global.registrationOtps.get(registrationOtpKey(email, role));
+        if (pendingEntry && Date.now() - pendingEntry.lastSentAt < OTP_RESEND_COOLDOWN_MS) {
+            const waitSec = Math.ceil((OTP_RESEND_COOLDOWN_MS - (Date.now() - pendingEntry.lastSentAt)) / 1000);
+            await logUserAction(null, 'REGISTER_INITIATE_RATE_LIMITED', '/api/register/initiate', { email, role }, ip, 'failed');
+            return res.status(429).json({ error: `Subiri sekunde ${waitSec} kabla ya kujaribu tena.` });
+        }
+
+        if (await registrationAlreadyExists(email, role)) {
+            await logUserAction(null, 'REGISTER_INITIATE_FAILED', '/api/register/initiate', { reason: 'Account already exists', email, role }, ip, 'failed');
+            return res.status(400).json({ error: 'Akaunti na barua pepe hii tayari ipo' });
+        }
+
+        if (role === 'admin' || role === 'seller') {
+            if (!business_name) {
+                await logUserAction(null, 'REGISTER_INITIATE_FAILED', '/api/register/initiate', { reason: 'Business name required', email, role }, ip, 'failed');
+                return res.status(400).json({ error: 'Jina la biashara linahitajika' });
+            }
+
+            const { data: adminUsers, error: adminError } = await supabaseAdmin
+                .from('users')
+                .select('id, email, role, status')
+                .ilike('business_name', business_name.trim())
+                .eq('role', 'admin')
+                .eq('status', 'approved');
+
+            if (adminError) throw adminError;
+
+            const hasApprovedAdmin = adminUsers && adminUsers.length > 0;
+
+            if (role === 'seller' && !hasApprovedAdmin) {
+                await logUserAction(null, 'REGISTER_INITIATE_FAILED', '/api/register/initiate', {
+                    reason: 'No approved admin for business',
+                    business_name,
+                    email,
+                    role
+                }, ip, 'failed');
+                return res.status(400).json({
+                    error: 'Biashara hii haina msimamizi. Tafadhali jisajili kama msimamizi kwanza.'
+                });
+            }
+
+            if (role === 'admin') {
+                const { data: existingBusiness, error: businessError } = await supabaseAdmin
+                    .from('users')
+                    .select('id, email, role')
+                    .ilike('business_name', business_name.trim())
+                    .in('role', ['admin', 'seller']);
+
+                if (businessError) throw businessError;
+
+                if (existingBusiness && existingBusiness.length > 0) {
+                    await logUserAction(null, 'REGISTER_INITIATE_FAILED', '/api/register/initiate', {
+                        reason: 'Business name already taken',
+                        business_name,
+                        existing_user: existingBusiness[0].email
+                    }, ip, 'failed');
+                    return res.status(400).json({
+                        error: 'Jina la biashara tayari limeshasajiliwa',
+                        existingUser: existingBusiness[0].email
+                    });
+                }
+            }
+        }
+
+        const otpCode = generateOtpCode();
+        const passwordHash = await bcrypt.hash(password, 10);
+
+        global.registrationOtps.set(registrationOtpKey(email, role), {
+            otp: otpCode,
+            passwordHash,
+            payload: { email, role, full_name, phone, business_name, business_location, language },
+            expiresAt: Date.now() + OTP_EXPIRY_MS,
+            lastSentAt: Date.now(),
+            attempts: 0,
+            isUsed: false,
+            createdAt: new Date().toISOString()
+        });
+
+        const emailResult = await sendRegistrationOtpEmail(email, full_name, otpCode);
+        // 🔒 The OTP is only returned in the response in dev/test mode (never on
+        // email failure in production) so the code can't be intercepted.
+        const returnOtp = shouldReturnOtpInResponse() || process.env.ENABLE_OTP_HINT === 'true';
+
+        console.log('📧 Registration OTP:', email, emailResult.success ? 'sent OK' : 'EMAIL FAILED - ' + emailResult.error);
+
+        await logUserAction(null, 'REGISTER_INITIATE_SUCCESS', '/api/register/initiate', {
+            email,
+            role,
+            email_sent: emailResult.success
+        }, ip, 'success');
+
+        res.status(200).json({
+            success: true,
+            requiresOtp: true,
+            email,
+            role,
+            expiresIn: '10 minutes',
+            message: 'Msimbo wa uthibitisho umetumwa kwenye barua pepe yako.',
+            email_sent: emailResult.success,
+            ...(emailResult.success === false ? { warning: 'Msimbo haukuweza kutumwa kwenye barua pepe. Tumia "Tuma msimbo tena" kujaribu tena.' } : {}),
+            ...(returnOtp ? { otp: otpCode, hint: true } : {})
+        });
+
+    } catch (error) {
+        console.error('❌ REGISTER INITIATE ERROR:', error.message);
+        await logUserAction(null, 'REGISTER_INITIATE_ERROR', '/api/register/initiate', { error: error.message, email, role }, ip, 'failed');
+        res.status(500).json({ error: 'Hitilafu ya ndani ya server: ' + error.message });
+    }
+});
+
+// Step 2 — confirm the emailed OTP, which finally creates the account
+app.post('/api/register/verify-otp', async (req, res) => {
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    console.log('🔍 REGISTER VERIFY OTP REQUEST:', req.body?.email, 'Role:', req.body?.role, 'IP:', ip);
+
+    const { email, role, otp } = req.body;
+
+    if (!email || !role || !otp) {
+        await logUserAction(null, 'REGISTER_VERIFY_FAILED', '/api/register/verify-otp', { reason: 'Missing fields', email, role }, ip, 'failed');
+        return res.status(400).json({ error: 'Email, role na msimbo zinahitajika' });
+    }
+
+    try {
+        const key = registrationOtpKey(email, role);
+        const entry = global.registrationOtps.get(key);
+
+        if (!entry || entry.isUsed) {
+            await logUserAction(null, 'REGISTER_VERIFY_FAILED', '/api/register/verify-otp', { reason: 'No pending registration', email, role }, ip, 'failed');
+            return res.status(400).json({ error: 'Msimbo si sahihi au umeisha muda wake' });
+        }
+
+        if (Date.now() > entry.expiresAt) {
+            global.registrationOtps.delete(key);
+            await logUserAction(null, 'REGISTER_VERIFY_FAILED', '/api/register/verify-otp', { reason: 'OTP expired', email, role }, ip, 'failed');
+            return res.status(400).json({ error: 'Msimbo umeisha muda wake. Tafadhali jisajili tena.' });
+        }
+
+        if (entry.otp !== String(otp).trim()) {
+            entry.attempts += 1;
+            if (entry.attempts >= OTP_MAX_ATTEMPTS) {
+                global.registrationOtps.delete(key);
+            }
+            await logUserAction(null, 'REGISTER_VERIFY_FAILED', '/api/register/verify-otp', { reason: 'Wrong OTP', email, role, attempts: entry.attempts }, ip, 'failed');
+            return res.status(400).json({ error: 'Msimbo si sahihi' });
+        }
+
+        // Safety: the account must still not exist (e.g. created meanwhile by an admin)
+        if (await registrationAlreadyExists(email, role)) {
+            global.registrationOtps.delete(key);
+            await logUserAction(null, 'REGISTER_VERIFY_FAILED', '/api/register/verify-otp', { reason: 'Account already exists', email, role }, ip, 'failed');
+            return res.status(400).json({ error: 'Akaunti na barua pepe hii tayari ipo' });
+        }
+
+        const payload = entry.payload;
+
+        // ✅ OTP confirmed — mint a short-lived token that /api/register now
+        // REQUIRES to create the account. This keeps account creation locked
+        // behind the email verification.
+        const registrationToken = jwt.sign(
+            {
+                email: payload.email,
+                role: payload.role,
+                passwordHash: entry.passwordHash,
+                full_name: payload.full_name || null,
+                phone: payload.phone || null,
+                business_name: payload.business_name || null,
+                business_location: payload.business_location || null,
+                language: payload.language || 'sw',
+                type: 'registration_verified',
+                verifiedAt: Date.now()
+            },
+            JWT_SECRET,
+            { expiresIn: '10m' } // Short expiration for security
+        );
+
+        global.registrationOtps.delete(key);
+
+        console.log('✅ Email verified for registration:', email, 'Role:', role);
+
+        await logUserAction(null, 'REGISTER_OTP_VERIFIED', '/api/register/verify-otp', {
+            email,
+            role,
+            email_verified: true
+        }, ip, 'success');
+
+        res.json({
+            success: true,
+            verified: true,
+            message: 'Msimbo umehakikiwa kikamilifu!',
+            registrationToken,
+            email,
+            role,
+            expiresIn: '10 minutes'
+        });
+
+    } catch (error) {
+        console.error('❌ REGISTER VERIFY OTP ERROR:', error.message);
+        await logUserAction(null, 'REGISTER_VERIFY_ERROR', '/api/register/verify-otp', { error: error.message, email, role }, ip, 'failed');
+        res.status(500).json({ error: 'Hitilafu ya ndani ya server: ' + error.message });
+    }
+});
+
+// Step 3 — resend the OTP (rate-limited)
+app.post('/api/register/resend-otp', async (req, res) => {
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    console.log('📨 REGISTER RESEND OTP REQUEST:', req.body?.email, 'Role:', req.body?.role, 'IP:', ip);
+
+    const { email, role } = req.body;
+
+    if (!email || !role) {
+        await logUserAction(null, 'REGISTER_RESEND_FAILED', '/api/register/resend-otp', { reason: 'Missing fields', email, role }, ip, 'failed');
+        return res.status(400).json({ error: 'Email na role zinahitajika' });
+    }
+
+    try {
+        const key = registrationOtpKey(email, role);
+        const entry = global.registrationOtps.get(key);
+
+        if (!entry || entry.isUsed) {
+            await logUserAction(null, 'REGISTER_RESEND_FAILED', '/api/register/resend-otp', { reason: 'No pending registration', email, role }, ip, 'failed');
+            return res.status(400).json({ error: 'Hakuna usajili unaosubiri uthibitisho. Tafadhali anza upya.' });
+        }
+
+        const cooldownLeft = entry.lastSentAt + OTP_RESEND_COOLDOWN_MS - Date.now();
+        if (cooldownLeft > 0) {
+            await logUserAction(null, 'REGISTER_RESEND_FAILED', '/api/register/resend-otp', { reason: 'Cooldown', email, role }, ip, 'failed');
+            return res.status(429).json({ error: `Subiri sekunde ${Math.ceil(cooldownLeft / 1000)} kabla ya kutuma tena.` });
+        }
+
+        entry.otp = generateOtpCode();
+        entry.lastSentAt = Date.now();
+        entry.expiresAt = Date.now() + OTP_EXPIRY_MS;
+        entry.attempts = 0;
+
+        const emailResult = await sendRegistrationOtpEmail(email, entry.payload.full_name, entry.otp);
+        // 🔒 Same rule as initiate: OTP is only returned in dev/test mode.
+        const returnOtp = shouldReturnOtpInResponse() || process.env.ENABLE_OTP_HINT === 'true';
+
+        await logUserAction(null, 'REGISTER_RESEND_SUCCESS', '/api/register/resend-otp', {
+            email,
+            role,
+            email_sent: emailResult.success
+        }, ip, 'success');
+
+        res.json({
+            success: true,
+            message: 'Msimbo mpya umetumwa kwenye barua pepe yako.',
+            expiresIn: '10 minutes',
+            email_sent: emailResult.success,
+            ...(emailResult.success === false ? { warning: 'Msimbo haukuweza kutumwa kwenye barua pepe. Tumia "Tuma msimbo tena" kujaribu tena.' } : {}),
+            ...(returnOtp ? { otp: entry.otp } : {})
+        });
+
+    } catch (error) {
+        console.error('❌ REGISTER RESEND OTP ERROR:', error.message);
+        await logUserAction(null, 'REGISTER_RESEND_ERROR', '/api/register/resend-otp', { error: error.message, email, role }, ip, 'failed');
         res.status(500).json({ error: 'Hitilafu ya ndani ya server: ' + error.message });
     }
 });
@@ -8965,4 +9347,5 @@ server.listen(PORT, '0.0.0.0', () => {
 // =============================================
 // ✅ DOCUMENT SHARE ENDPOINTS - REMOVED (test project completed)
 // =============================================
-console.log('✅ Document share endpoints removed (test completed)');
+console.log('✅ Document share endpoints removed (test completed)');
+fr
