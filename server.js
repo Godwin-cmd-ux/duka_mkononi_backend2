@@ -9348,4 +9348,3 @@ server.listen(PORT, '0.0.0.0', () => {
 // ✅ DOCUMENT SHARE ENDPOINTS - REMOVED (test project completed)
 // =============================================
 console.log('✅ Document share endpoints removed (test completed)');
-fr
