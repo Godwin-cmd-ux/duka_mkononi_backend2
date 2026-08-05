@@ -2929,10 +2929,9 @@ setInterval(() => {
     }
 }, 60 * 1000);
 
-// In development / test mode the OTP is also returned in the response so the
-// flow can be tested without receiving the email (same pattern as password reset).
-const shouldReturnOtpInResponse = () =>
-    process.env.NODE_ENV === 'development' || process.env.ENABLE_TEST_MODE === 'true';
+// 🔒 The registration OTP is delivered ONLY by email. It is never included in
+// API responses (not even in development) — the verification code must come
+// from the user's inbox, so the modal can never display it.
 
 async function sendRegistrationOtpEmail(to, fullName, otpCode) {
     const subject = 'Msimbo wa Uthibitisho wa Usajili - DukaMkononi / Registration Code';
@@ -3070,9 +3069,7 @@ app.post('/api/register/initiate', async (req, res) => {
         });
 
         const emailResult = await sendRegistrationOtpEmail(email, full_name, otpCode);
-        // 🔒 The OTP is only returned in the response in dev/test mode (never on
-        // email failure in production) so the code can't be intercepted.
-        const returnOtp = shouldReturnOtpInResponse() || process.env.ENABLE_OTP_HINT === 'true';
+        // 🔒 The OTP is delivered ONLY by email — it is never put in the response.
 
         console.log('📧 Registration OTP:', email, emailResult.success ? 'sent OK' : 'EMAIL FAILED - ' + emailResult.error);
 
@@ -3090,8 +3087,7 @@ app.post('/api/register/initiate', async (req, res) => {
             expiresIn: '10 minutes',
             message: 'Msimbo wa uthibitisho umetumwa kwenye barua pepe yako.',
             email_sent: emailResult.success,
-            ...(emailResult.success === false ? { warning: 'Msimbo haukuweza kutumwa kwenye barua pepe. Tumia "Tuma msimbo tena" kujaribu tena.' } : {}),
-            ...(returnOtp ? { otp: otpCode, hint: true } : {})
+            ...(emailResult.success === false ? { warning: 'Msimbo haukuweza kutumwa kwenye barua pepe. Tumia "Tuma msimbo tena" kujaribu tena.' } : {})
         });
 
     } catch (error) {
@@ -3226,8 +3222,7 @@ app.post('/api/register/resend-otp', async (req, res) => {
         entry.attempts = 0;
 
         const emailResult = await sendRegistrationOtpEmail(email, entry.payload.full_name, entry.otp);
-        // 🔒 Same rule as initiate: OTP is only returned in dev/test mode.
-        const returnOtp = shouldReturnOtpInResponse() || process.env.ENABLE_OTP_HINT === 'true';
+        // 🔒 The OTP is delivered ONLY by email — it is never put in the response.
 
         await logUserAction(null, 'REGISTER_RESEND_SUCCESS', '/api/register/resend-otp', {
             email,
@@ -3240,8 +3235,7 @@ app.post('/api/register/resend-otp', async (req, res) => {
             message: 'Msimbo mpya umetumwa kwenye barua pepe yako.',
             expiresIn: '10 minutes',
             email_sent: emailResult.success,
-            ...(emailResult.success === false ? { warning: 'Msimbo haukuweza kutumwa kwenye barua pepe. Tumia "Tuma msimbo tena" kujaribu tena.' } : {}),
-            ...(returnOtp ? { otp: entry.otp } : {})
+            ...(emailResult.success === false ? { warning: 'Msimbo haukuweza kutumwa kwenye barua pepe. Tumia "Tuma msimbo tena" kujaribu tena.' } : {})
         });
 
     } catch (error) {
