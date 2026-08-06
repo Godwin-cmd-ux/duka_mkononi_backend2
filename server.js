@@ -2875,6 +2875,16 @@ app.post('/api/register', async (req, res) => {
             business_name: newUser.business_name 
         }, ip, 'success');
         
+        // 🖼️ Short-lived onboarding token so the new account can finish its
+        // optional profile setup (profile photo + business map location) without
+        // being logged in yet. Same JWT shape as the login token so the existing
+        // authenticateToken middleware accepts it.
+        const setupToken = jwt.sign(
+            { userId: newUser.id, email: newUser.email, role: newUser.role, type: 'onboarding' },
+            JWT_SECRET,
+            { expiresIn: '1h' }
+        );
+
         res.status(201).json({
             message: role === 'seller' 
                 ? 'Akaunti ya muuzaji imeundwa kikamilifu! Umewasilisha ombi lako. Tafadhali subiri uthibitisho wa msimamizi kabla ya kuingia.' 
@@ -2882,6 +2892,7 @@ app.post('/api/register', async (req, res) => {
             userId: newUser.id,
             status: 'success',
             requiresApproval: role === 'seller',
+            setupToken: setupToken,
             user: {
                 id: newUser.id,
                 email: newUser.email,
@@ -3333,6 +3344,9 @@ app.post('/api/login', async (req, res) => {
                 full_name: user.full_name,
                 business_name: user.business_name,
                 business_location: user.business_location,
+                business_logo_url: user.business_logo_url || null,
+                business_latitude: user.business_latitude || null,
+                business_longitude: user.business_longitude || null,
                 phone: user.phone,
                 status: user.status,
                 language: user.language || 'sw',
@@ -3358,7 +3372,7 @@ app.get('/api/user/profile', authenticateToken, async (req, res) => {
         
         const { data: user, error } = await supabase
             .from('users')
-            .select('id, email, role, full_name, phone, business_name, business_location, status, is_online, last_seen, created_at, updated_at')
+            .select('id, email, role, full_name, phone, business_name, business_location, business_logo_url, business_latitude, business_longitude, status, is_online, last_seen, created_at, updated_at')
             .eq('id', userId)
             .single();
 
@@ -3376,24 +3390,27 @@ app.get('/api/user/profile', authenticateToken, async (req, res) => {
 app.put('/api/user/profile', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
-        const { full_name, phone, business_name, business_location } = req.body;
+        const { full_name, phone, business_name, business_location, business_logo_url, business_latitude, business_longitude } = req.body;
         
         console.log('✏️ Profile update for user:', userId, 'Data:', req.body);
 
-        if (!full_name) {
+        if (!full_name && !business_logo_url && business_latitude === undefined && business_longitude === undefined) {
             await logUserAction(userId, 'PROFILE_UPDATE_FAILED', '/api/user/profile', { reason: 'Full name required' }, req.user_ip, 'failed');
             return res.status(400).json({ error: 'Jina kamili linahitajika' });
         }
 
         const updateData = {
-            full_name,
-            phone: phone || null,
             updated_at: new Date().toISOString(),
             last_seen: new Date().toISOString()
         };
 
+        if (full_name) updateData.full_name = full_name;
+        if (phone !== undefined) updateData.phone = phone || null;
         if (business_name) updateData.business_name = business_name;
-        if (business_location) updateData.business_location = business_location;
+        if (business_location !== undefined) updateData.business_location = business_location;
+        if (business_logo_url !== undefined) updateData.business_logo_url = business_logo_url;
+        if (business_latitude !== undefined) updateData.business_latitude = business_latitude;
+        if (business_longitude !== undefined) updateData.business_longitude = business_longitude;
 
         const { data, error } = await supabase
             .from('users')
@@ -3406,7 +3423,7 @@ app.put('/api/user/profile', authenticateToken, async (req, res) => {
         
         const { data: updatedUser, error: fetchError } = await supabase
             .from('users')
-            .select('id, email, role, full_name, phone, business_name, business_location, status, is_online, last_seen, created_at')
+            .select('id, email, role, full_name, phone, business_name, business_location, business_logo_url, business_latitude, business_longitude, status, is_online, last_seen, created_at')
             .eq('id', userId)
             .single();
 
@@ -3423,6 +3440,63 @@ app.put('/api/user/profile', authenticateToken, async (req, res) => {
 
     } catch (error) {
         await logUserAction(req.user?.id, 'PROFILE_UPDATE_ERROR', '/api/user/profile', { error: error.message }, req.user_ip, 'failed');
+        handleSupabaseError(error, res);
+    }
+});
+
+// =============================================
+// 🖼️ ONBOARDING PROFILE ENDPOINT
+// (used by the post-registration slideshow to finish the optional setup:
+//  profile photo + business map location — authenticated with the short-lived
+//  setupToken handed back by /api/register)
+// =============================================
+app.put('/api/onboarding/profile', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { business_logo_url, business_location, business_latitude, business_longitude } = req.body;
+
+        console.log('🖼️ Onboarding profile update for user:', userId, 'Data:', req.body);
+
+        if (business_logo_url === undefined && business_location === undefined && business_latitude === undefined && business_longitude === undefined) {
+            return res.status(400).json({ error: 'Hakuna data ya kusasisha.' });
+        }
+
+        const updateData = {
+            updated_at: new Date().toISOString()
+        };
+        if (business_logo_url !== undefined) updateData.business_logo_url = business_logo_url;
+        if (business_location !== undefined) updateData.business_location = business_location;
+        if (business_latitude !== undefined) updateData.business_latitude = business_latitude;
+        if (business_longitude !== undefined) updateData.business_longitude = business_longitude;
+
+        const { data, error } = await supabaseAdmin
+            .from('users')
+            .update(updateData)
+            .eq('id', userId);
+
+        if (error) throw error;
+
+        console.log('✅ Onboarding profile updated:', userId);
+
+        const { data: updatedUser, error: fetchError } = await supabaseAdmin
+            .from('users')
+            .select('id, email, role, full_name, phone, business_name, business_location, business_logo_url, business_latitude, business_longitude, status')
+            .eq('id', userId)
+            .single();
+
+        if (fetchError) throw fetchError;
+
+        await logUserAction(userId, 'ONBOARDING_PROFILE_UPDATE', '/api/onboarding/profile', { 
+            fields_updated: Object.keys(updateData).filter(k => k !== 'updated_at') 
+        }, req.user_ip, 'success');
+
+        res.json({
+            message: 'Profaili ya onboarding imesasishwa kikamilifu!',
+            user: updatedUser
+        });
+
+    } catch (error) {
+        await logUserAction(req.user?.id, 'ONBOARDING_PROFILE_UPDATE_ERROR', '/api/onboarding/profile', { error: error.message }, req.user_ip, 'failed');
         handleSupabaseError(error, res);
     }
 });
@@ -7261,7 +7335,7 @@ app.get('/api/businesses', async (req, res) => {
     try {
         const { data: users, error } = await supabase
             .from('users')
-            .select('id, email, role, full_name, phone, business_name, business_location, status, created_at')
+            .select('id, email, role, full_name, phone, business_name, business_location, business_logo_url, business_latitude, business_longitude, status, created_at')
             .eq('role', 'admin')
             .eq('status', 'approved')
             .order('created_at', { ascending: false });
