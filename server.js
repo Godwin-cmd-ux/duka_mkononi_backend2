@@ -3320,10 +3320,13 @@ app.post('/api/login', async (req, res) => {
             })
             .eq('id', user.id);
 
+        // 🔓 EVERLASTING SESSION: no expiresIn means the JWT has no exp claim,
+        // so it stays valid until the user explicitly logs out (the app clears
+        // the token from AsyncStorage on logout). Only /api/login tokens get
+        // this treatment — OTP/verification tokens remain short-lived.
         const token = jwt.sign(
             { userId: user.id, email: user.email, role: user.role },
-            JWT_SECRET,
-            { expiresIn: '24h' }
+            JWT_SECRET
         );
 
         console.log('✅ LOGIN SUCCESSFUL:', user.email);
