@@ -587,18 +587,16 @@
                     <div class="input-group">
                         <label class="label">Kategoria ya Bidhaa *</label>
                         <div class="categories-scroll" id="categoriesList">${categoriesHtml}</div>
-                        ${showCustomCategory ? `
-                            <div style="margin-top:12px;padding:12px;background:#fdeaea;border-radius:14px;">
-                                <input type="text" id="customCategory" placeholder="Andika kategoria yako" value="${escapeHtml(customCategory)}">
-                            </div>
-                        ` : ''}
+                        <div id="customCategoryWrap" style="margin-top:12px;padding:12px;background:#fdeaea;border-radius:14px;display:${showCustomCategory ? 'block' : 'none'};">
+                            <input type="text" id="customCategory" placeholder="Andika kategoria yako" value="${escapeHtml(customCategory)}">
+                        </div>
                     </div>
                     
                     <div class="input-group">
                         <label class="label">Bei ya Bidhaa (Sasa) *</label>
                         <div class="price-container">
                             <input type="number" id="currentPrice" placeholder="Bei ya sasa" value="${formData.price}">
-                            ${formData.price ? `<div class="price-preview"><small>TZS</small> <strong>${parseInt(formData.price).toLocaleString()}</strong></div>` : ''}
+                            <div class="price-preview" id="pricePreview1" style="display:${formData.price ? 'block' : 'none'};"><small>TZS</small> <strong id="pricePreviewVal1">${formData.price ? parseInt(formData.price).toLocaleString() : ''}</strong></div>
                         </div>
                     </div>
                     
@@ -606,7 +604,7 @@
                         <label class="label">Bei ya Kuuzia *</label>
                         <div class="price-container">
                             <input type="number" id="expectedPrice" placeholder="Bei unayotaka kauzia" value="${formData.expected_selling_price}">
-                            ${formData.expected_selling_price ? `<div class="price-preview"><small>TZS</small> <strong>${parseInt(formData.expected_selling_price).toLocaleString()}</strong></div>` : ''}
+                            <div class="price-preview" id="pricePreview2" style="display:${formData.expected_selling_price ? 'block' : 'none'};"><small>TZS</small> <strong id="pricePreviewVal2">${formData.expected_selling_price ? parseInt(formData.expected_selling_price).toLocaleString() : ''}</strong></div>
                         </div>
                     </div>
                     
@@ -620,31 +618,37 @@
                     </button>
                 </div>
                 
-                ${(formData.name || formData.price || formData.expected_selling_price) ? `
-                    <div class="preview-card">
-                        <div class="preview-inner">
-                            <div style="font-weight:700;margin-bottom:12px;">📋 Hakiki ya Bidhaa:</div>
-                            <div><strong>${escapeHtml(formData.name || 'Jina la Bidhaa')}</strong></div>
-                            <div style="font-size:13px;color:#7f8c8d;">Kategoria: ${escapeHtml(formData.category || 'Hajachaguliwa')}</div>
-                            <div style="display:flex;justify-content:space-between;margin-top:10px;">
-                                <div>Bei Sasa: <strong style="color:#3498db;">${formatCurrency(formData.price)}</strong></div>
-                                <div>Bei Kuuzia: <strong style="color:#27ae60;">${formatCurrency(formData.expected_selling_price)}</strong></div>
-                            </div>
-                            <div style="margin-top:8px;">Idadi: ${formData.stock || 0} vipande</div>
-                        </div>
-                    </div>
-                ` : ''}
+                <div id="previewArea"></div>
             `;
 
+            // Attach event listeners ONCE — they never get removed
             document.getElementById('submitBtn')?.addEventListener('click', handleSubmit);
-            document.getElementById('productName')?.addEventListener('input', (e) => { formData.name = e.target.value; renderUI(); });
-            document.getElementById('currentPrice')?.addEventListener('input', (e) => { formData.price = e.target.value.replace(/[^0-9]/g, ''); renderUI(); });
-            document.getElementById('expectedPrice')?.addEventListener('input', (e) => { formData.expected_selling_price = e.target.value.replace(/[^0-9]/g, ''); renderUI(); });
-            document.getElementById('stockInput')?.addEventListener('input', (e) => { formData.stock = e.target.value.replace(/[^0-9]/g, ''); renderUI(); });
             
-            if (document.getElementById('customCategory')) {
-                document.getElementById('customCategory').addEventListener('input', (e) => { customCategory = e.target.value; formData.category = customCategory; renderUI(); });
-            }
+            document.getElementById('productName')?.addEventListener('input', (e) => { 
+                formData.name = e.target.value; 
+                updateDynamicParts(); 
+            });
+            
+            document.getElementById('currentPrice')?.addEventListener('input', (e) => { 
+                formData.price = e.target.value.replace(/[^0-9]/g, ''); 
+                updateDynamicParts(); 
+            });
+            
+            document.getElementById('expectedPrice')?.addEventListener('input', (e) => { 
+                formData.expected_selling_price = e.target.value.replace(/[^0-9]/g, ''); 
+                updateDynamicParts(); 
+            });
+            
+            document.getElementById('stockInput')?.addEventListener('input', (e) => { 
+                formData.stock = e.target.value.replace(/[^0-9]/g, ''); 
+                updateDynamicParts(); 
+            });
+            
+            document.getElementById('customCategory')?.addEventListener('input', (e) => { 
+                customCategory = e.target.value; 
+                formData.category = customCategory; 
+                updateDynamicParts(); 
+            });
             
             document.querySelectorAll('.category-chip').forEach(el => {
                 el.addEventListener('click', () => {
@@ -652,13 +656,71 @@
                     if (cat === 'Nyingine') {
                         showCustomCategory = true;
                         formData.category = '';
+                        document.getElementById('customCategoryWrap').style.display = 'block';
                     } else {
                         showCustomCategory = false;
                         formData.category = cat;
+                        document.getElementById('customCategoryWrap').style.display = 'none';
                     }
-                    renderUI();
+                    updateDynamicParts();
                 });
             });
+
+            updateDynamicParts();
+        }
+
+        // Update ONLY the dynamic parts without re-rendering the form inputs
+        function updateDynamicParts() {
+            // Update category chip selection
+            document.querySelectorAll('.category-chip').forEach(el => {
+                const cat = el.getAttribute('data-cat');
+                el.classList.toggle('selected', formData.category === cat);
+            });
+
+            // Update price previews
+            const pp1 = document.getElementById('pricePreview1');
+            const ppv1 = document.getElementById('pricePreviewVal1');
+            if (pp1 && ppv1) {
+                pp1.style.display = formData.price ? 'block' : 'none';
+                ppv1.textContent = formData.price ? parseInt(formData.price).toLocaleString() : '';
+            }
+            const pp2 = document.getElementById('pricePreview2');
+            const ppv2 = document.getElementById('pricePreviewVal2');
+            if (pp2 && ppv2) {
+                pp2.style.display = formData.expected_selling_price ? 'block' : 'none';
+                ppv2.textContent = formData.expected_selling_price ? parseInt(formData.expected_selling_price).toLocaleString() : '';
+            }
+
+            // Update submit button state
+            const isFormValid = formData.name && formData.category && formData.price && formData.expected_selling_price && formData.stock;
+            const submitBtn = document.getElementById('submitBtn');
+            if (submitBtn) {
+                submitBtn.disabled = !isFormValid;
+                submitBtn.style.opacity = isFormValid ? '1' : '0.6';
+            }
+
+            // Update preview card
+            const previewArea = document.getElementById('previewArea');
+            if (previewArea) {
+                if (formData.name || formData.price || formData.expected_selling_price) {
+                    previewArea.innerHTML = `
+                        <div class="preview-card">
+                            <div class="preview-inner">
+                                <div style="font-weight:700;margin-bottom:12px;">📋 Hakiki ya Bidhaa:</div>
+                                <div><strong>${escapeHtml(formData.name || 'Jina la Bidhaa')}</strong></div>
+                                <div style="font-size:13px;color:#7f8c8d;">Kategoria: ${escapeHtml(formData.category || 'Hajachaguliwa')}</div>
+                                <div style="display:flex;justify-content:space-between;margin-top:10px;">
+                                    <div>Bei Sasa: <strong style="color:#3498db;">${formatCurrency(formData.price)}</strong></div>
+                                    <div>Bei Kuuzia: <strong style="color:#27ae60;">${formatCurrency(formData.expected_selling_price)}</strong></div>
+                                </div>
+                                <div style="margin-top:8px;">Idadi: ${formData.stock || 0} vipande</div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    previewArea.innerHTML = '';
+                }
+            }
         }
 
         // Sidebar functions
