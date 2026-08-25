@@ -603,6 +603,9 @@
         let updatingProfile = false;
         
         let editFormData = { name: '', phone: '', businessName: '', businessLocation: '' };
+        let logoUploading = false;
+        let locationTracking = false;
+        const CLOUDINARY_CONFIG = { cloudName: 'dooidwbgt', uploadPreset: 'react_native_uploads' };
 
         function showAlert(title, message, onOk = null) {
             const existing = document.querySelector('.custom-alert');
@@ -659,7 +662,10 @@
                 businessName: businessName,
                 businessLocation: businessLocation,
                 phone: user.phone || 'Hakuna namba',
-                role: user.role || ''
+                role: user.role || '',
+                businessLogo: user.business_logo_url || '',
+                businessLatitude: typeof user.business_latitude === 'number' ? user.business_latitude : null,
+                businessLongitude: typeof user.business_longitude === 'number' ? user.business_longitude : null
             };
             
             isSystemAdmin = user.email === "cosmavictorini1994@gmail.com";
@@ -873,6 +879,101 @@
             });
         }
 
+        // Logo Upload via Cloudinary
+        async function handleLogoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) { showAlert('Hitilafu', 'Chagua picha tu'); return; }
+            if (file.size > 5*1024*1024) { showAlert('Hitilafu', 'Picha ni kubwa sana (max 5MB)'); return; }
+
+            logoUploading = true;
+            renderDashboard();
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset);
+                const uploadUrl = 'https://api.cloudinary.com/v1_1/' + CLOUDINARY_CONFIG.cloudName + '/image/upload';
+                const res = await fetch(uploadUrl, { method: 'POST', body: formData });
+                if (!res.ok) throw new Error('Upload failed');
+                const data = await res.json();
+                const logoUrl = data.secure_url;
+
+                const token = localStorage.getItem('userToken');
+                const profileRes = await fetch(API_BASE_URL + '/api/user/profile', {
+                    method: 'PUT',
+                    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ business_logo_url: logoUrl })
+                });
+                if (!profileRes.ok) throw new Error('Profile update failed');
+                const updated = await profileRes.json();
+                const newLogo = updated.user?.business_logo_url || logoUrl;
+
+                userData.businessLogo = newLogo;
+                const cached = JSON.parse(localStorage.getItem('userData') || '{}');
+                cached.business_logo_url = newLogo;
+                localStorage.setItem('userData', JSON.stringify(cached));
+
+                document.getElementById('userName').innerHTML = escapeHtml(editFormData.name || userData.email);
+                const av = document.getElementById('userAvatar');
+                av.innerHTML = '<img src="' + escapeHtml(newLogo) + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';
+
+                showAlert('Mafanikio', 'Picha ya biashara imesasishwa!');
+                renderDashboard();
+            } catch(e) { showAlert('Hitilafu', 'Imeshindwa kupakia picha: ' + e.message); }
+            finally { logoUploading = false; }
+        }
+
+        // GPS Location Tracking
+        async function handleTrackLocation() {
+            if (!navigator.geolocation) { showAlert('Hitilafu', 'GPS haipatikani kwenye kifaa chako'); return; }
+            locationTracking = true;
+            renderDashboard();
+            try {
+                const position = await new Promise((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 15000 });
+                });
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+
+                let areaName = '';
+                try {
+                    const geoRes = await fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng);
+                    if (geoRes.ok) { const geo = await geoRes.json(); areaName = geo.display_name || ''; }
+                } catch(e) {}
+
+                if (!confirm('Eneo lako: ' + (areaName || lat.toFixed(5) + ', ' + lng.toFixed(5)) + '
+
+Uhakikiwa?')) {
+                    locationTracking = false;
+                    renderDashboard();
+                    return;
+                }
+
+                const token = localStorage.getItem('userToken');
+                const res = await fetch(API_BASE_URL + '/api/user/profile', {
+                    method: 'PUT',
+                    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ business_latitude: lat, business_longitude: lng, ...(areaName ? { business_location: areaName } : {}) })
+                });
+                if (!res.ok) throw new Error('Save failed');
+                const updated = await res.json();
+
+                userData.businessLatitude = updated.user?.business_latitude ?? lat;
+                userData.businessLongitude = updated.user?.business_longitude ?? lng;
+                if (areaName) userData.businessLocation = areaName;
+
+                const cached = JSON.parse(localStorage.getItem('userData') || '{}');
+                cached.business_latitude = userData.businessLatitude;
+                cached.business_longitude = userData.businessLongitude;
+                if (areaName) cached.business_location = areaName;
+                localStorage.setItem('userData', JSON.stringify(cached));
+
+                showAlert('Mafanikio', 'Eneo limehifadhiwa! ' + (areaName || lat.toFixed(5) + ', ' + lng.toFixed(5)));
+                renderDashboard();
+            } catch(e) { showAlert('Hitilafu', 'Imeshindwa kupata eneo: ' + (e.message || e)); }
+            finally { locationTracking = false; renderDashboard(); }
+        }
+
         function goToSystemAdmin() {
             window.location.href = '../system_admin/index.html';
         }
@@ -903,7 +1004,10 @@
                     <div class="seller-card">
                         <div class="seller-info">
                             <div class="seller-header">
-                                <span class="seller-name">${escapeHtml(seller.full_name || seller.email)}</span>
+                                <div style="display:flex;align-items:center;gap:10px;flex:1;">
+                                    ${seller.business_logo_url ? '<img src="'+escapeHtml(seller.business_logo_url)+'" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">' : '<div style="width:32px;height:32px;border-radius:50%;background:#e8f4fd;display:flex;align-items:center;justify-content:center;font-size:14px;">👤</div>'}
+                                    <span class="seller-name">${escapeHtml(seller.full_name || seller.email)}</span>
+                                </div>
                                 <span class="status-chip ${statusClass}">${statusIcon} ${statusText}</span>
                             </div>
                             <div class="seller-email">📧 ${escapeHtml(seller.email)}</div>
@@ -954,15 +1058,26 @@
                             <span>Toka</span>
                         </div>
                     </div>
-                </div>
-                
-                <div class="business-card">
-                    <div class="business-name">${escapeHtml(userData.businessName)}</div>
-                    <div class="business-location">📍 ${escapeHtml(userData.businessLocation)}</div>
-                    <div class="business-phone">📞 ${escapeHtml(userData.phone)}</div>
-                    <div class="status-badge">🛡️ ${isSystemAdmin ? 'Msimamizi Mkuu wa Mfumo' : 'Msimamizi Mkuu'}</div>
-                    <div class="filter-info">🔍 Wauzaji wanaonyeshwa: Jina la biashara = "${escapeHtml(userData.businessName)}"</div>
-                </div>
+                </div>                    <div class="business-card">
+                        <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">
+                            <div id="businessLogoArea" style="width:70px;height:70px;border-radius:14px;background:#e8f4fd;display:flex;align-items:center;justify-content:center;border:2px dashed #3498db;cursor:pointer;overflow:hidden;" onclick="document.getElementById('logoFileInput').click()">
+                                ${userData.businessLogo ? '<img src="'+escapeHtml(userData.businessLogo)+'" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">' : '<div style="font-size:28px;">📷</div>'}
+                            </div>
+                            <div style="flex:1;">
+                                <div class="business-name">${escapeHtml(userData.businessName)}</div>
+                                <div class="business-location">📍 ${escapeHtml(userData.businessLocation)}</div>
+                                <div class="business-phone">📞 ${escapeHtml(userData.phone)}</div>
+                            </div>
+                        </div>
+                        <input type="file" id="logoFileInput" accept="image/*" style="display:none" onchange="handleLogoUpload(event)">
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+                            <div class="status-badge">🛡️ ${isSystemAdmin ? 'Msimamizi Mkuu wa Mfumo' : 'Msimamizi Mkuu'}</div>
+                        </div>
+                        <div class="filter-info">🔍 Wauzaji wanaonyeshwa: Jina la biashara = "${escapeHtml(userData.businessName)}"</div>
+                        <button id="trackLocationBtn" style="width:100%;margin-top:12px;padding:12px;background:#e67e22;color:white;border:none;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;" onclick="handleTrackLocation()">
+                            ${locationTracking ? '⏳ Inapata eneo...' : (userData.businessLatitude ? '🔄 Badili Eneo' : '🧭 Pata Eneo la GPS')}
+                        </button>
+                    </div>
                 
                 <div class="section-header">
                     <h2 class="section-title">Wauzaji Wa Biashara Hii</h2>

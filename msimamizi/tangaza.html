@@ -78,9 +78,12 @@
         .title { font-size: 22px; font-weight: 800; color: #1a1a1a; margin-bottom: 6px; }
         .subtitle { font-size: 14px; color: #666; margin-bottom: 16px; }
         
-        .free-banner { background: #d4edda; padding: 15px; border-radius: 12px; border-left: 4px solid #28a745; margin-top: 10px; }
-        .free-title { font-size: 16px; font-weight: 700; color: #155724; margin-bottom: 8px; }
-        .free-text { font-size: 13px; color: #155724; line-height: 1.5; }
+        .payment-banner { background: #fff3cd; padding: 15px; border-radius: 12px; border-left: 4px solid #f0ad4e; margin-top: 10px; }
+        .payment-banner-title { font-size: 16px; font-weight: 700; color: #856404; margin-bottom: 8px; }
+        .payment-banner-text { font-size: 13px; color: #856404; line-height: 1.5; }
+        .payment-price-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+        .payment-price { background: #f0ad4e; color: white; font-weight: 700; font-size: 14px; padding: 4px 10px; border-radius: 6px; }
+        .payment-duration { font-size: 12px; color: #856404; font-weight: 600; }
         
         .network-warning { background: #fff3cd; padding: 12px; border-radius: 10px; margin-top: 12px; color: #856404; font-size: 13px; }
         
@@ -137,7 +140,11 @@
         .stat-badge.reports { color: #e74c3c; }
         .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
         .status-free { background: #d4edda; color: #155724; }
-        .status-paid { background: #f8d7da; color: #721c24; }
+        .status-paid { background: #d4edda; color: #155724; }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-expired { background: #f8d7da; color: #721c24; }
+        .renew-btn { background: #f0ad4e; color: white; padding: 10px 16px; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; text-align: center; margin-top: 12px; width: 100%; border: none; }
+        .pay-now-btn { background: #FF6B35; color: white; padding: 10px 16px; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; text-align: center; margin-top: 12px; width: 100%; border: none; }
         
         .delete-btn { background: #FF6B35; padding: 8px 16px; border-radius: 8px; color: white; font-weight: 600; font-size: 12px; cursor: pointer; display: inline-block; margin-top: 12px; }
         
@@ -276,9 +283,6 @@
                 // Upload to Cloudinary
                 const cloudResult = await uploadToCloudinary(mediaFile, mediaType);
                 // Save to backend
-                const expiresAt = new Date();
-                expiresAt.setDate(expiresAt.getDate() + 30);
-                
                 const response = await fetch(`${API_BASE_URL}/api/matangazo`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
@@ -287,13 +291,31 @@
                         media_url: cloudResult.secure_url,
                         media_type: mediaType,
                         thumbnail_url: cloudResult.secure_url,
-                        payment_status: 'free',
-                        expires_at: expiresAt.toISOString()
+                        payment_status: 'pending'
                     })
                 });
                 
                 if (response.ok) {
-                    showAlert('Imefanikiwa! 🎉', 'Matangazo yamewekwa kikamilifu! Mudumu: Siku 30');
+                    const matangazoData = await response.json();
+                    const matangazoId = matangazoData?.data?.id;
+                    if (matangazoId) {
+                        try {
+                            const payRes = await fetch(API_BASE_URL + '/api/payments/pesapal/initiate', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + userToken },
+                                body: JSON.stringify({ amount: 3000, description: description.trim(), matangazo_id: matangazoId, phone: currentUser?.phone || '', email: currentUser?.email || '', name: currentUser?.name || '' })
+                            });
+                            const payData = await payRes.json();
+                            if (payRes.ok && payData.redirect_url) {
+                                window.open(payData.redirect_url, '_blank');
+                                showAlert('Matangazo Yameundwa! 🎉', 'Fungua kichupo kipya kulipa TZS 3,000. Baada ya kulipa, boresha ukurasa.');
+                            } else {
+                                showAlert('Imefanikiwa! 🎉', 'Matangazo yameundwa. Lipa upya baada ya kuingia.');
+                            }
+                        } catch(e) { showAlert('Imefanikiwa! 🎉', 'Matangazo yameundwa. Lipa upya baada ya kuingia.'); }
+                    } else {
+                        showAlert('Imefanikiwa! 🎉', 'Matangazo yamewekwa kikamilifu!');
+                    }
                     description = '';
                     mediaFile = null;
                     mediaType = null;
@@ -324,6 +346,24 @@
                 }
             } catch (err) { console.error(err); }
             finally { loadingAds = false; render(); }
+        }
+
+        async function handleRenewPayment(adId) {
+            showAlert('Malipo ya Upya', 'Utaelekezwa kwenye PesaPal kulipa TZS 3,000 kwa siku 30.');
+            try {
+                const res = await fetch(API_BASE_URL + '/api/payments/pesapal/initiate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + userToken },
+                    body: JSON.stringify({ amount: 3000, description: 'Malipo ya matangazo', matangazo_id: adId, phone: currentUser?.phone || '', email: currentUser?.email || '', name: currentUser?.name || '' })
+                });
+                const data = await res.json();
+                if (res.ok && data.redirect_url) {
+                    window.open(data.redirect_url, '_blank');
+                    showAlert('Angalia Malipo', 'Fungua kichupo kipya kukamilisha malipo. Baada ya kulipa, boresha ukurasa.');
+                } else {
+                    showAlert('Hitilafu', data.error || 'Imeshindwa kuanzisha malipo');
+                }
+            } catch(e) { showAlert('Hitilafu', 'Imeshindwa: ' + e.message); }
         }
 
         async function deleteAdvertisement(id) {
@@ -376,9 +416,13 @@
                     <div class="title">Tengeneza Matangazo</div>
                     <div class="subtitle">Weka maelezo na media ya matangazo yako</div>
                     
-                    <div class="free-banner">
-                        <div class="free-title">🆓 Bila Malipo</div>
-                        <div class="free-text">• Bila malipo kwa sasa<br>• Mudumu: Siku 30<br>• Fungua soko lako kwa urahisi</div>
+                    <div class="payment-banner">
+                        <div class="payment-banner-title">💳 Malipo ya Matangazo</div>
+                        <div class="payment-banner-text">• Matangazo yanalipwa kupitia PesaPal<br>• Mudumu: Siku 30 baada ya malipo<br>• Fungua soko lako kwa urahisi</div>
+                        <div class="payment-price-row">
+                            <span class="payment-price">TZS 3,000</span>
+                            <span class="payment-duration">kwa siku 30</span>
+                        </div>
                     </div>
                     
                     ${!isOnline ? '<div class="network-warning">⚠️ Hakuna muunganiko wa intaneti</div>' : ''}
@@ -438,31 +482,39 @@
                 `;
             }
             
-            return myAdvertisements.map(ad => `
-                <div class="ad-card">
+            return myAdvertisements.map(ad => {
+                const isFree = ad.is_free === true || ad.payment_status === 'free';
+                const isExpired = ad.expires_at && new Date(ad.expires_at).getTime() <= Date.now();
+                const isPending = ad.payment_status === 'pending' || ad.payment_status === 'failed';
+                const daysLeft = ad.expires_at ? Math.max(0, Math.ceil((new Date(ad.expires_at).getTime() - Date.now()) / (24*60*60*1000))) : 0;
+                
+                let statusLabel, statusClass;
+                if (isFree) { statusLabel = '🆓 Bila malipo'; statusClass = 'status-free'; }
+                else if (isPending) { statusLabel = '⏳ Inasubiri malipo'; statusClass = 'status-pending'; }
+                else if (isExpired) { statusLabel = '❌ Imeisha muda'; statusClass = 'status-expired'; }
+                else { statusLabel = '✅ Imelipwa'; statusClass = 'status-paid'; }
+                
+                return `<div class="ad-card">
                     <div class="ad-header">
-                        <div class="ad-title">${escapeHtml(ad.title || `Matangazo #${ad.id}`)}</div>
-                        <div class="ad-date">${formatDate(ad.created_at)}</div>
+                        <div class="ad-title">${escapeHtml(ad.title || 'Matangazo #' + ad.id)}</div>
+                        <div class="ad-date">${daysLeft > 0 ? 'Siku ' + daysLeft + ' zimebaki' : formatDate(ad.created_at)}</div>
                     </div>
                     <div class="ad-description">${escapeHtml(ad.description)}</div>
                     <div class="ad-media">
-                        ${ad.media_type === 'video' ? 
-                            `<div class="video-placeholder">🎥 Video Tangazo</div>` : 
-                            `<img src="${ad.media_url}" alt="tangazo" onerror="this.src='https://via.placeholder.com/300?text=No+Image'">`
-                        }
+                        ${ad.media_type === 'video' ? '<div class="video-placeholder">🎥 Video Tangazo</div>' : '<img src="' + ad.media_url + '" alt="tangazo" onerror="this.src=\'https://via.placeholder.com/300?text=No+Image\'">'}
                     </div>
                     <div class="stats-row">
                         <div class="reactions">
                             <div class="stat-badge likes">👍 ${ad.like_count || 0} Likes</div>
                             <div class="stat-badge reports">⚠️ ${ad.report_count || 0} Ripoti</div>
                         </div>
-                        <div class="status-badge ${ad.payment_status === 'free' ? 'status-free' : 'status-paid'}">
-                            ${ad.payment_status === 'free' ? '🆓 Bila malipo' : '💰 Imehadhiwa'}
-                        </div>
+                        <div class="status-badge ${statusClass}">${statusLabel}</div>
                     </div>
+                    ${isExpired ? '<button class="renew-btn" onclick="handleRenewPayment(' + ad.id + ')">💳 Lipa Upya (TZS 3,000)</button>' : ''}
+                    ${isPending ? '<button class="pay-now-btn" onclick="handleRenewPayment(' + ad.id + ')">💳 Lipa Sasa (TZS 3,000)</button>' : ''}
                     <div class="delete-btn" onclick="deleteAdvertisement(${ad.id})">Futa</div>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
         }
 
         function render() {
@@ -495,6 +547,7 @@
         window.clearMedia = () => clearMedia();
         window.handleUpload = () => handleUpload();
         window.deleteAdvertisement = (id) => deleteAdvertisement(id);
+        window.handleRenewPayment = (id) => handleRenewPayment(id);
         
         // Update description on input
         function setupDescriptionListener() {

@@ -268,6 +268,75 @@
         .alert-btn-success {
             background-color: #27ae60;
         }
+
+        /* OTP 6-digit boxes */
+        .otp-boxes {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 18px;
+        }
+        .otp-box {
+            width: 46px;
+            height: 56px;
+            border-radius: 12px;
+            border: 1.5px solid #d5dbe1;
+            background: #f8fafc;
+            text-align: center;
+            font-size: 22px;
+            font-weight: 700;
+            color: #2c3e50;
+            font-family: 'Inter', monospace;
+            transition: border-color 0.2s;
+        }
+        .otp-box:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        .otp-box.filled {
+            border-color: #3498db;
+        }
+        .otp-box.error {
+            border-color: #e74c3c;
+        }
+        .otp-error-box {
+            display: none;
+            align-items: center;
+            background: #fdecea;
+            border-radius: 10px;
+            padding: 8px 12px;
+            margin-bottom: 14px;
+        }
+        .otp-error-box.show {
+            display: flex;
+        }
+        .otp-error-icon {
+            margin-right: 6px;
+            font-size: 16px;
+        }
+        .otp-error-text {
+            font-size: 13px;
+            color: #c0392b;
+            font-weight: 500;
+            flex: 1;
+        }
+        .otp-close-btn {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            padding: 6px;
+            border-radius: 18px;
+            background: #f4f6f8;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            color: #95a5a6;
+        }
+        .otp-creating-text {
+            font-size: 13px;
+            color: #7f8c8d;
+            margin-top: 6px;
+        }
     </style>
 </head>
 <body>
@@ -363,21 +432,123 @@
     let registrationToken = null;
     let pendingEmail = '';
 
+    // OTP Modal — 6 individual digit boxes with countdown
+    const OTP_LENGTH = 6;
+    const OTP_RESEND_COOLDOWN = 30;
+    let otpDigits = [];
+    let otpCountdown = OTP_RESEND_COOLDOWN;
+    let otpCountdownTimer = null;
+
     function getOtpModalHtml(email) {
+        let boxesHtml = '';
+        for (let i = 0; i < OTP_LENGTH; i++) {
+            boxesHtml += `<input type="text" class="otp-box" id="otpBox${i}" maxlength="2" inputmode="numeric" pattern="[0-9]*" placeholder="•">`;
+        }
         return `
-            <div id="otpModal" class="custom-alert">
-                <div class="alert-box" style="max-width: 400px; padding: 28px 24px;">
-                    <div style="font-size: 40px; margin-bottom: 12px;">📧</div>
-                    <div class="alert-title">Uthibitisho wa Barua Pepe</div>
-                    <div class="alert-message">Tumetuma msimbo wa tarakimu 6 kwenye barua pepe: <strong>${email}</strong></div>
-                    <input type="text" id="otpInput" class="input-field" style="text-align: center; font-size: 24px; letter-spacing: 8px; margin-bottom: 16px; height: 56px;" placeholder="000000" maxlength="6" inputmode="numeric" pattern="[0-9]*">
-                    <div id="otpError" style="color: #e74c3c; font-size: 13px; margin-bottom: 12px; display: none;"></div>
-                    <div id="otpVerifyBtn" class="alert-btn" style="margin-bottom: 10px;">Hakiki Msimbo</div>
-                    <div id="otpResendBtn" style="font-size: 13px; color: #3498db; cursor: pointer; margin-bottom: 10px;">Tuma msimbo tena</div>
-                    <div id="otpCancelBtn" style="font-size: 13px; color: #95a5a6; cursor: pointer;">Badilisha barua pepe</div>
+            <div id="otpModal" class="custom-alert" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,0.55);display:flex;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(2px);padding:24px;">
+                <div style="background:white;border-radius:24px;width:100%;max-width:400px;padding:20px 24px 26px;align-items:center;position:relative;box-shadow:0 12px 24px rgba(0,0,0,0.18);">
+                    <button class="otp-close-btn" id="otpCloseBtn">✕</button>
+                    <div style="text-align:center;margin-bottom:14px;">
+                        <div style="width:64px;height:64px;border-radius:32px;background:#3498db1a;display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px;">
+                            <span style="font-size:34px;">✉️</span>
+                        </div>
+                    </div>
+                    <div class="alert-title" style="font-size:20px;font-weight:bold;color:#2c3e50;margin-bottom:6px;text-align:center;">Uthibitisho wa Barua Pepe</div>
+                    <div style="font-size:13px;color:#7f8c8d;text-align:center;line-height:19px;margin-bottom:22px;padding:0 6px;">Tumetuma msimbo wa tarakimu 6 kwenye barua pepe: <strong>${email}</strong></div>
+                    <div class="otp-boxes" id="otpBoxes">${boxesHtml}</div>
+                    <div class="otp-error-box" id="otpErrorBox">
+                        <span class="otp-error-icon">⚠️</span>
+                        <span class="otp-error-text" id="otpErrorText"></span>
+                    </div>
+                    <button id="otpVerifyBtn" class="alert-btn" style="width:100%;height:54px;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;cursor:pointer;border:none;font-size:16px;font-weight:bold;color:white;background:#3498db;">
+                        <span>✓</span> <span id="otpVerifyText">Hakiki Msimbo</span>
+                        <span id="otpVerifyLoader" style="display:none;"><div class="loader" style="width:20px;height:20px;border-width:2px;"></div></span>
+                    </button>
+                    <div id="otpCreatingAccount" style="display:none;text-align:center;margin-bottom:14px;">
+                        <div class="loader" style="margin:0 auto 8px;border-top-color:#3498db;"></div>
+                        <div class="otp-creating-text">Inaunda akaunti...</div>
+                    </div>
+                    <div style="text-align:center;margin-bottom:14px;">
+                        <span style="font-size:13px;color:#7f8c8d;">Hujapokea msimbo? </span>
+                        <span id="otpResendBtn" style="font-size:13px;font-weight:700;color:#3498db;cursor:pointer;"></span>
+                    </div>
+                    <div style="text-align:center;">
+                        <span id="otpCancelBtn" style="font-size:13px;color:#7f8c8d;cursor:pointer;display:inline-flex;align-items:center;gap:5px;text-decoration:underline;">← Badilisha barua pepe</span>
+                    </div>
                 </div>
             </div>
         `;
+    }
+
+    function showOtpResendState() {
+        const resendBtn = document.getElementById('otpResendBtn');
+        if (!resendBtn) return;
+        if (otpCountdown > 0) {
+            resendBtn.textContent = `Tuma tena (${otpCountdown}s)`;
+            resendBtn.style.color = '#95a5a6';
+            resendBtn.style.cursor = 'default';
+        } else {
+            resendBtn.textContent = 'Tuma msimbo tena';
+            resendBtn.style.color = '#3498db';
+            resendBtn.style.cursor = 'pointer';
+        }
+    }
+
+    function startOtpCountdown() {
+        otpCountdown = OTP_RESEND_COOLDOWN;
+        showOtpResendState();
+        if (otpCountdownTimer) clearInterval(otpCountdownTimer);
+        otpCountdownTimer = setInterval(() => {
+            otpCountdown--;
+            showOtpResendState();
+            if (otpCountdown <= 0) {
+                clearInterval(otpCountdownTimer);
+                otpCountdownTimer = null;
+            }
+        }, 1000);
+    }
+
+    function setOtpError(msg) {
+        const box = document.getElementById('otpErrorBox');
+        const text = document.getElementById('otpErrorText');
+        if (msg) {
+            box.classList.add('show');
+            text.textContent = msg;
+            for (let i = 0; i < OTP_LENGTH; i++) {
+                const b = document.getElementById('otpBox' + i);
+                if (b) b.classList.add('error');
+            }
+        } else {
+            box.classList.remove('show');
+            for (let i = 0; i < OTP_LENGTH; i++) {
+                const b = document.getElementById('otpBox' + i);
+                if (b) b.classList.remove('error');
+            }
+        }
+    }
+
+    function getOtpCode() { return otpDigits.join(''); }
+
+    function setOtpVerifying(verifying) {
+        const btn = document.getElementById('otpVerifyBtn');
+        const text = document.getElementById('otpVerifyText');
+        const loader = document.getElementById('otpVerifyLoader');
+        if (verifying) {
+            text.style.display = 'none';
+            loader.style.display = 'inline-block';
+            btn.disabled = true;
+        } else {
+            text.style.display = 'inline';
+            loader.style.display = 'none';
+            btn.disabled = false;
+        }
+    }
+
+    function setOtpCreating(creating) {
+        const el = document.getElementById('otpCreatingAccount');
+        const btn = document.getElementById('otpVerifyBtn');
+        if (creating) { el.style.display = 'block'; btn.style.display = 'none'; }
+        else { el.style.display = 'none'; btn.style.display = 'flex'; }
     }
 
     function showAlert(title, message, onOkCallback = null, isSuccessWithNavigate = false) {
@@ -494,7 +665,7 @@
             });
             const data = await response.json();
 
-            if (response.ok && data.success) {
+            if (response.ok && (data.success || data.requiresOtp)) {
                 pendingEmail = form.email;
                 formValues = form;
                 setLoadingState(false);
@@ -517,50 +688,80 @@
     function showOtpModal(email) {
         const existing = document.querySelector('.custom-alert');
         if (existing) existing.remove();
+        otpDigits = Array(OTP_LENGTH).fill('');
+        otpCountdown = OTP_RESEND_COOLDOWN;
         const wrapper = document.createElement('div');
         wrapper.innerHTML = getOtpModalHtml(email);
         document.body.appendChild(wrapper.firstElementChild);
-        const otpInput = document.getElementById('otpInput');
-        otpInput.focus();
-        otpInput.addEventListener('input', (e) => { e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 6); });
-        document.getElementById('otpVerifyBtn').addEventListener('click', () => handleVerifyOtp(otpInput.value));
+        for (let i = 0; i < OTP_LENGTH; i++) {
+            const box = document.getElementById('otpBox' + i);
+            box.addEventListener('input', (e) => {
+                const val = e.target.value.replace(/[^0-9]/g, '');
+                otpDigits[i] = val ? val.slice(-1) : '';
+                box.value = otpDigits[i];
+                if (otpDigits[i]) {
+                    box.classList.add('filled');
+                    if (i < OTP_LENGTH - 1) document.getElementById('otpBox' + (i + 1)).focus();
+                } else { box.classList.remove('filled'); }
+                setOtpError(null);
+            });
+            box.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && !otpDigits[i] && i > 0) {
+                    otpDigits[i - 1] = '';
+                    document.getElementById('otpBox' + (i - 1)).value = '';
+                    document.getElementById('otpBox' + (i - 1)).classList.remove('filled');
+                    document.getElementById('otpBox' + (i - 1)).focus();
+                }
+            });
+            box.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleVerifyOtp(); });
+        }
+        const checkAutoSubmit = () => {
+            if (otpDigits.join('').length === OTP_LENGTH && otpDigits.every(d => d !== '')) handleVerifyOtp();
+        };
+        for (let i = 0; i < OTP_LENGTH; i++) document.getElementById('otpBox' + i).addEventListener('input', checkAutoSubmit);
+        setTimeout(() => { const f = document.getElementById('otpBox0'); if (f) f.focus(); }, 350);
+        startOtpCountdown();
+        document.getElementById('otpVerifyBtn').addEventListener('click', () => handleVerifyOtp());
         document.getElementById('otpResendBtn').addEventListener('click', () => handleResendOtp(email));
-        document.getElementById('otpCancelBtn').addEventListener('click', () => document.getElementById('otpModal').remove());
-        otpInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleVerifyOtp(otpInput.value); });
+        document.getElementById('otpCancelBtn').addEventListener('click', () => { if (otpCountdownTimer) clearInterval(otpCountdownTimer); document.getElementById('otpModal').remove(); });
+        document.getElementById('otpCloseBtn').addEventListener('click', () => { if (otpCountdownTimer) clearInterval(otpCountdownTimer); document.getElementById('otpModal').remove(); });
     }
 
-    async function handleVerifyOtp(otp) {
-        const otpError = document.getElementById('otpError');
-        const otpVerifyBtn = document.getElementById('otpVerifyBtn');
-        if (!otp || otp.length !== 6) { otpError.textContent = 'Tafadhali weka msimbo wa tarakimu 6'; otpError.style.display = 'block'; return; }
-        otpError.style.display = 'none';
-        otpVerifyBtn.innerHTML = '<div class="loader" style="width:20px;height:20px;border-width:2px;"></div>';
+    async function handleVerifyOtp() {
+        const code = getOtpCode();
+        if (!code || code.length !== OTP_LENGTH) {
+            setOtpError('Tafadhali weka msimbo wa tarakimu 6');
+            return;
+        }
+        setOtpError(null);
+        setOtpVerifying(true);
         try {
             const response = await fetch(`${API_BASE_URL}/api/register/verify-otp`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: pendingEmail, role: 'customer', otp })
+                body: JSON.stringify({ email: pendingEmail, role: 'customer', otp: code })
             });
             const data = await response.json();
             if (response.ok && data.success && data.verified) {
                 registrationToken = data.registrationToken;
-                document.getElementById('otpModal').remove();
+                setOtpVerifying(false);
+                setOtpCreating(true);
                 await completeRegistration();
             } else {
-                otpVerifyBtn.innerHTML = 'Hakiki Msimbo';
-                otpError.textContent = data.error || 'Msimbo si sahihi';
-                otpError.style.display = 'block';
+                setOtpVerifying(false);
+                setOtpError(data.error || 'Msimbo si sahihi');
             }
         } catch (error) {
-            otpVerifyBtn.innerHTML = 'Hakiki Msimbo';
-            otpError.textContent = 'Hitilafu ya mtandao';
-            otpError.style.display = 'block';
+            setOtpVerifying(false);
+            setOtpError('Hitilafu ya mtandao');
         }
     }
 
     async function handleResendOtp(email) {
+        if (otpCountdown > 0) return;
         const otpResendBtn = document.getElementById('otpResendBtn');
         otpResendBtn.textContent = 'Inatuma...';
+        otpResendBtn.style.color = '#95a5a6';
         try {
             const response = await fetch(`${API_BASE_URL}/api/register/resend-otp`, {
                 method: 'POST',
@@ -568,11 +769,23 @@
                 body: JSON.stringify({ email, role: 'customer' })
             });
             const data = await response.json();
-            otpResendBtn.textContent = response.ok && data.success ? 'Msimbo umetumwa tena!' : (data.error || 'Imeshindikana');
-            setTimeout(() => { otpResendBtn.textContent = 'Tuma msimbo tena'; }, 3000);
+            if (response.ok && data.success) {
+                for (let i = 0; i < OTP_LENGTH; i++) {
+                    otpDigits[i] = '';
+                    const b = document.getElementById('otpBox' + i);
+                    if (b) { b.value = ''; b.classList.remove('filled'); }
+                }
+                setOtpError(null);
+                startOtpCountdown();
+            } else {
+                setOtpError(data.error || 'Imeshindikana');
+                otpResendBtn.textContent = 'Tuma msimbo tena';
+                otpResendBtn.style.color = '#3498db';
+            }
         } catch (error) {
-            otpResendBtn.textContent = 'Hitilafu ya mtandao';
-            setTimeout(() => { otpResendBtn.textContent = 'Tuma msimbo tena'; }, 3000);
+            setOtpError('Hitilafu ya mtandao');
+            otpResendBtn.textContent = 'Tuma msimbo tena';
+            otpResendBtn.style.color = '#3498db';
         }
     }
 
@@ -587,6 +800,9 @@
             const data = await response.json();
             setLoadingState(false);
             if (response.ok) {
+                if (otpCountdownTimer) clearInterval(otpCountdownTimer);
+                const modal = document.getElementById('otpModal');
+                if (modal) modal.remove();
                 resetForm();
                 showAlert('Mafanikio!', 'Akaunti ya Mteja imeundwa kikamilifu! Sasa unaweza kuingia.', null, true);
             } else {

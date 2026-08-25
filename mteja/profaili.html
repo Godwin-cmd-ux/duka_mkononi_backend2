@@ -213,6 +213,13 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
 
+        .avatar-wrap {
+            position: relative;
+            width: 90px;
+            height: 90px;
+            margin: 0 auto 16px;
+        }
+
         .avatar {
             width: 90px;
             height: 90px;
@@ -221,13 +228,55 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 16px;
+            overflow: hidden;
+        }
+
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .avatar-text {
             color: white;
             font-size: 38px;
             font-weight: 700;
+        }
+
+        .camera-badge {
+            position: absolute;
+            right: -4px;
+            bottom: 0;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #667eea;
+            border: 2px solid white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            z-index: 2;
+        }
+
+        .camera-badge:hover {
+            background: #5a6fd6;
+        }
+
+        .camera-badge span {
+            font-size: 14px;
+        }
+
+        #photoUploadInput {
+            display: none;
+        }
+
+        .upload-progress {
+            font-size: 12px;
+            color: #667eea;
+            text-align: center;
+            margin-top: 8px;
         }
 
         .greeting {
@@ -817,6 +866,73 @@
             }
         }
 
+        // Cloudinary Photo Upload
+        const CLOUDINARY_CLOUD_NAME = 'dooidwbgt';
+        const CLOUDINARY_UPLOAD_PRESET = 'react_native_uploads';
+
+        function setupPhotoUpload() {
+            const cameraBadge = document.getElementById('cameraBadge');
+            const photoInput = document.getElementById('photoUploadInput');
+            
+            if (cameraBadge && photoInput) {
+                cameraBadge.addEventListener('click', () => photoInput.click());
+                photoInput.addEventListener('change', handlePhotoUpload);
+            }
+        }
+
+        async function handlePhotoUpload(e) {
+            const file = e.target.files?.[0];
+            if (!file) return;
+
+            const progressEl = document.getElementById('uploadProgress');
+            if (progressEl) progressEl.textContent = 'Inapakia picha...';
+
+            try {
+                const formDataUpload = new FormData();
+                formDataUpload.append('file', file);
+                formDataUpload.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+                const response = await fetch(
+                    `https://api.cloudinary.com/v1_0/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+                    { method: 'POST', body: formDataUpload }
+                );
+
+                if (!response.ok) throw new Error('Imeshindwa kupakia picha');
+
+                const data = await response.json();
+                const imageUrl = data.secure_url;
+
+                // Update profile with new logo URL
+                const token = localStorage.getItem('userToken');
+                const updateResponse = await fetch(`${API_BASE_URL}/api/user/profile`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ business_logo_url: imageUrl }),
+                });
+
+                if (updateResponse.ok) {
+                    const result = await updateResponse.json();
+                    profile = result.user;
+                    // Update localStorage
+                    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+                    userData.business_logo_url = imageUrl;
+                    localStorage.setItem('userData', JSON.stringify(userData));
+                    updateSidebarUser();
+                    if (progressEl) progressEl.textContent = '';
+                    render();
+                } else {
+                    throw new Error('Imeshindwa kusasisha wasifu');
+                }
+            } catch (error) {
+                console.error('Photo upload error:', error);
+                if (progressEl) progressEl.textContent = 'Hitilafu: ' + error.message;
+            }
+        }
+
         // Render the UI
         function render() {
             if (loading) {
@@ -848,9 +964,16 @@
 
             container.innerHTML = `
                 <div class="profile-header">
-                    <div class="avatar">
-                        ${profile.business_logo_url ? `<img src="${escapeHtml(profile.business_logo_url)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : `<div class="avatar-text">${escapeHtml(initial)}</div>`}
+                    <div class="avatar-wrap">
+                        <div class="avatar">
+                            ${profile.business_logo_url ? `<img src="${escapeHtml(profile.business_logo_url)}" alt="Profile">` : `<div class="avatar-text">${escapeHtml(initial)}</div>`}
+                        </div>
+                        <div class="camera-badge" id="cameraBadge" title="Badilisha picha">
+                            <span>📷</span>
+                        </div>
+                        <input type="file" id="photoUploadInput" accept="image/*">
                     </div>
+                    <div class="upload-progress" id="uploadProgress"></div>
                     <div class="greeting">Habari, ${escapeHtml(displayName)}!</div>
                     <div class="role">${escapeHtml(roleName)}</div>
                 </div>
@@ -964,6 +1087,9 @@
 
             const logoutAccountBtn = document.getElementById('logoutAccountBtn');
             if (logoutAccountBtn) logoutAccountBtn.addEventListener('click', handleLogout);
+
+            // Setup photo upload
+            setupPhotoUpload();
         }
 
         // Sidebar functions

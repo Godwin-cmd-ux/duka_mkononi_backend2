@@ -285,6 +285,56 @@
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
         }
 
+        /* Twende Dukani Button */
+        .twende-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            padding: 12px 20px;
+            border-radius: 12px;
+            border: none;
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 14px;
+            box-shadow: 0 2px 8px rgba(39, 174, 96, 0.3);
+            transition: all 0.2s;
+        }
+
+        .twende-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(39, 174, 96, 0.4);
+        }
+
+        /* Business Logo */
+        .business-logo {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: #e8f4fd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .business-logo-placeholder {
+            border: 2px dashed #d0e8f7;
+            color: #667eea;
+            font-size: 22px;
+        }
+
+        .business-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
         /* Details */
         .details-container {
             display: flex;
@@ -697,6 +747,57 @@
             hideContactModal();
         }
 
+        // Twende Dukani - Open Google Maps directions
+        function handleTwendeDukani(businessName, lat, lng, location) {
+            const hasCoords = typeof lat === 'number' && typeof lng === 'number';
+            const hasAddress = !!location && location !== 'null';
+
+            if (!hasCoords && !hasAddress) {
+                alert('Hakuna taarifa za eneo kwa biashara hii.');
+                return;
+            }
+
+            // Try to get user's current location first
+            if (navigator.geolocation) {
+                alert('Inapata eneo lako la sasa...');
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const origin = `${position.coords.latitude},${position.coords.longitude}`;
+                        let destination;
+                        if (hasCoords) {
+                            destination = `${lat},${lng}`;
+                        } else {
+                            destination = encodeURIComponent(location);
+                        }
+                        const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
+                        window.open(mapsUrl, '_blank');
+                    },
+                    (error) => {
+                        // If geolocation fails, just search by destination
+                        let destination;
+                        if (hasCoords) {
+                            destination = `${lat},${lng}`;
+                        } else {
+                            destination = encodeURIComponent(location);
+                        }
+                        const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving`;
+                        window.open(mapsUrl, '_blank');
+                    },
+                    { enableHighAccuracy: true, timeout: 10000 }
+                );
+            } else {
+                // Fallback: just open Google Maps with destination
+                let destination;
+                if (hasCoords) {
+                    destination = `${lat},${lng}`;
+                } else {
+                    destination = encodeURIComponent(location);
+                }
+                const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving`;
+                window.open(mapsUrl, '_blank');
+            }
+        }
+
         // Fetch businesses from API
         async function fetchBusinesses() {
             loading = true;
@@ -793,9 +894,17 @@
             const businessesHtml = filtered.map(business => `
                 <div class="business-card" data-business-id="${business.id}">
                     <div class="card-header">
-                        <div class="business-name">${escapeHtml(business.business_name || 'Biashara Bila Jina')}</div>
+                        <div style="display:flex;align-items:center;gap:12px;flex:1;">
+                            <div class="business-logo ${business.business_logo_url ? '' : 'business-logo-placeholder'}">
+                                ${business.business_logo_url ? `<img src="${escapeHtml(business.business_logo_url)}" alt="Logo">` : '🏪'}
+                            </div>
+                            <div class="business-name">${escapeHtml(business.business_name || 'Biashara Bila Jina')}</div>
+                        </div>
                         <button class="contact-btn" data-id="${business.id}" data-phone="${escapeHtml(business.phone || '')}" data-name="${escapeHtml(business.business_name || 'Biashara')}">Wasiliana</button>
                     </div>
+                    <button class="twende-btn" data-twende='${JSON.stringify({lat: business.business_latitude, lng: business.business_longitude, loc: business.business_location || ''}).replace(/'/g, "&#39;")}' data-name="${escapeHtml(business.business_name || 'Biashara')}">
+                        🧭 Twende Dukani
+                    </button>
                     <div class="details-container">
                         <div class="detail-row">
                             <span class="detail-label">Jina la Msimamizi:</span>
@@ -862,6 +971,20 @@
                         if (business) {
                             makePhoneCall(business.phone);
                         }
+                    }
+                });
+            });
+            
+            // Attach Twende Dukani button events
+            document.querySelectorAll('.twende-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    try {
+                        const data = JSON.parse(btn.getAttribute('data-twende'));
+                        const name = btn.getAttribute('data-name');
+                        handleTwendeDukani(name, data.lat, data.lng, data.loc);
+                    } catch(err) {
+                        console.error('Twende Dukani error:', err);
                     }
                 });
             });

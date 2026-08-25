@@ -298,6 +298,40 @@
             render();
         }
 
+        let customers = [];
+
+        async function loadCustomers() {
+            const token = localStorage.getItem('userToken');
+            if (!token) return;
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/customers/my`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) { customers = await res.json(); }
+            } catch(e) { console.error('Error loading customers:', e); }
+        }
+
+        async function getOrCreateCustomer(name, phone) {
+            const token = localStorage.getItem('userToken');
+            if (!token) return null;
+            try {
+                const existing = customers.find(c => c.name?.toLowerCase() === name.toLowerCase());
+                if (existing) return existing.id;
+                const res = await fetch(`${API_BASE_URL}/api/customers`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name.trim(), phone: phone?.trim() || '', email: '' })
+                });
+                if (res.ok) {
+                    const result = await res.json();
+                    const newId = result.customer?.id || result.id;
+                    await loadCustomers();
+                    return newId || null;
+                }
+            } catch(e) { console.error('Error creating customer:', e); }
+            return null;
+        }
+
         async function handleSale() {
             if (cart.length === 0) { alert('Tafadhali ongeza bidhaa kwenye kikapu'); return; }
             loading = true;
@@ -306,7 +340,14 @@
             try {
                 const items = cart.map(i => ({ product_id: i.product_id, quantity: i.quantity, unit_price: i.unit_price }));
                 const saleData = { items, sale_date: saleDate, payment_method: 'cash', notes: `Muuzaji: ${userData?.full_name || userData?.email}` };
-                if (customerName.trim()) { saleData.customer_name = customerName.trim(); saleData.customer_phone = customerPhone.trim(); }
+                
+                // Create/get customer and attach customer_id if name provided
+                if (customerName.trim()) {
+                    const customerId = await getOrCreateCustomer(customerName.trim(), customerPhone.trim());
+                    if (customerId) { saleData.customer_id = customerId; }
+                    saleData.customer_name = customerName.trim();
+                    saleData.customer_phone = customerPhone.trim();
+                }
                 
                 const res = await fetch(`${API_BASE_URL}/api/sales`, {
                     method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -476,6 +517,7 @@
             updateSidebarUser();
             setupSidebar();
             await loadUserData();
+            await loadCustomers();
         }
         init();
     </script>
