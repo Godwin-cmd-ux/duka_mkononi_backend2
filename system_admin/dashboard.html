@@ -374,6 +374,22 @@
             } catch(e) { alert('Hitilafu ya mtandao'); }
         }
 
+        function handleLogout() {
+            if (confirm('Una uhakika unataka kutoka?')) {
+                localStorage.removeItem('userToken');
+                localStorage.removeItem('userData');
+                localStorage.removeItem('userId');
+                localStorage.removeItem('userEmail');
+                localStorage.removeItem('userRole');
+                localStorage.removeItem('userName');
+                localStorage.removeItem('userBusiness');
+                localStorage.removeItem('userStatus');
+                const keys = ['savedEmail_admin', 'savedPassword_admin', 'rememberMe_admin'];
+                keys.forEach(key => localStorage.removeItem(key));
+                window.location.href = '/login.html?role=admin';
+            }
+        }
+
         async function loadAllData() {
             loading = true;
             render();
@@ -610,6 +626,7 @@
                     <div class="header-actions">
                         <div class="header-btn" onclick="loadAllData()">⟳</div>
                         <div class="header-btn" onclick="window.location.href='/home.html'">🏠</div>
+                        <div class="header-btn" onclick="handleLogout()" style="color:#e74c3c;font-weight:700;">🚪</div>
                     </div>
                 </div>
                 <div class="tabs-container">

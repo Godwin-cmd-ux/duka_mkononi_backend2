@@ -941,9 +941,7 @@
                     if (geoRes.ok) { const geo = await geoRes.json(); areaName = geo.display_name || ''; }
                 } catch(e) {}
 
-                if (!confirm('Eneo lako: ' + (areaName || lat.toFixed(5) + ', ' + lng.toFixed(5)) + '
-
-Uhakikiwa?')) {
+                if (!confirm('Eneo lako: ' + (areaName || lat.toFixed(5) + ', ' + lng.toFixed(5)) + '\n\nUhakikiwa?')) {
                     locationTracking = false;
                     renderDashboard();
                     return;
