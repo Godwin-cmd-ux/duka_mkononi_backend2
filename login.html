@@ -743,6 +743,10 @@
             localStorage.setItem('userStatus', user.status || 'approved');
             localStorage.setItem('userName', user.full_name || user.email.split('@')[0]);
             if (user.business_name) localStorage.setItem('userBusiness', user.business_name);
+            if (user.business_logo_url) localStorage.setItem('userProfileImage', user.business_logo_url);
+            if (user.business_latitude) localStorage.setItem('userLatitude', String(user.business_latitude));
+            if (user.business_longitude) localStorage.setItem('userLongitude', String(user.business_longitude));
+            if (user.business_location) localStorage.setItem('userBusinessLocation', user.business_location);
             
             // Save credentials if remember me
             saveCredentials();

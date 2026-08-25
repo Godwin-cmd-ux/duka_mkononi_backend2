@@ -426,7 +426,13 @@
             const userAvatarEl = document.getElementById('userAvatar');
             const displayName = user.full_name || user.business_name || user.email?.split('@')[0] || 'Msimamizi';
             if (userNameEl) userNameEl.textContent = displayName;
-            if (userAvatarEl) userAvatarEl.textContent = displayName.charAt(0).toUpperCase();
+            if (userAvatarEl) {
+                if (user.business_logo_url) {
+                    userAvatarEl.innerHTML = `<img src="${user.business_logo_url}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+                } else {
+                    userAvatarEl.textContent = displayName.charAt(0).toUpperCase();
+                }
+            }
         }
 
         // Page routes mapping (paths relative to msimamizi folder)

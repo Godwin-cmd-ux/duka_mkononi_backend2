@@ -468,6 +468,14 @@
         <div class="modal-content">
             <div class="modal-title">Badili Wasifu Wako</div>
             <div class="modal-subtitle">Unaweza kubadili taarifa zako za wasifu</div>
+            <label class="input-label">Picha ya Profaili</label>
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+                <div id="editAvatarPreview" style="width:60px;height:60px;border-radius:50%;background:#2ecc71;display:flex;align-items:center;justify-content:center;color:white;font-size:24px;font-weight:bold;"></div>
+                <div style="flex:1;">
+                    <input type="file" id="profileImageInput" accept="image/*" style="display:none;">
+                    <div id="changePhotoBtn" style="padding:10px 16px;background:#e8f4fd;border-radius:10px;cursor:pointer;text-align:center;font-size:13px;font-weight:600;color:#3498db;">📸 Badilisha Picha</div>
+                </div>
+            </div>
             <label class="input-label">Jina Kamili *</label>
             <input type="text" id="editFullName" class="input-field" placeholder="Weka jina lako kamili">
             <label class="input-label">Namba ya Simu</label>
@@ -476,6 +484,12 @@
             <input type="text" id="editBusinessName" class="input-field" placeholder="Weka jina la biashara yako">
             <label class="input-label">Eneo la Biashara</label>
             <input type="text" id="editBusinessLocation" class="input-field" placeholder="Weka eneo la biashara yako">
+            <label class="input-label">Eneo la Ramani (Koordineti)</label>
+            <div style="display:flex;gap:8px;margin-bottom:16px;">
+                <input type="number" id="editLatitude" class="input-field" placeholder="Latitude" step="any" style="flex:1;">
+                <input type="number" id="editLongitude" class="input-field" placeholder="Longitude" step="any" style="flex:1;">
+            </div>
+            <div id="getCoordinatesBtn" style="padding:10px 16px;background:#e8f8f0;border-radius:10px;cursor:pointer;text-align:center;font-size:13px;font-weight:600;color:#27ae60;margin-bottom:16px;">📍 Pata Eneo la Sasa (GPS)</div>
             <div class="modal-buttons">
                 <div class="modal-btn btn-cancel" onclick="closeEditModal()">Ghairi</div>
                 <div class="modal-btn btn-save" onclick="updateProfile()">Hifadhi</div>
@@ -505,7 +519,12 @@
             if (user) {
                 const displayName = user.full_name || user.business_name || user.email?.split('@')[0] || 'Muuzaji';
                 document.getElementById('userName').innerHTML = escapeHtml(displayName);
-                document.getElementById('userAvatar').innerHTML = displayName.charAt(0).toUpperCase();
+                const avatarEl = document.getElementById('userAvatar');
+                if (user.business_logo_url) {
+                    avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+                } else {
+                    avatarEl.innerHTML = displayName.charAt(0).toUpperCase();
+                }
             }
         }
 
@@ -663,11 +682,15 @@
             render();
         }
 
+        let profileImageUrl = '';
+
         async function updateProfile() {
             const full_name = document.getElementById('editFullName').value;
             const phone = document.getElementById('editPhone').value;
             const business_name = document.getElementById('editBusinessName').value;
             const business_location = document.getElementById('editBusinessLocation').value;
+            const business_latitude = document.getElementById('editLatitude').value ? parseFloat(document.getElementById('editLatitude').value) : undefined;
+            const business_longitude = document.getElementById('editLongitude').value ? parseFloat(document.getElementById('editLongitude').value) : undefined;
             
             if (!full_name.trim()) {
                 alert('Tafadhali weka jina lako kamili');
@@ -677,17 +700,23 @@
             const token = localStorage.getItem('userToken');
             if (!token) return;
             
+            const updateData = { full_name, phone, business_name, business_location };
+            if (profileImageUrl) updateData.business_logo_url = profileImageUrl;
+            if (business_latitude !== undefined) updateData.business_latitude = business_latitude;
+            if (business_longitude !== undefined) updateData.business_longitude = business_longitude;
+            
             try {
                 const response = await fetch(`${API_BASE_URL}/api/user/profile`, {
                     method: 'PUT',
                     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ full_name, phone, business_name, business_location })
+                    body: JSON.stringify(updateData)
                 });
                 
                 if (response.ok) {
                     const result = await response.json();
-                    userData = result.user || { ...userData, full_name, phone, business_name, business_location };
+                    userData = result.user || { ...userData, ...updateData };
                     localStorage.setItem('userData', JSON.stringify(userData));
+                    if (userData.business_logo_url) localStorage.setItem('userProfileImage', userData.business_logo_url);
                     updateSidebarUser();
                     closeEditModal();
                     alert('Wasifu wako umesasishwa kikamilifu!');
@@ -700,11 +729,44 @@
             }
         }
 
+        // Upload profile image to Cloudinary
+        async function uploadProfileImage(file) {
+            const cloudName = 'dooidwbgt';
+            const uploadPreset = 'react_native_uploads';
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', uploadPreset);
+            try {
+                const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                if (data.secure_url) {
+                    profileImageUrl = data.secure_url;
+                    document.getElementById('editAvatarPreview').innerHTML = `<img src="${profileImageUrl}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                alert('Imeshindikana kupakia picha');
+            }
+        }
+
         function openEditModal() {
             document.getElementById('editFullName').value = userData?.full_name || '';
             document.getElementById('editPhone').value = userData?.phone || '';
             document.getElementById('editBusinessName').value = userData?.business_name || '';
             document.getElementById('editBusinessLocation').value = userData?.business_location || '';
+            document.getElementById('editLatitude').value = userData?.business_latitude || '';
+            document.getElementById('editLongitude').value = userData?.business_longitude || '';
+            profileImageUrl = userData?.business_logo_url || '';
+            const avatarPreview = document.getElementById('editAvatarPreview');
+            if (profileImageUrl) {
+                avatarPreview.innerHTML = `<img src="${profileImageUrl}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+            } else {
+                const initials = getInitials(userData?.full_name || userData?.business_name || 'U');
+                avatarPreview.innerHTML = `<span>${initials}</span>`;
+            }
             document.getElementById('editModal').style.display = 'flex';
         }
 
@@ -749,7 +811,7 @@
                     </div>
                     <div class="profile-card">
                         <div class="avatar-section">
-                            <div class="avatar" style="background: ${roleColor};"><div class="avatar-text">${escapeHtml(initials)}</div></div>
+                            <div class="avatar" style="background: ${roleColor};">${userData.business_logo_url ? `<img src="${escapeHtml(userData.business_logo_url)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : `<div class="avatar-text">${escapeHtml(initials)}</div>`}</div>
                             <div class="role-badge">${escapeHtml(roleName)}</div>
                         </div>
                         <div class="user-info">
@@ -807,6 +869,41 @@
             const logoutBtn = document.getElementById('logoutBtn');
             if (logoutBtn) {
                 logoutBtn.addEventListener('click', handleLogout);
+            }
+            // Profile image upload
+            const changePhotoBtn = document.getElementById('changePhotoBtn');
+            const profileImageInput = document.getElementById('profileImageInput');
+            if (changePhotoBtn && profileImageInput) {
+                changePhotoBtn.addEventListener('click', () => profileImageInput.click());
+                profileImageInput.addEventListener('change', (e) => {
+                    if (e.target.files && e.target.files[0]) {
+                        uploadProfileImage(e.target.files[0]);
+                    }
+                });
+            }
+            // GPS coordinates
+            const getCoordinatesBtn = document.getElementById('getCoordinatesBtn');
+            if (getCoordinatesBtn) {
+                getCoordinatesBtn.addEventListener('click', () => {
+                    if (navigator.geolocation) {
+                        getCoordinatesBtn.textContent = '⏳ Inapata eneo...';
+                        navigator.geolocation.getCurrentPosition(
+                            (position) => {
+                                document.getElementById('editLatitude').value = position.coords.latitude.toFixed(6);
+                                document.getElementById('editLongitude').value = position.coords.longitude.toFixed(6);
+                                getCoordinatesBtn.textContent = '✅ Eneo limepatawa!';
+                                setTimeout(() => { getCoordinatesBtn.textContent = '📍 Pata Eneo la Sasa (GPS)'; }, 2000);
+                            },
+                            (error) => {
+                                getCoordinatesBtn.textContent = '❌ Imeshindikana';
+                                setTimeout(() => { getCoordinatesBtn.textContent = '📍 Pata Eneo la Sasa (GPS)'; }, 2000);
+                                alert('Imeshindikana kupata eneo. Tafadhali weka kwa mikono.');
+                            }
+                        );
+                    } else {
+                        alert('Kifaa chako hakina GPS');
+                    }
+                });
             }
             document.addEventListener('click', (e) => {
                 if (window.innerWidth <= 768) {

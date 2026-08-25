@@ -296,10 +296,9 @@
 <script>
     // ------------------------------
     // DUKAMKONONI: CashierSignup (Muuzaji) web replica
-    // Exact behavior: validation, business check API, registration, loading states, alert handling
+    // OTP-based registration: initiate → verify-otp → register
     const API_BASE_URL = '';
 
-    // DOM elements
     const fullNameInput = document.getElementById('full_name');
     const businessNameInput = document.getElementById('business_name');
     const businessLocationInput = document.getElementById('business_location');
@@ -313,40 +312,51 @@
     const backBtn = document.getElementById('backBtn');
 
     let loading = false;
+    let formValues = null;
+    let registrationToken = null;
+    let pendingEmail = '';
 
-    // Helper: Show custom alert (mimics Alert.alert)
+    function getOtpModalHtml(email) {
+        return `
+            <div id="otpModal" class="custom-alert">
+                <div class="alert-box" style="max-width: 400px; padding: 28px 24px;">
+                    <div style="font-size: 40px; margin-bottom: 12px;">📧</div>
+                    <div class="alert-title">Uthibitisho wa Barua Pepe</div>
+                    <div class="alert-message">Tumetuma msimbo wa tarakimu 6 kwenye barua pepe: <strong>${email}</strong></div>
+                    <input type="text" id="otpInput" class="input-field" style="text-align: center; font-size: 24px; letter-spacing: 8px; margin-bottom: 16px; height: 56px;" placeholder="000000" maxlength="6" inputmode="numeric" pattern="[0-9]*">
+                    <div id="otpError" style="color: #e74c3c; font-size: 13px; margin-bottom: 12px; display: none;"></div>
+                    <div id="otpVerifyBtn" class="alert-btn" style="margin-bottom: 10px;">Hakiki Msimbo</div>
+                    <div id="otpResendBtn" style="font-size: 13px; color: #2ecc71; cursor: pointer; margin-bottom: 10px;">Tuma msimbo tena</div>
+                    <div id="otpCancelBtn" style="font-size: 13px; color: #95a5a6; cursor: pointer;">Badilisha barua pepe</div>
+                </div>
+            </div>
+        `;
+    }
+
     function showAlert(title, message, onOkCallback = null, isSuccessWithBack = false) {
         const existingAlert = document.querySelector('.custom-alert');
         if (existingAlert) existingAlert.remove();
 
         const overlay = document.createElement('div');
         overlay.className = 'custom-alert';
-        
         const alertBox = document.createElement('div');
         alertBox.className = 'alert-box';
-        
         const titleEl = document.createElement('div');
         titleEl.className = 'alert-title';
         titleEl.innerText = title;
-        
         const msgEl = document.createElement('div');
         msgEl.className = 'alert-message';
         msgEl.innerText = message;
-        
         const okBtn = document.createElement('div');
         okBtn.className = 'alert-btn';
         okBtn.innerText = 'Sawa';
-        
         alertBox.appendChild(titleEl);
         alertBox.appendChild(msgEl);
         alertBox.appendChild(okBtn);
-        
-        // For success case that routes back (router.back)
+
         if (isSuccessWithBack) {
-            okBtn.innerText = 'Sawa';
             okBtn.addEventListener('click', () => {
                 overlay.remove();
-                // Navigate back (same as router.back)
                 if (document.referrer && document.referrer.includes(window.location.host)) {
                     window.history.back();
                 } else {
@@ -360,13 +370,25 @@
                 if (onOkCallback) onOkCallback();
             });
         }
-        
         overlay.appendChild(alertBox);
         document.body.appendChild(overlay);
     }
 
     function showNetworkError() {
         showAlert('Hitilafu ya Mtandao', 'Hakuna muunganisho wa mtandao. Tafadhali hakikisha umeunganishwa kwenye internet.');
+    }
+
+    function setLoadingState(isLoading) {
+        loading = isLoading;
+        if (isLoading) {
+            signupBtn.classList.add('disabled');
+            signupBtnTextSpan.style.display = 'none';
+            loaderSpinner.style.display = 'inline-block';
+        } else {
+            signupBtn.classList.remove('disabled');
+            signupBtnTextSpan.style.display = 'inline-block';
+            loaderSpinner.style.display = 'none';
+        }
     }
 
     function getFormValues() {
@@ -381,7 +403,6 @@
         };
     }
 
-    // Complete validation from original TSX
     function validateForm(form) {
         if (!form.email || !form.password || !form.full_name || !form.business_name || !form.business_location) {
             showAlert('Hitilafu', 'Tafadhali jaza sehemu zote required');
@@ -403,70 +424,40 @@
         return true;
     }
 
-    // Core signup handler - mirrors handleSignup exactly with business check + registration
     async function handleSignup() {
         if (loading) return;
-
         const form = getFormValues();
         if (!validateForm(form)) return;
 
-        loading = true;
-        signupBtn.classList.add('disabled');
-        signupBtnTextSpan.style.display = 'none';
-        loaderSpinner.style.display = 'inline-block';
+        setLoadingState(true);
 
         try {
             // Step 1: Check if business exists and has admin
-            console.log(`🔍 Checking business: ${form.business_name}`);
-            
             const checkResponse = await fetch(`${API_BASE_URL}/api/check-business`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ business_name: form.business_name.trim() })
             });
-
             const checkData = await checkResponse.json();
-            console.log('📊 Business check result:', checkData);
 
             if (!checkResponse.ok) {
+                setLoadingState(false);
                 showAlert('Hitilafu', checkData.error || 'Hitilafu katika ukaguzi wa biashara');
-                loading = false;
-                signupBtn.classList.remove('disabled');
-                signupBtnTextSpan.style.display = 'inline-block';
-                loaderSpinner.style.display = 'none';
                 return;
             }
-
-            // If business doesn't exist at all
             if (!checkData.exists) {
-                showAlert(
-                    'Biashara Haipo',
-                    `Biashara "${form.business_name}" haipo kwenye mfumo. Tafadhali jisajili kama msimamizi kwanza.`
-                );
-                loading = false;
-                signupBtn.classList.remove('disabled');
-                signupBtnTextSpan.style.display = 'inline-block';
-                loaderSpinner.style.display = 'none';
+                setLoadingState(false);
+                showAlert('Biashara Haipo', `Biashara "${form.business_name}" haipo kwenye mfumo. Tafadhali jisajili kama msimamizi kwanza.`);
                 return;
             }
-
-            // If business exists but has no verified admin
             if (!checkData.hasAdmin) {
-                showAlert(
-                    'Biashara Haina Msimamizi',
-                    `Biashara "${form.business_name}" inapatikana lakini haina msimamizi aliyethibitishwa. Tafadhali jisajili kama msimamizi kwanza.`
-                );
-                loading = false;
-                signupBtn.classList.remove('disabled');
-                signupBtnTextSpan.style.display = 'inline-block';
-                loaderSpinner.style.display = 'none';
+                setLoadingState(false);
+                showAlert('Biashara Haina Msimamizi', `Biashara "${form.business_name}" inapatikana lakini haina msimamizi aliyethibitishwa.`);
                 return;
             }
 
-            // Step 2: Proceed with seller registration (role 'seller')
-            console.log(`✅ Business check passed, proceeding with seller registration...`);
-            
-            const registerResponse = await fetch(`${API_BASE_URL}/api/register`, {
+            // Step 2: Initiate registration (send OTP)
+            const initiateResponse = await fetch(`${API_BASE_URL}/api/register/initiate`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -479,81 +470,111 @@
                     business_location: form.business_location
                 })
             });
+            const initiateData = await initiateResponse.json();
 
-            const registerData = await registerResponse.json();
-            console.log('📨 Registration response:', registerData);
-
-            if (registerResponse.ok) {
-                // Success: Alert with "Sawa" that triggers router.back()
-                loading = false;
-                signupBtn.classList.remove('disabled');
-                signupBtnTextSpan.style.display = 'inline-block';
-                loaderSpinner.style.display = 'none';
-
-                // Show success alert, on close go back
-                const overlay = document.createElement('div');
-                overlay.className = 'custom-alert';
-                const alertBox = document.createElement('div');
-                alertBox.className = 'alert-box';
-                const titleEl = document.createElement('div');
-                titleEl.className = 'alert-title';
-                titleEl.innerText = 'Mafanikio';
-                const msgEl = document.createElement('div');
-                msgEl.className = 'alert-message';
-                msgEl.innerText = 'Akaunti ya Muuzaji imeundwa kikamilifu! Umewasilisha ombi lako. Tafadhali subiri uthibitisho wa msimamizi kabla ya kuingia.';
-                const okBtn = document.createElement('div');
-                okBtn.className = 'alert-btn';
-                okBtn.innerText = 'Sawa';
-                alertBox.appendChild(titleEl);
-                alertBox.appendChild(msgEl);
-                alertBox.appendChild(okBtn);
-                overlay.appendChild(alertBox);
-                document.body.appendChild(overlay);
-                
-                okBtn.addEventListener('click', () => {
-                    overlay.remove();
-                    // router.back() behavior
-                    if (document.referrer && document.referrer.includes(window.location.host)) {
-                        window.history.back();
-                    } else {
-                        window.location.href = '/home.html';
-                    }
-                });
-                return;
+            if (initiateResponse.ok && initiateData.success) {
+                pendingEmail = form.email;
+                formValues = form;
+                setLoadingState(false);
+                showOtpModal(form.email);
             } else {
-                // Handle specific error messages from backend
-                const errorMessage = registerData.error || 'Hitilafu imetokea wakati wa kujisajili';
-                
-                if (errorMessage.includes('Biashara hii haina msimamizi')) {
-                    showAlert('Biashara Haina Msimamizi', 'Biashara hii haina msimamizi aliyethibitishwa. Tafadhali jisajili kama msimamizi kwanza.');
-                } else if (errorMessage.includes('Akaunti na barua pepe hii tayari ipo')) {
-                    showAlert('Hitilafu', 'Barua pepe hii tayari imetumika. Tafadhali tumia barua pepe nyingine.');
-                } else if (errorMessage.includes('Jina la biashara tayari limeshasajiliwa')) {
-                    showAlert('Hitilafu', 'Jina la biashara tayari limeshasajiliwa na msimamizi mwingine.');
-                } else {
-                    showAlert('Hitilafu', errorMessage);
-                }
+                setLoadingState(false);
+                showAlert('Hitilafu', initiateData.error || 'Hitilafu imetokea wakati wa kujisajili');
             }
         } catch (error) {
-            console.error('❌ Signup error:', error);
+            console.error('Signup error:', error);
+            setLoadingState(false);
             if (error.message && (error.message.includes('Network request failed') || error.message.includes('fetch'))) {
-                showNetworkError();
-            } else if (error instanceof TypeError && error.message.includes('NetworkError')) {
                 showNetworkError();
             } else {
                 showAlert('Hitilafu', 'Hitilafu imetokea. Tafadhali jaribu tena.');
             }
-        } finally {
-            if (loading) {
-                loading = false;
-                signupBtn.classList.remove('disabled');
-                signupBtnTextSpan.style.display = 'inline-block';
-                loaderSpinner.style.display = 'none';
-            }
         }
     }
 
-    // Navigate back (router.back)
+    function showOtpModal(email) {
+        const existing = document.querySelector('.custom-alert');
+        if (existing) existing.remove();
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = getOtpModalHtml(email);
+        document.body.appendChild(wrapper.firstElementChild);
+        const otpInput = document.getElementById('otpInput');
+        otpInput.focus();
+        otpInput.addEventListener('input', (e) => { e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 6); });
+        document.getElementById('otpVerifyBtn').addEventListener('click', () => handleVerifyOtp(otpInput.value));
+        document.getElementById('otpResendBtn').addEventListener('click', () => handleResendOtp(email));
+        document.getElementById('otpCancelBtn').addEventListener('click', () => document.getElementById('otpModal').remove());
+        otpInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleVerifyOtp(otpInput.value); });
+    }
+
+    async function handleVerifyOtp(otp) {
+        const otpError = document.getElementById('otpError');
+        const otpVerifyBtn = document.getElementById('otpVerifyBtn');
+        if (!otp || otp.length !== 6) { otpError.textContent = 'Tafadhali weka msimbo wa tarakimu 6'; otpError.style.display = 'block'; return; }
+        otpError.style.display = 'none';
+        otpVerifyBtn.innerHTML = '<div class="loader" style="width:20px;height:20px;border-width:2px;"></div>';
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/register/verify-otp`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: pendingEmail, role: 'seller', otp })
+            });
+            const data = await response.json();
+            if (response.ok && data.success && data.verified) {
+                registrationToken = data.registrationToken;
+                document.getElementById('otpModal').remove();
+                await completeRegistration();
+            } else {
+                otpVerifyBtn.innerHTML = 'Hakiki Msimbo';
+                otpError.textContent = data.error || 'Msimbo si sahihi';
+                otpError.style.display = 'block';
+            }
+        } catch (error) {
+            otpVerifyBtn.innerHTML = 'Hakiki Msimbo';
+            otpError.textContent = 'Hitilafu ya mtandao';
+            otpError.style.display = 'block';
+        }
+    }
+
+    async function handleResendOtp(email) {
+        const otpResendBtn = document.getElementById('otpResendBtn');
+        otpResendBtn.textContent = 'Inatuma...';
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/register/resend-otp`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, role: 'seller' })
+            });
+            const data = await response.json();
+            otpResendBtn.textContent = response.ok && data.success ? 'Msimbo umetumwa tena!' : (data.error || 'Imeshindikana');
+            setTimeout(() => { otpResendBtn.textContent = 'Tuma msimbo tena'; }, 3000);
+        } catch (error) {
+            otpResendBtn.textContent = 'Hitilafu ya mtandao';
+            setTimeout(() => { otpResendBtn.textContent = 'Tuma msimbo tena'; }, 3000);
+        }
+    }
+
+    async function completeRegistration() {
+        setLoadingState(true);
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ verificationToken: registrationToken, email: formValues.email, role: 'seller' })
+            });
+            const data = await response.json();
+            setLoadingState(false);
+            if (response.ok) {
+                showAlert('Mafanikio', 'Akaunti ya Muuzaji imeundwa kikamilifu! Umewasilisha ombi lako. Tafadhali subiri uthibitisho wa msimamizi kabla ya kuingia.', null, true);
+            } else {
+                showAlert('Hitilafu', data.error || 'Hitilafu imetokea wakati wa kujisajili');
+            }
+        } catch (error) {
+            setLoadingState(false);
+            showAlert('Hitilafu', 'Hitilafu imetokea. Tafadhali jaribu tena.');
+        }
+    }
+
     function goBack() {
         if (document.referrer && document.referrer.includes(window.location.host)) {
             window.history.back();
@@ -562,24 +583,13 @@
         }
     }
 
-    // Attach event listeners
     signupBtn.addEventListener('click', handleSignup);
     backBtn.addEventListener('click', goBack);
-
-    // Enter key submission on any input
     const inputs = [fullNameInput, businessNameInput, businessLocationInput, emailInput, phoneInput, passwordInput, confirmPasswordInput];
     inputs.forEach(input => {
-        if (input) {
-            input.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleSignup();
-                }
-            });
-        }
+        if (input) input.addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); handleSignup(); } });
     });
-
-    console.log('CashierSignup (Muuzaji) ready — Web version matches Dukamkononi mobile behavior');
+    console.log('CashierSignup (Muuzaji) ready — OTP-based registration flow');
 </script>
 </body>
 </html>

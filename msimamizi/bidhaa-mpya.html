@@ -487,7 +487,12 @@
             // Update sidebar user info
             const userName = userData.full_name || userData.email?.split('@')[0] || 'Msimamizi';
             document.getElementById('userName').innerHTML = escapeHtml(userName);
-            document.getElementById('userAvatar').innerHTML = userName.charAt(0).toUpperCase();
+            const avatarEl = document.getElementById('userAvatar');
+            if (userData.business_logo_url) {
+                avatarEl.innerHTML = `<img src="${escapeHtml(userData.business_logo_url)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+            } else {
+                avatarEl.innerHTML = userName.charAt(0).toUpperCase();
+            }
             
             return true;
         }

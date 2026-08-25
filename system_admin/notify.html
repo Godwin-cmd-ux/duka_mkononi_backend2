@@ -274,9 +274,21 @@
             render();
             
             const token = localStorage.getItem('userToken');
+            // Server requires translations object with 6+ language keys
+            const titleText = notificationTitle;
+            const messageText = notificationMessage;
+            const translations = {
+                sw: { title: titleText, message: messageText },
+                en: { title: titleText, message: messageText },
+                fr: { title: titleText, message: messageText },
+                de: { title: titleText, message: messageText },
+                zh: { title: titleText, message: messageText },
+                es: { title: titleText, message: messageText },
+                hi: { title: titleText, message: messageText },
+                ur: { title: titleText, message: messageText }
+            };
             const body = {
-                title: notificationTitle,
-                message: notificationMessage,
+                translations,
                 notification_type: notificationType,
                 delivery_method: 'email'
             };

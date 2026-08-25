@@ -636,7 +636,12 @@
             if (user) {
                 const displayName = user.full_name || user.email?.split('@')[0] || 'Mteja';
                 document.getElementById('userName').innerHTML = escapeHtml(displayName);
-                document.getElementById('userAvatar').innerHTML = displayName.charAt(0).toUpperCase();
+                const avatarEl = document.getElementById('userAvatar');
+                if (user.business_logo_url) {
+                    avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+                } else {
+                    avatarEl.innerHTML = displayName.charAt(0).toUpperCase();
+                }
             }
         }
 
@@ -844,7 +849,7 @@
             container.innerHTML = `
                 <div class="profile-header">
                     <div class="avatar">
-                        <div class="avatar-text">${escapeHtml(initial)}</div>
+                        ${profile.business_logo_url ? `<img src="${escapeHtml(profile.business_logo_url)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : `<div class="avatar-text">${escapeHtml(initial)}</div>`}
                     </div>
                     <div class="greeting">Habari, ${escapeHtml(displayName)}!</div>
                     <div class="role">${escapeHtml(roleName)}</div>
@@ -883,6 +888,9 @@
                             <div class="label">Hali</div>
                             <div><span class="status-badge ${statusClass}">${escapeHtml(statusName)}</span></div>
                         </div>
+
+                        ${profile.business_location ? `<div class="field"><div class="label">Eneo la Biashara</div><div class="value">${escapeHtml(profile.business_location)}</div></div>` : ''}
+                        ${profile.business_latitude && profile.business_longitude ? `<div class="field"><div class="label">Koordineti za Ramani</div><div class="value">${escapeHtml(String(profile.business_latitude))}, ${escapeHtml(String(profile.business_longitude))}</div></div>` : ''}
 
                         <div class="field">
                             <div class="label">Mwanachama Tangu</div>
