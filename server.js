@@ -3989,14 +3989,12 @@ app.put('/api/products/:id', authenticateToken, async (req, res) => {
         }, req.user_ip, 'failed');
         handleSupabaseError(error, res);
     }
-});
-
-app.delete('/api/products/:id', authenticateToken, async (req, res) => {
+});app.delete('/api/products/:id', authenticateToken, async (req, res) => {
     try {
         const productId = req.params.id;
         const userId = req.user.id;
         
-        console.log(`🗑️ Deleting product ${productId} by user ${userId}`);
+        console.log(`🗑️ Hard deleting product ${productId} by user ${userId}`);
         
         // Update user's last seen
         await supabase
@@ -4031,25 +4029,36 @@ app.delete('/api/products/:id', authenticateToken, async (req, res) => {
             });
         }
         
+        // First, delete related sale_items to handle foreign key constraints
+        console.log(`🗑️ Deleting related sale_items for product ${productId}`);
+        const { error: saleItemsError } = await supabase
+            .from('sale_items')
+            .delete()
+            .eq('product_id', productId);
+        
+        if (saleItemsError) {
+            console.warn('⚠️ Warning deleting sale_items:', saleItemsError.message);
+            // Continue with product deletion even if sale_items deletion fails
+        }
+        
+        // Now hard delete the product
         const { error } = await supabase
             .from('products')
-            .update({ 
-                is_active: false,
-                updated_at: new Date().toISOString()
-            })
+            .delete()
             .eq('id', productId);
         
         if (error) throw error;
         
-        console.log('✅ Product deactivated:', productId);
+        console.log('✅ Product permanently deleted:', productId);
         
         await logUserAction(userId, 'PRODUCT_DELETE', '/api/products/:id', { 
             product_id: productId,
-            product_name: product.name 
+            product_name: product.name,
+            delete_type: 'hard_delete'
         }, req.user_ip, 'success');
         
         res.json({
-            message: 'Bidhaa imedhibitishwa kikamilifu!',
+            message: 'Bidhaa imefutwa kabisa kutoka kwenye mfumo!',
             productId: productId
         });
         
@@ -4058,6 +4067,7 @@ app.delete('/api/products/:id', authenticateToken, async (req, res) => {
             error: error.message,
             product_id: req.params.id 
         }, req.user_ip, 'failed');
+        
         handleSupabaseError(error, res);
     }
 });
