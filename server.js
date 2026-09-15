@@ -500,7 +500,15 @@ console.log('✅ WebSocket cleanup and heartbeat services started');
 // ✅ MIDDLEWARE YA MSINGI
 // =============================================
 app.use(cors({
-    origin: ['http://localhost:19006', 'exp://localhost:19000', 'your-app-scheme://'], // React Native dev servers
+    origin: [
+        'http://localhost:19006',
+        'exp://localhost:19000',
+        'http://localhost:8081',
+        'http://localhost:3000',
+        'https://dukamkononi.com',
+        'https://www.dukamkononi.com',
+        'your-app-scheme://',
+    ], // React Native + web dev/production origins
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'ngrok-skip-browser-warning'],
     credentials: true
@@ -3989,12 +3997,14 @@ app.put('/api/products/:id', authenticateToken, async (req, res) => {
         }, req.user_ip, 'failed');
         handleSupabaseError(error, res);
     }
-});app.delete('/api/products/:id', authenticateToken, async (req, res) => {
+});
+
+app.delete('/api/products/:id', authenticateToken, async (req, res) => {
     try {
         const productId = req.params.id;
         const userId = req.user.id;
         
-        console.log(`🗑️ Hard deleting product ${productId} by user ${userId}`);
+        console.log(`🗑️ Deleting product ${productId} by user ${userId}`);
         
         // Update user's last seen
         await supabase
@@ -4029,36 +4039,25 @@ app.put('/api/products/:id', authenticateToken, async (req, res) => {
             });
         }
         
-        // First, delete related sale_items to handle foreign key constraints
-        console.log(`🗑️ Deleting related sale_items for product ${productId}`);
-        const { error: saleItemsError } = await supabase
-            .from('sale_items')
-            .delete()
-            .eq('product_id', productId);
-        
-        if (saleItemsError) {
-            console.warn('⚠️ Warning deleting sale_items:', saleItemsError.message);
-            // Continue with product deletion even if sale_items deletion fails
-        }
-        
-        // Now hard delete the product
         const { error } = await supabase
             .from('products')
-            .delete()
+            .update({ 
+                is_active: false,
+                updated_at: new Date().toISOString()
+            })
             .eq('id', productId);
         
         if (error) throw error;
         
-        console.log('✅ Product permanently deleted:', productId);
+        console.log('✅ Product deactivated:', productId);
         
         await logUserAction(userId, 'PRODUCT_DELETE', '/api/products/:id', { 
             product_id: productId,
-            product_name: product.name,
-            delete_type: 'hard_delete'
+            product_name: product.name 
         }, req.user_ip, 'success');
         
         res.json({
-            message: 'Bidhaa imefutwa kabisa kutoka kwenye mfumo!',
+            message: 'Bidhaa imedhibitishwa kikamilifu!',
             productId: productId
         });
         
@@ -4067,7 +4066,6 @@ app.put('/api/products/:id', authenticateToken, async (req, res) => {
             error: error.message,
             product_id: req.params.id 
         }, req.user_ip, 'failed');
-        
         handleSupabaseError(error, res);
     }
 });
