@@ -337,6 +337,32 @@
                 <input type="text" class="input-field" id="full_name" placeholder="Jina Kamili *" autocomplete="name">
                 <input type="text" class="input-field" id="business_name" placeholder="Jina la Biashara *" autocomplete="organization">
                 <input type="text" class="input-field" id="business_location" placeholder="Mahali pa Biashara *" autocomplete="address-line1">
+                <select class="input-field" id="business_type">
+                    <option value="">Aina ya Biashara *</option>
+                    <option value="spare_parts">Sehemu za Gari</option>
+                    <option value="supermarket">Supermarket</option>
+                    <option value="pharmacy">Duka la Dawa</option>
+                    <option value="electronics">Elektroniki</option>
+                    <option value="clothing">Mavazi</option>
+                    <option value="hardware">Vifaa Vinene (Hardware)</option>
+                    <option value="cosmetics">Vipodozi</option>
+                    <option value="perfume">Manukato</option>
+                    <option value="restaurant">Mgahawa</option>
+                    <option value="furniture">Samani</option>
+                    <option value="stationery">Vifaa vya Ofisi na Shule</option>
+                    <option value="mobile_accessories">Vifaa vya Simu</option>
+                    <option value="computer_shop">Duka la Kompyuta</option>
+                    <option value="phone_shop">Duka la Simu</option>
+                    <option value="agriculture">Kilimo</option>
+                    <option value="construction_materials">Vifaa vya Ujenzi</option>
+                    <option value="beauty_salon">Saluni ya Urembo</option>
+                    <option value="barbershop">Kinyozi</option>
+                    <option value="auto_repair">Karakana ya Magari</option>
+                    <option value="general_retail">Rejareja ya Jumla</option>
+                    <option value="wholesale">Jumla (Wholesale)</option>
+                    <option value="other">Nyingine</option>
+                </select>
+                <textarea class="input-field" id="business_description" placeholder="Maelezo mafupi ya biashara (mfano: Tunauza sehemu za magari ya Toyota na Nissan...)" style="height:72px;padding:14px 16px;resize:vertical;font-family:'Inter',sans-serif;"></textarea>
                 <input type="email" class="input-field" id="email" placeholder="Barua Pepe *" autocomplete="email">
                 <input type="tel" class="input-field" id="phone" placeholder="Namba ya Simu" autocomplete="tel">
                 <input type="password" class="input-field" id="adminCode" placeholder="Admin Code *">
@@ -374,6 +400,8 @@
     const fullNameInput = document.getElementById('full_name');
     const businessNameInput = document.getElementById('business_name');
     const businessLocationInput = document.getElementById('business_location');
+    const businessTypeInput = document.getElementById('business_type');
+    const businessDescInput = document.getElementById('business_description');
     const emailInput = document.getElementById('email');
     const phoneInput = document.getElementById('phone');
     const adminCodeInput = document.getElementById('adminCode');
@@ -587,6 +615,8 @@
             full_name: fullNameInput.value.trim(),
             business_name: businessNameInput.value.trim(),
             business_location: businessLocationInput.value.trim(),
+            business_type: businessTypeInput.value,
+            business_description: (businessDescInput.value || '').trim(),
             email: emailInput.value.trim(),
             phone: phoneInput.value.trim(),
             adminCode: adminCodeInput.value.trim(),
@@ -596,7 +626,7 @@
     }
 
     function validateForm(form) {
-        if (!form.email || !form.password || !form.full_name || !form.business_name || !form.business_location || !form.adminCode) {
+        if (!form.email || !form.password || !form.full_name || !form.business_name || !form.business_location || !form.adminCode || !form.business_type) {
             showAlert('Hitilafu', 'Tafadhali jaza sehemu zote required');
             return false;
         }
@@ -641,7 +671,9 @@
                     full_name: form.full_name,
                     phone: form.phone || '',
                     business_name: form.business_name,
-                    business_location: form.business_location
+                    business_location: form.business_location,
+                    business_type: form.business_type,
+                    business_description: form.business_description || ''
                 }),
             });
 
