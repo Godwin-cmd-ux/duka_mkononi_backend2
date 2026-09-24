@@ -356,9 +356,11 @@
             } catch(e) { console.error(e); }
         }
 
-        async function updateUserStatus(userId, status, userName) {
+        async function updateUserStatus(userId, status) {
             const token = localStorage.getItem('userToken');
             const action = status === 'approved' ? 'enable' : 'disable';
+            const u = users.find(usr => String(usr.id) === String(userId));
+            const userName = (u && (u.full_name || u.email)) || 'Mtumiaji';
             if (!confirm(`Una uhakika unataka ${action === 'enable' ? 'kuwezesha' : 'kuzuia'} ${userName}?`)) return;
             
             try {
@@ -446,8 +448,8 @@
                 <div style="display:flex; gap:12px; margin-top:20px;">
                     <button class="action-btn btn-logs" style="flex:1;" onclick="viewUserLogs(${JSON.stringify(user).replace(/"/g, '&quot;')})">📋 Angalia Logs</button>
                     ${user.status === 'approved' ? 
-                        `<button class="action-btn btn-disable" style="flex:1;" onclick="updateUserStatus('${user.id}', 'pending', '${escapeHtml(user.full_name || user.email)}')">🔒 Zuia</button>` :
-                        `<button class="action-btn btn-enable" style="flex:1;" onclick="updateUserStatus('${user.id}', 'approved', '${escapeHtml(user.full_name || user.email)}')">✅ Wezesha</button>`
+                        `<button class="action-btn btn-disable" style="flex:1;" onclick="updateUserStatus('${user.id}', 'pending')">🔒 Zuia</button>` :
+                        `<button class="action-btn btn-enable" style="flex:1;" onclick="updateUserStatus('${user.id}', 'approved')">✅ Wezesha</button>`
                     }
                 </div>
             `;
@@ -538,8 +540,8 @@
                                         <button class="action-btn btn-details" onclick="viewUserDetails(${JSON.stringify(user).replace(/"/g, '&quot;')})">📋 Maelezo</button>
                                         <button class="action-btn btn-logs" onclick="viewUserLogs(${JSON.stringify(user).replace(/"/g, '&quot;')})">📜 Logs</button>
                                         ${user.status === 'approved' ? 
-                                            `<button class="action-btn btn-disable" onclick="updateUserStatus('${user.id}', 'pending', '${escapeHtml(user.full_name || user.email)}')">🔒 Zuia</button>` :
-                                            `<button class="action-btn btn-enable" onclick="updateUserStatus('${user.id}', 'approved', '${escapeHtml(user.full_name || user.email)}')">✅ Wezesha</button>`
+                                            `<button class="action-btn btn-disable" onclick="updateUserStatus('${user.id}', 'pending')">🔒 Zuia</button>` :
+                                            `<button class="action-btn btn-enable" onclick="updateUserStatus('${user.id}', 'approved')">✅ Wezesha</button>`
                                         }
                                     </div>
                                 </div>

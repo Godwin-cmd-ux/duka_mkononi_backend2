@@ -175,7 +175,7 @@
                 <div id="selectAllBtn" class="select-all">✓ Teua Wote</div>
             </div>
             <div id="userListContainer" class="user-list"></div>
-            <div id="doneBtn" class="done-btn">Imekamilika (0 wamechaguliwa)</div>
+            <div id="doneBtn" class="done-btn" onclick="finishRecipientSelection()">Imekamilika (0 wamechaguliwa)</div>
         </div>
     </div>
 
@@ -375,6 +375,11 @@
             render();
         }
 
+        function finishRecipientSelection() {
+            if (selectedUsers.length === 0) { alert('Chagua angalau mpokeaji mmoja'); return; }
+            closeRecipientModal();
+        }
+
         function toggleUserSelection(userId) {
             if (selectedUsers.includes(userId)) {
                 selectedUsers = selectedUsers.filter(id => id !== userId);
@@ -536,6 +541,7 @@
         window.sendNotification = sendNotification;
         window.openRecipientModal = openRecipientModal;
         window.closeRecipientModal = closeRecipientModal;
+        window.finishRecipientSelection = finishRecipientSelection;
         window.toggleUserSelection = toggleUserSelection;
         window.selectAllUsers = selectAllUsers;
         window.refreshData = () => { loadAllData(); };

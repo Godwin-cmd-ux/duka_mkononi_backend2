@@ -534,6 +534,7 @@
                     `}
                 </div>
             `;
+            if (activeTab === 'post') setupDescriptionListener();
         }
 
         window.setTab = (tab) => {
@@ -543,11 +544,11 @@
         };
         
         window.refreshAds = () => { loadMyAdvertisements(); };
-        window.handleFileSelect = (e) => handleFileSelect(e);
-        window.clearMedia = () => clearMedia();
-        window.handleUpload = () => handleUpload();
-        window.deleteAdvertisement = (id) => deleteAdvertisement(id);
-        window.handleRenewPayment = (id) => handleRenewPayment(id);
+        window.handleFileSelect = handleFileSelect;
+        window.clearMedia = clearMedia;
+        window.handleUpload = handleUpload;
+        window.deleteAdvertisement = deleteAdvertisement;
+        window.handleRenewPayment = handleRenewPayment;
         
         // Update description on input
         function setupDescriptionListener() {
