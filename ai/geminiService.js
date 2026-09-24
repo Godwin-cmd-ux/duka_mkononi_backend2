@@ -92,52 +92,79 @@ async function generateContent({ systemInstruction, parts, extra = {} }) {
     };
   }
 
-  const controller = new AbortController();
-  const timeoutMs = extra.timeoutMs || 120000;
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  // Transient spikes in demand (HTTP 429 / 503) are usually temporary — retry
+  // with exponential backoff before surfacing a hard error to the user.
+  const maxRetries = extra.maxRetries !== undefined ? extra.maxRetries : 3;
+  const baseDelayMs = extra.retryBaseDelayMs !== undefined ? extra.retryBaseDelayMs : 1500;
 
-  let response;
-  try {
-    response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestBody),
-      signal: controller.signal,
-    });
-  } catch (networkError) {
-    clearTimeout(timeout);
-    if (networkError.name === 'AbortError') {
-      const err = new Error('Gemini timeout - server ilichukua muda mrefu kupata majibu');
-      err.code = 'GEMINI_TIMEOUT';
+  let error;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    if (attempt > 0) {
+      const delayMs = baseDelayMs * Math.pow(2, attempt - 1);
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+
+    const controller = new AbortController();
+    const timeoutMs = extra.timeoutMs || 120000;
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+    let response;
+    try {
+      response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+        signal: controller.signal,
+      });
+    } catch (networkError) {
+      clearTimeout(timeout);
+      if (networkError.name === 'AbortError') {
+        const err = new Error('Gemini timeout - server ilichukua muda mrefu kupata majibu');
+        err.code = 'GEMINI_TIMEOUT';
+        throw err;
+      }
+      const err = new Error('Network error calling Gemini: ' + networkError.message);
+      err.code = 'GEMINI_NETWORK';
       throw err;
     }
-    const err = new Error('Network error calling Gemini: ' + networkError.message);
-    err.code = 'GEMINI_NETWORK';
-    throw err;
-  }
-  clearTimeout(timeout);
+    clearTimeout(timeout);
 
-  if (!response.ok) {
+    if (response.ok) {
+      try {
+        return await response.json();
+      } catch (parseError) {
+        const err = new Error('Gemini returned invalid payload: ' + parseError.message);
+        err.code = 'GEMINI_BAD_RESPONSE';
+        throw err;
+      }
+    }
+
     let detail = '';
+    let status = response.status;
     try {
       const body = await response.json();
       detail = body?.error?.message || JSON.stringify(body);
     } catch (_) {
       detail = await response.text().catch(() => '');
     }
-    const err = new Error(`Gemini API error ${response.status}: ${detail}`);
-    err.code = response.status === 429 ? 'GEMINI_RATE_LIMIT' : 'GEMINI_API_ERROR';
-    err.status = response.status;
+
+    // Only transient overloads are retried; server-side validation (4xx like
+    // 400/404) should surface immediately so the user can fix the request.
+    const transient = status === 429 || status === 503;
+    if (attempt < maxRetries && transient) {
+      error = new Error(`Gemini API error ${status}: ${detail}`);
+      error.code = 'GEMINI_RATE_LIMIT';
+      error.status = status;
+      continue;
+    }
+
+    const err = new Error(`Gemini API error ${status}: ${detail}`);
+    err.code = status === 429 ? 'GEMINI_RATE_LIMIT' : 'GEMINI_API_ERROR';
+    err.status = status;
     throw err;
   }
 
-  try {
-    return await response.json();
-  } catch (parseError) {
-    const err = new Error('Gemini returned invalid payload: ' + parseError.message);
-    err.code = 'GEMINI_BAD_RESPONSE';
-    throw err;
-  }
+  throw error;
 }
 
 // Pull the concatenated text out of a generateContent response.
