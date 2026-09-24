@@ -833,7 +833,7 @@ const authenticateToken = async (req, res, next) => {
         
         const { data: user, error } = await supabaseAdmin
             .from('users')
-            .select('id, email, role, full_name, business_name, business_type, business_description, status, is_online, last_seen')
+            .select('id, email, role, full_name, business_name, status, is_online, last_seen')
             .eq('id', decoded.userId)
             .single();
         
@@ -2892,13 +2892,30 @@ app.post('/api/register', async (req, res) => {
             updated_at: new Date().toISOString()
         };
 
-        const { data: newUser, error: insertError } = await supabaseAdmin
+        let newUser;
+        const { data: insertedUser, error: insertError } = await supabaseAdmin
             .from('users')
             .insert([userData])
             .select()
             .single();
-        
-        if (insertError) throw insertError;
+        newUser = insertedUser;
+
+        if (insertError && /does not exist|column.*not found/i.test(insertError.message)) {
+            // Optional business profile columns aren't in the deployed DB yet —
+            // retry without them so registration still succeeds.
+            const safeUserData = { ...userData };
+            delete safeUserData.business_type;
+            delete safeUserData.business_description;
+            const { data: sUser, error: sError } = await supabaseAdmin
+                .from('users')
+                .insert([safeUserData])
+                .select()
+                .single();
+            if (sError) throw sError;
+            newUser = sUser;
+        } else if (insertError) {
+            throw insertError;
+        }
 
         console.log('✅ USER REGISTERED:', { 
             id: newUser.id, 
@@ -3420,14 +3437,28 @@ app.get('/api/user/profile', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
         console.log('👤 Profile requested for user:', userId);
-        
-        const { data: user, error } = await supabase
+
+        const BASE_COLS = 'id, email, role, full_name, phone, business_name, business_location, business_logo_url, business_latitude, business_longitude, status, is_online, last_seen, created_at, updated_at';
+        const OPTIONAL_COLS = 'business_type, business_description';
+
+        let { data: user, error } = await supabase
             .from('users')
-            .select('id, email, role, full_name, phone, business_name, business_location, business_logo_url, business_latitude, business_longitude, business_type, business_description, status, is_online, last_seen, created_at, updated_at')
+            .select(BASE_COLS + ', ' + OPTIONAL_COLS)
             .eq('id', userId)
             .single();
 
-        if (error) throw error;
+        if (error && /does not exist|column.*not found/i.test(error.message)) {
+            // Deployed DB predates the optional profile columns — retry without them.
+            const { data: fallback, error: fallbackErr } = await supabase
+                .from('users')
+                .select(BASE_COLS)
+                .eq('id', userId)
+                .single();
+            if (fallbackErr) throw fallbackErr;
+            user = { ...fallback, business_type: null, business_description: null };
+        } else if (error) {
+            throw error;
+        }
 
         await logUserAction(userId, 'PROFILE_VIEW', '/api/user/profile', {}, req.user_ip, 'success');
         
@@ -3470,17 +3501,43 @@ app.put('/api/user/profile', authenticateToken, async (req, res) => {
             .update(updateData)
             .eq('id', userId);
 
-        if (error) throw error;
+        if (error && /does not exist|column.*not found/i.test(error.message)) {
+            // Optional business profile columns aren't in the deployed DB yet —
+            // strip them from the update so the rest still saves.
+            const safeUpdate = { ...updateData };
+            delete safeUpdate.business_type;
+            delete safeUpdate.business_description;
+            const { data: sData, error: sError } = await supabase
+                .from('users')
+                .update(safeUpdate)
+                .eq('id', userId);
+            if (sError) throw sError;
+        } else if (error) {
+            throw error;
+        }
 
         console.log('✅ User profile updated:', userId);
         
-        const { data: updatedUser, error: fetchError } = await supabase
+        const BASE_COLS = 'id, email, role, full_name, phone, business_name, business_location, business_logo_url, business_latitude, business_longitude, status, is_online, last_seen, created_at';
+        const OPTIONAL_COLS = 'business_type, business_description';
+
+        let { data: updatedUser, error: fetchError } = await supabase
             .from('users')
-            .select('id, email, role, full_name, phone, business_name, business_location, business_logo_url, business_latitude, business_longitude, business_type, business_description, status, is_online, last_seen, created_at')
+            .select(BASE_COLS + ', ' + OPTIONAL_COLS)
             .eq('id', userId)
             .single();
 
-        if (fetchError) throw fetchError;
+        if (fetchError && /does not exist|column.*not found/i.test(fetchError.message)) {
+            const { data: fallback, error: fallbackErr } = await supabase
+                .from('users')
+                .select(BASE_COLS)
+                .eq('id', userId)
+                .single();
+            if (fallbackErr) throw fallbackErr;
+            updatedUser = { ...fallback, business_type: null, business_description: null };
+        } else if (fetchError) {
+            throw fetchError;
+        }
 
         await logUserAction(userId, 'PROFILE_UPDATE', '/api/user/profile', { 
             fields_updated: Object.keys(updateData).filter(k => k !== 'updated_at' && k !== 'last_seen') 
@@ -3569,6 +3626,23 @@ app.put('/api/onboarding/profile', authenticateToken, async (req, res) => {
 
 // Lazy DB schema so feature can run without a manual migration.
 async function ensureAiImportSchema() {
+    // Bootstrap the exec_sql helper if it's missing (same pattern as the rest of the server).
+    try {
+        const { error: probeErr } = await supabaseAdmin.rpc('exec_sql', { query: 'SELECT 1' });
+        if (probeErr) {
+            const createFunctionSQL = `
+                CREATE OR REPLACE FUNCTION exec_sql(query text)
+                RETURNS void AS $$
+                BEGIN
+                    EXECUTE query;
+                END;
+                $$ LANGUAGE plpgsql;
+                SET search_path = public, extensions;
+            `;
+            await supabaseAdmin.rpc('exec_sql', { query: createFunctionSQL }).catch(() => {});
+        }
+    } catch (_) {}
+
     const migrations = [
         'ALTER TABLE users ADD COLUMN IF NOT EXISTS business_type TEXT',
         'ALTER TABLE users ADD COLUMN IF NOT EXISTS business_description TEXT',
@@ -3668,6 +3742,21 @@ app.post('/api/inventory/ai-import', authenticateToken, async (req, res) => {
             return res.status(400).json({ error: 'Biashara inahitajika. Sajili biashara yako kwanza.' });
         }
 
+        // Tolerantly read the optional profile fields (columns may not exist yet).
+        let businessType = null;
+        let businessDescription = null;
+        try {
+            const { data: bizRow, error: bizErr } = await supabaseAdmin
+                .from('users')
+                .select('business_type, business_description')
+                .eq('id', userId)
+                .single();
+            if (!bizErr && bizRow) {
+                businessType = bizRow.business_type;
+                businessDescription = bizRow.business_description;
+            }
+        } catch (_) {}
+
         const images = Array.isArray(req.body?.images) ? req.body.images : [];
 
         if (images.length === 0) {
@@ -3711,8 +3800,8 @@ app.post('/api/inventory/ai-import', authenticateToken, async (req, res) => {
 
         // ---- Step C: ask Gemini to interpret ----
         const prompt = buildUserPrompt({
-            businessType: req.user.business_type,
-            businessDescription: req.user.business_description,
+            businessType,
+            businessDescription,
             existingItems: presentAsGeminiList(candidates),
             extractedSections: extraction.images
         });
@@ -3824,8 +3913,8 @@ app.post('/api/inventory/ai-import', authenticateToken, async (req, res) => {
             success: true,
             items: finalItems,
             meta: {
-                businessType: req.user.business_type || null,
-                businessDescription: req.user.business_description || null,
+                businessType,
+                businessDescription,
                 imageCount: cleanImages.length,
                 existingCandidateCount: candidates.length,
                 model: GEMINI_MODEL
