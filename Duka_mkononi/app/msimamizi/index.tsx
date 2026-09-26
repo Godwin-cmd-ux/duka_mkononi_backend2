@@ -29,6 +29,17 @@ import { fetchWithTimeout, requireNetwork } from '../../lib/network';
 // ✅ KUBADILISHWA: Tumia ngrok URL mpya
 import { API_BASE_URL } from '../../constants/api';
 
+// Aina zinazoruhusiwa za biashara (normalized keys — the same list as the
+// AI-import page and the Laravel BUSINESS_TYPES, so the stored value stays
+// consistent across web and mobile).
+const BIZ_TYPES = [
+  'spare_parts', 'pharmacy', 'supermarket', 'clothing', 'electronics',
+  'restaurant', 'hardware', 'cosmetics', 'perfume', 'mobile_accessories',
+  'furniture', 'stationery', 'agriculture', 'construction_materials',
+  'beauty_salon', 'barbershop', 'auto_repair', 'phone_shop', 'computer_shop',
+  'general_retail', 'wholesale', 'other',
+];
+
 export default function MsimamiziHomeScreen() {
   const { t, lang } = useLang();
   const router = useRouter();
@@ -57,7 +68,9 @@ export default function MsimamiziHomeScreen() {
     name: '',
     phone: '',
     businessName: '',
-    businessLocation: ''
+    businessLocation: '',
+    businessType: '',
+    businessDescription: ''
   });
   const [updatingProfile, setUpdatingProfile] = useState(false);
   const [updatingSellerStatus, setUpdatingSellerStatus] = useState<string | null>(null);
@@ -74,7 +87,12 @@ export default function MsimamiziHomeScreen() {
       async () => {
         const token = await AsyncStorage.getItem('userToken');
         if (!token) throw new Error('sync failed');
-        const res = await fetchWithTimeout(`${API_BASE_URL}/api/admin/users`, {
+        // Server-side filtering (Laravel AdminController::users accepts
+        // ?business= and ?role=): only this business's sellers cross the
+        // network instead of the whole users table.
+        const res = await fetchWithTimeout(
+          `${API_BASE_URL}/api/admin/users?business=${encodeURIComponent(userData.businessName || '')}&role=seller`,
+          {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -136,11 +154,18 @@ export default function MsimamiziHomeScreen() {
           name: user.full_name || t('admin_dashboard.profile_full_name'),
           phone: user.phone || '',
           businessName: businessName,
-          businessLocation: businessLocation
+          businessLocation: businessLocation,
+          businessType: user.business_type || '',
+          businessDescription: user.business_description || ''
         });
 
         // ✅ KUBADILISHWA: Pita business name kwa loadSellersData
         await loadSellersData(businessName);
+
+        // Pull the authoritative profile so the edit form always shows the
+        // stored business type/description. Runs in the background (it only
+        // feeds the edit modal) so it never delays the first paint.
+        loadProfileIntoEditForm();
       }
     } catch (error) {
       console.error('Error loading user data:', error);
@@ -166,10 +191,15 @@ export default function MsimamiziHomeScreen() {
         const cachedSellers = await getCache<any[]>('admin:users');
         if (cachedSellers) { setSellersData(cachedSellers); }
 
-        console.log('📡 Inapakua data ya wauzaji kutoka:', `${API_BASE_URL}/api/admin/users`);
-        console.log('🏢 Jina la biashara la msimamizi:', adminBusinessName || userData.businessName);
+        const businessNameToFilter = adminBusinessName || userData.businessName;
+
+        console.log('📡 Inapakua data ya wauzaji kutoka:', `${API_BASE_URL}/api/admin/users?business=...&role=seller`);
+        console.log('🏢 Jina la biashara la msimamizi:', businessNameToFilter);
         
-        const response = await fetchWithTimeout(`${API_BASE_URL}/api/admin/users`, {
+        // Server-side filtering — Laravel only returns this business's sellers.
+        const response = await fetchWithTimeout(
+            `${API_BASE_URL}/api/admin/users?business=${encodeURIComponent(businessNameToFilter || '')}&role=seller`,
+            {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -190,7 +220,6 @@ export default function MsimamiziHomeScreen() {
             const usersArray = data.users || [];
             
             // ✅ KUBADILISHWA: Filter wauzaji kulingana na business_name ya msimamizi
-            const businessNameToFilter = adminBusinessName || userData.businessName;
             const sellers = usersArray.filter((user: any) => {
                 const isSeller = user.role === 'seller';
                 const hasMatchingBusiness = user.business_name === businessNameToFilter;
@@ -214,6 +243,48 @@ export default function MsimamiziHomeScreen() {
         const cachedSellers = await getCache<any[]>('admin:users');
         if (cachedSellers) { setSellersData(cachedSellers); return; }
         Alert.alert(t('app.error'), t('admin_dashboard.error_network'));
+    }
+  };
+
+  // Pull the authoritative profile (includes business_type and
+  // business_description saved from the AI-import page or this modal) so
+  // the edit form always prefills the stored values, and keep the local
+  // cache in sync for other pages.
+  const loadProfileIntoEditForm = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) return;
+
+      const res = await fetchWithTimeout(`${API_BASE_URL}/api/user/profile`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'ngrok-skip-browser-warning': 'true',
+          'Accept': 'application/json'
+        },
+      });
+      if (!res.ok) return;
+      const profile = await res.json();
+      if (!profile) return;
+
+      setEditFormData((prev) => ({
+        ...prev,
+        businessType: profile.business_type || '',
+        businessDescription: profile.business_description || ''
+      }));
+
+      const cached = await AsyncStorage.getItem('userData');
+      if (cached) {
+        const user = JSON.parse(cached);
+        await AsyncStorage.setItem('userData', JSON.stringify({
+          ...user,
+          business_type: profile.business_type || '',
+          business_description: profile.business_description || ''
+        }));
+      }
+    } catch (error) {
+      // Offline: the modal falls back to the cached values.
+      console.error('Error loading profile into edit form:', error);
     }
   };
 
@@ -263,7 +334,9 @@ export default function MsimamiziHomeScreen() {
           full_name: editFormData.name,
           phone: editFormData.phone,
           business_name: editFormData.businessName,
-          business_location: editFormData.businessLocation
+          business_location: editFormData.businessLocation,
+          business_type: (editFormData.businessType || '').trim(),
+          business_description: (editFormData.businessDescription || '').trim()
         }),
       });
 
@@ -288,7 +361,9 @@ export default function MsimamiziHomeScreen() {
             businessName: editFormData.businessName,
             businessLocation: editFormData.businessLocation,
             phone: editFormData.phone,
-            full_name: editFormData.name
+            full_name: editFormData.name,
+            business_type: (editFormData.businessType || '').trim(),
+            business_description: (editFormData.businessDescription || '').trim()
           };
           await AsyncStorage.setItem('userData', JSON.stringify(updatedUserData));
         }
@@ -1074,6 +1149,11 @@ export default function MsimamiziHomeScreen() {
               </TouchableOpacity>
             </View>
             
+            <ScrollView
+              style={styles.modalScroll}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>{t('admin_dashboard.profile_full_name')}</Text>
               <TextInput
@@ -1117,6 +1197,46 @@ export default function MsimamiziHomeScreen() {
                 onChangeText={(text) => setEditFormData(prev => ({ ...prev, businessLocation: text }))}
               />
             </View>
+
+            {/* Aina ya Biashara — same option list as the AI-import page. */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>{t('profile.business_type_label')}</Text>
+              <View style={styles.bizTypeWrap}>
+                {BIZ_TYPES.map((btype) => (
+                  <TouchableOpacity
+                    key={btype}
+                    style={[
+                      styles.bizTypeChip,
+                      editFormData.businessType === btype && styles.bizTypeChipActive,
+                    ]}
+                    onPress={() => setEditFormData(prev => ({ ...prev, businessType: btype }))}
+                  >
+                    <Text style={[
+                      styles.bizTypeText,
+                      editFormData.businessType === btype && styles.bizTypeTextActive,
+                    ]}>
+                      {t('business_types.' + btype)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Maelezo mafupi ya Biashara — feeds the AI import feature. */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>{t('profile.business_description_label')}</Text>
+              <TextInput
+                style={[styles.input, styles.descriptionTextArea]}
+                placeholder={t('profile.business_description_placeholder')}
+                value={editFormData.businessDescription}
+                onChangeText={(text) => setEditFormData(prev => ({ ...prev, businessDescription: text }))}
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+              />
+              <Text style={styles.descriptionHint}>{t('profile.business_description_hint')}</Text>
+            </View>
+            </ScrollView>
 
             <View style={styles.modalButtons}>
               <TouchableOpacity 
@@ -1613,6 +1733,43 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     fontSize: 15,
     backgroundColor: '#f8f9fa',
+  },
+  modalScroll: {
+    maxHeight: '70%',
+  },
+  bizTypeWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  bizTypeChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    backgroundColor: 'white',
+  },
+  bizTypeChipActive: {
+    backgroundColor: '#2ecc71',
+    borderColor: '#27ae60',
+  },
+  bizTypeText: {
+    fontSize: 13,
+    color: '#7f8c8d',
+  },
+  bizTypeTextActive: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  descriptionTextArea: {
+    minHeight: 90,
+  },
+  descriptionHint: {
+    fontSize: 12,
+    color: '#95a5a6',
+    fontStyle: 'italic',
+    marginTop: 6,
   },
   modalButtons: {
     flexDirection: 'row',

@@ -8,6 +8,7 @@ import {
     ScrollView,
     StyleSheet,
     Text,
+    TextInput,
     TouchableOpacity,
     View
 } from 'react-native';
@@ -122,6 +123,7 @@ export default function RipotiScreen() {
   const [activeProductTab, setActiveProductTab] = useState<'sold' | 'unsold'>('sold');
   const [userToken, setUserToken] = useState<string | null>(null);
   const [dataSource, setDataSource] = useState<'admin' | 'seller'>('seller');
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     loadUserData();
@@ -134,7 +136,10 @@ export default function RipotiScreen() {
       async () => {
         const token = await AsyncStorage.getItem('userToken');
         if (!token) throw new Error('sync failed');
-        const res = await fetchWithTimeout(`${API_BASE_URL}/api/admin/users`, {
+        // Server-side filtering: only this business's approved members.
+        const res = await fetchWithTimeout(
+          `${API_BASE_URL}/api/admin/users?business=${encodeURIComponent(userData.businessName || '')}&role=seller,admin`,
+          {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -245,16 +250,21 @@ export default function RipotiScreen() {
     return { allProducts: enrichedProducts, soldProducts: sold, unsoldProducts: unsold };
   };
 
-  const buildBusinessSales = (rawSales: any[], allSellers: User[], rawProducts: Product[], businessName: string): Sale[] => {
+  const buildBusinessSales = (rawSales: any[], allSellers: User[], rawProducts: Product[], businessName: string, customerNameById: Map<number, string> = new Map()): Sale[] => {
     const allSales: Sale[] = [];
     rawSales.forEach((sale: any) => {
       const saleSeller = allSellers.find(s => s.id === sale.seller_id);
       if (saleSeller && saleSeller.business_name === businessName) {
+        // The slim sales payload has no embedded `customers` relation, so
+        // resolve the name from the customers map by customer_id (same as
+        // the Blade page). Full payloads still use the embedded relation.
         let customerName = 'Mteja';
-        let customerId = null;
+        let customerId = sale.customer_id ?? null;
         if (sale.customers) {
           customerName = sale.customers.name;
           customerId = sale.customers.id;
+        } else if (customerId && customerNameById.get(customerId)) {
+          customerName = customerNameById.get(customerId)!;
         }
 
         let sellerName = saleSeller.full_name || saleSeller.email;
@@ -389,7 +399,10 @@ export default function RipotiScreen() {
       // 1. Pata wauzaji wote wa biashara
       let usersRaw: any[] | null = await getCache<any[]>('admin:users');
       try {
-        const sellersResponse = await fetchWithTimeout(`${API_BASE_URL}/api/admin/users`, {
+        // Server-side filtering — Laravel returns only this business's members.
+        const sellersResponse = await fetchWithTimeout(
+          `${API_BASE_URL}/api/admin/users?business=${encodeURIComponent(businessName)}&role=seller,admin`,
+          {
           method: 'GET',
           headers: headers
         }, 20000);
@@ -418,7 +431,10 @@ export default function RipotiScreen() {
       // 2. Pata bidhaa zote za biashara
       let productsRaw: any[] | null = await getCache<any[]>('admin:products');
       try {
-        const productsResponse = await fetchWithTimeout(`${API_BASE_URL}/api/admin/products`, {
+        // slim=1: report only needs the handful of columns it displays.
+        const productsResponse = await fetchWithTimeout(
+          `${API_BASE_URL}/api/admin/products?business_name=${encodeURIComponent(businessName)}&slim=1`,
+          {
           method: 'GET',
           headers: headers
         }, 20000);
@@ -456,10 +472,57 @@ export default function RipotiScreen() {
         console.log('📦 Bidhaa za biashara:', rawProducts.length);
       }
 
-      // 3. Pata mauzo yote ya biashara
+      // 3. Pata wateja wote wa biashara (server-filtered by business_name).
+      //    Fetched BEFORE sales so customer names can be resolved from the
+      //    slim sales payload, which carries customer_id but no relation.
+      let customersRaw: any[] | null = await getCache<any[]>('admin:customers');
+      try {
+        const customersResponse = await fetchWithTimeout(
+          `${API_BASE_URL}/api/admin/customers?business_name=${encodeURIComponent(businessName)}`,
+          {
+          method: 'GET',
+          headers: headers
+        }, 20000);
+
+        if (customersResponse.ok && allSellers.length > 0) {
+          const responseData = await customersResponse.json();
+          customersRaw = Array.isArray(responseData) ? responseData : responseData.customers || [];
+          setCache('admin:customers', customersRaw).catch(() => {});
+        }
+      } catch (error) {
+        console.warn('⚠️ Customers fetch failed, using cache:', error);
+        if (!customersRaw) throw error;
+      }
+
+      const customerNameById = new Map<number, string>();
+      let allCustomers: Customer[] = [];
+      if (customersRaw) {
+        const customersData = customersRaw;
+        customersData.forEach((c: any) => {
+          if (c && c.id != null) customerNameById.set(c.id, c.name);
+        });
+        allCustomers = customersData.filter((customer: any) => {
+          const customerSeller = allSellers.find(s => s.id === customer.seller_id);
+          return customerSeller && customerSeller.business_name === businessName;
+        }).map((customer: any) => ({
+          ...customer,
+          seller_name: allSellers.find(s => s.id === customer.seller_id)?.full_name || 
+                      allSellers.find(s => s.id === customer.seller_id)?.email || 
+                      'Hajulikani'
+        }));
+        
+        allCustomers = allCustomers.map(customer => adjustCustomerPurchases(customer));
+        
+        setCustomers(allCustomers);
+        console.log('👥 Wateja wa biashara:', allCustomers.length);
+      }
+
+      // 4. Pata mauzo yote ya biashara (server-filtered + slim=1).
       let salesRaw: any[] | null = await getCache<any[]>('admin:sales');
       try {
-        const salesResponse = await fetchWithTimeout(`${API_BASE_URL}/api/admin/sales`, {
+        const salesResponse = await fetchWithTimeout(
+          `${API_BASE_URL}/api/admin/sales?business_name=${encodeURIComponent(businessName)}&slim=1`,
+          {
           method: 'GET',
           headers: headers
         }, 20000);
@@ -476,54 +539,17 @@ export default function RipotiScreen() {
 
       let allSales: Sale[] = [];
       if (salesRaw) {
-        allSales = buildBusinessSales(salesRaw, allSellers, rawProducts, businessName);
+        allSales = buildBusinessSales(salesRaw, allSellers, rawProducts, businessName, customerNameById);
         console.log('💰 Mauzo ya biashara:', allSales.length);
         setSales(allSales);
       }
 
-      // 4. Process products with sales data
+      // 5. Process products with sales data
       const { allProducts, soldProducts, unsoldProducts } = processProductsWithSalesData(rawProducts, allSales);
       setAllProducts(allProducts);
       setSoldProducts(soldProducts);
       setUnsoldProducts(unsoldProducts);
       console.log('📊 Bidhaa zimeuzwa:', soldProducts.length, '| Hazijauzwa:', unsoldProducts.length);
-
-      // 5. Pata wateja wote wa biashara
-      let customersRaw: any[] | null = await getCache<any[]>('admin:customers');
-      try {
-        const customersResponse = await fetchWithTimeout(`${API_BASE_URL}/api/admin/customers`, {
-          method: 'GET',
-          headers: headers
-        }, 20000);
-
-        if (customersResponse.ok && allSellers.length > 0) {
-          const responseData = await customersResponse.json();
-          customersRaw = Array.isArray(responseData) ? responseData : responseData.customers || [];
-          setCache('admin:customers', customersRaw).catch(() => {});
-        }
-      } catch (error) {
-        console.warn('⚠️ Customers fetch failed, using cache:', error);
-        if (!customersRaw) throw error;
-      }
-
-      let allCustomers: Customer[] = [];
-      if (customersRaw) {
-        const customersData = customersRaw;
-        allCustomers = customersData.filter((customer: any) => {
-          const customerSeller = allSellers.find(s => s.id === customer.seller_id);
-          return customerSeller && customerSeller.business_name === businessName;
-        }).map((customer: any) => ({
-          ...customer,
-          seller_name: allSellers.find(s => s.id === customer.seller_id)?.full_name || 
-                      allSellers.find(s => s.id === customer.seller_id)?.email || 
-                      'Hajulikani'
-        }));
-        
-        allCustomers = allCustomers.map(customer => adjustCustomerPurchases(customer));
-        
-        setCustomers(allCustomers);
-        console.log('👥 Wateja wa biashara:', allCustomers.length);
-      }
 
       // 6. Hesabu takwimu za biashara
       if (allSales.length > 0) {
@@ -714,6 +740,29 @@ export default function RipotiScreen() {
     }
   };
 
+  // ============================== SEARCH ==============================
+  // Client-side search across the mauzo / bidhaa / wateja tabs (parity with
+  // the Blade report page). Search is independent of the API calls.
+  const matchesSearch = (...values: any[]) => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return true;
+    return values.some((v) => String(v ?? '').toLowerCase().includes(term));
+  };
+
+  const getFilteredSales = () => searchTerm
+    ? sales.filter(s => matchesSearch(s.product_name, s.customer_name, s.seller_name, s.sale_date))
+    : sales;
+  const getFilteredSoldProducts = () => searchTerm
+    ? soldProducts.filter(p => matchesSearch(p.name, p.category))
+    : soldProducts;
+  const getFilteredUnsoldProducts = () => searchTerm
+    ? unsoldProducts.filter(p => matchesSearch(p.name, p.category))
+    : unsoldProducts;
+  const getFilteredCustomers = () => searchTerm
+    ? customers.filter(c => matchesSearch(c.name, c.phone, c.email))
+    : customers;
+  const noResultsText = () => `Hakuna matokeo yanayolingana na "${searchTerm}"`;
+
   const formatCurrency = (amount: number) => {
     if (!amount && amount !== 0) return 'TSh 0';
     if (isNaN(amount)) return 'TSh 0';
@@ -898,8 +947,9 @@ export default function RipotiScreen() {
           {t('reports.sales_report')} - {isAdmin ? userData.businessName : t('reports.personal_report')}
           {isAdmin && dataSource === 'admin' && ` (${t('reports.sellers_count', { n: sellers.length })}`}
         </Text>
-        {sales && sales.length > 0 ? (
-          sales.map((sale, index) => (
+        {sales.length > 0 ? (
+          getFilteredSales().length > 0 ? (
+          getFilteredSales().map((sale, index) => (
             <View key={`${sale.id}-${index}`} style={styles.reportItem}>
               <View style={styles.reportItemMain}>
                 <Text style={styles.reportItemTitle}>{sale.product_name}</Text>
@@ -925,6 +975,12 @@ export default function RipotiScreen() {
               </View>
             </View>
           ))
+          ) : (
+            <View style={styles.noData}>
+              <Ionicons name="search" size={48} color="#bdc3c7" />
+              <Text style={styles.noDataText}>{noResultsText()}</Text>
+            </View>
+          )
         ) : (
           <View style={styles.noData}>
             <Ionicons name="receipt" size={48} color="#bdc3c7" />
@@ -948,7 +1004,8 @@ export default function RipotiScreen() {
         </Text>
         
         {soldProducts.length > 0 ? (
-          soldProducts.map((product) => {
+          getFilteredSoldProducts().length > 0 ? (
+          getFilteredSoldProducts().map((product) => {
             const purchasePrice = product.price || 0;
             const sellingPrice = product.expected_selling_price || product.price || 0;
             const profitPerUnit = sellingPrice - purchasePrice;
@@ -997,6 +1054,12 @@ export default function RipotiScreen() {
               </View>
             );
           })
+          ) : (
+            <View style={styles.noData}>
+              <Ionicons name="search" size={48} color="#bdc3c7" />
+              <Text style={styles.noDataText}>{noResultsText()}</Text>
+            </View>
+          )
         ) : (
           <View style={styles.noData}>
             <Ionicons name="checkmark-done" size={48} color="#bdc3c7" />
@@ -1023,7 +1086,8 @@ export default function RipotiScreen() {
         </Text>
         
         {unsoldProducts.length > 0 ? (
-          unsoldProducts.map((product) => {
+          getFilteredUnsoldProducts().length > 0 ? (
+          getFilteredUnsoldProducts().map((product) => {
             const purchasePrice = product.price || 0;
             const sellingPrice = product.expected_selling_price || product.price || 0;
             const profitPerUnit = sellingPrice - purchasePrice;
@@ -1077,6 +1141,12 @@ export default function RipotiScreen() {
               </View>
             );
           })
+          ) : (
+            <View style={styles.noData}>
+              <Ionicons name="search" size={48} color="#bdc3c7" />
+              <Text style={styles.noDataText}>{noResultsText()}</Text>
+            </View>
+          )
         ) : (
           <View style={styles.noData}>
             <Ionicons name="happy" size={48} color="#2ecc71" />
@@ -1175,7 +1245,8 @@ export default function RipotiScreen() {
         </Text>
         
         {customers && customers.length > 0 ? (
-          customers.map((customer) => {
+          getFilteredCustomers().length > 0 ? (
+          getFilteredCustomers().map((customer) => {
             const actualTotal = customer.actual_purchases || customer.total_purchases;
             const actualCount = customer.actual_purchase_count || customer.purchases_count;
             const lastPurchase = customer.last_purchase_date ? 
@@ -1237,6 +1308,12 @@ export default function RipotiScreen() {
               </View>
             );
           })
+          ) : (
+            <View style={styles.noData}>
+              <Ionicons name="search" size={48} color="#bdc3c7" />
+              <Text style={styles.noDataText}>{noResultsText()}</Text>
+            </View>
+          )
         ) : (
           <View style={styles.noData}>
             <Ionicons name="people" size={48} color="#bdc3c7" />
@@ -1316,7 +1393,7 @@ export default function RipotiScreen() {
       <View style={styles.reportNav}>
         <TouchableOpacity 
           style={[styles.navButton, activeReport === 'overview' && styles.activeNavButton]}
-          onPress={() => setActiveReport('overview')}
+          onPress={() => { setActiveReport('overview'); setSearchTerm(''); }}
         >
           <Ionicons 
             name="grid" 
@@ -1330,7 +1407,7 @@ export default function RipotiScreen() {
 
         <TouchableOpacity 
           style={[styles.navButton, activeReport === 'sales' && styles.activeNavButton]}
-          onPress={() => setActiveReport('sales')}
+          onPress={() => { setActiveReport('sales'); setSearchTerm(''); }}
         >
           <Ionicons 
             name="receipt" 
@@ -1344,7 +1421,7 @@ export default function RipotiScreen() {
 
         <TouchableOpacity 
           style={[styles.navButton, activeReport === 'products' && styles.activeNavButton]}
-          onPress={() => setActiveReport('products')}
+          onPress={() => { setActiveReport('products'); setSearchTerm(''); }}
         >
           <Ionicons 
             name="cube" 
@@ -1358,7 +1435,7 @@ export default function RipotiScreen() {
 
         <TouchableOpacity 
           style={[styles.navButton, activeReport === 'customers' && styles.activeNavButton]}
-          onPress={() => setActiveReport('customers')}
+          onPress={() => { setActiveReport('customers'); setSearchTerm(''); }}
         >
           <Ionicons 
             name="people" 
@@ -1370,6 +1447,26 @@ export default function RipotiScreen() {
           </Text>
         </TouchableOpacity>
       </View>
+
+      {activeReport !== 'overview' && (
+        <View style={styles.searchContainer}>
+          <Ionicons name="search" size={18} color="#95a5a6" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder={t('app.search')}
+            placeholderTextColor="#95a5a6"
+            value={searchTerm}
+            onChangeText={setSearchTerm}
+            autoCorrect={false}
+            autoCapitalize="none"
+          />
+          {searchTerm.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchTerm('')} style={styles.searchClear}>
+              <Ionicons name="close-circle" size={18} color="#95a5a6" />
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
 
       <View style={styles.reportContent}>
         {renderReportContent()}
@@ -1543,6 +1640,28 @@ const styles = StyleSheet.create({
   },
   activeNavButtonText: {
     color: 'white',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#ecf0f1',
+    paddingHorizontal: 12,
+    marginBottom: 16,
+  },
+  searchIcon: {
+    marginRight: 6,
+  },
+  searchInput: {
+    flex: 1,
+    paddingVertical: 12,
+    fontSize: 14,
+    color: '#2c3e50',
+  },
+  searchClear: {
+    padding: 4,
   },
   reportContent: {
     marginBottom: 24,

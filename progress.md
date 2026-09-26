@@ -1162,3 +1162,115 @@ serve 200 with the viewer markup present.
 - Pagination / lazy loading for very long day lists on Rejea.
 - Apply the same server-side filtering pattern to the mteja and muuzaji
   apps.
+
+---
+
+## Expo sync — Msimamizi dashboard (`index`)
+
+**Date:** 2026-09-26
+**Module:** Msimamizi
+**Blade file inspected:** `resources/views/msimamizi/index.blade.php`
+**Expo file modified:** `Duka_mkononi/app/msimamizi/index.tsx`
+**Supporting file modified:** `Duka_mkononi/constants/api.ts`
+
+**Laravel endpoints used:**
+- `GET /api/admin/users?business=<name>&role=seller` (AdminController::users)
+- `GET /api/user/profile` (ProfileController::show)
+- `PUT /api/user/profile` (ProfileController::update)
+- `PUT /api/admin/users/{id}/status`, `DELETE /api/admin/users/{id}`
+
+**Old Node behaviour discovered in Expo:**
+- The mobile dashboard called `/api/admin/users` with **no query params** and
+  filtered the whole users table in the client. Laravel accepts `?business=`
+  and `?role=` (documented in entry 3) and the current Blade page already
+  passes them, so the mobile call was downloading far more data than needed.
+- The API base URL was the dead Node backend
+  `https://duka-mkononi-backend-6b9g.onrender.com`.
+- The edit-profile modal had no **business type** or **business description**
+  fields, so the AI-import business info added in entry 6 could never be
+  edited from mobile.
+
+**Changes made (Expo only):**
+1. `constants/api.ts` now points at `https://www.dukamkononi.com` (the
+   Laravel API).
+2. Seller fetching (both the live-sync callback and `loadSellersData`) now
+   requests `/api/admin/users?business=<businessName>&role=seller`, matching
+   the Blade page and the Laravel contract. The existing client-side guard
+   filter is kept as a safety net.
+3. Added `loadProfileIntoEditForm()` — fetches `/api/user/profile` on load
+   and syncs `business_type` / `business_description` into the edit form and
+   the AsyncStorage cache (same behaviour as the Blade page).
+4. The edit-profile modal gained the **Aina ya Biashara** chip selector (same
+   22-type list as the AI-import page / `business_types` locale keys) and the
+   **Maelezo mafupi ya Biashara** field; both are now sent in the
+   `PUT /api/user/profile` body and persisted to the local cache.
+5. Profile fields wrapped in a `ScrollView` so the larger modal stays usable
+   on small screens (mobile UX preserved — no Blade layout copied).
+
+**Verification:** `npx tsc --noEmit` passes with no errors after increasing
+`--max-old-space-size`. Reused existing locale keys (`profile.business_type_*`,
+`business_types.*`) confirmed present in all 8 locale files, so no locale
+edits were needed.
+
+**Remaining issues / not changed:**
+- The `ngrok-skip-browser-warning` header is a leftover from the ngrok/Node
+  backend. It is harmless and could be removed app-wide in a later cleanup.
+- `PUT /api/admin/users/{id}/status` in `AdminController` only accepts
+  `pending|approved|rejected`; the **Ondoa** action (and its fallback) sends
+  `inactive`, which the server rejects with 400. The Blade page has the same
+  behaviour, so this was left as-is and flagged rather than diverging from
+  the web implementation.
+
+---
+
+## Expo sync — Msimamizi Ripoti (`ripoti`)
+
+**Date:** 2026-09-26
+**Module:** Msimamizi
+**Blade file inspected:** `resources/views/msimamizi/ripoti.blade.php`
+**Expo file modified:** `Duka_mkononi/app/msimamizi/ripoti.tsx`
+
+**Laravel endpoints used:**
+- `GET /api/admin/users?business=<name>&role=seller,admin`
+- `GET /api/admin/products?business_name=<name>&slim=1`
+- `GET /api/admin/sales?business_name=<name>&slim=1`
+- `GET /api/admin/customers?business_name=<name>`
+- `GET /api/products/my`, `GET /api/sales/my`, `GET /api/customers/my` (seller path)
+
+**Old Node behaviour discovered in Expo:**
+- The admin report fetched `/api/admin/users`, `/api/admin/products`,
+  `/api/admin/sales` and `/api/admin/customers` with **no query params** and
+  filtered every row in the client — the exact pattern entry 3 removed from
+  the Blade page. The Blade page already passes `business`/`business_name`,
+  `role=seller,admin` and `slim=1`.
+- Because the mobile build relied on the **full** sales payload, customer
+  names came from the embedded `sale.customers` relation. Switching to
+  `slim=1` (which drops embedded relations) requires resolving names from a
+  `customerNameById` map keyed on `customer_id` — the approach the Blade page
+  already uses.
+- The Expo page had **no client-side search**, while the Blade page searches
+  the Mauzo / Bidhaa / Wateja tabs.
+
+**Changes made (Expo only):**
+1. All four admin fetches (plus the live-sync callback) now pass the
+   server-side filters Laravel expects (`business` / `business_name`, `role`,
+   `slim`). Client-side guard filters are retained as a safety net.
+2. Reordered `fetchBusinessData()` to fetch customers before sales and build a
+   `customerNameById` map; `buildBusinessSales()` now accepts that map and
+   resolves names from `customer_id` when the slim payload has no embedded
+   `customers` relation (full payloads still use the relation).
+3. Added the client-side **search bar** to the Mauzo / Bidhaa / Wateja tabs,
+   filtering by the same fields as the Blade page, with a clear button and a
+   no-results state. Search resets when switching tabs.
+
+**Verification:** `npx tsc --noEmit` passes clean.
+
+**Remaining issues / not changed:**
+- **Exports** (PDF / Excel / Print) are still stubbed in Expo with a
+  "coming soon" alert (`handlePrintPDF`, `handleExportExcel`, `handlePrint`),
+  whereas the Blade page builds a printable HTML table and a CSV. Implementing
+  this natively is substantial (expo-print / expo-sharing / file system) and
+  was left for a dedicated pass.
+- The seller path (`/api/products/my`, `/api/sales/my`, `/api/customers/my`)
+  is unchanged and still relies on the embedded `customers` relation, matching
+  `SaleController::my`.
