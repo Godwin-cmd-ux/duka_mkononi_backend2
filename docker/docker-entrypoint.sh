@@ -41,16 +41,37 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 4. This app talks to Supabase over REST — it has NO SQL database. If
-#    DB_CONNECTION somehow resolves to sqlite (Laravel's stock default),
-#    every session/cache read 500s with "database.sqlite does not exist".
-#    Fail loudly at boot instead.
+# 4. Self-heal values that are categorically broken for this app. It talks
+#    to Supabase over REST and has NO SQL database, so sqlite and the
+#    database-backed session/cache/queue drivers can never work — typically
+#    these arrive via copy-pasted platform env vars. Coerce + warn loudly.
+#    (Deliberately NOT fatal: a misconfigured dashboard should not take the
+#    site down when the correct value is unambiguous.)
 # ---------------------------------------------------------------------------
-if [ "${DB_CONNECTION:-sqlite}" = "sqlite" ]; then
-    echo "FATAL: DB_CONNECTION=sqlite is invalid for this app (Supabase REST only)." >&2
-    echo "       Remove DB_CONNECTION/SESSION_DRIVER/CACHE_STORE=database from your" >&2
-    echo "       platform env — the image defaults (pgsql/file/file/sync) are correct." >&2
-    exit 1
+healed=""
+if [ "${DB_CONNECTION:-}" = "sqlite" ] || [ -z "${DB_CONNECTION:-}" ]; then
+    DB_CONNECTION=pgsql
+    export DB_CONNECTION
+    healed="$healed DB_CONNECTION"
+fi
+if [ "${SESSION_DRIVER:-}" = "database" ]; then
+    SESSION_DRIVER=file
+    export SESSION_DRIVER
+    healed="$healed SESSION_DRIVER"
+fi
+if [ "${CACHE_STORE:-}" = "database" ]; then
+    CACHE_STORE=file
+    export CACHE_STORE
+    healed="$healed CACHE_STORE"
+fi
+if [ "${QUEUE_CONNECTION:-}" = "database" ]; then
+    QUEUE_CONNECTION=sync
+    export QUEUE_CONNECTION
+    healed="$healed QUEUE_CONNECTION"
+fi
+if [ -n "$healed" ]; then
+    echo "entrypoint: WARNING — healed broken values:$healed (Supabase REST app; no SQL database)."
+    echo "entrypoint: WARNING — remove these from your platform env to silence this."
 fi
 
 # ---------------------------------------------------------------------------
