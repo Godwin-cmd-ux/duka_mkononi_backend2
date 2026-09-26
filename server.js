@@ -34,39 +34,18 @@ const path = require('path');
 const WebSocket = require('ws');
 const http = require('http');
 const crypto = require('crypto');
-
-// ✅ AI INVENTORY IMPORT — ISOLATED MODULES
-// (Gemini key stays server-side only — see ai/ directory)
-const { extractTextFromImages } = require('./ai/imageExtractor');
-const { buildSystemInstruction, buildUserPrompt } = require('./ai/promptBuilder');
-const { validateAndRepair: validateAIResponse } = require('./ai/responseValidator');
-const { findExistingProducts, presentAsGeminiList } = require('./ai/inventoryMatcher');
-const geminiService = require('./ai/geminiService');
-const GEMINI_MODEL = process.env.GEMINI_MODEL || geminiService.GEMINI_MODEL;
-
-// ✅ ALLOWED BUSINESS TYPES (normalized keys — the frontend renders localized labels)
-const BUSINESS_TYPE_ALLOWED = [
-    'spare_parts', 'pharmacy', 'supermarket', 'clothing', 'electronics',
-    'restaurant', 'hardware', 'cosmetics', 'perfume', 'mobile_accessories',
-    'furniture', 'stationery', 'agriculture', 'construction_materials',
-    'beauty_salon', 'barbershop', 'auto_repair', 'phone_shop', 'computer_shop',
-    'general_retail', 'wholesale', 'other'
-];
-
-// ✅ GEMINI STATUS FLAG (logged once so misconfiguration is visible in logs)
-if (!process.env.GEMINI_API_KEY) {
-    console.warn('⚠️ GEMINI_API_KEY siyopo kwenye environment — AI inventory import haitafanya kazi.');
-    console.warn('   Weka GEMINI_API_KEY kwenye .env (au Render dashboard) kisha anzisha upya.');
-} else {
-    console.log('✅ Gemini API configured (model: ' + GEMINI_MODEL + ')');
-}
-
 const app = express();
 const server = http.createServer(app);
 
 // ✅ JWT SECRET DEFINITION (ADD THIS!)
 // =============================================
-const JWT_SECRET = process.env.JWT_SECRET || '419a2994t-default-secret-key-for-development';
+// No fallback: without JWT_SECRET in .env the server must fail loudly
+// rather than silently sign tokens with a publicly-known secret.
+const JWT_SECRET = process.env.JWT_SECRET || '';
+if (!JWT_SECRET) {
+    console.error('FATAL: JWT_SECRET is not set. Add it to .env (same value the Laravel backend uses).');
+    process.exit(1);
+}
 console.log('🔑 JWT_SECRET initialized');
 
 
@@ -88,8 +67,8 @@ const EMAIL_CONFIG = {
     port: process.env.EMAIL_PORT || 587,
     secure: process.env.EMAIL_SECURE === 'true',
     auth: {
-        user: process.env.EMAIL_USER || 'your-email@gmail.com',
-        pass: process.env.EMAIL_PASSWORD || 'ukjjouggmmgaaffg'
+        user: process.env.EMAIL_USER || '',
+        pass: process.env.EMAIL_PASSWORD || ''
     },
     from: process.env.EMAIL_FROM || 'DukaMkononi <no-reply@dukamkononi.com>'
 };
@@ -98,8 +77,8 @@ const EMAIL_CONFIG = {
 const emailTransporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: process.env.EMAIL_USER || 'godwinfranklin419@gmail.com',
-        pass: process.env.EMAIL_PASSWORD || 'ukjjouggmmgaaffg' // Use App Password, not regular password
+        user: process.env.EMAIL_USER || '',
+        pass: process.env.EMAIL_PASSWORD || '' // Use App Password, not regular password
     }
 });
 
@@ -184,7 +163,7 @@ wss.on('connection', async (ws, req) => {
         // Verify JWT token
         let decoded;
         try {
-            decoded = jwt.verify(token, process.env.JWT_SECRET || '419a2994t');
+            decoded = jwt.verify(token, JWT_SECRET);
         } catch (error) {
             ws.close(1008, 'Invalid token');
             return;
@@ -2791,8 +2770,6 @@ app.post('/api/register', async (req, res) => {
     const phone = verified.phone || null;
     const business_name = verified.business_name || null;
     const business_location = verified.business_location || null;
-    const business_type = verified.business_type || null;
-    const business_description = verified.business_description || null;
     const language = verified.language || 'sw';
 
     // Cross-check when the caller also supplies an email (e.g. the legacy web pages)
@@ -2882,8 +2859,6 @@ app.post('/api/register', async (req, res) => {
             phone: phone || null,
             business_name: business_name || null,
             business_location: business_location || null,
-            business_type: business_type || null,
-            business_description: business_description || null,
             language: language || 'sw',
             status: userStatus,
             is_online: false,
@@ -2892,30 +2867,13 @@ app.post('/api/register', async (req, res) => {
             updated_at: new Date().toISOString()
         };
 
-        let newUser;
-        const { data: insertedUser, error: insertError } = await supabaseAdmin
+        const { data: newUser, error: insertError } = await supabaseAdmin
             .from('users')
             .insert([userData])
             .select()
             .single();
-        newUser = insertedUser;
-
-        if (insertError && /does not exist|column.*not found/i.test(insertError.message)) {
-            // Optional business profile columns aren't in the deployed DB yet —
-            // retry without them so registration still succeeds.
-            const safeUserData = { ...userData };
-            delete safeUserData.business_type;
-            delete safeUserData.business_description;
-            const { data: sUser, error: sError } = await supabaseAdmin
-                .from('users')
-                .insert([safeUserData])
-                .select()
-                .single();
-            if (sError) throw sError;
-            newUser = sUser;
-        } else if (insertError) {
-            throw insertError;
-        }
+        
+        if (insertError) throw insertError;
 
         console.log('✅ USER REGISTERED:', { 
             id: newUser.id, 
@@ -3037,18 +2995,11 @@ app.post('/api/register/initiate', async (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     console.log('📨 REGISTER INITIATE REQUEST:', req.body?.email, 'Role:', req.body?.role, 'IP:', ip);
 
-    const { email, password, role, full_name, phone, business_name, business_location, business_type, business_description, language } = req.body;
+    const { email, password, role, full_name, phone, business_name, business_location, language } = req.body;
 
     if (!email || !password || !role) {
         await logUserAction(null, 'REGISTER_INITIATE_FAILED', '/api/register/initiate', { reason: 'Missing required fields', email, role }, ip, 'failed');
         return res.status(400).json({ error: 'Email, password na role zinahitajika' });
-    }
-
-    // business_type is mandatory for admins (defines their business category,
-    // which later powers the AI inventory import); optional for sellers).
-    if (role === 'admin' && (!business_type || !BUSINESS_TYPE_ALLOWED.includes(business_type))) {
-        await logUserAction(null, 'REGISTER_INITIATE_FAILED', '/api/register/initiate', { reason: 'Invalid business_type', email, role, business_type }, ip, 'failed');
-        return res.status(400).json({ error: 'Aina ya biashara inahitajika' });
     }
 
     if (password.length < 6) {
@@ -3134,7 +3085,7 @@ app.post('/api/register/initiate', async (req, res) => {
         global.registrationOtps.set(registrationOtpKey(email, role), {
             otp: otpCode,
             passwordHash,
-            payload: { email, role, full_name, phone, business_name, business_location, business_type, business_description, language },
+            payload: { email, role, full_name, phone, business_name, business_location, language },
             expiresAt: Date.now() + OTP_EXPIRY_MS,
             lastSentAt: Date.now(),
             attempts: 0,
@@ -3228,8 +3179,6 @@ app.post('/api/register/verify-otp', async (req, res) => {
                 phone: payload.phone || null,
                 business_name: payload.business_name || null,
                 business_location: payload.business_location || null,
-                business_type: payload.business_type || null,
-                business_description: payload.business_description || null,
                 language: payload.language || 'sw',
                 type: 'registration_verified',
                 verifiedAt: Date.now()
@@ -3437,28 +3386,14 @@ app.get('/api/user/profile', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
         console.log('👤 Profile requested for user:', userId);
-
-        const BASE_COLS = 'id, email, role, full_name, phone, business_name, business_location, business_logo_url, business_latitude, business_longitude, status, is_online, last_seen, created_at, updated_at';
-        const OPTIONAL_COLS = 'business_type, business_description';
-
-        let { data: user, error } = await supabase
+        
+        const { data: user, error } = await supabase
             .from('users')
-            .select(BASE_COLS + ', ' + OPTIONAL_COLS)
+            .select('id, email, role, full_name, phone, business_name, business_location, business_logo_url, business_latitude, business_longitude, status, is_online, last_seen, created_at, updated_at')
             .eq('id', userId)
             .single();
 
-        if (error && /does not exist|column.*not found/i.test(error.message)) {
-            // Deployed DB predates the optional profile columns — retry without them.
-            const { data: fallback, error: fallbackErr } = await supabase
-                .from('users')
-                .select(BASE_COLS)
-                .eq('id', userId)
-                .single();
-            if (fallbackErr) throw fallbackErr;
-            user = { ...fallback, business_type: null, business_description: null };
-        } else if (error) {
-            throw error;
-        }
+        if (error) throw error;
 
         await logUserAction(userId, 'PROFILE_VIEW', '/api/user/profile', {}, req.user_ip, 'success');
         
@@ -3472,11 +3407,11 @@ app.get('/api/user/profile', authenticateToken, async (req, res) => {
 app.put('/api/user/profile', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
-        const { full_name, phone, business_name, business_location, business_logo_url, business_latitude, business_longitude, business_type, business_description } = req.body;
+        const { full_name, phone, business_name, business_location, business_logo_url, business_latitude, business_longitude } = req.body;
         
         console.log('✏️ Profile update for user:', userId, 'Data:', req.body);
 
-        if (!full_name && !business_logo_url && !business_type && !business_description && business_latitude === undefined && business_longitude === undefined) {
+        if (!full_name && !business_logo_url && business_latitude === undefined && business_longitude === undefined) {
             await logUserAction(userId, 'PROFILE_UPDATE_FAILED', '/api/user/profile', { reason: 'Full name required' }, req.user_ip, 'failed');
             return res.status(400).json({ error: 'Jina kamili linahitajika' });
         }
@@ -3493,51 +3428,23 @@ app.put('/api/user/profile', authenticateToken, async (req, res) => {
         if (business_logo_url !== undefined) updateData.business_logo_url = business_logo_url;
         if (business_latitude !== undefined) updateData.business_latitude = business_latitude;
         if (business_longitude !== undefined) updateData.business_longitude = business_longitude;
-        if (business_type !== undefined) updateData.business_type = business_type || null;
-        if (business_description !== undefined) updateData.business_description = business_description || null;
 
         const { data, error } = await supabase
             .from('users')
             .update(updateData)
             .eq('id', userId);
 
-        if (error && /does not exist|column.*not found/i.test(error.message)) {
-            // Optional business profile columns aren't in the deployed DB yet —
-            // strip them from the update so the rest still saves.
-            const safeUpdate = { ...updateData };
-            delete safeUpdate.business_type;
-            delete safeUpdate.business_description;
-            const { data: sData, error: sError } = await supabase
-                .from('users')
-                .update(safeUpdate)
-                .eq('id', userId);
-            if (sError) throw sError;
-        } else if (error) {
-            throw error;
-        }
+        if (error) throw error;
 
         console.log('✅ User profile updated:', userId);
         
-        const BASE_COLS = 'id, email, role, full_name, phone, business_name, business_location, business_logo_url, business_latitude, business_longitude, status, is_online, last_seen, created_at';
-        const OPTIONAL_COLS = 'business_type, business_description';
-
-        let { data: updatedUser, error: fetchError } = await supabase
+        const { data: updatedUser, error: fetchError } = await supabase
             .from('users')
-            .select(BASE_COLS + ', ' + OPTIONAL_COLS)
+            .select('id, email, role, full_name, phone, business_name, business_location, business_logo_url, business_latitude, business_longitude, status, is_online, last_seen, created_at')
             .eq('id', userId)
             .single();
 
-        if (fetchError && /does not exist|column.*not found/i.test(fetchError.message)) {
-            const { data: fallback, error: fallbackErr } = await supabase
-                .from('users')
-                .select(BASE_COLS)
-                .eq('id', userId)
-                .single();
-            if (fallbackErr) throw fallbackErr;
-            updatedUser = { ...fallback, business_type: null, business_description: null };
-        } else if (fetchError) {
-            throw fetchError;
-        }
+        if (fetchError) throw fetchError;
 
         await logUserAction(userId, 'PROFILE_UPDATE', '/api/user/profile', { 
             fields_updated: Object.keys(updateData).filter(k => k !== 'updated_at' && k !== 'last_seen') 
@@ -3608,562 +3515,6 @@ app.put('/api/onboarding/profile', authenticateToken, async (req, res) => {
     } catch (error) {
         await logUserAction(req.user?.id, 'ONBOARDING_PROFILE_UPDATE_ERROR', '/api/onboarding/profile', { error: error.message }, req.user_ip, 'failed');
         handleSupabaseError(error, res);
-    }
-});
-
-// =============================================
-// 🤖 AI INVENTORY IMPORT (Gemini)
-// ---------------------------------------------
-// Two-step pipeline:
-//   1. POST /api/inventory/ai-import      → OCR-extract text from photos,
-//                                          match existing products, have Gemini
-//                                          produce a structured interpretation.
-//   2. POST /api/inventory/ai-import/verify → user-confirmed rows only; apply
-//                                          stock increases / create products.
-// Security: every read/write is scoped to the authenticated user's business.
-// The Gemini key NEVER leaves the server.
-// =============================================
-
-// Lazy DB schema so feature can run without a manual migration.
-async function ensureAiImportSchema() {
-    // Bootstrap the exec_sql helper if it's missing (same pattern as the rest of the server).
-    try {
-        const { error: probeErr } = await supabaseAdmin.rpc('exec_sql', { query: 'SELECT 1' });
-        if (probeErr) {
-            const createFunctionSQL = `
-                CREATE OR REPLACE FUNCTION exec_sql(query text)
-                RETURNS void AS $$
-                BEGIN
-                    EXECUTE query;
-                END;
-                $$ LANGUAGE plpgsql;
-                SET search_path = public, extensions;
-            `;
-            await supabaseAdmin.rpc('exec_sql', { query: createFunctionSQL }).catch(() => {});
-        }
-    } catch (_) {}
-
-    const migrations = [
-        'ALTER TABLE users ADD COLUMN IF NOT EXISTS business_type TEXT',
-        'ALTER TABLE users ADD COLUMN IF NOT EXISTS business_description TEXT',
-        `CREATE TABLE IF NOT EXISTS ai_import_verifications (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            verification_token TEXT NOT NULL UNIQUE,
-            user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-            action TEXT NOT NULL,
-            product_id UUID,
-            product_name TEXT,
-            quantity INTEGER,
-            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        )`
-    ];
-    const results = [];
-    for (const migration of migrations) {
-        try {
-            const { error } = await supabaseAdmin.rpc('exec_sql', { query: migration });
-            if (error) {
-                results.push({ migration: migration.slice(0, 60), status: 'failed', error: error.message });
-            } else {
-                results.push({ migration: migration.slice(0, 60), status: 'success' });
-            }
-        } catch (error) {
-            results.push({ migration: migration.slice(0, 60), status: 'error', error: error.message });
-        }
-    }
-    return results;
-}
-
-// In-memory idempotency fallback when the ai_import_verifications table
-// cannot be created (keeps double-verification prevention working in-process).
-if (!global.aiImportVerified) global.aiImportVerified = new Map();
-
-const normalizeDedupName = (name) => String(name || '')
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, 120);
-
-// Insert-marker that is idempotent. Throws on real DB errors.
-async function markAiImportVerified({ token, userId, action, productId, productName, quantity }) {
-    // Persist first (authoritative source of truth).
-    try {
-        const { error } = await supabaseAdmin
-            .from('ai_import_verifications')
-            .insert({
-                verification_token: token,
-                user_id: userId,
-                action,
-                product_id: productId || null,
-                product_name: productName || null,
-                quantity: quantity || null
-            });
-        if (error) {
-            if (error.code === '23505') return { already: true }; // unique hit → done before
-            if (/does not exist|relation.*not found/i.test(error.message)) throw error; // fall to memory below
-            throw error;
-        }
-        return { already: false };
-    } catch (error) {
-        if (/does not exist|relation.*not found/i.test(error.message)) {
-            if (global.aiImportVerified.has(token)) return { already: true };
-            global.aiImportVerified.set(token, { userId, action, productId, productName, quantity, at: Date.now() });
-            return { already: false };
-        }
-        throw error;
-    }
-}
-
-// All user ids whose products belong to the caller's business.
-async function getBusinessSellerIds(businessName) {
-    const { data: businessUsers, error } = await supabaseAdmin
-        .from('users')
-        .select('id')
-        .eq('business_name', businessName)
-        .in('role', ['admin', 'seller'])
-        .eq('status', 'approved');
-    if (error) throw error;
-    return (businessUsers || []).map((u) => u.id);
-}
-
-// Manual/sellers who added inventory share the business — admin approves sellers.
-const AI_IMPORT_MAX_IMAGES = 6;
-const AI_IMPORT_MAX_IMAGE_B64 = 6 * 1024 * 1024;   // ~4.5MB binary per image
-const AI_IMPORT_MAX_TOTAL_B64 = 9.5 * 1024 * 1024; // under the 10mb express body limit
-
-// Step 1 — interpret photos into structured, editable lines.
-app.post('/api/inventory/ai-import', authenticateToken, async (req, res) => {
-    try {
-        const userId = req.user.id;
-        const businessName = req.user.business_name;
-        const ip = req.user_ip;
-
-        if (!businessName) {
-            return res.status(400).json({ error: 'Biashara inahitajika. Sajili biashara yako kwanza.' });
-        }
-
-        // Tolerantly read the optional profile fields (columns may not exist yet).
-        let businessType = null;
-        let businessDescription = null;
-        try {
-            const { data: bizRow, error: bizErr } = await supabaseAdmin
-                .from('users')
-                .select('business_type, business_description')
-                .eq('id', userId)
-                .single();
-            if (!bizErr && bizRow) {
-                businessType = bizRow.business_type;
-                businessDescription = bizRow.business_description;
-            }
-        } catch (_) {}
-
-        const images = Array.isArray(req.body?.images) ? req.body.images : [];
-
-        if (images.length === 0) {
-            await logUserAction(userId, 'AI_IMPORT_NO_IMAGES', '/api/inventory/ai-import', {}, ip, 'failed');
-            return res.status(400).json({ error: 'Hakuna picha zilizochaguliwa', code: 'NO_IMAGES' });
-        }
-        if (images.length > AI_IMPORT_MAX_IMAGES) {
-            return res.status(400).json({ error: `Unaweza kuchagua hadi picha ${AI_IMPORT_MAX_IMAGES}`, code: 'TOO_MANY_IMAGES' });
-        }
-
-        let totalB64 = 0;
-        const cleanImages = [];
-        for (const img of images) {
-            const b64 = typeof img?.base64 === 'string' ? img.base64 : '';
-            const name = typeof img?.name === 'string' ? img.name.slice(0, 200) : 'image';
-            if (!b64) continue; // silently drop empty payloads
-            if (b64.length > AI_IMPORT_MAX_IMAGE_B64) {
-                return res.status(400).json({ error: 'Picha moja ni kubwa sana', code: 'IMAGE_TOO_LARGE' });
-            }
-            totalB64 += b64.length;
-            cleanImages.push({ name, base64: b64 });
-        }
-        if (cleanImages.length === 0) {
-            return res.status(400).json({ error: 'Hakuna picha halali zilizotumwa', code: 'NO_IMAGES' });
-        }
-        if (totalB64 > AI_IMPORT_MAX_TOTAL_B64) {
-            return res.status(400).json({ error: 'Picha ni nyingi mno kwa ukubwa. Bana picha au punguza idadi.', code: 'TOTAL_TOO_LARGE' });
-        }
-
-        // Best-effort migration (cheap, idempotent).
-        await ensureAiImportSchema().catch(() => {});
-
-        // ---- Step A: OCR-type extraction (replaceable layer) ----
-        const extraction = await extractTextFromImages(cleanImages);
-
-        // ---- Step B: resolve existing products belonging to THIS business ----
-        const sellerIds = await getBusinessSellerIds(businessName);
-        const candidates = sellerIds.length
-            ? await findExistingProducts(supabaseAdmin, sellerIds, extraction.images)
-            : [];
-
-        // ---- Step C: ask Gemini to interpret ----
-        const prompt = buildUserPrompt({
-            businessType,
-            businessDescription,
-            existingItems: presentAsGeminiList(candidates),
-            extractedSections: extraction.images
-        });
-
-        const payload = await geminiService.generateContent({
-            systemInstruction: buildSystemInstruction(),
-            parts: [{ text: prompt }],
-            extra: { temperature: 0.2, maxOutputTokens: 8192 }
-        });
-        const rawText = geminiService.extractTextFromResponse(payload);
-
-        // ---- Step D: never trust the model ----
-        const { valid, items } = validateAIResponse(rawText);
-        if (!valid || items.length === 0) {
-            await logUserAction(userId, 'AI_IMPORT_NO_VALID_ITEMS', '/api/inventory/ai-import', {
-                imageCount: cleanImages.length,
-                rawPreview: String(rawText).slice(0, 300)
-            }, ip, 'warning');
-            return res.status(422).json({
-                error: 'Hakuna bidhaa zilizoweza kutambuliwa kutoka kwenye picha. Jaribu picha nyingine zenye mwanga mzuri.',
-                code: 'NO_VALID_ITEMS'
-            });
-        }
-
-        // ---- Step E: cross-check EXISTING ids against allowed candidates ----
-        const allowedIds = new Set(candidates.map((c) => String(c.id)));
-        const rowIndexById = new Map(candidates.map((c) => [String(c.id), c]));
-
-        const sanitizedItems = [];
-        for (const item of items) {
-            let row = { ...item };
-            if (row.status === 'EXISTING' && (!row.matchedExistingItemId || !allowedIds.has(row.matchedExistingItemId))) {
-                row = {
-                    ...row,
-                    status: 'NEW',
-                    matchedExistingItemId: null,
-                    needsReview: true,
-                    warnings: [...(row.warnings || []), 'Gemini alibainisha bidhaa isiyo ndani ya biashara hii — imekuwa bidhaa mpya kwa uhakiki.']
-                };
-            }
-            if (row.matchedExistingItemId) {
-                const p = rowIndexById.get(row.matchedExistingItemId);
-                if (p) {
-                    // carry the product's live stock through so the UI can show
-                    // current quantity and the user sees the BEFORE value.
-                    row.currentStock = p.stock ?? 0;
-                    row.buyingPrice = row.buyingPrice ?? p.cost_price ?? null;
-                    row.sellingPrice = row.sellingPrice ?? p.expected_selling_price ?? null;
-                } else {
-                    row.status = 'NEW';
-                    row.matchedExistingItemId = null;
-                    row.needsReview = true;
-                }
-            }
-            row.belongsToBusiness = row.status === 'NEW' ? true : (row.matchedExistingItemId ? allowedIds.has(row.matchedExistingItemId) : false);
-            sanitizedItems.push(row);
-        }
-
-        // ---- Step F: de-duplicate across rows (same existing id / same name) ----
-        const dedupMap = new Map();
-        for (const row of sanitizedItems) {
-            const key = row.status === 'EXISTING' && row.matchedExistingItemId
-                ? 'existing:' + row.matchedExistingItemId
-                : 'new:' + normalizeDedupName(row.name);
-            const existing = dedupMap.get(key);
-            if (existing) {
-                const qOld = existing.quantity ?? 0;
-                const qAdd = row.quantity ?? 0;
-                existing.quantity = (qOld + qAdd) || null;
-                existing.needsReview = existing.needsReview || row.needsReview;
-                existing.warnings = [
-                    ...(existing.warnings || []),
-                    ...(row.warnings || []),
-                    'Bidhaa hii imeonekana kwenye picha nyingi — idadi imejumlishwa.'
-                ].slice(0, 6);
-                existing.confidence = Math.max(existing.confidence || 0, row.confidence || 0);
-            } else {
-                dedupMap.set(key, { ...row });
-            }
-        }
-
-        const finalItems = Array.from(dedupMap.values()).map((row) => ({
-            id: crypto.randomUUID(),
-            verificationToken: crypto.randomUUID(),
-            name: row.name,
-            category: row.category || '',
-            description: row.description || '',
-            quantity: row.quantity ?? null,
-            buyingPrice: row.buyingPrice ?? null,
-            sellingPrice: row.sellingPrice ?? null,
-            price: row.price ?? row.sellingPrice ?? null,
-            status: row.status,
-            matchedExistingItemId: row.matchedExistingItemId,
-            currentStock: row.currentStock ?? null,
-            confidence: row.confidence ?? 0.5,
-            needsReview: !!row.needsReview,
-            sourceImage: row.sourceImage || '',
-            warnings: row.warnings || [],
-            belongsToBusiness: !!row.belongsToBusiness
-        }));
-
-        await logUserAction(userId, 'AI_IMPORT_PROCESSED', '/api/inventory/ai-import', {
-            imageCount: cleanImages.length,
-            itemsReturned: finalItems.length,
-            existingCandidates: candidates.length
-        }, ip, 'success');
-
-        res.json({
-            success: true,
-            items: finalItems,
-            meta: {
-                businessType,
-                businessDescription,
-                imageCount: cleanImages.length,
-                existingCandidateCount: candidates.length,
-                model: GEMINI_MODEL
-            }
-        });
-
-    } catch (error) {
-        console.error('❌ AI IMPORT ERROR:', error.message);
-        await logUserAction(req.user?.id, 'AI_IMPORT_ERROR', '/api/inventory/ai-import', { error: error.message }, req.user_ip, 'failed');
-        const code = error.code || 'AI_IMPORT_ERROR';
-        const status = ['GEMINI_RATE_LIMIT', 'GEMINI_TIMEOUT'].includes(code) ? 503 : (code === 'NO_VALID_ITEMS' ? 422 : 500);
-        res.status(status).json({ error: 'Server imekumbana na tatizo wakati wa kuchambua picha: ' + (error.message || ''), code });
-    }
-});
-
-// Step 2 — verify a single user-confirmed row (idempotent).
-app.post('/api/inventory/ai-import/verify', authenticateToken, async (req, res) => {
-    try {
-        const userId = req.user.id;
-        const businessName = req.user.business_name;
-        const ip = req.user_ip;
-
-        if (!businessName) {
-            return res.status(400).json({ error: 'Biashara inahitajika.' });
-        }
-
-        const body = (req.body && typeof req.body.item === 'object' && req.body.item) ? req.body.item : (req.body || {});
-        const verificationToken = typeof body.verificationToken === 'string' && body.verificationToken.trim()
-            ? body.verificationToken.trim()
-            : null;
-        const action = String(body.action || '').toUpperCase();
-
-        if (!verificationToken) {
-            return res.status(400).json({ error: 'verificationToken inahitajika', code: 'MISSING_TOKEN' });
-        }
-        if (!['EXISTING', 'NEW'].includes(action)) {
-            return res.status(400).json({ error: 'action lazima iwe EXISTING au NEW', code: 'BAD_ACTION' });
-        }
-
-        const quantityRaw = Number(body.quantity);
-        if (!Number.isInteger(quantityRaw) || quantityRaw <= 0) {
-            return res.status(400).json({ error: 'Idadi lazima iwe nambari nzima kubwa kuliko sifuri', code: 'BAD_QUANTITY' });
-        }
-
-        await ensureAiImportSchema().catch(() => {});
-
-        const sellerIds = await getBusinessSellerIds(businessName);
-        const owned = new Set(sellerIds);
-
-        if (action === 'EXISTING') {
-            const productId = String(body.matchedExistingItemId || '');
-            if (!productId) {
-                return res.status(400).json({ error: 'Bidhaa yenye upatanifu haikutambuliwa', code: 'NO_MATCH' });
-            }
-
-            const { data: product, error: pErr } = await supabaseAdmin
-                .from('products')
-                .select('id, name, stock, price, cost_price, expected_selling_price, seller_id')
-                .eq('id', productId)
-                .single();
-            if (pErr || !product) {
-                await logUserAction(userId, 'AI_IMPORT_VERIFY_NOT_FOUND', '/api/inventory/ai-import/verify', { productId }, ip, 'failed');
-                return res.status(404).json({ error: 'Bidhaa haipatikani', code: 'PRODUCT_NOT_FOUND' });
-            }
-            if (!owned.has(product.seller_id)) {
-                await logUserAction(userId, 'AI_IMPORT_VERIFY_FORBIDDEN', '/api/inventory/ai-import/verify', { productId }, ip, 'failed');
-                return res.status(403).json({ error: 'Bidhaa hii si ya biashara yako', code: 'FORBIDDEN' });
-            }
-
-            // Idempotency: mark first, apply changes only when the mark is new.
-            let already;
-            try {
-                ({ already } = await markAiImportVerified({
-                    token: verificationToken,
-                    userId,
-                    action: 'EXISTING',
-                    productId: productId,
-                    productName: product.name,
-                    quantity: quantityRaw
-                }));
-            } catch (e) {
-                return res.status(500).json({ error: 'Server imeshindwa kuhifadhi uthibitisho: ' + e.message, code: 'VERIFY_STORE_ERROR' });
-            }
-            if (already) {
-                await logUserAction(userId, 'AI_IMPORT_VERIFY_DUPLICATE', '/api/inventory/ai-import/verify', { productId }, ip, 'success');
-                return res.json({ success: true, alreadyVerified: true, message: 'Bidhaa hii tayari imethibitishwa.', product });
-            }
-
-            const updateData = {
-                stock: (product.stock ?? 0) + quantityRaw,
-                updated_at: new Date().toISOString()
-            };
-            // Apply price corrections ONLY when the user supplied positive values.
-            const buying = Number(body.buyingPrice);
-            const selling = Number(body.sellingPrice);
-            const price = Number(body.price);
-            if (Number.isFinite(buying) && buying > 0) updateData.cost_price = buying;
-            if (Number.isFinite(selling) && selling > 0) updateData.expected_selling_price = selling;
-            if (Number.isFinite(price) && price > 0) updateData.price = price;
-
-            const { error: uErr } = await supabaseAdmin
-                .from('products')
-                .update(updateData)
-                .eq('id', productId);
-            if (uErr) {
-                // Roll back the marker so the user can retry cleanly.
-                await supabaseAdmin.from('ai_import_verifications').delete().eq('verification_token', verificationToken).catch(() => {});
-                global.aiImportVerified.delete(verificationToken);
-                await logUserAction(userId, 'AI_IMPORT_VERIFY_APPLY_FAILED', '/api/inventory/ai-import/verify', { productId, error: uErr.message }, ip, 'failed');
-                return res.status(500).json({ error: 'Imeshindwa kuongeza bidhaa kwenye stoo: ' + uErr.message, code: 'STOCK_UPDATE_FAILED' });
-            }
-
-            await logUserAction(userId, 'AI_IMPORT_VERIFY', '/api/inventory/ai-import/verify', {
-                action: 'EXISTING',
-                productId,
-                addedStock: quantityRaw,
-                oldStock: product.stock ?? 0,
-                newStock: updateData.stock
-            }, ip, 'success');
-
-            return res.json({
-                success: true,
-                alreadyVerified: false,
-                message: 'Sasa idadi ya bidhaa imeongezeka.',
-                product: {
-                    id: productId,
-                    name: product.name,
-                    stock: updateData.stock
-                }
-            });
-        }
-
-        // ---- NEW ----
-        const name = String(body.name || '').trim();
-        if (!name) {
-            return res.status(400).json({ error: 'Jina la bidhaa linahitajika', code: 'MISSING_NAME' });
-        }
-
-        // Confirm the product does not already exist in this business.
-        const { data: dupes } = await supabaseAdmin
-            .from('products')
-            .select('id, name')
-            .eq('is_active', true)
-            .in('seller_id', [...owned])
-            .ilike('name', name);
-        if (dupes && dupes.length > 0) {
-            await logUserAction(userId, 'AI_IMPORT_VERIFY_DUP', '/api/inventory/ai-import/verify', { name }, ip, 'failed');
-            return res.status(409).json({
-                error: 'Bidhaa hii tayari ipo kwenye biashara yako. Ongeza idadi badala ya kuunda bidhaa mpya.',
-                code: 'PRODUCT_EXISTS',
-                existingProductId: dupes[0].id,
-                existingProductName: dupes[0].name
-            });
-        }
-
-        const buying = Number(body.buyingPrice);
-        const selling = Number(body.sellingPrice);
-        const price = Number(body.price);
-        const validBuying = Number.isFinite(buying) && buying > 0 ? buying : null;
-        const validSelling = Number.isFinite(selling) && selling > 0 ? selling : null;
-        const validPrice = Number.isFinite(price) && price > 0 ? price : (validSelling || validBuying);
-
-        if (!validPrice && !validSelling) {
-            return res.status(400).json({
-                error: 'Bei haijabainishwa. Weka bei ya kuuza (au bei ya kununua) kabla ya kuthibitisha.',
-                code: 'MISSING_PRICE'
-            });
-        }
-
-        // Idempotency marker before the insert.
-        let already;
-        try {
-            ({ already } = await markAiImportVerified({
-                token: verificationToken,
-                userId,
-                action: 'NEW',
-                productName: name,
-                quantity: quantityRaw
-            }));
-        } catch (e) {
-            return res.status(500).json({ error: 'Server imeshindwa kuhifadhi uthibitisho: ' + e.message, code: 'VERIFY_STORE_ERROR' });
-        }
-        if (already) {
-            return res.json({ success: true, alreadyVerified: true, message: 'Bidhaa hii tayari imethibitishwa.' });
-        }
-
-        const newProduct = {
-            name,
-            category: String(body.category || 'Mengineyo').trim().slice(0, 100) || 'Mengineyo',
-            description: String(body.description || '').trim().slice(0, 500),
-            price: validPrice,
-            expected_selling_price: validSelling || validPrice,
-            cost_price: validBuying,
-            stock: quantityRaw,
-            is_active: true,
-            seller_id: userId,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-        };
-
-        const { data: created, error: cErr } = await supabaseAdmin
-            .from('products')
-            .insert([newProduct])
-            .select()
-            .single();
-        if (cErr) {
-            await supabaseAdmin.from('ai_import_verifications').delete().eq('verification_token', verificationToken).catch(() => {});
-            global.aiImportVerified.delete(verificationToken);
-            if (cErr.code === '23505') {
-                return res.status(409).json({ error: 'Bidhaa yenye jina hili tayari ipo.', code: 'PRODUCT_EXISTS' });
-            }
-            await logUserAction(userId, 'AI_IMPORT_VERIFY_INSERT_FAILED', '/api/inventory/ai-import/verify', { name, error: cErr.message }, ip, 'failed');
-            return res.status(500).json({ error: 'Imeshindwa kuunda bidhaa: ' + cErr.message, code: 'PRODUCT_CREATE_FAILED' });
-        }
-
-        await logUserAction(userId, 'AI_IMPORT_VERIFY', '/api/inventory/ai-import/verify', {
-            action: 'NEW',
-            productId: created.id,
-            name,
-            stock: quantityRaw
-        }, ip, 'success');
-
-        res.status(201).json({
-            success: true,
-            alreadyVerified: false,
-            message: 'Bidhaa mpya imeundwa kikamilifu!',
-            product: { id: created.id, name: created.name, stock: created.stock }
-        });
-
-    } catch (error) {
-        console.error('❌ AI IMPORT VERIFY ERROR:', error.message);
-        await logUserAction(req.user?.id, 'AI_IMPORT_VERIFY', '/api/inventory/ai-import/verify', { error: error.message }, req.user_ip, 'failed');
-        res.status(500).json({ error: 'Imeshindwa kuthibitisha bidhaa: ' + error.message, code: 'VERIFY_ERROR' });
-    }
-});
-
-// Admin-only DB migration for the AI import feature.
-app.post('/api/setup/ai-import-migration', authenticateToken, async (req, res) => {
-    try {
-        if (req.user.role !== 'admin') {
-            return res.status(403).json({ error: 'Unauthorized' });
-        }
-        const results = await ensureAiImportSchema();
-        await logUserAction(req.user.id, 'AI_IMPORT_MIGRATION', '/api/setup/ai-import-migration', {
-            successful: results.filter((r) => r.status === 'success').length
-        }, req.user_ip, 'success');
-        res.json({ success: true, message: 'AI import migration completed', results });
-    } catch (error) {
-        res.status(500).json({ error: 'Database migration failed', details: error.message });
     }
 });
 
@@ -9741,8 +9092,7 @@ const KNOWN_TABLES = [
     'users', 'sales', 'sale_items', 'products', 'customers',
     'user_logs', 'password_reset_codes', 'pending_emails',
     'matangazo', 'reactions', 'notifications', 'payments',
-    'expenses', 'user_presence_history', 'active_sessions',
-    'ai_import_verifications'
+    'expenses', 'user_presence_history', 'active_sessions'
 ];
 
 /**
@@ -10064,6 +9414,441 @@ setInterval(() => {
 }, 24 * 60 * 60 * 1000);
 
 console.log('Database backup system (Cloudinary) initialized - backups run every 24 hours');
+
+// =============================================
+// ✅ AI IMPORT (OCR → Gemini → inventory interpretation)
+// Mirrors Laravel's AiImportController (api/inventory/ai-import + /verify).
+// Pipeline layers live in ./ai so the same logic can be unit-tested.
+// =============================================
+const { generateContent, extractTextFromResponse, textPart, GEMINI_MODEL } = require('./ai/geminiService');
+const { extractTextFromImages } = require('./ai/imageExtractor');
+const { findExistingProducts, presentAsGeminiList } = require('./ai/inventoryMatcher');
+const { buildSystemInstruction, buildUserPrompt } = require('./ai/promptBuilder');
+const { validateAndRepair } = require('./ai/responseValidator');
+
+const AI_IMPORT_MAX_IMAGES = 6;
+const AI_IMPORT_MAX_IMAGE_B64 = 6 * 1024 * 1024;
+const AI_IMPORT_MAX_TOTAL_B64 = 9.5 * 1024 * 1024;
+
+// The verification endpoint can be hit twice on flaky mobile networks; keep a
+// short-lived in-process guard so one item is never applied twice.
+const aiImportVerified = new Set();
+
+// Shared business lookup: admin + approved sellers of one business.
+async function getBusinessSellerIds(businessName) {
+    if (!businessName) return [];
+    const { data, error } = await supabaseAdmin
+        .from('users')
+        .select('id, role, status, business_name')
+        .eq('business_name', businessName)
+        .in('role', ['admin', 'seller']);
+    if (error) throw error;
+    return (data || []).filter(u => u.status === 'approved').map(u => u.id);
+}
+
+app.post('/api/inventory/ai-import', authenticateToken, async (req, res) => {
+    const userId = req.user.id;
+    const businessName = req.user.business_name;
+    const ip = req.user_ip;
+
+    try {
+        if (!businessName) {
+            return res.status(400).json({ error: 'Biashara inahitajika. Sajili biashara yako kwanzi.', code: 'NO_BUSINESS' });
+        }
+
+        const images = Array.isArray(req.body.images) ? req.body.images : [];
+        if (images.length === 0) {
+            await logUserAction(userId, 'AI_IMPORT_NO_IMAGES', '/api/inventory/ai-import', [], ip, 'failed');
+            return res.status(400).json({ error: 'Hakuna picha zilizochaguliwa', code: 'NO_IMAGES' });
+        }
+        if (images.length > AI_IMPORT_MAX_IMAGES) {
+            return res.status(400).json({ error: `Unaweza kuchagua hadi picha ${AI_IMPORT_MAX_IMAGES}`, code: 'TOO_MANY_IMAGES' });
+        }
+
+        let totalB64 = 0;
+        const cleanImages = [];
+        for (const img of images) {
+            const b64 = img && typeof img.base64 === 'string' ? img.base64 : '';
+            const name = img && typeof img.name === 'string' ? img.name.slice(0, 200) : 'image';
+            if (!b64) continue;
+            if (b64.length > AI_IMPORT_MAX_IMAGE_B64) {
+                return res.status(400).json({ error: 'Picha moja ni kubwa sana', code: 'IMAGE_TOO_LARGE' });
+            }
+            totalB64 += b64.length;
+            cleanImages.push({ name, base64: b64 });
+        }
+        if (cleanImages.length === 0) {
+            return res.status(400).json({ error: 'Hakuna picha halali zilizotumwa', code: 'NO_IMAGES' });
+        }
+        if (totalB64 > AI_IMPORT_MAX_TOTAL_B64) {
+            return res.status(400).json({ error: 'Picha ni nyingi mno kwa ukubwa. Bana picha au punguza idadi.', code: 'TOTAL_TOO_LARGE' });
+        }
+
+        // Business context stored on the user row (same as Laravel).
+        const { data: bizUser, error: bizErr } = await supabaseAdmin
+            .from('users')
+            .select('business_type, business_description')
+            .eq('id', userId)
+            .single();
+        if (bizErr) console.warn('⚠️ Could not load business context:', bizErr.message);
+
+        // Stage 1 — OCR transcription.
+        const extraction = await extractTextFromImages(cleanImages);
+
+        // Stage 2 — candidate existing products for this business only.
+        const sellerIds = await getBusinessSellerIds(businessName);
+        const candidates = sellerIds.length > 0
+            ? await findExistingProducts(supabaseAdmin, sellerIds, extraction.images)
+            : [];
+
+        // Stage 3 — Gemini interpretation with the business-aware prompt.
+        const prompt = buildUserPrompt({
+            businessType: bizUser?.business_type || null,
+            businessDescription: bizUser?.business_description || null,
+            existingItems: presentAsGeminiList(candidates),
+            extractedSections: extraction.images,
+        });
+        const payload = await generateContent({
+            systemInstruction: buildSystemInstruction(),
+            parts: [textPart(prompt)],
+            extra: { temperature: 0.2, maxOutputTokens: 8192 },
+        });
+        const rawText = extractTextFromResponse(payload);
+
+        // Stage 4 — never trust raw model output.
+        const result = validateAndRepair(rawText);
+        if (!result.valid || result.items.length === 0) {
+            await logUserAction(userId, 'AI_IMPORT_NO_VALID_ITEMS', '/api/inventory/ai-import', {
+                imageCount: cleanImages.length,
+            }, ip, 'warning');
+            return res.status(422).json({
+                error: 'Hakuna bidhaa zilizoweza kutambuliwa kutoka kwenye picha. Jaribu picha nyingine zenye mwanga mzuri.',
+                code: 'NO_VALID_ITEMS',
+            });
+        }
+
+        // Only allow matches that belong to this business; sanitize + enrich.
+        const allowedIds = new Map(candidates.map(c => [String(c.id), c]));
+        const crypto = require('crypto');
+        const finalItems = [];
+        const dedupMap = new Map();
+
+        for (const item of result.items) {
+            let row = { ...item };
+            if (row.status === 'EXISTING' && !allowedIds.has(row.matchedExistingItemId)) {
+                row.status = 'NEW';
+                row.matchedExistingItemId = null;
+                row.needsReview = true;
+                row.warnings = [...(row.warnings || []).slice(0, 5), 'Gemini alibainisha bidhaa isiyo ndani ya biashara hii — imekuwa bidhaa mpya kwa uhakiki.'];
+            }
+            if (row.status === 'EXISTING' && row.matchedExistingItemId) {
+                const p = allowedIds.get(row.matchedExistingItemId);
+                row.currentStock = p.stock ?? 0;
+                row.buyingPrice = row.buyingPrice ?? p.cost_price ?? null;
+                row.sellingPrice = row.sellingPrice ?? (p.expected_selling_price || p.price) ?? null;
+            }
+            const key = row.status === 'EXISTING' && row.matchedExistingItemId
+                ? 'existing:' + row.matchedExistingItemId
+                : 'new:' + row.name.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120);
+            if (dedupMap.has(key)) {
+                const existing = dedupMap.get(key);
+                const sum = (existing.quantity || 0) + (row.quantity || 0);
+                existing.quantity = sum || null;
+                existing.needsReview = existing.needsReview || row.needsReview;
+                existing.warnings = [...(existing.warnings || []), ...(row.warnings || []), 'Bidhaa hii imeonekana kwenye picha nyingi — idadi imejumlishwa.'].slice(0, 6);
+                existing.confidence = Math.max(existing.confidence || 0, row.confidence || 0);
+            } else {
+                dedupMap.set(key, row);
+            }
+        }
+
+        for (const row of dedupMap.values()) {
+            finalItems.push({
+                id: crypto.randomUUID(),
+                verificationToken: crypto.randomUUID(),
+                name: row.name,
+                category: row.category || '',
+                description: row.description || '',
+                quantity: row.quantity ?? null,
+                buyingPrice: row.buyingPrice ?? null,
+                sellingPrice: row.sellingPrice ?? null,
+                price: row.price ?? row.sellingPrice ?? null,
+                status: row.status,
+                matchedExistingItemId: row.matchedExistingItemId,
+                currentStock: row.currentStock ?? null,
+                confidence: row.confidence ?? 0.5,
+                needsReview: !!row.needsReview,
+                sourceImage: row.sourceImage || '',
+                warnings: row.warnings || [],
+                belongsToBusiness: row.status === 'NEW' ? true : !!(row.matchedExistingItemId && allowedIds.has(row.matchedExistingItemId)),
+            });
+        }
+
+        await logUserAction(userId, 'AI_IMPORT_PROCESSED', '/api/inventory/ai-import', {
+            imageCount: cleanImages.length,
+            itemsReturned: finalItems.length,
+            existingCandidates: candidates.length,
+        }, ip, 'success');
+
+        res.json({
+            success: true,
+            items: finalItems,
+            meta: {
+                businessType: bizUser?.business_type || null,
+                businessDescription: bizUser?.business_description || null,
+                imageCount: cleanImages.length,
+                existingCandidateCount: candidates.length,
+                model: GEMINI_MODEL,
+            },
+        });
+    } catch (error) {
+        console.error('❌ AI IMPORT ERROR:', error.message);
+        await logUserAction(userId, 'AI_IMPORT_ERROR', '/api/inventory/ai-import', { error: error.message }, ip, 'failed');
+        const code = error.code || 'AI_IMPORT_ERROR';
+        const status = (code === 'GEMINI_RATE_LIMIT' || code === 'GEMINI_TIMEOUT') ? 503 : 500;
+        res.status(status).json({
+            error: 'Server imekumbana na tatizo wakati wa kuchambua picha: ' + error.message,
+            code,
+        });
+    }
+});
+
+app.post('/api/inventory/ai-import/verify', authenticateToken, async (req, res) => {
+    const userId = req.user.id;
+    const businessName = req.user.business_name;
+    const ip = req.user_ip;
+
+    try {
+        if (!businessName) {
+            return res.status(400).json({ error: 'Biashara inahitajika.', code: 'NO_BUSINESS' });
+        }
+
+        const body = req.body.item && typeof req.body.item === 'object' ? req.body.item : req.body;
+        const verificationToken = typeof body.verificationToken === 'string' && body.verificationToken.trim()
+            ? body.verificationToken.trim() : null;
+        const action = String(body.action || '').toUpperCase();
+
+        if (!verificationToken) {
+            return res.status(400).json({ error: 'verificationToken inahitajika', code: 'MISSING_TOKEN' });
+        }
+        if (action !== 'EXISTING' && action !== 'NEW') {
+            return res.status(400).json({ error: 'action lazima iwe EXISTING au NEW', code: 'BAD_ACTION' });
+        }
+
+        let quantity = Number(body.quantity);
+        if (!Number.isFinite(quantity) || !Number.isInteger(quantity) || quantity <= 0) {
+            return res.status(400).json({ error: 'Idadi lazima iwe nambari nzima kubwa kuliko sifuri', code: 'BAD_QUANTITY' });
+        }
+
+        const sellerIds = await getBusinessSellerIds(businessName);
+        const owned = new Set(sellerIds);
+
+        if (action === 'EXISTING') {
+            const productId = String(body.matchedExistingItemId || '');
+            if (!productId) {
+                return res.status(400).json({ error: 'Bidhaa yenye upatanifu haikutambuliwa', code: 'NO_MATCH' });
+            }
+
+            const { data: product, error: pErr } = await supabaseAdmin
+                .from('products')
+                .select('id, name, stock, seller_id')
+                .eq('id', productId)
+                .single();
+            if (pErr || !product) {
+                await logUserAction(userId, 'AI_IMPORT_VERIFY_NOT_FOUND', '/api/inventory/ai-import/verify', { productId }, ip, 'failed');
+                return res.status(404).json({ error: 'Bidhaa haipatikani', code: 'PRODUCT_NOT_FOUND' });
+            }
+            if (!owned.has(product.seller_id)) {
+                await logUserAction(userId, 'AI_IMPORT_VERIFY_FORBIDDEN', '/api/inventory/ai-import/verify', { productId }, ip, 'failed');
+                return res.status(403).json({ error: 'Bidhaa hii si ya biashara yako', code: 'FORBIDDEN' });
+            }
+
+            if (aiImportVerified.has(verificationToken)) {
+                return res.json({ success: true, alreadyVerified: true, message: 'Bidhaa hii tayari imethibitishwa.', product });
+            }
+
+            const updateData = {
+                stock: (product.stock || 0) + quantity,
+                updated_at: new Date().toISOString(),
+            };
+            const buying = parseFloat(body.buyingPrice) || 0;
+            const selling = parseFloat(body.sellingPrice) || 0;
+            const price = parseFloat(body.price) || 0;
+            if (buying > 0) updateData.cost_price = buying;
+            if (selling > 0) updateData.price = selling;
+            if (price > 0) updateData.price = price;
+
+            const { error: uErr } = await supabaseAdmin
+                .from('products')
+                .update(updateData)
+                .eq('id', productId);
+            if (uErr) {
+                await logUserAction(userId, 'AI_IMPORT_VERIFY_APPLY_FAILED', '/api/inventory/ai-import/verify', { productId, error: uErr.message }, ip, 'failed');
+                return res.status(500).json({ error: 'Imeshindwa kuongeza bidhaa kwenye stoo: ' + uErr.message, code: 'STOCK_UPDATE_FAILED' });
+            }
+            aiImportVerified.add(verificationToken);
+
+            await logUserAction(userId, 'AI_IMPORT_VERIFY', '/api/inventory/ai-import/verify', {
+                action: 'EXISTING', productId, addedStock: quantity, oldStock: product.stock || 0, newStock: updateData.stock,
+            }, ip, 'success');
+
+            await supabaseAdmin.from('ai_import_verifications').insert([{
+                id: require('crypto').randomUUID(),
+                user_id: userId,
+                business_name: businessName,
+                total_products: 1,
+                duplicates_skipped: 0,
+                new_products: 0,
+                source_name: req.body.source_name || 'ai_import',
+                created_at: new Date().toISOString(),
+            }]);
+
+            return res.json({
+                success: true,
+                alreadyVerified: false,
+                message: 'Sasa idadi ya bidhaa imeongezeka.',
+                product: { id: productId, name: product.name, stock: updateData.stock },
+            });
+        }
+
+        // action === 'NEW' → create the product.
+        const name = String(body.name || '').trim();
+        if (!name) {
+            return res.status(400).json({ error: 'Jina la bidhaa linahitajika', code: 'MISSING_NAME' });
+        }
+
+        const { data: dupes, error: dErr } = await supabaseAdmin
+            .from('products')
+            .select('id, name')
+            .in('seller_id', sellerIds)
+            .eq('is_active', true)
+            .ilike('name', name);
+        if (dErr) console.warn('⚠️ Duplicate check failed:', dErr.message);
+        if (dupes && dupes.length > 0) {
+            await logUserAction(userId, 'AI_IMPORT_VERIFY_DUP', '/api/inventory/ai-import/verify', { name }, ip, 'failed');
+            return res.status(409).json({
+                error: 'Bidhaa hii tayari ipo kwenye biashara yako. Ongeza idadi badala ya kuunda bidhaa mpya.',
+                code: 'PRODUCT_EXISTS',
+                existingProductId: dupes[0].id,
+                existingProductName: dupes[0].name,
+            });
+        }
+
+        const buying = parseFloat(body.buyingPrice) || 0;
+        const selling = parseFloat(body.sellingPrice) || 0;
+        const price = parseFloat(body.price) || 0;
+        const validBuying = buying > 0 ? buying : null;
+        const validSelling = selling > 0 ? selling : null;
+        const validPrice = price > 0 ? price : (validSelling || validBuying);
+        if (!validPrice) {
+            return res.status(400).json({
+                error: 'Bei haijabainishwa. Weka bei ya kuuza (au bei ya kununua) kabla ya kuthibitisha.',
+                code: 'MISSING_PRICE',
+            });
+        }
+
+        if (aiImportVerified.has(verificationToken)) {
+            return res.json({ success: true, alreadyVerified: true, message: 'Bidhaa hii tayari imethibitishwa.' });
+        }
+
+        const category = String(body.category || 'Mengineyo').trim().slice(0, 100) || 'Mengineyo';
+        const now = new Date().toISOString();
+        const newProduct = {
+            id: require('crypto').randomUUID(),
+            name,
+            category,
+            description: String(body.description || '').trim().slice(0, 500),
+            price: validPrice,
+            cost_price: validBuying,
+            expected_selling_price: validSelling,
+            stock: quantity,
+            is_active: true,
+            seller_id: userId,
+            business_name: businessName,
+            created_at: now,
+            updated_at: now,
+        };
+
+        const { data: created, error: cErr } = await supabaseAdmin
+            .from('products')
+            .insert([newProduct])
+            .select('id, name, stock')
+            .single();
+        if (cErr) {
+            if (cErr.code === '23505') {
+                return res.status(409).json({ error: 'Bidhaa yenye jina hili tayari ipo.', code: 'PRODUCT_EXISTS' });
+            }
+            await logUserAction(userId, 'AI_IMPORT_VERIFY_INSERT_FAILED', '/api/inventory/ai-import/verify', { name, error: cErr.message }, ip, 'failed');
+            return res.status(500).json({ error: 'Imeshindwa kuunda bidhaa: ' + cErr.message, code: 'PRODUCT_CREATE_FAILED' });
+        }
+        aiImportVerified.add(verificationToken);
+
+        await logUserAction(userId, 'AI_IMPORT_VERIFY', '/api/inventory/ai-import/verify', {
+            action: 'NEW', productId: created.id, name, stock: quantity,
+        }, ip, 'success');
+
+        await supabaseAdmin.from('ai_import_verifications').insert([{
+            id: require('crypto').randomUUID(),
+            user_id: userId,
+            business_name: businessName,
+            total_products: 1,
+            duplicates_skipped: 0,
+            new_products: 1,
+            source_name: req.body.source_name || 'ai_import',
+            created_at: now,
+        }]);
+
+        return res.status(201).json({
+            success: true,
+            alreadyVerified: false,
+            message: 'Bidhaa mpya imeundwa kikamilifu!',
+            product: created,
+        });
+    } catch (error) {
+        console.error('❌ AI IMPORT VERIFY ERROR:', error.message);
+        await logUserAction(req.user?.id, 'AI_IMPORT_VERIFY', '/api/inventory/ai-import/verify', { error: error.message }, req.user_ip, 'failed');
+        return res.status(500).json({ error: 'Imeshindwa kuthibitisha bidhaa: ' + error.message, code: 'VERIFY_ERROR' });
+    }
+});
+
+app.post('/api/setup/ai-import-migration', authenticateToken, async (req, res) => {
+    const userId = req.user.id;
+    const ip = req.user_ip;
+
+    try {
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ error: 'Unauthorized' });
+        }
+
+        // Mirror Laravel: report which optional schema pieces are missing so the
+        // operator can add them in the Supabase SQL Editor.
+        const results = [];
+        const checkColumn = async (column) => {
+            try {
+                const { error } = await supabaseAdmin.from('users').select(column).limit(1);
+                results.push({ migration: `ALTER TABLE users ADD COLUMN ${column} TEXT`, status: error ? 'failed' : 'success', error: error ? `Column users.${column} is missing in Supabase; add it in the Supabase SQL Editor.` : null });
+            } catch (e) {
+                results.push({ migration: `ALTER TABLE users ADD COLUMN ${column} TEXT`, status: 'failed', error: e.message });
+            }
+        };
+        await checkColumn('business_type');
+        await checkColumn('business_description');
+        try {
+            const { error } = await supabaseAdmin.from('ai_import_verifications').select('id').limit(1);
+            results.push({ migration: 'CREATE TABLE IF NOT EXISTS ai_import_verifications', status: error ? 'failed' : 'success', error: error ? 'Table ai_import_verifications is missing in Supabase; create it in the Supabase SQL Editor.' : null });
+        } catch (e) {
+            results.push({ migration: 'CREATE TABLE IF NOT EXISTS ai_import_verifications', status: 'failed', error: e.message });
+        }
+
+        await logUserAction(userId, 'AI_IMPORT_MIGRATION', '/api/setup/ai-import-migration', {
+            successful: results.filter(r => r.status === 'success').length,
+        }, ip, 'success');
+        res.json({ success: true, message: 'AI import migration completed', results });
+    } catch (error) {
+        await logUserAction(userId, 'AI_IMPORT_MIGRATION_ERROR', '/api/setup/ai-import-migration', { error: error.message }, ip, 'failed');
+        res.status(500).json({ error: 'Database migration failed', details: error.message });
+    }
+});
 
 // =============================================
 // ✅ START SERVER - LISTEN ON PORT 10000

@@ -1,93 +1,92 @@
-# DukaMkononi — New Server (v2.0)
+# DukaMkononi Backend (Laravel)
 
-The full, updated backend server for **DukaMkononi** with real **PesaPal** payment integration for advertisements.
+The DukaMkononi backend, now running on **Laravel 11** (PHP). It exposes the exact same routes and API responses as the previous Node/Express server, so all existing web pages and mobile clients work unchanged.
 
-## What changed in this version
+- **Web UI** — Laravel Blade views (`resources/views`), self-contained, served at the same URLs (including `.html` aliases and redirects).
+- **API** — Eloquent models + controllers under `app/Http/Controllers/Api`, auth via a HS256 JWT (`app/Services/JwtToken.php`) signed with the same secret/payload as the old Node server.
+- **Database** — Eloquent over the existing Supabase Postgres schema (`pgsql`), or `sqlite` for local development. Migrations are guarded (`create-if-not-exists`) so they never touch existing tables.
 
-1. **Paid advertisements (TZS 3,000 / 30 days)**
+## Requirements
 
-   - `POST /api/matangazo` now supports an **opt-in paid flow**: send `payment_status: 'pending'` to create an advertisement that is **not live** (`is_active: false`) until payment is confirmed.
-   - After a successful PesaPal payment (IPN, callback or status check), the ad is automatically activated with `expires_at = now + 30 days`.
-   - **Renewals** extend `expires_at` by another 30 days from the current expiry (if still in the future).
-   - Any request **without** `payment_status: 'pending'` keeps the legacy behavior — a live free ad (`payment_status: 'completed'`, `is_free: true`) — so existing web/clients are not broken.
+- PHP 8.2+ with `pdo_pgsql`, `openssl`, `mbstring`
+- Composer
 
-2. **PesaPal fixes**
+## Setup (local)
 
-   - `getPesapalAccessToken()` no longer sends credentials in the `Authorization` header — PesaPal v3 expects them in the JSON body.
-   - Default `PESAPAL_CALLBACK_URL` / `PESAPAL_IPN_URL` fixed to the real endpoints (`/api/payments/pesapal-callback`, `/api/payments/pesapal-ipn`).
-   - `POST /api/payments/pesapal/initiate` now verifies the user **owns** the `matangazo_id` they are paying for.
+```bash
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate        # guarded, safe on existing DBs
+php artisan serve          # http://127.0.0.1:8000
+```
 
-3. **Public feed**
+Local development defaults to `sqlite` (`database/database.sqlite`). For Supabase set in `.env`:
 
-   - `GET /api/matangazo` now shows legacy free ads **plus** paid ads that are still within their 30-day window (expired paid ads are hidden automatically).
+```
+DB_CONNECTION=pgsql
+DB_HOST=db.yourproject.supabase.co
+DB_PORT=5432
+DB_DATABASE=postgres
+DB_USERNAME=postgres
+DB_PASSWORD=...
+SUPABASE_URL=https://yourproject.supabase.co
+```
 
-4. **Configurable pricing (server-enforced)**
-
-   - `MATANGAZO_PRICE` (default `3000`) and `MATANGAZO_DURATION_DAYS` (default `30`) can be overridden with environment variables.
-   - For matangazo payments the server **never trusts the client-supplied amount** — it always charges `MATANGAZO_PRICE`.
-
-## Deploy / Host
-
-> ⚠️ **IMPORTANT:** This server is built for **Express 4** (`package.json` pins `express: ^4.21.2`). Do **not** upgrade to Express 5 — the code uses Express-4 route syntax (e.g. `/api/profit/daily/:date?`) that crashes on Express 5 at startup.
-
-### Option A — Render (recommended)
-
-1. Commit `server.js` + `package.json` to your backend repo and push.
-2. In the **Render dashboard → your Web Service → Environment**, add the variables below (`.env` is git-ignored and will NOT be deployed — dashboard vars are the only way on Render).
-3. Deploy. The server listens on Render's `PORT` automatically.
-
-### Option B — your own server (VPS / local)
-
-1. Put `server.js` into your server directory (the folder that also contains `index.html`, `mteja/`, `muuzaji/`, `msimamizi/`, `admin/` web folders — replace your old `server.js` with this one).
-2. Create a `.env` file from `.env.example` next to `server.js` (the server loads it automatically with its built-in loader — no `dotenv` package needed).
-3. Install dependencies: `npm install`
-4. Start: `npm start` (listens on `PORT`, default `10000`).
-
-## Required environment variables
+## Key environment variables
 
 | Variable | Description |
 | --- | --- |
-| `SUPABASE_URL` | Supabase project URL |
-| `SUPABASE_ANON_KEY` | Supabase anon (publishable) key |
-| `SUPABASE_SERVICE_KEY` | Supabase service-role key (server-side only) |
-| `JWT_SECRET` | Long random string for signing tokens |
-| `EMAIL_USER` / `EMAIL_PASSWORD` | Gmail + App Password for Nodemailer |
-| `PESAPAL_ENV` | `sandbox` or `live` |
-| `PESAPAL_CONSUMER_KEY` / `PESAPAL_CONSUMER_SECRET` | PesaPal API keys |
-| `PESAPAL_NOTIFICATION_ID` | IPN notification ID (register your IPN URL in the PesaPal dashboard) |
-| `PESAPAL_CALLBACK_URL` | Public callback URL, e.g. `https://your-domain.com/api/payments/pesapal-callback` |
-| `PESAPAL_IPN_URL` | Public IPN URL, e.g. `https://your-domain.com/api/payments/pesapal-ipn` |
+| `JWT_SECRET` | HS256 signing secret (keep the same value the Node backend used) |
+| `DB_CONNECTION` / `DB_HOST` / `DB_PORT` / `DB_DATABASE` / `DB_USERNAME` / `DB_PASSWORD` | Database connection |
+| `PESAPAL_ENV` / `PESAPAL_CONSUMER_KEY` / `PESAPAL_CONSUMER_SECRET` / `PESAPAL_NOTIFICATION_ID` | PesaPal payment gateway (`sandbox` or `live`) |
+| `PESAPAL_CALLBACK_URL` / `PESAPAL_IPN_URL` | Public callback / IPN endpoints |
+| `MATANGAZO_PRICE` / `MATANGAZO_DURATION_DAYS` | Paid-ad pricing (default `3000` TZS / `30` days) |
+| `ENABLE_TEST_MODE` | When `true` (or `APP_ENV=local`), OTP flows accept the test code |
+| `EMAIL_HOST` / `EMAIL_PORT` / `EMAIL_USER` / `EMAIL_PASSWORD` / `EMAIL_FROM` | SMTP for OTP e-mails (falls back to log mailer) |
+| `GEMINI_API_KEY` / `GEMINI_MODEL` | AI product import (Gemini) |
+| `SUPABASE_URL` | Project URL (used in backup headers / health payload) |
 
-## Database notes
+## Deployment notes
 
-The `matangazo` table needs these columns (they already exist in the current production database):
+- Run `php artisan config:cache` for production; all controller reads go through `config/*` files so caching is safe.
+- The old Node/Express artifacts (`server.js`, `.html`, `js/`, `ai/`, `locales/`, `package.json`, `node_modules/`) were removed after conversion; they are preserved in git tag **`pre-laravel-migration`**.
 
-- `payment_status` (text: `'pending'` / `'completed'` / `'free'`)
-- `is_free` (boolean)
-- `is_active` (boolean)
-- `expires_at` (timestamptz, nullable)
-- `order_tracking_id` (text, nullable)
+## Docker deployment
 
-The `payments` table needs `matangazo_id` (nullable FK) so a payment can activate the matching advertisement.
+The repo ships a production-ready image:
 
-## API endpoints added/used by the app
+| File | Purpose |
+| --- | --- |
+| `Dockerfile` | Multi-stage build: Composer deps + `php:8.2-fpm` with PDO Postgres/opcache |
+| `docker/nginx.conf` | Nginx vhost proxying to PHP-FPM |
+| `docker/php.ini` | PHP limits + OPcache |
+| `docker/docker-entrypoint.sh` | Boot script: guarded migrations + `php artisan optimize` (only when `APP_ENV=production`) |
+| `docker-compose.yml` | `app` (PHP-FPM) + `nginx` sidecar, external Supabase/Postgres |
 
-| Method | Endpoint | Auth | Purpose |
-| --- | --- | --- | --- |
-| POST | `/api/matangazo` | Bearer token | Create an ad (`payment_status: 'pending'` starts the paid flow) |
-| POST | `/api/payments/pesapal/initiate` | Bearer token | Create a PesaPal order (TZS 3,000) and get the redirect URL |
-| GET | `/api/payments/pesapal/status/:order_tracking_id` | Bearer token | Poll PesaPal for the transaction status |
-| POST | `/api/payments/pesapal-ipn` | PesaPal | Instant Payment Notification (activates the ad on completion) |
-| POST | `/api/payments/pesapal-callback` | PesaPal | Browser callback after payment (activates the ad on completion) |
-| GET | `/api/matangazo` | none | Public feed (free + active paid ads) |
-| GET | `/api/matangazo/my` | Bearer token | User's own ads (including pending / expired) |
+```bash
+# 1. Fill in .env (Supabase/pgsql host, JWT_SECRET, APP_KEY, PESAPAL_*, EMAIL_*)
+cp .env.example .env
+php artisan key:generate        # sets APP_KEY in .env
 
-## Payment flow (how the mobile app uses this)
+# 2. Build and start
+docker compose up -d --build
 
-1. App uploads media to Cloudinary.
-2. App creates the ad with `payment_status: 'pending'`.
-3. App calls `/api/payments/pesapal/initiate` with `{ amount: 3000, matangazo_id, description }` → server returns `redirect_url`.
-4. App opens `redirect_url` (PesaPal payment page). The user enters their mobile-money account and confirms **TZS 3,000**.
-5. PesaPal sends the IPN / callback → server activates the ad (`is_active: true`, `expires_at = +30 days`).
-6. App polls `/api/payments/pesapal/status/:order_tracking_id` → shows success.
-7. When the ad expires, the user can pay again from **My Ads** to renew for another 30 days.
+# 3. App is served on http://localhost:80
+```
+
+- Code is baked into the image; `storage/` and `backup/` are persisted via named volumes.
+- On boot (in production) the entrypoint runs the guarded migrations (safe on an existing DB) then caches config/routes/views.
+- Point your VPS/Render/AWS host at the app ports, or terminate TLS in a reverse proxy in front of Nginx.
+
+## API surface
+
+- ~99 API routes under `api/` (login, OTP registration, products, sales, customers, matangazo, reactions, payments/PesaPal, notifications, reports, expenses, profit, revenue, admin, backups, AI import, debug, health…) — see `routes/api.php`.
+- Pages and `.html` aliases are registered in `routes/web.php`.
+
+## Payment flow (unchanged)
+
+1. App uploads media, creates ad with `payment_status: 'pending'`.
+2. App calls `POST /api/payments/pesapal/initiate` `{ amount, matangazo_id, description }` → server returns `redirect_url` (server always charges `MATANGAZO_PRICE`).
+3. PesaPal IPN / callback activates the ad with `expires_at = now + MATANGAZO_DURATION_DAYS` (renewals extend from the current expiry).
+4. App polls `GET /api/payments/pesapal/status/:order_tracking_id` for the result.
