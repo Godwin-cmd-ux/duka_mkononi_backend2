@@ -240,23 +240,20 @@ export default function PreviewScreen() {
     }
   };
 
-  // ✅ FIXED: Load daily expenses and RETURN the data with proper debugging
-  const loadDailyExpenses = async (dates: string[], token: string) => {
+  // ✅ Matumizi: ONE range request for the whole window (the old code made a
+  // separate request per sale date and missed days that had expenses but no
+  // sales — the same fix the Blade page made).
+  const loadExpensesRange = async (startDate: string, endDate: string, token: string) => {
+    const expensesByDate: {[key: string]: Expense[]} = {};
     try {
       setExpensesLoading(true);
-      const expensesByDate: {[key: string]: Expense[]} = {};
-      
-      console.log('🔍 Inatafuta matumizi kwa siku:', dates);
-      
-      for (const date of dates) {
+      const cacheKey = `d:office-expenses:range:${startDate}_${endDate}`;
+
+      let expenses: Expense[] | null = await getCache<Expense[]>(cacheKey);
+      if (!expenses) {
         try {
-          console.log(`📅 Inatafuta matumizi ya tarehe: ${date}`);
-
-          const cachedDate = await getCache<any[]>(`d:office-expenses:range:${date}`);
-          if (cachedDate) { expensesByDate[date] = cachedDate; continue; }
-
           const response = await fetchWithTimeout(
-            `${API_BASE_URL}/api/office-expenses/range?start_date=${date}&end_date=${date}`,
+            `${API_BASE_URL}/api/office-expenses/range?start_date=${startDate}&end_date=${endDate}`,
             {
               headers: {
                 'Authorization': `Bearer ${token}`,
@@ -266,61 +263,30 @@ export default function PreviewScreen() {
             20000
           );
 
-          console.log(`📊 Status code kwa ${date}:`, response.status);
-
           if (response.ok) {
             const data = await response.json();
-            console.log(`📦 Response kwa ${date}:`, {
-              success: data.success,
-              count: data.count,
-              total: data.total,
-              expensesCount: data.expenses?.length
-            });
-            
-            if (data.success && data.expenses) {
-              console.log(`💰 Expenses raw kwa ${date}:`, JSON.stringify(data.expenses, null, 2));
-              
-              // Filter to ensure expenses match the date
-              const validExpenses = data.expenses.filter((exp: Expense) => {
-                const expDate = exp.expense_date.split('T')[0];
-                return expDate === date;
-              });
-              
-              expensesByDate[date] = validExpenses;
-              setCache(`d:office-expenses:range:${date}`, validExpenses).catch(() => {});
-              console.log(`✅ Matumizi ${validExpenses.length} yamepatikana kwa tarehe ${date}, jumla: ${validExpenses.reduce((sum, e) => sum + e.amount, 0)}`);
-            } else {
-              console.log(`ℹ️ Hakuna matumizi kwa tarehe ${date}`);
-              expensesByDate[date] = [];
+            if (data.success && Array.isArray(data.expenses)) {
+              expenses = data.expenses;
+              setCache(cacheKey, expenses).catch(() => {});
             }
-          } else {
-            console.warn(`⚠️ Failed to fetch expenses for ${date}: ${response.status}`);
-            expensesByDate[date] = [];
           }
         } catch (error) {
-          console.error(`❌ Error loading expenses for ${date}:`, error);
-          const cachedDate = await getCache<any[]>(`d:office-expenses:range:${date}`);
-          if (cachedDate) { expensesByDate[date] = cachedDate; } else { expensesByDate[date] = []; }
+          console.warn('⚠️ Expenses range fetch failed, using cache:', error);
         }
       }
-      
-      setDailyExpenses(expensesByDate);
-      console.log('💰 Matumizi ya kila siku yamepakuliwa:', Object.keys(expensesByDate).length);
-      
-      // Log summary
-      Object.keys(expensesByDate).forEach(date => {
-        const total = expensesByDate[date].reduce((sum, e) => sum + e.amount, 0);
-        console.log(`📊 ${date}: ${expensesByDate[date].length} expenses, total=${total}`);
+
+      (expenses || []).forEach((exp: Expense) => {
+        const d = (exp.expense_date || '').split('T')[0];
+        if (!d) return;
+        if (!expensesByDate[d]) expensesByDate[d] = [];
+        expensesByDate[d].push(exp);
       });
-      
-      // ✅ CRITICAL: Log the final data being returned
-      console.log('🔥 FINAL expensesData before return:', JSON.stringify(expensesByDate, null, 2));
-      
-      // ✅ RETURN the data for immediate use
+
+      setDailyExpenses(expensesByDate);
+      console.log('💰 Matumizi ya range yamepakuliwa:', Object.keys(expensesByDate).length, 'siku');
       return expensesByDate;
-      
     } catch (error) {
-      console.error('Error loading daily expenses:', error);
+      console.error('Error loading expenses range:', error);
       return {};
     } finally {
       setExpensesLoading(false);
@@ -347,8 +313,9 @@ export default function PreviewScreen() {
           );
         }
 
+        // role=seller,admin keeps the admin's own records (Blade passes it too).
         const sellersResponse = await fetchWithTimeout(
-          `${API_BASE_URL}/api/admin/users?business=${encodeURIComponent(businessName)}`,
+          `${API_BASE_URL}/api/admin/users?business=${encodeURIComponent(businessName)}&role=seller,admin`,
           {
             method: 'GET',
             headers: {
@@ -420,7 +387,9 @@ export default function PreviewScreen() {
           });
         }
 
-        const productsResponse = await fetchWithTimeout(`${API_BASE_URL}/api/admin/products`, {
+        const productsResponse = await fetchWithTimeout(
+          `${API_BASE_URL}/api/admin/products?business_name=${encodeURIComponent(businessName)}`,
+          {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -467,7 +436,9 @@ export default function PreviewScreen() {
       if (cachedSales) { allSales = cachedSales; }
       
       try {
-        const salesResponse = await fetchWithTimeout(`${API_BASE_URL}/api/admin/sales`, {
+        const salesResponse = await fetchWithTimeout(
+          `${API_BASE_URL}/api/admin/sales?business_name=${encodeURIComponent(businessName)}`,
+          {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -560,23 +531,21 @@ export default function PreviewScreen() {
       }
 
       // ✅ 4. ANDAA DATA KWA KILA SIKU - WITH EXPENSES
-      if (allSales.length > 0) {
-        // Get unique dates from sales
-        const uniqueDates = [...new Set(allSales.map(sale => 
-          sale.sale_date.split('T')[0]
-        ))];
-        
-        console.log('📅 Unique dates from sales:', uniqueDates);
-        
-        // ✅ Wait for expenses and use the returned data
-        const expensesData = await loadDailyExpenses(uniqueDates, token);
-        
-        // ✅ CRITICAL: Log the data received
-        console.log('🔥 expensesData kutoka loadDailyExpenses:', JSON.stringify(expensesData, null, 2));
-        console.log('🔥 expensesData["2026-03-01"]:', expensesData['2026-03-01']);
-        
+      const salesDates = [...new Set(allSales.map(sale =>
+        sale.sale_date.split('T')[0]
+      ))];
+
+      // ONE range request (no date filter on mobile yet) so days that have
+      // expenses but no sales are included too — matching the Blade page.
+      const expensesData = await loadExpensesRange('2000-01-01', '2100-01-01', token);
+      const expenseDates = Object.keys(expensesData);
+      const allDates = [...new Set([...salesDates, ...expenseDates])];
+
+      if (allDates.length > 0) {
+        console.log('📅 Tarehe zote (mauzo + matumizi):', allDates.length);
+
         // ✅ Process with the actual data
-        processDailyData(allSales, allProducts, allSellers, expensesData);
+        processDailyData(allSales, allProducts, allSellers, expensesData, allDates);
         
         const totalSalesAmount = allSales.reduce((sum, sale) => sum + sale.total_amount, 0);
         
@@ -636,8 +605,8 @@ export default function PreviewScreen() {
   };
 
   // ✅ FIXED: processDailyData with better debugging
-  const processDailyData = (sales: Sale[], products: Product[], sellers: Seller[], expensesByDate: {[key: string]: Expense[]} = {}) => {
-    if (sales.length === 0) {
+  const processDailyData = (sales: Sale[], products: Product[], sellers: Seller[], expensesByDate: {[key: string]: Expense[]} = {}, datesOverride?: string[]) => {
+    if (sales.length === 0 && (!datesOverride || datesOverride.length === 0)) {
       console.log('⚠️ Hakuna mauzo ya kuandaa');
       setDailySummaries([]);
       return;
@@ -669,7 +638,11 @@ export default function PreviewScreen() {
 
     console.log('📅 Tarehe zilizopatikana:', Object.keys(salesByDate).length);
 
-    const summaries: DailySummary[] = Object.keys(salesByDate).map(date => {
+    // Include expense-only days (no sales but with expenses).
+    const summaryDates = datesOverride && datesOverride.length
+      ? datesOverride
+      : Object.keys(salesByDate);
+    const summaries: DailySummary[] = summaryDates.map(date => {
       const daySales = salesByDate[date];
       const dayExpenses = expensesByDate[date] || [];
       
@@ -715,7 +688,10 @@ export default function PreviewScreen() {
       // NET PROFIT
       const netProfit = totalProfit - totalExpenses;
 
-      const customers = [...new Set(daySales.map(sale => sale.customer_name))];
+      // Only genuinely recorded names — drop the placeholder (like the Blade page).
+      const customers = [...new Set(daySales
+        .map(sale => sale.customer_name)
+        .filter(name => name && name !== t('preview.default_customer')))];
       
       const daySellers = sellers.filter(seller => 
         daySales.some(sale => sale.user_id === seller.id)
