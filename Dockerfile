@@ -3,8 +3,13 @@
 # DukaMkononi backend (Laravel) — deployment image.
 #
 # Two stages:
-#   1. `vendor`  — installs PHP dependencies with Composer.
-#   2. `app`     — PHP-FPM with Nginx expected as a sidecar (see docker-compose.yml).
+#   1. `vendor` — installs PHP dependencies with Composer.
+#   2. `app`    — nginx (HTTP :80) + PHP-FPM (FastCGI) in ONE container,
+#                 supervised by a tiny entrypoint so PaaS platforms
+#                 (Render, Railway, Fly.io...) that scan for an open HTTP
+#                 port find one immediately.
+#
+# docker-compose.yml runs this same image and publishes port 80.
 
 # ---------------------------------------------------------------------------
 # Stage 1: Composer dependencies
@@ -24,13 +29,14 @@ RUN composer install \
         --optimize-autoloader
 
 # ---------------------------------------------------------------------------
-# Stage 2: Runtime (PHP-FPM)
+# Stage 2: Runtime — nginx + PHP-FPM in one container
 # ---------------------------------------------------------------------------
 FROM php:8.2-fpm AS app
 
-# System packages needed to build the PHP extensions
+# nginx serves HTTP; the lib* packages are needed to build the PHP extensions
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
+        nginx \
         libpq-dev \
         libicu-dev \
         libzip-dev \
@@ -53,6 +59,11 @@ RUN apt-get update \
 # PHP runtime configuration (memory limits, opcache, etc.)
 COPY docker/php.ini "$PHP_INI_DIR/conf.d/zz-dukamkononi.ini"
 
+# Container-local nginx: replace the main config entirely (our file is a
+# complete main config — worker/events/http — not a conf.d site snippet).
+RUN rm -f /etc/nginx/sites-enabled/default /etc/nginx/conf.d/default.conf
+COPY docker/nginx.conf /etc/nginx/nginx.conf
+
 # Application source
 WORKDIR /var/www/html
 COPY --from=vendor /app/vendor ./vendor
@@ -64,13 +75,15 @@ RUN mkdir -p \
         storage/framework/views \
         storage/framework/cache/data \
         storage/logs \
+        /var/log/nginx \
+        /var/lib/nginx \
         backup \
-    && chown -R www-data:www-data storage bootstrap/cache backup \
-    && chmod +x docker/docker-entrypoint.sh
+    && chown -R www-data:www-data storage bootstrap/cache backup /var/lib/nginx /var/log/nginx \
+    && chmod +x docker/docker-entrypoint.sh docker/supervisord.sh
 
 USER www-data
 
-EXPOSE 9000
+EXPOSE 8080
 
 ENTRYPOINT ["docker/docker-entrypoint.sh"]
-CMD ["php-fpm"]
+CMD ["bash", "docker/supervisord.sh"]

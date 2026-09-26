@@ -10,22 +10,11 @@ services:
       APP_DEBUG: "false"
       # Supabase / Postgres connection (override here or in .env)
       DB_CONNECTION: pgsql
+    ports:
+      - "80:8080"
     volumes:
       - app_storage:/var/www/html/storage
       - app_backup:/var/www/html/backup
-    networks:
-      - backend
-
-  nginx:
-    image: nginx:alpine
-    restart: unless-stopped
-    ports:
-      - "80:80"
-    volumes:
-      - ./public:/var/www/html/public:ro
-      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-    depends_on:
-      - app
     networks:
       - backend
 
