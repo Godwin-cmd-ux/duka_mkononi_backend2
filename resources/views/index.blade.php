@@ -320,7 +320,7 @@
         
         <!-- App Download Button -->
         <nav>
-            <a href="https://raw.githubusercontent.com/Godwin-cmd-ux/duka_mkononi_apk/main/duka_mkononi_mobile.apk" 
+            <a href="https://expo.dev/artifacts/eas/9TKXD6b4FGjwYZDZos8OcAWmuyY4N4tvgO397xOsUu0.apk" 
                class="app-download-btn" 
                target="_blank" rel="noopener">
                 📱 Pakua App Yetu
