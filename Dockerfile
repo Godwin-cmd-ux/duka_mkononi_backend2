@@ -56,6 +56,16 @@ RUN apt-get update \
         opcache \
     && rm -rf /var/lib/apt/lists/*
 
+# Framework store defaults baked into the image. This app talks to Supabase
+# over REST — it has NO SQL database — so sessions/cache/queue must never fall
+# back to the database driver, and DB_CONNECTION must never resolve to sqlite
+# (the Laravel stock default, which 500s with "database.sqlite does not exist").
+# Platform-provided env vars (Render dashboard, etc.) still override these.
+ENV DB_CONNECTION=pgsql \
+    SESSION_DRIVER=file \
+    CACHE_STORE=file \
+    QUEUE_CONNECTION=sync
+
 # PHP runtime configuration (memory limits, opcache, etc.)
 COPY docker/php.ini "$PHP_INI_DIR/conf.d/zz-dukamkononi.ini"
 
