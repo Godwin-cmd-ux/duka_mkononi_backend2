@@ -720,7 +720,10 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             if (!token) return false;
             
             try {
-                const response = await fetch(`${API_BASE_URL}/api/admin/users`, {
+                // Server-side filtering: only this business's SELLERS cross the
+                // network (previously the entire users table was fetched and
+                // filtered in the browser — the dashboard's main slowdown).
+                const response = await fetch(`${API_BASE_URL}/api/admin/users?business=${encodeURIComponent(businessName || '')}&role=seller`, {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -1224,7 +1227,12 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             setupSidebar();
             const success = await loadUserData();
             if (!success) return;
-            await Promise.all([loadSellersData(userData.businessName), loadProfileIntoEditForm()]);
+            // The profile refresh only feeds the edit modal (which already
+            // falls back to the localStorage cache), so it must NOT delay
+            // the dashboard's first paint — run it in the background.
+            const sellersPromise = loadSellersData(userData.businessName);
+            loadProfileIntoEditForm();
+            await sellersPromise;
             loading = false;
             renderDashboard();
         }

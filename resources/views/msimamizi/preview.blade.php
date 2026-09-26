@@ -588,7 +588,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             try {
                 // Fetch sellers
                 let sellers = [];
-                const sellersRes = await fetch(`${API_BASE_URL}/api/admin/users?business=${encodeURIComponent(userData.businessName)}`, {
+                const sellersRes = await fetch(`${API_BASE_URL}/api/admin/users?business=${encodeURIComponent(userData.businessName)}&role=seller,admin`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 // Server-side business filter (?business=): only this

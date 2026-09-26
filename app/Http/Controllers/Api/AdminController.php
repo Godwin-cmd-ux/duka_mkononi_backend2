@@ -39,14 +39,24 @@ class AdminController extends BaseController
                 return $this->json(['error' => 'Unauthorized'], 403);
             }
 
-            // Optional server-side business filter: pages like the msimamizi
-            // dashboard/rejea pass ?business= so only that business's users
-            // leave the database (previously the whole users table was sent
-            // and filtered in the browser). No param = all users (system admin).
+            // Optional server-side business/role filters: pages like the
+            // msimamizi dashboard pass ?business=&role=seller so only that
+            // business's sellers leave the database (previously the whole
+            // users table was sent and filtered in the browser — slow on
+            // large tables). No params = all users (system admin view).
             $usersQuery = User::query()->orderByDesc('created_at');
             $businessFilter = trim((string) ($request->query('business', '') ?: $request->query('business_name', '')));
             if ($businessFilter !== '') {
                 $usersQuery->where('business_name', $businessFilter);
+            }
+            $roleFilter = trim((string) $request->query('role', ''));
+            if ($roleFilter !== '') {
+                $roles = array_values(array_filter(array_map('trim', explode(',', $roleFilter)), fn ($r) => in_array($r, ['admin', 'seller', 'client', 'system_admin'], true)));
+                if (count($roles) === 1) {
+                    $usersQuery->where('role', $roles[0]);
+                } elseif (count($roles) > 1) {
+                    $usersQuery->whereIn('role', $roles);
+                }
             }
 
             $users = $usersQuery->get()->toArray();
