@@ -498,6 +498,7 @@
         let businessEvents = [];
         let businessStats = { totalSellers: 0, totalProducts: 0, totalSalesAmount: 0, totalProfit: 0, totalNetProfit: 0 };
         let loading = true;
+        let refreshing = false;
         let activeTab = 'days';
 
         // Applied date-range filter (YYYY-MM-DD); empty strings = no filter.
