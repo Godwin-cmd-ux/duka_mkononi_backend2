@@ -292,6 +292,7 @@
             };
             document.getElementById('userName').innerHTML = escapeHtml(currentUser.name);
             const avatarEl = document.getElementById('userAvatar');
+            const displayName = user.full_name || user.business_name || user.email?.split('@')[0] || 'Msimamizi';
             if (user.business_logo_url) {
                 avatarEl.classList.add('js-avatar-view');
 avatarEl.setAttribute('data-full', user.business_logo_url);
