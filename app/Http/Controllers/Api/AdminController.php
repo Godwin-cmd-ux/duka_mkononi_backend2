@@ -136,20 +136,31 @@ class AdminController extends BaseController
                 $query->whereIn('seller_id', $businessUserIds ?: ['00000000-0000-0000-0000-000000000000']);
             }
 
-            $products = $query->orderByDesc('created_at')->get()->toArray();
-
-            $sellerIds = array_values(array_unique(array_filter(array_map(fn($p) => $p['seller_id'] ?? null, $products))));
-            $usersById = [];
-            if ($sellerIds) {
-                foreach (User::whereIn('id', $sellerIds)->get() as $u) {
-                    $usersById[$u->id] = $u->toArray();
-                }
+            // slim=1: report pages only need a handful of columns and no
+            // embedded user objects — the full payloads (2+ MB) were the
+            // main reason the ripoti page took forever to load on slow
+            // links. Full mode (default) is unchanged.
+            $slim = $request->boolean('slim');
+            if ($slim) {
+                $query->select(['id', 'name', 'price', 'expected_selling_price', 'category', 'stock', 'seller_id', 'created_at']);
             }
 
-            $result = array_map(function ($p) use ($usersById) {
-                $p['users'] = isset($p['seller_id']) && isset($usersById[$p['seller_id']]) ? $usersById[$p['seller_id']] : null;
-                return $p;
-            }, $products);
+            $products = $query->orderByDesc('created_at')->get()->toArray();
+
+            $result = $products;
+            if (!$slim) {
+                $sellerIds = array_values(array_unique(array_filter(array_map(fn($p) => $p['seller_id'] ?? null, $products))));
+                $usersById = [];
+                if ($sellerIds) {
+                    foreach (User::whereIn('id', $sellerIds)->get() as $u) {
+                        $usersById[$u->id] = $u->toArray();
+                    }
+                }
+                $result = array_map(function ($p) use ($usersById) {
+                    $p['users'] = isset($p['seller_id']) && isset($usersById[$p['seller_id']]) ? $usersById[$p['seller_id']] : null;
+                    return $p;
+                }, $products);
+            }
 
             $this->log($userId, 'ADMIN_PRODUCTS_VIEW', '/api/admin/products', ['count' => count($result)], $this->ip($request), 'success');
 
@@ -198,6 +209,27 @@ class AdminController extends BaseController
             }
 
             $sales = $salesQuery->orderByDesc('sale_date')->get()->toArray();
+
+            // slim=1: skip the per-sale/per-item relation embedding (users,
+            // customers, full product objects per item) — report pages map
+            // names themselves; only the item columns they use are fetched.
+            if ($request->boolean('slim')) {
+                $saleIds = array_column($sales, 'id');
+                $itemsBySaleId = [];
+                if ($saleIds) {
+                    foreach (SaleItem::whereIn('sale_id', $saleIds)->select(['sale_id', 'product_id', 'quantity', 'unit_price', 'total_price'])->get() as $item) {
+                        $itemsBySaleId[$item->sale_id][] = $item->toArray();
+                    }
+                }
+
+                $result = array_map(function ($sale) use ($itemsBySaleId) {
+                    $sale['sale_items'] = $itemsBySaleId[$sale['id']] ?? [];
+                    return $sale;
+                }, $sales);
+
+                $this->log($userId, 'ADMIN_SALES_VIEW', '/api/admin/sales', ['count' => count($result), 'slim' => true], $this->ip($request), 'success');
+                return $this->json(['sales' => array_values($result)]);
+            }
 
             $sellerIds = array_values(array_unique(array_filter(array_map(fn($s) => $s['seller_id'] ?? null, $sales))));
             $usersById = [];

@@ -550,6 +550,7 @@
 @endverbatim
 @include('partials.toast')
 @include('partials.photo-viewer')
+@include('partials.cloudinary-config')
 @verbatim
     <!-- Mobile menu toggle -->
     <div class="mobile-menu-toggle" id="mobileMenuToggle">
@@ -908,7 +909,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         }
 
         // Cloudinary Photo Upload
-        const CLOUDINARY_CLOUD_NAME = '{{ config('cloudinary.cloud_name') }}';
+        const CLOUDINARY_CLOUD_NAME = (window.CLOUDINARY_CONFIG ? window.CLOUDINARY_CONFIG.cloudName : '');
         const CLOUDINARY_UPLOAD_PRESET = 'react_native_uploads';
 
         function setupPhotoUpload() {

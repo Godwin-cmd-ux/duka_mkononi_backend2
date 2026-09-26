@@ -524,6 +524,7 @@
 </head>
 @endverbatim
 @include('partials.photo-viewer')
+@include('partials.cloudinary-config')
 @verbatim
 <body>
     <div class="mobile-menu-toggle" id="mobileMenuToggle">
@@ -627,7 +628,9 @@
         let editFormData = { name: '', phone: '', businessName: '', businessLocation: '', businessType: '', businessDescription: '' };
         let logoUploading = false;
         let locationTracking = false;
-        const CLOUDINARY_CONFIG = { cloudName: '{{ config('cloudinary.cloud_name') }}', uploadPreset: '{{ config('cloudinary.upload_preset') }}' };
+        // Real values come from the Blade-processed partial (this file's
+        // script is inside @verbatim, so {{ }} here would never interpolate).
+        const CLOUDINARY_CONFIG = (window.CLOUDINARY_CONFIG || { cloudName: '', uploadPreset: 'react_native_uploads' });
 
         function showAlert(title, message, onOk = null) {
             const existing = document.querySelector('.custom-alert');

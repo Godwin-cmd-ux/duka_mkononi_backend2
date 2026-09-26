@@ -298,20 +298,25 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         }
 
         async function fetchBusinessData(headers) {
-            // Fetch users — server-side business filter (?business=) so only
-            // this business's users leave the database.
-            const sellersRes = await fetch(`${API_BASE_URL}/api/admin/users?business=${encodeURIComponent(userData.businessName)}`, { headers });
+            const bizQuery = `business_name=${encodeURIComponent(userData.businessName)}`;
+
+            // All four reads fire in PARALLEL (they used to run strictly
+            // one-after-another) and products/sales use slim=1 payloads
+            // (no embedded user/product objects — those made the page
+            // download megabytes before anything could render).
+            const [sellersRes, productsRes, salesRes, customersRes] = await Promise.all([
+                fetch(`${API_BASE_URL}/api/admin/users?business=${encodeURIComponent(userData.businessName)}&role=seller,admin`, { headers }),
+                fetch(`${API_BASE_URL}/api/admin/products?${bizQuery}&slim=1`, { headers }),
+                fetch(`${API_BASE_URL}/api/admin/sales?${bizQuery}&slim=1`, { headers }),
+                fetch(`${API_BASE_URL}/api/admin/customers?${bizQuery}`, { headers }),
+            ]);
+
             if (sellersRes.ok) {
                 const data = await sellersRes.json();
                 const users = data.users || (Array.isArray(data) ? data : []);
                 sellers = users.filter(u => u.business_name === userData.businessName && u.status === 'approved');
             }
-            
-            // Fetch products (server-side business filter avoids downloading
-            // every business's products and PostgREST's 1000-row cap cutting
-            // this business's rows off)
-            const bizQuery = `business_name=${encodeURIComponent(userData.businessName)}`;
-            const productsRes = await fetch(`${API_BASE_URL}/api/admin/products?${bizQuery}`, { headers });
+
             let rawProducts = [];
             if (productsRes.ok) {
                 const data = await productsRes.json();
@@ -321,9 +326,17 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     category: p.category, stock: p.stock || 0, seller_id: p.seller_id, created_at: p.created_at
                 }));
             }
-            
-            // Fetch sales (server-side business filter)
-            const salesRes = await fetch(`${API_BASE_URL}/api/admin/sales?${bizQuery}`, { headers });
+
+            // Customer names come from the customers payload (the slim sales
+            // payload has no embedded relations).
+            const customerNameById = new Map();
+            if (customersRes.ok) {
+                const data = await customersRes.json();
+                const custs = data.customers || (Array.isArray(data) ? data : []);
+                custs.forEach(c => customerNameById.set(c.id, c.name));
+                customers = custs.filter(c => sellers.some(s => s.id === c.seller_id)).map(c => ({ ...c, total_purchases: c.total_purchases / 2, purchases_count: Math.round(c.purchases_count / 2) }));
+            }
+
             let allSales = [];
             if (salesRes.ok) {
                 const data = await salesRes.json();
@@ -338,7 +351,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                                 quantity: item.quantity || 1, unit_price: item.unit_price || 0,
                                 total_amount: item.total_price || (item.unit_price * item.quantity),
                                 sale_date: sale.sale_date?.split('T')[0] || new Date().toISOString().split('T')[0],
-                                customer_name: sale.customers?.name || 'Mteja', seller_name: seller.full_name || seller.email,
+                                customer_name: (sale.customer_id && customerNameById.get(sale.customer_id)) || 'Mteja', seller_name: seller.full_name || seller.email,
                                 cost_price: product?.price || 0, profit: 0
                             });
                         });
@@ -363,14 +376,6 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             });
             soldProducts = allProducts.filter(p => p.has_sales);
             unsoldProducts = allProducts.filter(p => !p.has_sales);
-            
-            // Fetch customers (server-side business filter)
-            const customersRes = await fetch(`${API_BASE_URL}/api/admin/customers?${bizQuery}`, { headers });
-            if (customersRes.ok) {
-                const data = await customersRes.json();
-                const custs = data.customers || (Array.isArray(data) ? data : []);
-                customers = custs.filter(c => sellers.some(s => s.id === c.seller_id)).map(c => ({ ...c, total_purchases: c.total_purchases / 2, purchases_count: Math.round(c.purchases_count / 2) }));
-            }
             
             // Stats
             const totalSales = sales.reduce((s, sale) => s + sale.total_amount, 0);

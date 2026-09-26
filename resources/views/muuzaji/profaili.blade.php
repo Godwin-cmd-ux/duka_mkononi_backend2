@@ -408,6 +408,7 @@
 @endverbatim
 @include('partials.toast')
 @include('partials.photo-viewer')
+@include('partials.cloudinary-config')
 @verbatim
     <div class="mobile-menu-toggle" id="mobileMenuToggle">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2">
@@ -800,7 +801,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
 
         // Upload profile image to Cloudinary
         async function uploadProfileImage(file) {
-            const cloudName = '{{ config('cloudinary.cloud_name') }}';
+            const cloudName = (window.CLOUDINARY_CONFIG ? window.CLOUDINARY_CONFIG.cloudName : '');
             const uploadPreset = 'react_native_uploads';
             const formData = new FormData();
             formData.append('file', file);

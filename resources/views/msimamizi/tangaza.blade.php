@@ -173,6 +173,7 @@
 </head>
 @endverbatim
 @include('partials.photo-viewer')
+@include('partials.cloudinary-config')
 @verbatim
 <body>
     <div class="mobile-menu-toggle" id="mobileMenuToggle">☰</div>
@@ -196,7 +197,7 @@
 
     <script>
         const API_BASE_URL = '';
-        const CLOUDINARY_CONFIG = { cloudName: '{{ config('cloudinary.cloud_name') }}', uploadPreset: '{{ config('cloudinary.upload_preset') }}' };
+        const CLOUDINARY_CONFIG = (window.CLOUDINARY_CONFIG || { cloudName: '', uploadPreset: 'react_native_uploads' });
         
         let userToken = null;
         let currentUser = null;
