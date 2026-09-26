@@ -1618,10 +1618,18 @@
     "error_missing_price": "Le prix de vente est requis. Renseignez-le avant de valider.",
     "verify_success_existing": "{name} : stock augmenté de {quantity}. Nouveau stock : {total}.",
     "verify_success_new": "{name} a été créé avec succès !",
-    "permission": "Autorisation nécessaire pour accéder aux photos/caméra."
+    "permission": "Autorisation nécessaire pour accéder aux photos/caméra.",
+    "biz_title": "Informations sur l’entreprise",
+    "biz_sub": "Aide l’IA à comprendre vos produits",
+    "biz_custom_option": "Autre (écrivez la vôtre)",
+    "biz_custom_placeholder": "Ex. Pièces détachées de moto",
+    "biz_type_required": "Veuillez choisir ou saisir un type d’entreprise.",
+    "biz_saved": "Informations enregistrées. L’IA les utilisera pour lire vos photos.",
+    "biz_save_error": "Échec de l’enregistrement des informations."
   },
   "business_types": {
     "spare_parts": "Pièces détachées",
+    "motorcycle_spares": "Pièces de moto",
     "pharmacy": "Pharmacie",
     "supermarket": "Supermarché",
     "clothing": "Vêtements",

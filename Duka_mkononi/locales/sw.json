@@ -1610,10 +1610,18 @@
     "error_missing_price": "Bei ya kuuza inahitajika. Weka kabla ya kuthibitisha.",
     "verify_success_existing": "{name} stoo imeongezeka {quantity}. Stoo mpya: {total}.",
     "verify_success_new": "{name} imeundwa kikamilifu!",
-    "permission": "Ruhusa inahitajika kupata picha/kamera."
+    "permission": "Ruhusa inahitajika kupata picha/kamera.",
+    "biz_title": "Taarifa za Biashara",
+    "biz_sub": "Husaidia AI kufahamu bidhaa zako",
+    "biz_custom_option": "Nyingine (andika mwenyewe)",
+    "biz_custom_placeholder": "Mfano: Spea za Pikipiki",
+    "biz_type_required": "Tafadhali chagua au andika aina ya biashara.",
+    "biz_saved": "Taarifa za biashara zimehifadhiwa. AI itazitumia kuchambua picha zako.",
+    "biz_save_error": "Imeshindwa kuhifadhi taarifa za biashara."
   },
   "business_types": {
     "spare_parts": "Sehemu za Gari",
+    "motorcycle_spares": "Spea za Pikipiki",
     "pharmacy": "Duka la Dawa",
     "supermarket": "Supermarket",
     "clothing": "Nguo",

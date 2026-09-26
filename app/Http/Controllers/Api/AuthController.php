@@ -14,7 +14,7 @@ use Illuminate\Support\Str;
 class AuthController extends BaseController
 {
     private const BUSINESS_TYPE_ALLOWED = [
-        'spare_parts', 'pharmacy', 'supermarket', 'clothing', 'electronics',
+        'spare_parts', 'motorcycle_spares', 'pharmacy', 'supermarket', 'clothing', 'electronics',
         'restaurant', 'hardware', 'cosmetics', 'perfume', 'mobile_accessories',
         'furniture', 'stationery', 'agriculture', 'construction_materials',
         'beauty_salon', 'barbershop', 'auto_repair', 'phone_shop', 'computer_shop',

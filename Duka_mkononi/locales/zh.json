@@ -1609,10 +1609,18 @@
     "error_missing_price": "需要售价。请先设置再验证。",
     "verify_success_existing": "{name} 的库存增加 {quantity}。新库存：{total}。",
     "verify_success_new": "{name} 已成功创建！",
-    "permission": "需要相册/相机访问权限。"
+    "permission": "需要相册/相机访问权限。",
+    "biz_title": "业务信息",
+    "biz_sub": "帮助 AI 了解您的商品",
+    "biz_custom_option": "其他（自行填写）",
+    "biz_custom_placeholder": "例如：摩托车配件",
+    "biz_type_required": "请选择或输入业务类型。",
+    "biz_saved": "业务信息已保存，AI 将据此识别您的图片。",
+    "biz_save_error": "保存业务信息失败。"
   },
   "business_types": {
     "spare_parts": "汽车配件",
+    "motorcycle_spares": "摩托车配件",
     "pharmacy": "药房",
     "supermarket": "超市",
     "clothing": "服装",

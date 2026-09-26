@@ -1618,10 +1618,18 @@
     "error_missing_price": "Selling price is required. Set it before verifying.",
     "verify_success_existing": "{name} stock increased by {quantity}. New stock: {total}.",
     "verify_success_new": "{name} has been created successfully!",
-    "permission": "Permission needed to access photos/camera."
+    "permission": "Permission needed to access photos/camera.",
+    "biz_title": "Business information",
+    "biz_sub": "Helps AI understand your products",
+    "biz_custom_option": "Other (write your own)",
+    "biz_custom_placeholder": "e.g. Motorcycle spare parts",
+    "biz_type_required": "Please choose or type a business type.",
+    "biz_saved": "Business information saved. AI will use it to read your photos.",
+    "biz_save_error": "Failed to save business information."
   },
   "business_types": {
     "spare_parts": "Spare Parts",
+    "motorcycle_spares": "Motorcycle Spare Parts",
     "pharmacy": "Pharmacy",
     "supermarket": "Supermarket",
     "clothing": "Clothing",

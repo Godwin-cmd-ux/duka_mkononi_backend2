@@ -896,7 +896,8 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         // Same option list as the AI-import modal (bidhaa-mpya) so the two
         // stay consistent; value '' = Nyingine/haijabainishwa.
         const BUSINESS_TYPES = [
-            ['spare_parts','Sehemu za Gari'],['supermarket','Supermarket'],['pharmacy','Duka la Dawa'],
+            ['spare_parts','Sehemu za Gari'],['motorcycle_spares','Spea za Pikipiki'],
+            ['supermarket','Supermarket'],['pharmacy','Duka la Dawa'],
             ['electronics','Elektroniki'],['clothing','Mavazi'],['hardware','Vifaa Vinene (Hardware)'],
             ['cosmetics','Vipodozi'],['perfume','Manukato'],['restaurant','Mgahawa'],['furniture','Samani'],
             ['stationery','Vifaa vya Ofisi na Shule'],['mobile_accessories','Vifaa vya Simu'],['computer_shop','Duka la Kompyuta'],

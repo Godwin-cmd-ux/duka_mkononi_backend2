@@ -33,7 +33,7 @@ import { API_BASE_URL } from '../../constants/api';
 // AI-import page and the Laravel BUSINESS_TYPES, so the stored value stays
 // consistent across web and mobile).
 const BIZ_TYPES = [
-  'spare_parts', 'pharmacy', 'supermarket', 'clothing', 'electronics',
+  'spare_parts', 'motorcycle_spares', 'pharmacy', 'supermarket', 'clothing', 'electronics',
   'restaurant', 'hardware', 'cosmetics', 'perfume', 'mobile_accessories',
   'furniture', 'stationery', 'agriculture', 'construction_materials',
   'beauty_salon', 'barbershop', 'auto_repair', 'phone_shop', 'computer_shop',

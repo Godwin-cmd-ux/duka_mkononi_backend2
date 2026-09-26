@@ -87,6 +87,7 @@ init();
 <div class="ai-biz-title">Taarifa za Biashara (husaidia AI kufahamu bidhaa zako)</div>
 <div class="ai-biz-grid">
 <div class="ai-biz-field"><label class="ai-biz-label">Aina ya Biashara</label><select id="aiBizType"></select></div>
+<div class="ai-biz-field" id="aiBizTypeCustomWrap" style="display:none;"><label class="ai-biz-label">Andika Aina Yako ya Biashara</label><input type="text" id="aiBizTypeCustom" placeholder="Mfano: Spea za Pikipiki"></div>
 <div class="ai-biz-field"><label class="ai-biz-label">Maelezo mafupi ya Biashara</label><input type="text" id="aiBizDesc" placeholder="Mfano: Tunauza sehemu za magari ya Toyota na Nissan..."></div>
 </div>
 <button type="button" class="ai-biz-save" onclick="saveAiBusinessProfile()">Hifadhi Taarifa</button>
@@ -132,7 +133,7 @@ var AI_MAX_IMAGES=6;
 var AI_MAX_PER_IMAGE_B64=6*1024*1024;
 var AI_MAX_TOTAL_B64=9*1024*1024;
 var AI_PROGRESS_MSGS=['Inatayarisha picha...','Inasoma maandishi...','Inasoma orodha ya bidhaa...','Inatuma taarifa kwa Gemini...','Gemini inachambua orodha...','Inalinganisha bidhaa zilizopo...','Inahakiki kurudiwa kwa bidhaa...','Inatayarisha matokeo...','Karibu kuisha...','Tafadhali subiri...'];
-var AI_BIZ_TYPES=[['spare_parts','Sehemu za Gari'],['supermarket','Supermarket'],['pharmacy','Duka la Dawa'],['electronics','Elektroniki'],['clothing','Mavazi'],['hardware','Vifaa Vinene (Hardware)'],['cosmetics','Vipodozi'],['perfume','Manukato'],['restaurant','Mgahawa'],['furniture','Samani'],['stationery','Vifaa vya Ofisi na Shule'],['mobile_accessories','Vifaa vya Simu'],['computer_shop','Duka la Kompyuta'],['phone_shop','Duka la Simu'],['agriculture','Kilimo'],['construction_materials','Vifaa vya Ujenzi'],['beauty_salon','Saluni ya Urembo'],['barbershop','Kinyozi'],['auto_repair','Karakana ya Magari'],['general_retail','Rejareja ya Jumla'],['wholesale','Jumla (Wholesale)'],['other','Nyingine']];
+var AI_BIZ_TYPES=[['spare_parts','Sehemu za Gari'],['motorcycle_spares','Spea za Pikipiki'],['supermarket','Supermarket'],['pharmacy','Duka la Dawa'],['electronics','Elektroniki'],['clothing','Mavazi'],['hardware','Vifaa Vinene (Hardware)'],['cosmetics','Vipodozi'],['perfume','Manukato'],['restaurant','Mgahawa'],['furniture','Samani'],['stationery','Vifaa vya Ofisi na Shule'],['mobile_accessories','Vifaa vya Simu'],['computer_shop','Duka la Kompyuta'],['phone_shop','Duka la Simu'],['agriculture','Kilimo'],['construction_materials','Vifaa vya Ujenzi'],['beauty_salon','Saluni ya Urembo'],['barbershop','Kinyozi'],['auto_repair','Karakana ya Magari'],['general_retail','Rejareja ya Jumla'],['wholesale','Jumla (Wholesale)'],['other','Nyingine'],['__custom__','Nyingine (andika mwenyewe)']];
 var aiImages=[];
 var aiRows=[];
 var aiProcessing=false;
@@ -165,23 +166,36 @@ ov.addEventListener('click',function(e){if(e.target===ov)done(false);});
 });
 }
 function populateAiBizTypes(){
-var sel=$('aiBizType');if(!sel||sel.options.length>0)return;
-sel.innerHTML='<option value="">— Chagua Aina ya Biashara —</option>'+AI_BIZ_TYPES.map(function(t){return '<option value="'+esc(t[0])+'">'+esc(t[1])+'</option>';}).join('');
+var sel=$('aiBizType');if(!sel)return;
+if(sel.options.length===0){sel.innerHTML='<option value="">— Chagua Aina ya Biashara —</option>'+AI_BIZ_TYPES.map(function(t){return '<option value="'+esc(t[0])+'">'+esc(t[1])+'</option>';}).join('');}
+sel.onchange=function(){var w=$('aiBizTypeCustomWrap');if(w)w.style.display=sel.value==='__custom__'?'block':'none';};
+}
+// Sets the business-type select from a stored value; unknown/custom values
+// switch the select to "Nyingine (andika mwenyewe)" and fill the free-text box.
+function setAiBizTypeValue(v){
+var sel=$('aiBizType'),wrap=$('aiBizTypeCustomWrap'),ci=$('aiBizTypeCustom');
+if(!sel)return;
+if(!v){sel.value='';if(wrap)wrap.style.display='none';return;}
+var known=AI_BIZ_TYPES.some(function(t){return t[0]===v;});
+if(known&&v!=='__custom__'){sel.value=v;if(wrap)wrap.style.display='none';}
+else{sel.value='__custom__';if(ci)ci.value=v;if(wrap)wrap.style.display='block';}
 }
 async function loadAiBusinessProfile(){
 var sel=$('aiBizType'),desc=$('aiBizDesc');if(!sel||!desc)return;
 // Prefill from cached userData first (instant), then refresh from the
 // profile API so taarifa za biashara zilizohifadhiwa appear automatically
 // and the user never re-enters them.
-try{if(typeof userData!=='undefined'&&userData){if(userData.business_type)sel.value=userData.business_type;if(userData.business_description)desc.value=userData.business_description;}}catch(e){}
+try{if(typeof userData!=='undefined'&&userData){if(userData.business_type)setAiBizTypeValue(userData.business_type);if(userData.business_description)desc.value=userData.business_description;}}catch(e){}
 try{
 var r=await fetch(API_BASE_URL+'/api/user/profile',{headers:{'Authorization':'Bearer '+token}});
-if(r.ok){var u=await r.json();if(u.business_type){sel.value=u.business_type;if(typeof userData!=='undefined'&&userData){userData.business_type=u.business_type;}}if(u.business_description){desc.value=u.business_description;if(typeof userData!=='undefined'&&userData){userData.business_description=u.business_description;}}}
+if(r.ok){var u=await r.json();if(u.business_type){setAiBizTypeValue(u.business_type);if(typeof userData!=='undefined'&&userData){userData.business_type=u.business_type;}}if(u.business_description){desc.value=u.business_description;if(typeof userData!=='undefined'&&userData){userData.business_description=u.business_description;}}}
 }catch(e){}
 }
 async function saveAiBusinessProfile(){
 var sel=$('aiBizType'),desc=$('aiBizDesc');
 var btype=sel.value,bdesc=(desc.value||'').trim();
+if(btype==='__custom__'){var ci=$('aiBizTypeCustom');btype=(ci&&ci.value||'').trim();}
+if(!btype){showAiBanner('error','Tafadhali chagua au andika aina ya biashara.');return;}
 try{
 var r=await fetch(API_BASE_URL+'/api/user/profile',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({business_type:btype,business_description:bdesc})});
 var d=await r.json().catch(function(){return{};});

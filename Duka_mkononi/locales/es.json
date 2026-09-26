@@ -1618,10 +1618,18 @@
     "error_missing_price": "El precio de venta es obligatorio. Establézcalo antes de verificar.",
     "verify_success_existing": "{name} el stock aumentó {quantity}. Nuevo stock: {total}.",
     "verify_success_new": "¡{name} se creó correctamente!",
-    "permission": "Se necesita permiso para acceder a fotos/cámara."
+    "permission": "Se necesita permiso para acceder a fotos/cámara.",
+    "biz_title": "Información del negocio",
+    "biz_sub": "Ayuda a la IA a entender tus productos",
+    "biz_custom_option": "Otro (escribe el tuyo)",
+    "biz_custom_placeholder": "Ej.: piezas de motocicleta",
+    "biz_type_required": "Elige o escribe un tipo de negocio.",
+    "biz_saved": "Información guardada. La IA la usará para leer tus fotos.",
+    "biz_save_error": "No se pudo guardar la información del negocio."
   },
   "business_types": {
     "spare_parts": "Piezas de repuesto",
+    "motorcycle_spares": "Repuestos de moto",
     "pharmacy": "Farmacia",
     "supermarket": "Supermercado",
     "clothing": "Ropa",

@@ -266,6 +266,7 @@ Rules:
     {
         $types = [
             'spare_parts' => 'Spare Parts',
+            'motorcycle_spares' => 'Motorcycle Spare Parts',
             'pharmacy' => 'Pharmacy',
             'supermarket' => 'Supermarket',
             'clothing' => 'Clothing',

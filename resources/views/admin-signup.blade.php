@@ -341,6 +341,7 @@
                 <select class="input-field" id="business_type">
                     <option value="">Aina ya Biashara *</option>
                     <option value="spare_parts">Sehemu za Gari</option>
+                    <option value="motorcycle_spares">Spea za Pikipiki</option>
                     <option value="supermarket">Supermarket</option>
                     <option value="pharmacy">Duka la Dawa</option>
                     <option value="electronics">Elektroniki</option>

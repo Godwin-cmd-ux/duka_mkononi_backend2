@@ -1610,10 +1610,18 @@
     "error_missing_price": "Verkaufspreis erforderlich. Bitte vor der Bestätigung festlegen.",
     "verify_success_existing": "{name}: Bestand um {quantity} erhöht. Neuer Bestand: {total}.",
     "verify_success_new": "{name} wurde erfolgreich erstellt!",
-    "permission": "Berechtigung für Fotos/Kamera erforderlich."
+    "permission": "Berechtigung für Fotos/Kamera erforderlich.",
+    "biz_title": "Geschäftsinformationen",
+    "biz_sub": "Hilft der KI, Ihre Produkte zu verstehen",
+    "biz_custom_option": "Sonstiges (eigenes eingeben)",
+    "biz_custom_placeholder": "z. B. Motorrad-Ersatzteile",
+    "biz_type_required": "Bitte wählen oder geben Sie eine Geschäftsart ein.",
+    "biz_saved": "Geschäftsinformationen gespeichert. Die KI nutzt sie zum Lesen Ihrer Fotos.",
+    "biz_save_error": "Geschäftsinformationen konnten nicht gespeichert werden."
   },
   "business_types": {
     "spare_parts": "Ersatzteile",
+    "motorcycle_spares": "Motorrad-Ersatzteile",
     "pharmacy": "Apotheke",
     "supermarket": "Supermarkt",
     "clothing": "Kleidung",

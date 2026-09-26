@@ -29,6 +29,18 @@ import { fetchWithTimeout, requireNetwork } from '../../lib/network';
 
 import { API_BASE_URL } from '../../constants/api';
 
+// Business types shared with the Blade AI-import modal, in the same order. New
+// types must stay in sync with `AI_BIZ_TYPES` in
+// resources/views/msimamizi/bidhaa-mpya.blade.php and with `businessTypeLabel()`
+// in app/Http/Controllers/Api/AiImportController.php.
+const BIZ_TYPES = [
+  'spare_parts', 'motorcycle_spares', 'supermarket', 'pharmacy', 'electronics',
+  'clothing', 'hardware', 'cosmetics', 'perfume', 'restaurant', 'furniture',
+  'stationery', 'mobile_accessories', 'computer_shop', 'phone_shop', 'agriculture',
+  'construction_materials', 'beauty_salon', 'barbershop', 'auto_repair',
+  'general_retail', 'wholesale', 'other',
+];
+
 export default function BidhaaMpyaScreen() {
   const { t } = useLang();
   const router = useRouter();
@@ -61,6 +73,14 @@ export default function BidhaaMpyaScreen() {
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
   const [verifiedIds, setVerifiedIds] = useState<Record<string, boolean>>({});
   const [aiError, setAiError] = useState<string | null>(null);
+
+  // "Taarifa za Biashara" (business type + description) — mirrors the card in
+  // the Blade AI-import modal and is saved via PUT /api/user/profile.
+  const [bizType, setBizType] = useState('');
+  const [bizCustomType, setBizCustomType] = useState('');
+  const [showCustomBizType, setShowCustomBizType] = useState(false);
+  const [bizDescription, setBizDescription] = useState('');
+  const [bizSaving, setBizSaving] = useState(false);
 
   const AI_IMPORT_MAX_IMAGES = 6;
   
@@ -476,6 +496,76 @@ export default function BidhaaMpyaScreen() {
     return cycle[dotActive % cycle.length];
   }, [dotActive, t]);
 
+  // Applies a stored business type to the chip UI: known slugs select their
+  // chip, unknown values switch to the free-text "Nyingine" entry.
+  const applyBizType = (value?: string) => {
+    const val = value || '';
+    if (val && !BIZ_TYPES.includes(val)) {
+      setShowCustomBizType(true);
+      setBizCustomType(val);
+      setBizType('');
+    } else {
+      setShowCustomBizType(false);
+      setBizType(val);
+    }
+  };
+
+  const saveBusinessInfo = async () => {
+    if (bizSaving) return;
+    const finalType = (showCustomBizType ? bizCustomType : bizType).trim();
+    if (!finalType) {
+      Alert.alert(t('app.error'), t('aiImport.biz_type_required'));
+      return;
+    }
+    const finalDesc = bizDescription.trim();
+
+    try {
+      setBizSaving(true);
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) {
+        Alert.alert(t('app.error'), t('products.error_auth'));
+        return;
+      }
+      if (!(await requireNetwork())) return;
+
+      const res = await fetchWithTimeout(`${API_BASE_URL}/api/user/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'ngrok-skip-browser-warning': 'true',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({ business_type: finalType, business_description: finalDesc }),
+      }, 20000);
+
+      const payload = await res.json().catch(() => null);
+      if (!res.ok) {
+        Alert.alert(t('app.error'), (payload && payload.error) || t('aiImport.biz_save_error'));
+        return;
+      }
+
+      // The API echoes the saved profile back, so prefer it over the local
+      // values and only fall back to what we sent.
+      const savedUser = (payload && payload.user) || null;
+      const cached = await AsyncStorage.getItem('userData');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        parsed.business_type = savedUser ? savedUser.business_type : finalType;
+        parsed.business_description = savedUser ? savedUser.business_description : finalDesc;
+        await AsyncStorage.setItem('userData', JSON.stringify(parsed));
+        setUserData(parsed);
+      }
+
+      Alert.alert(t('app.success'), t('aiImport.biz_saved'));
+    } catch (error) {
+      console.error('❌ Kosa la kuhifadhi taarifa za biashara:', error);
+      Alert.alert(t('app.error'), t('aiImport.error_network'));
+    } finally {
+      setBizSaving(false);
+    }
+  };
+
   const loadUserData = async () => {
     try {
       const userToken = await AsyncStorage.getItem('userToken');
@@ -489,6 +579,27 @@ export default function BidhaaMpyaScreen() {
 
       const user = JSON.parse(storedUserData);
       setUserData(user);
+      applyBizType(user.business_type);
+      setBizDescription(user.business_description || '');
+
+      // Refresh the authoritative profile so saved business info always shows.
+      try {
+        const profileRes = await fetchWithTimeout(`${API_BASE_URL}/api/user/profile`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${userToken}`,
+            'ngrok-skip-browser-warning': 'true',
+            'Accept': 'application/json',
+          },
+        }, 20000);
+        if (profileRes.ok) {
+          const prof = await profileRes.json();
+          if (prof) {
+            applyBizType(prof.business_type);
+            setBizDescription(prof.business_description || '');
+          }
+        }
+      } catch (_) { /* keep cached values */ }
       
       if (user.business_name) {
         fetchExistingProducts(user.business_name, userToken);
@@ -1433,6 +1544,77 @@ export default function BidhaaMpyaScreen() {
 
             {mode === 'ai' && (
               <View style={styles.aiPanel}>
+                <View style={styles.bizCard}>
+                  <Text style={styles.bizCardTitle}>{t('aiImport.biz_title')}</Text>
+                  <Text style={styles.bizCardSub}>{t('aiImport.biz_sub')}</Text>
+
+                  <Text style={styles.bizLabel}>{t('profile.business_type_label')}</Text>
+                  <View style={styles.bizTypeWrap}>
+                    {BIZ_TYPES.map((slug) => {
+                      const active = !showCustomBizType && bizType === slug;
+                      return (
+                        <TouchableOpacity
+                          key={slug}
+                          style={[styles.bizTypeChip, active && styles.bizTypeChipActive]}
+                          onPress={() => { setShowCustomBizType(false); setBizType(slug); }}
+                          activeOpacity={0.8}
+                        >
+                          <Text style={[styles.bizTypeText, active && styles.bizTypeTextActive]}>
+                            {t('business_types.' + slug)}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                    <TouchableOpacity
+                      style={[styles.bizTypeChip, showCustomBizType && styles.bizTypeChipActive]}
+                      onPress={() => setShowCustomBizType(true)}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={[styles.bizTypeText, showCustomBizType && styles.bizTypeTextActive]}>
+                        {t('aiImport.biz_custom_option')}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {showCustomBizType && (
+                    <TextInput
+                      style={styles.bizInput}
+                      placeholder={t('aiImport.biz_custom_placeholder')}
+                      value={bizCustomType}
+                      onChangeText={setBizCustomType}
+                      autoCorrect={false}
+                    />
+                  )}
+
+                  <Text style={[styles.bizLabel, styles.bizLabelSpaced]}>{t('profile.business_description_label')}</Text>
+                  <TextInput
+                    style={[styles.bizInput, styles.bizDescInput]}
+                    placeholder={t('profile.business_description_placeholder')}
+                    value={bizDescription}
+                    onChangeText={setBizDescription}
+                    multiline
+                    numberOfLines={2}
+                    textAlignVertical="top"
+                  />
+                  <Text style={styles.bizHint}>{t('profile.business_description_hint')}</Text>
+
+                  <TouchableOpacity
+                    style={styles.bizSaveButton}
+                    onPress={saveBusinessInfo}
+                    disabled={bizSaving}
+                    activeOpacity={0.85}
+                  >
+                    {bizSaving ? (
+                      <ActivityIndicator size="small" color="#ffffff" />
+                    ) : (
+                      <>
+                        <Ionicons name="save-outline" size={16} color="#ffffff" />
+                        <Text style={styles.bizSaveButtonText}>{t('app.save')}</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                </View>
+
                 <View style={styles.aiHowBox}>
                   <Text style={styles.aiHowTitle}>{t('aiImport.how_title')}</Text>
                   <Text style={styles.aiHowStep}>{t('aiImport.how_1')}</Text>
@@ -2752,6 +2934,94 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     color: '#c0392b',
+  },
+  bizCard: {
+    backgroundColor: '#fbfaff',
+    borderWidth: 1,
+    borderColor: '#ece7f7',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 18,
+  },
+  bizCardTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#5b3fa8',
+  },
+  bizCardSub: {
+    fontSize: 12,
+    color: '#7f8c8d',
+    marginTop: 2,
+    marginBottom: 10,
+  },
+  bizLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#7f8c8d',
+    marginBottom: 6,
+  },
+  bizLabelSpaced: {
+    marginTop: 14,
+  },
+  bizTypeWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  bizTypeChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    backgroundColor: '#ffffff',
+  },
+  bizTypeChipActive: {
+    backgroundColor: '#8e44ad',
+    borderColor: '#7c5cbf',
+  },
+  bizTypeText: {
+    fontSize: 13,
+    color: '#7f8c8d',
+  },
+  bizTypeTextActive: {
+    color: '#ffffff',
+    fontWeight: '700',
+  },
+  bizInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 15,
+    color: '#2c3e50',
+    backgroundColor: '#ffffff',
+    marginTop: 10,
+  },
+  bizDescInput: {
+    minHeight: 64,
+  },
+  bizHint: {
+    fontSize: 11,
+    color: '#95a5a6',
+    fontStyle: 'italic',
+    marginTop: 6,
+  },
+  bizSaveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#7c5cbf',
+    borderRadius: 20,
+    paddingVertical: 11,
+    marginTop: 14,
+  },
+  bizSaveButtonText: {
+    color: '#ffffff',
+    fontWeight: '700',
+    fontSize: 14,
   },
   aiProcessButton: {
     backgroundColor: '#8e44ad',

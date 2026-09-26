@@ -1274,3 +1274,90 @@ edits were needed.
 - The seller path (`/api/products/my`, `/api/sales/my`, `/api/customers/my`)
   is unchanged and still relies on the embedded `customers` relation, matching
   `SaleController::my`.
+
+---
+
+## Expo sync — Msimamizi Rejea (`preview`)
+
+**Date:** 2026-09-26
+**Module:** Msimamizi
+**Blade file inspected:** `resources/views/msimamizi/preview.blade.php`
+**Expo file modified:** `Duka_mkononi/app/msimamizi/preview.tsx`
+
+**Laravel endpoints used:**
+- `GET /api/admin/users?business=<name>&role=seller,admin`
+- `GET /api/admin/products?business_name=<name>`
+- `GET /api/admin/sales?business_name=<name>` (+ `date_from`/`date_to` when a
+  filter is active on the web)
+- `GET /api/office-expenses/range?start_date=&end_date=`
+
+**Old Node behaviour discovered in Expo:**
+- Users fetched with `?business=` but **without `role=seller,admin`** (Blade
+  passes it so the admin's own records are included).
+- Products fetched from `/api/admin/products` with **no `business_name`**, then
+  filtered in the client — the whole products table crossed the network.
+- Sales fetched from `/api/admin/sales` with **no `business_name`/date range**,
+  then filtered in the client.
+- Expenses were fetched with a **per-date request** (`loadDailyExpenses` looped
+  over every sale date), i.e. the N+1 pattern the Blade page replaced with a
+  single range request. Expense-only days (expenses but no sales) were dropped.
+
+**Changes made (Expo only):**
+1. Added `&role=seller,admin` to the users fetch.
+2. Added `?business_name=<name>` to the products fetch.
+3. Added `?business_name=<name>` to the sales fetch.
+4. Replaced `loadDailyExpenses(dates)` with `loadExpensesRange(start, end)` — a
+   single `/api/office-expenses/range` request for the whole window. Day cards
+   are now built from the union of sales dates and expense dates, so
+   expense-only days appear (with a negative net), matching Blade.
+5. Dropped the `"Mteja"` placeholder from the daily customers list (Blade only
+   lists genuinely recorded names).
+
+**Verification:** `npx tsc --noEmit` passes clean.
+
+**Remaining issues / not changed (documented Blade features still missing in
+Expo — require a dedicated feature pass):**
+- **Date-range filter** (progress.md §2a): Blade has Kuanzia/Hadi date pickers
+  that re-fetch sales with `date_from`/`date_to`. Expo has no filter UI yet, so
+  it always requests the full window.
+- **"Zimesomwa" mark-all-read** (progress.md §2c): Blade calls
+  `POST /api/admin/notifications/mark-all-read` and
+  `POST /api/admin/notifications/read-state`; Expo's Taarifa tab has no
+  read-state concept.
+- **"Chapisha Taarifa" per-day print** (progress.md §2d): Blade builds a
+  printable HTML document for one day; Expo has no print/PDF action
+  (expo-print/expo-sharing would be needed).
+
+---
+
+## New business type — `motorcycle_spares` ("Spea za Pikipiki")
+
+**Date:** 2026-09-26
+**Module:** Msimamizi (Bidhaa Mpya / AI import) + shared business-type lists
+
+**Change:** added `motorcycle_spares` to the business-type list, right after
+`spare_parts` (they are commonly sold by the same shop), and brought every
+place that keeps its own copy of the list in line:
+
+| File | What it holds |
+| --- | --- |
+| `resources/views/msimamizi/bidhaa-mpya.blade.php` | `AI_BIZ_TYPES` in the AI-import modal |
+| `resources/views/msimamizi/index.blade.php` | `BUSINESS_TYPES` in the dashboard edit modal |
+| `resources/views/admin-signup.blade.php` | business-type `<select>` at registration |
+| `app/Http/Controllers/Api/AuthController.php` | `BUSINESS_TYPE_ALLOWED` (registration validation) |
+| `app/Http/Controllers/Api/AiImportController.php` | `businessTypeLabel()` — label sent to Gemini |
+| `Duka_mkononi/app/msimamizi/bidhaa-mpya.tsx` | `BIZ_TYPES` in the AI-import panel |
+| `Duka_mkononi/app/msimamizi/index.tsx` | `BIZ_TYPES` in the dashboard edit modal |
+| `Duka_mkononi/app/muuzaji/profaili.tsx` | `BIZ_TYPES` in the seller profile |
+| `Duka_mkononi/locales/*.json` (8 languages) | `business_types.motorcycle_spares` |
+
+**Why every list had to change:** `ProfileController::update()` stores
+`business_type` verbatim, and each edit modal writes the select's value back on
+save. Any list missing the new slug would have silently reset a shop that had
+picked it back to "Nyingine" the next time they edited their profile. The AI
+prompt is the other trap: `businessTypeLabel()` falls back to the raw slug, so
+without the entry Gemini was told the business type was literally
+`motorcycle_spares`.
+
+**Verification:** `npx tsc --noEmit` passes clean; `php -l` clean on both
+controllers; all 8 locale files parse.
