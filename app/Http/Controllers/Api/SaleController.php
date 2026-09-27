@@ -373,6 +373,463 @@ class SaleController extends BaseController
         }
     }
 
+    /**
+     * PUT /api/sales/{id}
+     *
+     * Edit a sale. The sale already moved stock when it was created, so an
+     * edit must move stock by the DIFFERENCE only:
+     *   quantity increased -> sell the extra units (deduct the delta)
+     *   quantity reduced   -> return those units to stock (credit the delta)
+     * Re-applying the full quantity would double-count the original sale.
+     *
+     * Data integrity:
+     *   - the sale total is recomputed server-side from its own lines, so the
+     *     client's `total_amount` can never make the figures drift;
+     *   - a sale may only be edited by the seller who recorded it;
+     *   - increasing quantity past available stock is rejected before any write;
+     *   - Supabase/PostgREST has no cross-table transaction, so each write is
+     *     compensated if a later write fails, and the internal
+     *     `ai_dup_<key>` idempotency marker in `notes` is preserved;
+     *   - the customer's running totals are adjusted by the total's delta.
+     */
+    public function update(Request $request, $id)
+    {
+        if (function_exists('set_time_limit')) {
+            @set_time_limit(300);
+        }
+
+        $id = trim((string) $id);
+
+        try {
+            $userId = $this->userId($request);
+            $this->touchLastSeen($userId);
+
+            $sale = $id !== '' ? Sale::where('id', $id)->where('seller_id', $userId)->first() : null;
+
+            if (!$sale) {
+                $this->log($userId, 'SALE_UPDATE_FAILED', '/api/sales/' . $id, [
+                    'reason' => 'Sale not found or not owned by caller',
+                ], $this->ip($request), 'failed');
+
+                return $this->json([
+                    'success' => false,
+                    'error' => 'Mauzo hayakupatikana au huna ruhusa kuyahariri',
+                    'code' => 'SALE_NOT_FOUND',
+                ], 404);
+            }
+
+            // ---- 1. Validate the requested line changes -------------------
+            $incomingItems = $request->input('sale_items');
+            $incomingItems = (is_array($incomingItems) && count($incomingItems) > 0) ? $incomingItems : [];
+
+            $changes = [];
+            $invalid = [];
+            foreach ($incomingItems as $raw) {
+                if (!is_array($raw)) {
+                    $invalid[] = ['reason' => 'Malformed sale item'];
+                    continue;
+                }
+
+                $itemId = isset($raw['id']) ? trim((string) $raw['id']) : '';
+                $qty = (isset($raw['quantity']) && is_numeric($raw['quantity'])) ? (float) $raw['quantity'] : 0;
+                $unitPrice = (isset($raw['unit_price']) && is_numeric($raw['unit_price'])) ? (float) $raw['unit_price'] : 0;
+
+                if ($itemId === '') {
+                    $invalid[] = ['reason' => 'Missing sale item id'];
+                    continue;
+                }
+                if ($qty <= 0) {
+                    $invalid[] = ['id' => $itemId, 'reason' => 'Invalid quantity'];
+                    continue;
+                }
+                if ($unitPrice <= 0) {
+                    $invalid[] = ['id' => $itemId, 'reason' => 'Invalid unit price'];
+                    continue;
+                }
+
+                // The line must belong to THIS sale (and therefore to the caller).
+                $existing = SaleItem::where('id', $itemId)->where('sale_id', $sale->id)->first();
+                if (!$existing) {
+                    $invalid[] = ['id' => $itemId, 'reason' => 'Sale item not found'];
+                    continue;
+                }
+
+                $oldQty = (float) ($existing->quantity ?? 0);
+                $oldUnitPrice = (float) ($existing->unit_price ?? 0);
+
+                $changes[] = [
+                    'id' => $itemId,
+                    'product_id' => $existing->product_id,
+                    'old_quantity' => $oldQty,
+                    'old_unit_price' => $oldUnitPrice,
+                    'new_quantity' => $qty,
+                    'unit_price' => $unitPrice,
+                    'delta' => $qty - $oldQty,
+                ];
+            }
+
+            if (count($invalid) > 0) {
+                $this->log($userId, 'SALE_UPDATE_FAILED', '/api/sales/' . $sale->id, [
+                    'reason' => 'Invalid items',
+                    'invalid_items' => $invalid,
+                ], $this->ip($request), 'failed');
+
+                return $this->json([
+                    'success' => false,
+                    'error' => 'Taarifa za bidhaa hazijakamilika au si sahihi',
+                    'invalidItems' => $invalid,
+                    'code' => 'INVALID_ITEMS',
+                ], 400);
+            }
+
+            // ---- 2. Plan the stock movement per product -------------------
+            // One product may appear on more than one line of the same sale,
+            // so the deltas are aggregated first (see planStockDeltas(), which
+            // is pure and unit tested). Increasing a quantity sells the extra
+            // units; reducing it puts those units back on the shelf.
+            $productIds = [];
+            foreach ($changes as $change) {
+                if (!empty($change['product_id'])) {
+                    $productIds[(string) $change['product_id']] = true;
+                }
+            }
+            $productIds = array_keys($productIds);
+
+            $stockByProduct = [];
+            $productNames = [];
+            if (count($productIds) > 0) {
+                // One lookup for every product on the sale instead of N queries.
+                $products = Product::whereIn('id', $productIds)->select(['id', 'stock', 'name'])->get()->toArray();
+                foreach ($products as $product) {
+                    $pid = (string) ($product['id'] ?? '');
+                    if ($pid === '') {
+                        continue;
+                    }
+                    $stockByProduct[$pid] = (float) ($product['stock'] ?? 0);
+                    $productNames[$pid] = $product['name'] ?? null;
+                }
+            }
+
+            // Selling more than exists must fail BEFORE anything is written.
+            $plan = self::planStockDeltas($changes, $stockByProduct);
+            $stockDeltas = $plan['deltas'];
+            $stockIssues = [];
+            foreach ($plan['issues'] as $issue) {
+                $issue['product_name'] = $productNames[(string) $issue['product_id']] ?? null;
+                $stockIssues[] = $issue;
+            }
+
+            if (count($stockIssues) > 0) {
+                $this->log($userId, 'SALE_UPDATE_FAILED', '/api/sales/' . $sale->id, [
+                    'reason' => 'Stock issues',
+                    'stock_issues' => $stockIssues,
+                ], $this->ip($request), 'failed');
+
+                return $this->json([
+                    'success' => false,
+                    'error' => 'Hakuna bidhaa za kutosha kwa kuongeza kiasi',
+                    'stockIssues' => $stockIssues,
+                    'code' => 'STOCK_ISSUES',
+                ], 400);
+            }
+
+            // ---- 3. Recompute the sale total from its own lines -----------
+            $existingItems = SaleItem::where('sale_id', $sale->id)->get()->toArray();
+            $changesById = [];
+            foreach ($changes as $change) {
+                $changesById[(string) $change['id']] = $change;
+            }
+
+            $newTotal = 0.0;
+            foreach ($existingItems as $line) {
+                $lineId = (string) ($line['id'] ?? '');
+                if (isset($changesById[$lineId])) {
+                    $newTotal += $changesById[$lineId]['new_quantity'] * $changesById[$lineId]['unit_price'];
+                } else {
+                    $newTotal += (float) ($line['total_price'] ?? 0);
+                }
+            }
+            $newTotal = round($newTotal, 2);
+
+            $now = $this->isoNow();
+            $oldTotal = (float) ($sale->total_amount ?? 0);
+            $oldNotes = (string) ($sale->notes ?? '');
+            // Kept so a compensated (rolled-back) edit leaves no trace - including
+            // the `updated_at` that the admin preview uses as an edit marker.
+            $oldUpdatedAt = (string) ($sale->updated_at ?? $now);
+
+            // Never drop the internal double-submit marker store() wrote into notes.
+            $marker = '';
+            if (strncmp($oldNotes, 'ai_dup_', 7) === 0) {
+                $separator = strpos($oldNotes, ' | ');
+                $marker = ($separator === false) ? $oldNotes : substr($oldNotes, 0, $separator);
+            }
+            $incomingNotes = trim((string) $request->input('notes', ''));
+            $incomingCustomerName = trim((string) $request->input('customer_name', ''));
+            if ($incomingNotes === '') {
+                $newNotes = $marker;
+            } elseif ($marker !== '') {
+                $newNotes = $marker . ' | ' . $incomingNotes;
+            } else {
+                $newNotes = $incomingNotes;
+            }
+
+            // ---- 4. Write the sale header (notes + recomputed total) ------
+            try {
+                Sale::where('id', $sale->id)->where('seller_id', $userId)->update([
+                    'notes' => $newNotes !== '' ? $newNotes : null,
+                    'total_amount' => $newTotal,
+                    'updated_at' => $now,
+                ]);
+            } catch (\Throwable $e) {
+                $this->log($userId, 'SALE_UPDATE_FAILED', '/api/sales/' . $sale->id, [
+                    'reason' => 'Sale header write failed',
+                    'error' => $e->getMessage(),
+                ], $this->ip($request), 'failed');
+
+                return $this->json([
+                    'success' => false,
+                    'error' => 'Imeshindikana kuhifadhi mabadiliko ya mauzo',
+                    'code' => 'SALE_UPDATE_ERROR',
+                ], 500);
+            }
+
+            // ---- 5. Write the sale lines ---------------------------------
+            $appliedItems = [];
+            foreach ($changes as $change) {
+                try {
+                    SaleItem::where('id', $change['id'])->where('sale_id', $sale->id)->update([
+                        'quantity' => $change['new_quantity'],
+                        'unit_price' => $change['unit_price'],
+                        'total_price' => round($change['new_quantity'] * $change['unit_price'], 2),
+                    ]);
+                    $appliedItems[] = $change;
+                } catch (\Throwable $e) {
+                    $this->revertSaleItems($sale->id, $appliedItems, $now);
+                    $this->revertSaleHeader($sale->id, $userId, $oldNotes, $oldTotal, $oldUpdatedAt);
+
+                    $this->log($userId, 'SALE_UPDATE_FAILED', '/api/sales/' . $sale->id, [
+                        'reason' => 'Sale item write failed',
+                        'error' => $e->getMessage(),
+                    ], $this->ip($request), 'failed');
+
+                    return $this->json([
+                        'success' => false,
+                        'error' => 'Imeshindikana kuhifadhi bidhaa za mauzo',
+                        'code' => 'SALE_ITEMS_UPDATE_ERROR',
+                    ], 500);
+                }
+            }
+
+            // ---- 6. Move stock by the difference ONLY --------------------
+            $stockUpdates = [];
+            foreach ($stockDeltas as $productId => $delta) {
+                if (abs($delta) < 0.00001) {
+                    continue;
+                }
+
+                // Re-read right before writing and store an absolute, fresh
+                // value (same rule as store()) so a concurrent sale cannot be
+                // resurrected from a stock number read earlier.
+                $current = Product::where('id', $productId)->select(['stock'])->first();
+                if (!$current) {
+                    continue;
+                }
+
+                $oldStock = (float) ($current->stock ?? 0);
+                $newStock = $oldStock - $delta; // increase => delta>0 => stock down
+                if ($newStock < 0) {
+                    $newStock = 0;
+                }
+
+                try {
+                    Product::where('id', $productId)->update([
+                        'stock' => $newStock,
+                        'updated_at' => $now,
+                    ]);
+
+                    $stockUpdates[] = [
+                        'product_id' => $productId,
+                        'quantity_change' => $delta,
+                        'old_stock' => $oldStock,
+                        'new_stock' => $newStock,
+                    ];
+                } catch (\Throwable $e) {
+                    foreach (array_reverse($stockUpdates) as $applied) {
+                        try {
+                            Product::where('id', $applied['product_id'])->update([
+                                'stock' => $applied['old_stock'],
+                                'updated_at' => $now,
+                            ]);
+                        } catch (\Throwable $rollbackError) {
+                        }
+                    }
+                    $this->revertSaleItems($sale->id, $appliedItems, $now);
+                    $this->revertSaleHeader($sale->id, $userId, $oldNotes, $oldTotal, $oldUpdatedAt);
+
+                    $this->log($userId, 'SALE_UPDATE_FAILED', '/api/sales/' . $sale->id, [
+                        'reason' => 'Stock write failed',
+                        'error' => $e->getMessage(),
+                    ], $this->ip($request), 'failed');
+
+                    return $this->json([
+                        'success' => false,
+                        'error' => 'Imeshindikana kusasisha stoo',
+                        'code' => 'STOCK_UPDATE_ERROR',
+                    ], 500);
+                }
+            }
+
+            // ---- 7. Keep the customer's running totals honest -------------
+            if ($sale->customer_id) {
+                $customerDelta = $newTotal - $oldTotal;
+                if (abs($customerDelta) > 0.00001) {
+                    $customer = Customer::where('id', $sale->customer_id)->select(['total_purchases'])->first();
+                    if ($customer) {
+                        $newTotalPurchases = max(0, (float) ($customer->total_purchases ?? 0) + $customerDelta);
+                        try {
+                            Customer::where('id', $sale->customer_id)->update([
+                                'total_purchases' => $newTotalPurchases,
+                                'updated_at' => $now,
+                            ]);
+                        } catch (\Throwable $e) {
+                            // Best effort: the sale itself is already saved correctly.
+                        }
+                    }
+                }
+            }
+
+            $updatedSale = Sale::where('id', $sale->id)->first();
+            $hydrated = $updatedSale ? $this->attachRelations([$updatedSale->toArray()])[0] : null;
+
+            // Rich details: the admin preview turns this log entry into a
+            // "taarifa" (who edited which sale, from what to what).
+            $itemChanges = [];
+            foreach ($changes as $change) {
+                $itemChanges[] = [
+                    'product_id' => $change['product_id'],
+                    'product_name' => $productNames[(string) $change['product_id']] ?? null,
+                    'old_quantity' => $change['old_quantity'],
+                    'new_quantity' => $change['new_quantity'],
+                    'unit_price' => $change['unit_price'],
+                ];
+            }
+
+            $this->log($userId, 'SALE_UPDATE', '/api/sales/' . $sale->id, [
+                'sale_id' => $sale->id,
+                'invoice_number' => $sale->invoice_number,
+                'customer_name' => $incomingCustomerName,
+                'old_total_amount' => $oldTotal,
+                'total_amount' => $newTotal,
+                'items_changed' => count($changes),
+                'items' => $itemChanges,
+                'stock_updates' => $stockUpdates,
+            ], $this->ip($request), 'success');
+
+            return $this->json([
+                'success' => true,
+                'message' => 'Mauzo yamehaririwa kikamilifu!',
+                'sale' => $hydrated,
+                'stock_updates' => $stockUpdates,
+            ]);
+        } catch (\Throwable $e) {
+            $this->log($this->userId($request), 'SALE_UPDATE_ERROR', '/api/sales/' . $id, [
+                'error' => $e->getMessage(),
+            ], $this->ip($request), 'failed');
+
+            return $this->dbError($e);
+        }
+    }
+
+    /**
+     * Compensating write: restore sale lines already applied in this request.
+     * PostgREST has no transaction, so a failed later step must undo earlier ones.
+     */
+    private function revertSaleItems(string $saleId, array $appliedItems, string $now): void
+    {
+        foreach (array_reverse($appliedItems) as $applied) {
+            try {
+                SaleItem::where('id', $applied['id'])->where('sale_id', $saleId)->update([
+                    'quantity' => $applied['old_quantity'],
+                    'unit_price' => $applied['old_unit_price'],
+                    'total_price' => round($applied['old_quantity'] * $applied['old_unit_price'], 2),
+                ]);
+            } catch (\Throwable $e) {
+            }
+        }
+    }
+
+    /**
+     * Pure planning step for a sale edit (no I/O - unit tested).
+     *
+     * Aggregates each product's stock delta across every changed line and
+     * flags a plan that would break stock:
+     *   - the product does not exist, or
+     *   - selling the extra units would exceed the stock on hand.
+     * A reduced quantity (negative delta) is always safe: it credits stock back.
+     *
+     * @param  array<int, array{product_id?: mixed, delta?: mixed}>  $changes
+     * @param  array<string, float|int>  $stockByProduct  product id => stock on hand
+     * @return array{deltas: array<string, float>, issues: array<int, array<string, mixed>>}
+     */
+    public static function planStockDeltas(array $changes, array $stockByProduct): array
+    {
+        $deltas = [];
+        foreach ($changes as $change) {
+            $productId = $change['product_id'] ?? null;
+            if ($productId === null || $productId === '') {
+                continue;
+            }
+
+            $productId = (string) $productId;
+            if (!isset($deltas[$productId])) {
+                $deltas[$productId] = 0.0;
+            }
+            $deltas[$productId] += (float) ($change['delta'] ?? 0);
+        }
+
+        $issues = [];
+        foreach ($deltas as $productId => $delta) {
+            if ($delta <= 0) {
+                continue; // reducing a quantity only ever puts stock back
+            }
+
+            if (!array_key_exists($productId, $stockByProduct)) {
+                $issues[] = ['product_id' => $productId, 'reason' => 'Product not found'];
+                continue;
+            }
+
+            $available = (float) $stockByProduct[$productId];
+            if ($available < $delta) {
+                $issues[] = [
+                    'product_id' => $productId,
+                    'reason' => 'Insufficient stock',
+                    'available' => $available,
+                    'additional_required' => $delta,
+                ];
+            }
+        }
+
+        return ['deltas' => $deltas, 'issues' => $issues];
+    }
+
+    /**
+     * Compensating write: restore the sale header (notes + total).
+     */
+    private function revertSaleHeader(string $saleId, ?string $userId, string $oldNotes, float $oldTotal, string $oldUpdatedAt): void
+    {
+        try {
+            Sale::where('id', $saleId)->where('seller_id', $userId)->update([
+                'notes' => $oldNotes !== '' ? $oldNotes : null,
+                'total_amount' => $oldTotal,
+                // Restore the original timestamp, not now(): otherwise a failed
+                // edit would still look like an edit to the admin preview.
+                'updated_at' => $oldUpdatedAt,
+            ]);
+        } catch (\Throwable $e) {
+        }
+    }
+
     private function generateInvoiceNumber($seller_id = null)
     {
         try {

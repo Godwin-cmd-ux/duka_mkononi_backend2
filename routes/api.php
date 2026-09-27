@@ -86,6 +86,7 @@ use Illuminate\Support\Facades\Route;
 
         Route::get('sales/my', [SaleController::class, 'my']);
         Route::post('sales', [SaleController::class, 'store']);
+        Route::put('sales/{id}', [SaleController::class, 'update']);
         Route::get('customers/my', [CustomerController::class, 'my']);
         Route::post('customers', [CustomerController::class, 'store']);
         Route::put('customers/{id}', [CustomerController::class, 'update']);
