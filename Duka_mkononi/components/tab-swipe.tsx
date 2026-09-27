@@ -1,5 +1,5 @@
 import { usePathname, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   Dimensions,
@@ -9,7 +9,6 @@ import {
   PanResponderInstance,
   StyleSheet,
 } from 'react-native';
-import { playPageFold, preloadPageFold } from '../lib/page-fold-sound';
 
 /**
  * Swipe-to-change-tab wrapper with a paper-fold (page-turn) transition.
@@ -90,10 +89,6 @@ export default function TabSwipe({ tabs, children }: TabSwipeProps) {
     if (next > 0) setWidth((current) => (Math.abs(current - next) > 1 ? next : current));
   }, []);
 
-  useEffect(() => {
-    preloadPageFold();
-  }, []);
-
   // The PanResponder is created once, so its callbacks read live values from
   // this ref instead of a stale closure.
   const live = useRef({ currentIndex, router, tabs, width });
@@ -147,7 +142,6 @@ export default function TabSwipe({ tabs, children }: TabSwipeProps) {
         const direction = goingLeft ? -1 : 1;
         setHingeOnce(goingLeft ? 'left' : 'right');
         turning.current = true;
-        playPageFold();
 
         Animated.timing(drag, {
           toValue: direction,

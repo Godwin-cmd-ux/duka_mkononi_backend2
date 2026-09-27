@@ -54,6 +54,9 @@ export default function MauzoScreen() {
   });
   const [closeSalesModalVisible, setCloseSalesModalVisible] = useState(false);
   const [todayClosed, setTodayClosed] = useState(false);
+  // "Hifadhi Mabadiliko" shows a spinner and locks while the PUT is in
+  // flight, so a slow save is visible and cannot be double-submitted.
+  const [savingSale, setSavingSale] = useState(false);
   
   const today = new Date().toISOString().split('T')[0];
 
@@ -384,6 +387,7 @@ export default function MauzoScreen() {
         update_data: updateData
       });
 
+      setSavingSale(true);
       const response = await fetch(`${API_BASE_URL}/api/sales/${selectedSale.id}`, {
         method: 'PUT',
         headers: {
@@ -437,6 +441,8 @@ export default function MauzoScreen() {
     } catch (error) {
       console.error('Error updating sale:', error);
       Alert.alert(t('app.error'), t('seller_dashboard.error_network'));
+    } finally {
+      setSavingSale(false);
     }
   };
 
@@ -1069,14 +1075,19 @@ export default function MauzoScreen() {
               <TouchableOpacity 
                 style={styles.cancelButton}
                 onPress={() => setEditModalVisible(false)}
+                disabled={savingSale}
               >
                 <Text style={styles.cancelButtonText}>{t('seller_dashboard.cancel')}</Text>
               </TouchableOpacity>
               
               <TouchableOpacity 
-                style={styles.saveButton}
+                style={[styles.saveButton, savingSale && styles.saveButtonBusy]}
                 onPress={updateSale}
+                disabled={savingSale}
               >
+                {savingSale ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : null}
                 <Text style={styles.saveButtonText}>{t('seller_dashboard.save')}</Text>
               </TouchableOpacity>
             </View>
@@ -1622,10 +1633,17 @@ const styles = StyleSheet.create({
   
   saveButton: {
     flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'center',
     paddingVertical: 14,
     alignItems: 'center',
+    gap: 8,
     backgroundColor: '#2196F3',
     borderRadius: 10,
+  },
+  
+  saveButtonBusy: {
+    opacity: 0.7,
   },
   
   saveButtonText: {

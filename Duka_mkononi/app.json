@@ -17,7 +17,8 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.franklin19.dukamkononi"
     },
     "android": {
       "package": "com.franklin19.dukamkononi",

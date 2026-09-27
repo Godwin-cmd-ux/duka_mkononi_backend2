@@ -3482,7 +3482,7 @@ swiping left always navigated to `ripoti` and swiping right was always refused a
 path, which is why those felt perfect. Now the longest matching tab wins
 (`resolveTabIndex`), so ripoti/preview/bidhaa-mpya/tangaza turn correctly.
 
-### 3. Paper-fold transition + fold sound
+### 3. Paper-fold transition + fold sound (sound removed in Pass 32)
 `tab-swipe.tsx` no longer slides. One `Animated.Value` (0 flat, +/-1 folded shut)
 drives a 3D turn: `perspective: 1100`, a `rotateY` up to 80 deg, a lighter
 translate and a depth fade, hinged on the edge leading into the direction of
@@ -3521,7 +3521,7 @@ plus a crease snap, mono 22.05 kHz 16-bit PCM) into
 
 ## Pass 31 - Paper-squash fold sound + sale-edit message traced to an undeployed route (Sep 27, 2026)
 
-### 1. The fold sound is now a "paper squash"
+### 1. The fold sound is now a "paper squash" (removed again in Pass 32)
 
 The Pass 30 clip was a smooth band-passed swish with a single crease snap, which
 read as airy rather than papery. `scripts/generate-page-fold-sound.js` now
@@ -3578,3 +3578,103 @@ then run `php artisan route:clear` and `php artisan config:clear` on the server.
   on the waveform statistics and the user's description ("paper squash").
 - Nothing committed, no OTA, no deploy. The sale-edit route still has to be
   deployed by whoever owns the server before editing works in the app.
+
+---
+
+## Pass 32 - Fold sound removed entirely + mobile save button spins (Sep 27, 2026)
+
+### 1. The tab-swipe sound is gone
+
+The paper-fold cue could not be judged on a device here and was not worth the
+extra moving parts, so it has been removed completely. The fold animation itself
+is untouched.
+
+Deleted:
+- `Duka_mkononi/assets/sounds/page-fold.wav` (and the now-empty `assets/sounds/`
+  directory),
+- `Duka_mkononi/lib/page-fold-sound.ts` (the expo-av player),
+- `Duka_mkononi/scripts/generate-page-fold-sound.js` (the synthesiser).
+
+`components/tab-swipe.tsx` lost the `playPageFold`/`preloadPageFold` import, the
+preload `useEffect` (and the now-unused `useEffect` import) and the
+`playPageFold()` call on a committed swipe. A repo-wide grep for
+`page-fold|pageFold|PageFold` returns nothing.
+
+`expo-av` stays in `package.json`: `msimamizi/tangaza.tsx` and
+`mteja/matangazo.tsx` still import `Video`/`ResizeMode` from it, so the
+dependency was deliberately not dropped.
+
+### 2. "Hifadhi Mabadiliko" now spins while a sale is saving
+
+- Web (`resources/views/muuzaji/mauzo.blade.php`) already had this:
+  `setEditSaleBusy()` swaps the button for a `fa-spin` spinner + "Inahifadhi..."
+  and locks both footer buttons from the click until the PUT settles - success,
+  the 404 (`routeMissing`) branch and the network-error branch all restore it. No
+  change was needed; it ships with the next web deploy.
+- Mobile (`Duka_mkononi/app/muuzaji/mauzo.tsx`) had none, so the edit-modal save
+  button never changed when tapped. It now holds a `savingSale` flag: an
+  `ActivityIndicator` plus a dimmed button while the PUT is in flight, and
+  `disabled` on both save and cancel (the same double-tap guard as the web). The
+  flag is cleared in a `finally`, so no early return or thrown fetch can strand it.
+
+### Verification
+- `npx tsc --noEmit` (in `Duka_mkononi`) -> clean
+- `grep -rn "page-fold|pageFold|PageFold"` over `app/ components/ lib/
+  constants/ scripts/ hooks/` -> no matches
+- `assets/sounds/` removed; `assets/` now holds only `images/`
+- `mauzo.tsx` re-checked as CRLF-only after the edit (0 LF-only lines)
+
+### Not done / assumptions
+- Nothing committed, no OTA, no deploy.
+- The spinner is type-checked only - there is no device here to watch it.
+- The web spinner has been in the repo for a while; if the live site still shows
+  a dead button, the Blade simply has not been deployed yet. A 404 from an
+  undeployed server also settles so fast that the spinner may only flash.
+- Editing a sale still 404s in production until the server picks up the
+  `PUT /api/sales/{id}` route committed in `1a5c065`.
+
+## Pass 33 - Fix `iv is not defined` crash on Bidhaa Mpya (Sep 27, 2026)
+
+### 1. The new-product page threw `ReferenceError: iv is not defined` on every keystroke
+
+`resources/views/msimamizi/bidhaa-mpya.blade.php` declared the form-validity
+flag as a *local* inside `renderUI()`:
+
+```js
+const iv = formData.name && formData.category && formData.price &&
+  formData.expected_selling_price && formData.stock;
+```
+
+`updateDynamic()` then read `iv` (`sb.disabled = !iv`) as if it were shared
+state. It is a separate function, so it never saw that binding - `iv` does not
+exist in its scope and is not a global either. The page failed on load
+(`init()` -> `renderUI()` -> `updateDynamic()`) and again on every `input`
+event, and the submit button therefore never unlocked correctly.
+
+Fix: the expression now lives in one place, a new `isFormValid()` helper next to
+`validateForm()`. `renderUI()` does `const iv = isFormValid();` and
+`updateDynamic()` does the same, so the two can no longer drift apart.
+
+`iv` was the only such shared-but-undeclared name: `grep -rn "\biv\b"` over
+`resources/views/` matches only this file.
+
+### Verification
+- `php -l resources/views/msimamizi/bidhaa-mpya.blade.php` -> no syntax errors
+- Both inline `<script>` blocks (lines 35-80 and 132-562) extracted to relative
+  temp files -> `node --check` -> clean; temp files deleted
+- The first script block was executed in Node against a small DOM stub, which
+  runs its top-level `init()` plus explicit `renderUI()` and `updateDynamic()`
+  calls. Before the fix that throws `ReferenceError: iv is not defined`; after
+  it the block completes with exit code 0, and `isFormValid()` reads `false` on
+  an empty form and `true` once all five fields are filled
+- `php artisan view:clear` run so no stale compiled view is served
+- File stayed CRLF-only after the edit (566 CRLF, 0 LF-only)
+
+### Not done / assumptions
+- Nothing committed, no push, no deploy - the live site keeps the crash until
+  this Blade is deployed.
+- A stale compiled view in `storage/framework/views` could have masked the fix;
+  the cache was cleared, but a server-side `php artisan view:clear` after deploy
+  is still the safe move.
+- Only the reported page was changed. The other msimamizi pages were not audited
+  for the same "local declared in one function, read in another" pattern.

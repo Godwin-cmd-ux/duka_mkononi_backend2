@@ -9,6 +9,20 @@
       "android": {
         "buildType": "apk"
       }
+    },
+    "aab": {
+      "channel": "production",
+      "autoIncrement": true,
+      "android": {
+        "buildType": "app-bundle"
+      }
+    },
+    "ios": {
+      "channel": "production",
+      "autoIncrement": true
     }
+  },
+  "submit": {
+    "production": {}
   }
 }
