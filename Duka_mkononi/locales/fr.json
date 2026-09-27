@@ -582,7 +582,7 @@
     "no_sales": "No sales yet"
   },
   "reports": {
-    "cost_not_recorded": "prix d'achat non enregistre",
+    "cost_not_recorded": "prix d'achat non enregistré",
     "title": "Rapport Complet",
     "sales_report": "Rapport de Ventes",
     "daily_report": "Daily Report",
