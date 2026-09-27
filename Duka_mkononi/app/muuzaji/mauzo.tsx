@@ -57,6 +57,17 @@ export default function MauzoScreen() {
   
   const today = new Date().toISOString().split('T')[0];
 
+  // Live edit total = quantity × unit price. The summary total follows the
+  // quantity the seller types (the server recomputes the same value on save).
+  // Falls back to the recorded total when there is no unit price.
+  // Same quantity resolution as handleUpdateSale, so the live total always
+  // matches what saving would produce.
+  const editUnitPriceNum = parseFloat(editForm.unit_price) || 0;
+  const editQuantityNum = parseInt(editForm.quantity, 10) || (selectedSale?.sale_items?.[0]?.quantity || 1);
+  const editTotalAmount = editUnitPriceNum > 0
+    ? editQuantityNum * editUnitPriceNum
+    : (selectedSale?.total_amount || 0);
+
   // Format currency function
   const formatCurrency = (amount: number) => {
     return `TZS ${amount.toLocaleString('en-TZ', {
@@ -109,6 +120,31 @@ export default function MauzoScreen() {
     
     // Mwishowe: Rudi kwenye default
     return t('seller_dashboard.unknown_customer');
+  };
+
+  // Customer count = distinct known customers + one "unknown customer" per
+  // sale that has no customer data (same rule as the report pages).
+  const countTodayCustomers = () => {
+    const unknown = t('seller_dashboard.unknown_customer');
+    const known = new Set(
+      salesData.map(s => getCustomerName(s)).filter(n => n && n !== unknown)
+    ).size;
+    const unknownSales = salesData.filter(s => {
+      const n = getCustomerName(s);
+      return !n || n === unknown;
+    }).length;
+    return known + unknownSales;
+  };
+
+  // Sales created with an idempotency key store their notes as
+  // "ai_dup_<clientSaleKey> | <real notes>". That marker is an internal
+  // double-submit guard written by SaleController::store / commitAiSale, never
+  // something the seller should read, so strip it for display only.
+  const stripInternalNotes = (notes: any): string => {
+    if (!notes || typeof notes !== 'string') return '';
+    if (!notes.startsWith('ai_dup_')) return notes;
+    const separator = notes.indexOf(' | ');
+    return separator >= 0 ? notes.slice(separator + 3) : '';
   };
 
   // Load sales data from database - IMPROVED VERSION
@@ -353,6 +389,9 @@ export default function MauzoScreen() {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
+          // Ask Laravel for JSON on every error status too, so a not-found
+          // response is parseable instead of an HTML error page.
+          'Accept': 'application/json',
         },
         body: JSON.stringify(updateData),
       });
@@ -361,6 +400,30 @@ export default function MauzoScreen() {
         Alert.alert(t('app.success'), t('seller_dashboard.success_edit'));
         setEditModalVisible(false);
         loadSalesData(); // Reload data
+      } else if (response.status === 404) {
+        // Two very different 404s arrive here:
+        //  * the sale is missing or belongs to another business - the API
+        //    answers with `error` (code SALE_NOT_FOUND), and
+        //  * PUT /api/sales/{id} is not on the deployed server at all -
+        //    Laravel answers "The route api/sales/<id> could not be found."
+        //    with no `error` field.
+        // Surface the real reason in both cases; never the stale "editing is
+        // not available yet" text, and never the bare English route sentence.
+        let jsonError: any = null;
+        try { jsonError = await response.json(); } catch { jsonError = null; }
+        const routeMissing = !!jsonError && !jsonError.error &&
+          typeof jsonError.message === 'string' &&
+          /could not be found/i.test(jsonError.message);
+        console.warn('❌ Sale update rejected:', response.status, jsonError);
+        Alert.alert(
+          t('app.error'),
+          routeMissing
+            ? t('seller_dashboard.server_not_updated')
+            : (jsonError && (jsonError.error || jsonError.message))
+              || t('seller_dashboard.error_edit'),
+          [{ text: t('app.ok') }]
+        );
+        setEditModalVisible(false);
       } else {
         const errorText = await response.text();
         console.error('❌ Update error:', errorText);
@@ -697,15 +760,15 @@ export default function MauzoScreen() {
             </View>
           )}
           
-          {/* Show notes if available */}
-          {item.notes && (
+          {/* Show notes if available (without the internal idempotency marker) */}
+          {stripInternalNotes(item.notes) ? (
             <View style={styles.notesRow}>
               <Ionicons name="document-text" size={14} color="#95a5a6" />
               <Text style={styles.notesText} numberOfLines={2}>
-                {item.notes}
+                {stripInternalNotes(item.notes)}
               </Text>
             </View>
-          )}
+          ) : null}
         </View>
         
         <View style={styles.saleFooter}>
@@ -989,9 +1052,13 @@ export default function MauzoScreen() {
                   <View style={styles.summaryRow}>
                     <Text style={styles.totalLabel}>{t('seller_dashboard.total')}:</Text>
                     <Text style={styles.totalValue}>
-                      {formatCurrency(selectedSale.total_amount || 0)}
+                      {formatCurrency(editTotalAmount)}
                     </Text>
                   </View>
+
+                  <Text style={styles.fieldHint}>
+                    {t('seller_dashboard.stock_sync_note')}
+                  </Text>
 
                   </View>
               
@@ -1033,7 +1100,7 @@ export default function MauzoScreen() {
               {'\n\n'}
               {t('seller_dashboard.total_today')}: {formatCurrency(calculateTodayTotal())}
               {'\n\n'}
-              {t('seller_dashboard.customers')}: {new Set(salesData.map(s => getCustomerName(s))).size}
+              {t('seller_dashboard.customers')}: {countTodayCustomers()}
             </Text>
             
             <View style={styles.confirmButtons}>

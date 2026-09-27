@@ -6,7 +6,6 @@ import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
-    Image,
     Modal,
     ScrollView,
     StyleSheet,
@@ -16,6 +15,7 @@ import {
     View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import ZoomableImage from '../../components/zoomable-image';
 import { useLang } from '../../context/LanguageContext';
 import { useSession } from '../../context/SessionContext';
 import { uploadToCloudinary } from '../../utils/cloudinary';
@@ -53,25 +53,15 @@ export default function ProfailiScreen() {
 
   // Hali ya modali ya kuhariri wasifu
   const [editModalVisible, setEditModalVisible] = useState(false);
+  // A seller may only edit their OWN details. Business fields (name, location,
+  // type, description, logo, coordinates) are read-only and are managed by the
+  // msimamizi.
   const [editFormData, setEditFormData] = useState({
     full_name: '',
-    phone: '',
-    business_name: '',
-    business_location: '',
-    business_type: '',
-    business_description: ''
+    phone: ''
   });
   const [updatingProfile, setUpdatingProfile] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
-
-  // Aina zinazoruhusiwa za biashara (normalized keys — see server BUSINESS_TYPE_ALLOWED)
-  const BIZ_TYPES = [
-    'spare_parts', 'motorcycle_spares', 'pharmacy', 'supermarket', 'clothing', 'electronics',
-    'restaurant', 'hardware', 'cosmetics', 'perfume', 'mobile_accessories',
-    'furniture', 'stationery', 'agriculture', 'construction_materials',
-    'beauty_salon', 'barbershop', 'auto_repair', 'phone_shop', 'computer_shop',
-    'general_retail', 'wholesale', 'other',
-  ];
 
   // Pakua data ya mtumiaji na takwimu wakati komponenti inapopakuliwa
   useEffect(() => {
@@ -155,11 +145,7 @@ export default function ProfailiScreen() {
       // Weka data ya awali ya fomu
       setEditFormData({
         full_name: user.full_name || '',
-        phone: user.phone || '',
-        business_name: user.business_name || '',
-        business_location: user.business_location || '',
-        business_type: user.business_type || '',
-        business_description: user.business_description || ''
+        phone: user.phone || ''
       });
       
     } catch (error: any) {
@@ -176,11 +162,7 @@ export default function ProfailiScreen() {
           setUserData(user);
           setEditFormData({
             full_name: user.full_name || '',
-            phone: user.phone || '',
-            business_name: user.business_name || '',
-            business_location: user.business_location || '',
-            business_type: user.business_type || '',
-            business_description: user.business_description || ''
+            phone: user.phone || ''
           });
           console.log('📄 Inatumia data iliyohifadhiwa ya mtumiaji kama nyongeza');
         } else {
@@ -287,163 +269,62 @@ export default function ProfailiScreen() {
         return;
       }
 
-      if (!businessData) {
-        console.error('❌ No business data available');
-        return;
-      }
-
       const cachedStats = await getCache<any>('user:stats');
       if (cachedStats) { setStats(cachedStats); }
 
-      console.log(`📊 Loading stats for business: ${businessData.business_name}, Admin: ${businessData.is_admin}`);
+      console.log('📊 Loading TODAY stats (same contract as the Blade page)');
 
       let totalProducts = 0;
       let totalSales = 0;
       let totalRevenue = 0;
       let totalCustomers = 0;
 
-      // ✅ KUPAKUA BIDHAA - KWA BIASHARA HUSIKA TU
-      if (businessData.is_admin) {
-        // Msimamizi anaona bidhaa zote za biashara yake
-        const productsResponse = await fetchWithTimeout(`${API_BASE_URL}/api/products/my`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'ngrok-skip-browser-warning': 'true'
-          },
-        });
-
-        if (productsResponse.ok) {
-          const productsData = await productsResponse.json();
-          totalProducts = productsData.length || 0;
-          console.log(`📦 Admin: Loaded ${totalProducts} products from business`);
-        }
-      } else {
-        // Muuzaji anaona bidhaa zote za wauzaji wote katika biashara hiyo
-        try {
-          // Kwanza pata wauzaji wote katika biashara hii
-          const sellersResponse = await fetchWithTimeout(
-            `${API_BASE_URL}/api/business/${encodeURIComponent(businessData.business_name)}/sellers`,
-            {
-              method: 'GET',
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-                'ngrok-skip-browser-warning': 'true'
-              },
-            }
-          );
-
-          if (sellersResponse.ok) {
-            const sellers = await sellersResponse.json();
-            console.log(`✅ Found ${sellers.length} sellers in business`);
-            
-            let allProducts = [];
-            
-            // Pata bidhaa kutoka kwa kila muuzaji
-            for (const seller of sellers) {
-              const sellerProductsResponse = await fetchWithTimeout(
-                `${API_BASE_URL}/api/products/seller/${seller.id}`,
-                {
-                  method: 'GET',
-                  headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                    'ngrok-skip-browser-warning': 'true'
-                  },
-                }
-              );
-              
-              if (sellerProductsResponse.ok) {
-                const sellerProducts = await sellerProductsResponse.json();
-                allProducts = [...allProducts, ...sellerProducts];
-              }
-            }
-            
-            totalProducts = allProducts.length;
-            console.log(`📦 Seller: Loaded ${totalProducts} products from all sellers in business`);
-          }
-        } catch (error) {
-          console.error('❌ Error loading business products:', error);
-        }
+      // Bidhaa za biashara: /api/products/my already scopes itself server-side
+      // (admin -> the admin's own rows, seller -> the business's products), so
+      // the old per-seller fan-out is gone. Both Node endpoints it used,
+      // /api/business/{name}/sellers and /api/products/seller/{id}, are 404 on
+      // Laravel - the Blade page never called them either.
+      const productsResponse = await fetchWithTimeout(`${API_BASE_URL}/api/products/my`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'ngrok-skip-browser-warning': 'true'
+        },
+      });
+      if (productsResponse.ok) {
+        const productsData = await productsResponse.json();
+        totalProducts = Array.isArray(productsData) ? productsData.length : 0;
       }
 
-      // ✅ KUPAKUA MAUZO - KWA BIASHARA HUSIKA TU
-      if (businessData.is_admin) {
-        // Msimamizi anaona mauzo yote ya biashara yake
-        const salesResponse = await fetchWithTimeout(`${API_BASE_URL}/api/sales/my`, {
+      // Mauzo ya LEO pekee: filtered by the database through date_from/date_to,
+      // exactly like resources/views/muuzaji/profaili.blade.php.
+      const todayStr = new Date().toISOString().split('T')[0];
+      const salesResponse = await fetchWithTimeout(
+        `${API_BASE_URL}/api/sales/my?date_from=${todayStr}&date_to=${todayStr}`,
+        {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
             'ngrok-skip-browser-warning': 'true'
           },
-        });
-
-        if (salesResponse.ok) {
-          const salesData = await salesResponse.json();
-          totalSales = salesData.length || 0;
-          totalRevenue = salesData.reduce((sum: number, sale: any) => 
-            sum + parseFloat(sale.total_amount || 0), 0);
-          console.log(`💰 Admin: Loaded ${totalSales} sales from business, Revenue: ${totalRevenue}`);
         }
-      } else {
-        // Muuzaji anaona mauzo yake pekee
-        const salesResponse = await fetchWithTimeout(`${API_BASE_URL}/api/sales/my`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'ngrok-skip-browser-warning': 'true'
-          },
+      );
+      if (salesResponse.ok) {
+        const salesData = await salesResponse.json();
+        const list = Array.isArray(salesData) ? salesData : [];
+        totalSales = list.length;
+        totalRevenue = list.reduce((sum: number, sale: any) =>
+          sum + (parseFloat(sale.total_amount) || 0), 0);
+        // Wateja wa Leo = distinct customer_id recorded in today's sales, plus
+        // one "unknown customer" for every sale that has no customer data.
+        const customerIds = new Set<string>();
+        let unknownCustomers = 0;
+        list.forEach((sale: any) => {
+          if (sale.customer_id) customerIds.add(sale.customer_id);
+          else unknownCustomers += 1;
         });
-
-        if (salesResponse.ok) {
-          const salesData = await salesResponse.json();
-          // Filter mauzo ya muuzaji huyu tu
-          const userSales = salesData.filter((sale: any) => 
-            sale.seller_id === userData.id || sale.created_by === userData.id
-          );
-          totalSales = userSales.length || 0;
-          totalRevenue = userSales.reduce((sum: number, sale: any) => 
-            sum + parseFloat(sale.total_amount || 0), 0);
-          console.log(`💰 Seller: Loaded ${totalSales} personal sales, Revenue: ${totalRevenue}`);
-        }
-      }
-
-      // ✅ KUPAKUA WATEJA - KWA BIASHARA HUSIKA TU
-      if (businessData.is_admin) {
-        // Msimamizi anaona wateja wote wa biashara
-        const customersResponse = await fetchWithTimeout(`${API_BASE_URL}/api/customers/my`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'ngrok-skip-browser-warning': 'true'
-          },
-        });
-
-        if (customersResponse.ok) {
-          const customersData = await customersResponse.json();
-          totalCustomers = customersData.length || 0;
-          console.log(`👥 Admin: Loaded ${totalCustomers} customers from business`);
-        }
-      } else {
-        // Muuzaji anaona wateja wake pekee
-        const customersResponse = await fetchWithTimeout(`${API_BASE_URL}/api/customers/my`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'ngrok-skip-browser-warning': 'true'
-          },
-        });
-
-        if (customersResponse.ok) {
-          const customersData = await customersResponse.json();
-          // Filter wateja waliofunguliwa na muuzaji huyu
-          const userCustomers = customersData.filter((customer: any) => 
-            customer.created_by === userData.id
-          );
-          totalCustomers = userCustomers.length || 0;
-          console.log(`👥 Seller: Loaded ${totalCustomers} personal customers`);
-        }
+        totalCustomers = customerIds.size + unknownCustomers;
+        console.log(`💰 Loaded ${totalSales} sales today, Revenue: ${totalRevenue}, Customers: ${totalCustomers}`);
       }
 
       // Weka takwimu
@@ -504,13 +385,11 @@ export default function ProfailiScreen() {
           'Content-Type': 'application/json',
           'ngrok-skip-browser-warning': 'true'
         },
+        // Only the seller's own fields. Sending business fields here would let
+        // a seller overwrite the business profile, which is not allowed.
         body: JSON.stringify({
           full_name: editFormData.full_name,
-          phone: editFormData.phone,
-          business_name: editFormData.business_name,
-          business_location: editFormData.business_location,
-          business_type: editFormData.business_type || null,
-          business_description: editFormData.business_description || null
+          phone: editFormData.phone
         }),
       });
 
@@ -528,11 +407,7 @@ export default function ProfailiScreen() {
         setUserData((prev: any) => ({
           ...prev,
           full_name: updatedData.user?.full_name || editFormData.full_name,
-          phone: updatedData.user?.phone || editFormData.phone,
-          business_name: updatedData.user?.business_name || editFormData.business_name,
-          business_location: updatedData.user?.business_location || editFormData.business_location,
-          business_type: updatedData.user?.business_type || editFormData.business_type,
-          business_description: updatedData.user?.business_description || editFormData.business_description
+          phone: updatedData.user?.phone || editFormData.phone
         }));
 
         // Sasisha AsyncStorage
@@ -542,18 +417,9 @@ export default function ProfailiScreen() {
           const updatedUserData = {
             ...user,
             full_name: updatedData.user?.full_name || editFormData.full_name,
-            phone: updatedData.user?.phone || editFormData.phone,
-            business_name: updatedData.user?.business_name || editFormData.business_name,
-            business_location: updatedData.user?.business_location || editFormData.business_location,
-            business_type: updatedData.user?.business_type || editFormData.business_type,
-            business_description: updatedData.user?.business_description || editFormData.business_description
+            phone: updatedData.user?.phone || editFormData.phone
           };
           await AsyncStorage.setItem('userData', JSON.stringify(updatedUserData));
-        }
-
-        // Reload business data ikiwa jina la biashara limebadilika
-        if (editFormData.business_name !== userData.business_name) {
-          await loadBusinessData();
         }
 
         setEditModalVisible(false);
@@ -627,7 +493,9 @@ export default function ProfailiScreen() {
       .substring(0, 2) || 'UM';
   };
 
-  // 🖼️ Upload a profile photo (picks → Cloudinary → saves URL to the server)
+  // 🖼️ Upload a profile photo (picks → Cloudinary → saves the URL to the server)
+  // The seller owns their photo even though the column is shared with the
+  // business row (`business_logo_url`).
   const handleChangePhoto = async () => {
     try {
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -752,7 +620,11 @@ export default function ProfailiScreen() {
           <View style={styles.avatarSection}>
             <View style={styles.avatarWrap}>
               {userData.business_logo_url ? (
-                <Image source={{ uri: userData.business_logo_url }} style={[styles.avatar, styles.avatarImage]} />
+                <ZoomableImage
+                  uri={userData.business_logo_url}
+                  style={[styles.avatar, styles.avatarImage]}
+                  name={userData.full_name || userData.business_name}
+                />
               ) : (
                 <View style={[styles.avatar, { backgroundColor: getRoleColor(userData.role) }]}>
                   <Text style={styles.avatarText}>
@@ -760,7 +632,7 @@ export default function ProfailiScreen() {
                   </Text>
                 </View>
               )}
-              {/* Camera badge — change photo anytime */}
+              {/* Camera badge — the seller may change their own photo */}
               <TouchableOpacity
                 style={[styles.cameraBadge, { backgroundColor: getRoleColor(userData.role) }]}
                 onPress={handleChangePhoto}
@@ -1023,54 +895,6 @@ export default function ProfailiScreen() {
                 keyboardType="phone-pad"
               />
               
-              <Text style={styles.inputLabel}>{t('profile.business')}</Text>
-              <TextInput
-                style={styles.input}
-                placeholder={t('profile.biz_name_placeholder')}
-                value={editFormData.business_name}
-                onChangeText={(text) => setEditFormData(prev => ({ ...prev, business_name: text }))}
-              />
-              
-              <Text style={styles.inputLabel}>{t('profile.business_location')}</Text>
-              <TextInput
-                style={styles.input}
-                placeholder={t('profile.biz_location_placeholder')}
-                value={editFormData.business_location}
-                onChangeText={(text) => setEditFormData(prev => ({ ...prev, business_location: text }))}
-              />
-
-              <Text style={styles.inputLabel}>{t('profile.business_type_label')}</Text>
-              <View style={styles.bizTypeWrap}>
-                {BIZ_TYPES.map((btype) => (
-                  <TouchableOpacity
-                    key={btype}
-                    style={[
-                      styles.bizTypeChip,
-                      editFormData.business_type === btype && styles.bizTypeChipActive,
-                    ]}
-                    onPress={() => setEditFormData(prev => ({ ...prev, business_type: btype }))}
-                  >
-                    <Text style={[
-                      styles.bizTypeText,
-                      editFormData.business_type === btype && styles.bizTypeTextActive,
-                    ]}>
-                      {t('business_types.' + btype)}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <Text style={styles.inputLabel}>{t('profile.business_description_label')}</Text>
-              <TextInput
-                style={[styles.input, styles.descriptionTextArea]}
-                placeholder={t('profile.business_description_placeholder')}
-                value={editFormData.business_description}
-                onChangeText={(text) => setEditFormData(prev => ({ ...prev, business_description: text }))}
-                multiline
-                numberOfLines={4}
-                textAlignVertical="top"
-              />
-              <Text style={styles.descriptionHint}>{t('profile.business_description_hint')}</Text>
             </ScrollView>
 
             <View style={styles.modalButtons}>
@@ -1449,40 +1273,6 @@ const styles = StyleSheet.create({
   },
   modalScroll: {
     maxHeight: '70%',
-  },
-  bizTypeWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  bizTypeChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    backgroundColor: 'white',
-  },
-  bizTypeChipActive: {
-    backgroundColor: '#2ecc71',
-    borderColor: '#27ae60',
-  },
-  bizTypeText: {
-    fontSize: 13,
-    color: '#7f8c8d',
-  },
-  bizTypeTextActive: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  descriptionTextArea: {
-    minHeight: 90,
-  },
-  descriptionHint: {
-    fontSize: 12,
-    color: '#95a5a6',
-    fontStyle: 'italic',
-    marginTop: 6,
   },
   modalButtons: {
     flexDirection: 'row',

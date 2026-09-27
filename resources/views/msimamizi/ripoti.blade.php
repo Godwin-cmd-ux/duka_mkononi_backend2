@@ -321,6 +321,15 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             return list.filter(s => s.cost_price === null).length;
         }
 
+        // A sale with no recorded customer is one "unknown customer", so the
+        // customer count = known customers + sales with no customer data.
+        // Sales rows are one per item, so count distinct sale ids.
+        function unknownCustomerCount(list) {
+            return new Set((list || [])
+                .filter(s => !s.customer_name || s.customer_name === 'Mteja')
+                .map(s => s.id)).size;
+        }
+
         // A profit total is only meaningful if every sale it covers had a
         // recorded buying price. Without this the owner sees a clean number
         // that silently excludes unsold-cost rows.
@@ -441,7 +450,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             const todayProfit = sumProfit(sales.filter(s => s.sale_date === today));
             const totalCost = sales.reduce((s, sale) => s + (typeof sale.cost_price === 'number' ? sale.cost_price * sale.quantity : 0), 0);
             const avgMargin = totalCost > 0 ? (totalProfit / totalCost) * 100 : 0;
-            businessStats = { totalSales, totalProfit, totalCustomers: customers.length, totalProducts: allProducts.length, totalSellers: sellers.length, todaySales, todayProfit, averageProfitMargin: avgMargin, unknownCostSales: unknownCostCount(sales), unknownCostSalesToday: unknownCostCount(sales.filter(s => s.sale_date === today)) };
+            businessStats = { totalSales, totalProfit, totalCustomers: customers.length + unknownCustomerCount(sales), totalProducts: allProducts.length, totalSellers: sellers.length, todaySales, todayProfit, averageProfitMargin: avgMargin, unknownCostSales: unknownCostCount(sales), unknownCostSalesToday: unknownCostCount(sales.filter(s => s.sale_date === today)) };
         }
 
         async function fetchSellerData(headers) {
@@ -508,7 +517,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             const todayProfit = sumProfit(sales.filter(s => s.sale_date === today));
             const totalCost = sales.reduce((s, sale) => s + (typeof sale.cost_price === 'number' ? sale.cost_price * sale.quantity : 0), 0);
             const avgMargin = totalCost > 0 ? (totalProfit / totalCost) * 100 : 0;
-            businessStats = { totalSales, totalProfit, totalCustomers: customers.length, totalProducts: allProducts.length, totalSellers: 1, todaySales, todayProfit, averageProfitMargin: avgMargin, unknownCostSales: unknownCostCount(sales), unknownCostSalesToday: unknownCostCount(sales.filter(s => s.sale_date === today)) };
+            businessStats = { totalSales, totalProfit, totalCustomers: customers.length + unknownCustomerCount(sales), totalProducts: allProducts.length, totalSellers: 1, todaySales, todayProfit, averageProfitMargin: avgMargin, unknownCostSales: unknownCostCount(sales), unknownCostSalesToday: unknownCostCount(sales.filter(s => s.sale_date === today)) };
             sellers = [{ id: userData.id, full_name: userData.businessName, email: userData.email }];
         }
 
@@ -680,7 +689,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                         <div class="nav-tab ${activeReport === 'overview' ? 'active' : ''}" onclick="setReport('overview')">${ic('report', 15)} Mapitio</div>
                         <div class="nav-tab ${activeReport === 'sales' ? 'active' : ''}" onclick="setReport('sales')">${ic('money', 15)} Mauzo (${sales.length})</div>
                         <div class="nav-tab ${activeReport === 'products' ? 'active' : ''}" onclick="setReport('products')">${ic('box', 15)} Bidhaa (${allProducts.length})</div>
-                        <div class="nav-tab ${activeReport === 'customers' ? 'active' : ''}" onclick="setReport('customers')">${ic('users', 15)} Wateja (${customers.length})</div>
+                        <div class="nav-tab ${activeReport === 'customers' ? 'active' : ''}" onclick="setReport('customers')">${ic('users', 15)} Wateja (${customers.length + unknownCustomerCount(sales)})</div>
                     </div>
                     ${activeReport !== 'overview' ? renderSearchBar() : ''}
                     <div id="reportContent"></div>

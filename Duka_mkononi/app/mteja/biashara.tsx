@@ -4,7 +4,6 @@ import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
-    Image,
     Linking,
     Platform,
     ScrollView,
@@ -17,6 +16,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLang } from '../../context/LanguageContext';
 import LogoutButton from '../../components/logout-button';
+import ZoomableImage from '../../components/zoomable-image';
 
 // 🔥 UBADILISHO MUHIMU: Tumia URL yako ya ngrok
 import { API_BASE_URL } from '../../constants/api';
@@ -25,7 +25,9 @@ import { registerLive, syncNow } from '../../lib/syncer';
 import { fetchWithTimeout, requireNetwork } from '../../lib/network';
 
 interface Business {
-  id: number;
+  // NB: business/user ids are UUID STRINGS (Blade makes the same point in
+  // biashara.blade.php's bindCardEvents()). Typing this as `number` was wrong.
+  id: string;
   email: string;
   role: string;
   full_name: string;
@@ -177,7 +179,9 @@ export default function BiasharaScreen() {
     }
     
     let smsURL;
-    const message = `${t('customer_dashboard.contact')} ${businessName}`;
+    // Same message body the Blade page sends (biashara.blade.php sendSMS()):
+    // "Habari <business>, naomba kufahamu zaidi kuhusu huduma zako."
+    const message = t('customer_dashboard.sms_message').replace('{name}', businessName);
     
     if (Platform.OS === 'ios') {
       smsURL = `sms:${formattedPhone}&body=${encodeURIComponent(message)}`;
@@ -341,7 +345,11 @@ export default function BiasharaScreen() {
               {/* Header with Logo, Business Name and Contact Button */}
               <View style={styles.cardHeader}>
                 {business.business_logo_url ? (
-                  <Image source={{ uri: business.business_logo_url }} style={styles.businessLogo} />
+                  <ZoomableImage
+                    uri={business.business_logo_url}
+                    style={styles.businessLogo}
+                    name={business.business_name}
+                  />
                 ) : (
                   <View style={[styles.businessLogo, styles.businessLogoPlaceholder]}>
                     <Ionicons name="storefront-outline" size={22} color="#3498db" />

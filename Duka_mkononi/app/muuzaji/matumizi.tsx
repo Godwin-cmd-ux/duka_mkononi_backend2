@@ -174,15 +174,15 @@ export default function MatumiziScreen() {
         try {
             // Validate
             if (!formData.amount || parseFloat(formData.amount) <= 0) {
-                Alert.alert(t('app.error'), t('seller_dashboard.quantity_placeholder'));
+                Alert.alert(t('app.error'), t('seller_dashboard.expense_amount_required'));
                 return;
             }
             if (!formData.description.trim()) {
-                Alert.alert(t('app.error'), t('seller_dashboard.quantity_placeholder'));
+                Alert.alert(t('app.error'), t('seller_dashboard.expense_description_required'));
                 return;
             }
             if (!formData.category) {
-                Alert.alert(t('app.error'), t('seller_dashboard.quantity_placeholder'));
+                Alert.alert(t('app.error'), t('seller_dashboard.select_category'));
                 return;
             }
 
@@ -206,12 +206,12 @@ export default function MatumiziScreen() {
             const data = await response.json();
 
             if (data.success) {
-                Alert.alert(t('app.success'), t('seller_dashboard.success_edit'));
+                Alert.alert(t('app.success'), t('seller_dashboard.success_add'));
                 setAddModalVisible(false);
                 resetForm();
                 loadData(); // Reload data
             } else {
-                Alert.alert(t('app.error'), data.error || t('seller_dashboard.error_edit'));
+                Alert.alert(t('app.error'), data.error || t('seller_dashboard.error_add'));
             }
 
         } catch (error) {

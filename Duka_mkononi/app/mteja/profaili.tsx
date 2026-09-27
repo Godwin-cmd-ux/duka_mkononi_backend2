@@ -6,7 +6,6 @@ import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
-    Image,
     ScrollView,
     StyleSheet,
     Switch,
@@ -16,6 +15,7 @@ import {
     View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import ZoomableImage from '../../components/zoomable-image';
 import { useLang } from '../../context/LanguageContext';
 import { useSession } from '../../context/SessionContext';
 import { uploadToCloudinary } from '../../utils/cloudinary';
@@ -27,7 +27,9 @@ import { registerLive, syncNow } from '../../lib/syncer';
 import { fetchWithTimeout, requireNetwork } from '../../lib/network';
 
 interface UserProfile {
-  id: number;
+  // NB: user ids are UUID STRINGS (same finding as mteja/biashara and
+  // mteja/matangazo). Typing this as `number` was wrong.
+  id: string;
   email: string;
   role: string;
   full_name: string;
@@ -168,6 +170,11 @@ export default function ProfailiScreen() {
           full_name: userData.full_name || '',
           phone: userData.phone || ''
         });
+        // Keep the cached display name in sync (the Blade page does the same
+        // with localStorage.setItem('userName', ...)); other screens show it.
+        if (userData.full_name) {
+          await AsyncStorage.setItem('userName', userData.full_name);
+        }
       } else {
         const errorText = await response.text();
         console.error('❌ Profile fetch error:', response.status, errorText);
@@ -370,7 +377,11 @@ export default function ProfailiScreen() {
       <View style={styles.header}>
         <View style={styles.avatarWrap}>
           {profile?.business_logo_url ? (
-            <Image source={{ uri: profile.business_logo_url }} style={styles.avatar} />
+            <ZoomableImage
+              uri={profile.business_logo_url}
+              style={styles.avatar}
+              name={profile?.full_name || profile?.business_name}
+            />
           ) : (
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>

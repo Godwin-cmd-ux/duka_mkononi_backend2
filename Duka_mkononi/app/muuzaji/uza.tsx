@@ -104,7 +104,10 @@ export default function UzaScreen() {
         const activeProducts = (productsData || []).filter((product: any) => product && (product.is_active !== false));
         return activeProducts.map((product: any) => ({
           ...product,
-          expected_selling_price: product.expected_selling_price || product.price || 0,
+          // A missing selling price stays null. Falling back to product.price
+          // would show the BUYING price as the selling price and would record
+          // the sale at cost.
+          expected_selling_price: product.expected_selling_price ?? null,
           seller_name: product.seller_name || 'Muuza',
           seller_role: product.seller_role || 'unknown',
           seller_email: product.seller_email || null
@@ -322,8 +325,10 @@ export default function UzaScreen() {
       
       // ✅ HAKIKISHA expected_selling_price IKO
       const processedProducts = activeProducts.map((product: any) => {
-        // Fix: Hakikisha expected_selling_price ipo
-        const sellingPrice = product.expected_selling_price || product.price || 0;
+        // A missing selling price stays null. Falling back to product.price
+        // would show the BUYING price as the selling price and would record
+        // the sale at cost.
+        const sellingPrice = product.expected_selling_price ?? null;
         return {
           ...product,
           expected_selling_price: sellingPrice,
@@ -443,6 +448,15 @@ export default function UzaScreen() {
       return;
     }
 
+    // Usiue bidhaa kwa bei ya kununua: bei ya kuuzia lazima iwe imewekwa
+    if (selectedProduct.expected_selling_price === null || selectedProduct.expected_selling_price === undefined) {
+      Alert.alert(
+        t('seller_sell.selling_price_not_set'),
+        t('seller_sell.selling_price_not_set_msg', { name: selectedProduct.name })
+      );
+      return;
+    }
+
     // Angalia ikiwa bidhaa tayari ipo kwenye kikapu
     const existingItemIndex = cart.findIndex(item => item.product_id === selectedProduct.id);
     
@@ -463,8 +477,8 @@ export default function UzaScreen() {
         product_id: selectedProduct.id,
         name: selectedProduct.name,
         quantity: quantityNum,
-        unit_price: selectedProduct.expected_selling_price || selectedProduct.price,
-        total_price: quantityNum * (selectedProduct.expected_selling_price || selectedProduct.price),
+        unit_price: selectedProduct.expected_selling_price,
+        total_price: quantityNum * selectedProduct.expected_selling_price,
         original_stock: selectedProduct.stock, // Hifadhi stock asili
         seller_id: selectedProduct.seller_id,
         seller_name: selectedProduct.seller_name
@@ -693,11 +707,19 @@ export default function UzaScreen() {
         }
       }
 
+      // Idempotency key shared by every attempt of this sale. Laravel looks
+      // for a sale whose notes start with `ai_dup_<key>` and returns the
+      // ORIGINAL sale instead of creating a second one — this is what stops a
+      // double-tap or a retried request from deducting the stock twice (same
+      // fix as the Blade page: SaleController::store).
+      const clientSaleKey = 'uza-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+
       const saleData: any = {
         items: items,
         sale_date: formData.sale_date,
         payment_method: 'cash',
-        notes: `Muuzaji: ${userData.full_name || userData.email}`
+        notes: `Muuzaji: ${userData.full_name || userData.email}`,
+        clientSaleKey
       };
 
       if (customerId) {
@@ -706,21 +728,33 @@ export default function UzaScreen() {
 
       console.log('📤 Sending sale data for multiple items:', saleData);
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      const sendSale = async () => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
+        try {
+          return await fetch(`${API_BASE_URL}/api/sales`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+              'ngrok-skip-browser-warning': 'true'
+            },
+            body: JSON.stringify(saleData),
+            signal: controller.signal
+          });
+        } finally {
+          clearTimeout(timeoutId);
+        }
+      };
 
-      const response = await fetch(`${API_BASE_URL}/api/sales`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning': 'true'
-        },
-        body: JSON.stringify(saleData),
-        signal: controller.signal
-      });
-
-      clearTimeout(timeoutId);
+      // One automatic retry on a network hiccup. Safe from double charging
+      // because the shared clientSaleKey makes the request idempotent.
+      let response: any;
+      try {
+        response = await sendSale();
+      } catch (networkError) {
+        response = await sendSale();
+      }
 
       const responseText = await response.text();
       console.log('📥 API Response:', {
@@ -933,11 +967,14 @@ export default function UzaScreen() {
           
           <View style={styles.productFooter}>
             <View style={styles.priceColumn}>
-              {item.expected_selling_price && (
-                <Text style={styles.expectedPrice}>
-                  {t('seller_sell.sell_price')} {formatCurrency(item.expected_selling_price)}
-                </Text>
-              )}
+              {/* Always render the price row: a product whose selling price was
+                  never recorded must say so, not silently show nothing. */}
+              <Text style={styles.expectedPrice}>
+                {t('seller_sell.sell_price')}{' '}
+                {item.expected_selling_price === null || item.expected_selling_price === undefined
+                  ? <Text style={{ color: '#f39c12' }}>{t('seller_sell.selling_price_not_set')}</Text>
+                  : formatCurrency(item.expected_selling_price)}
+              </Text>
             </View>
             
             {/* Onyesha owner ya bidhaa */}
@@ -1065,21 +1102,6 @@ export default function UzaScreen() {
           </Text>
         </View>
 
-        {/* CART SUMMARY BADGE */}
-        {cart.length > 0 && (
-          <TouchableOpacity 
-            style={styles.cartBadge}
-            onPress={() => setShowCart(true)}
-          >
-            <View style={styles.cartBadgeContent}>
-              <Ionicons name="cart" size={20} color="white" />
-              <Text style={styles.cartBadgeText}>
-                {t('seller_sell.cart_summary')}: {cart.length} {t('seller_sell.products_count')} • {formatCurrency(calculateCartTotal())}
-              </Text>
-              <Ionicons name="chevron-forward" size={18} color="white" />
-            </View>
-          </TouchableOpacity>
-        )}
 
         <View style={styles.formContainer}>
           {/* Sehemu ya Kuchagua Bidhaa */}
@@ -1206,15 +1228,16 @@ export default function UzaScreen() {
                   <Ionicons name="pricetag" size={14} color="#7f8c8d" /> {selectedProduct.category || t('seller_sell.no_category2')}
                 </Text>
                 
-                {/* ✅ Onyesha bei ya kuuzia */}
-                {selectedProduct.expected_selling_price && (
-                  <View style={styles.expectedPriceInfo}>
-                    <Ionicons name="cash" size={14} color="#27ae60" />
-                    <Text style={styles.expectedPriceInfoText}>
-                      {t('seller_sell.sell_price')} {formatCurrency(selectedProduct.expected_selling_price)}
-                    </Text>
-                  </View>
-                )}
+                {/* ✅ Onyesha bei ya kuuzia (au "haijawekwa" ikiwa haipo) */}
+                <View style={styles.expectedPriceInfo}>
+                  <Ionicons name="cash" size={14} color="#27ae60" />
+                  <Text style={styles.expectedPriceInfoText}>
+                    {t('seller_sell.sell_price')}{' '}
+                    {selectedProduct.expected_selling_price === null || selectedProduct.expected_selling_price === undefined
+                      ? <Text style={{ color: '#f39c12' }}>{t('seller_sell.selling_price_not_set')}</Text>
+                      : formatCurrency(selectedProduct.expected_selling_price)}
+                  </Text>
+                </View>
                 
                 {/* ✅ Kiasi cha Kuongeza */}
                 <View style={styles.addToCartSection}>
@@ -1334,31 +1357,6 @@ export default function UzaScreen() {
             )}
           </View>
 
-          {/* ✅ Kitufe cha Kukamilisha Mauzo - SI LAZIMA CUSTOMER NAME */}
-          <TouchableOpacity 
-            style={[
-              styles.saleButton,
-              cart.length === 0 && styles.saleButtonDisabled
-            ]}
-            onPress={handleSale}
-            disabled={loading || cart.length === 0}
-          >
-            {loading ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <View style={styles.saleButtonContent}>
-                <Ionicons name="cart" size={24} color="white" />
-                <View style={styles.saleButtonTextContainer}>
-                  <Text style={styles.saleButtonText}>{t('seller_sell.complete_sale')}</Text>
-                  <Text style={styles.saleButtonSubtext}>
-                    {cart.reduce((sum, item) => sum + item.quantity, 0)} {t('seller_sell.products_count')} • {formatCurrency(calculateCartTotal())}
-                    {!formData.customer_name && ' • ' + t('seller_sell.no_customer_name')}
-                  </Text>
-                </View>
-              </View>
-            )}
-          </TouchableOpacity>
-
           {/* ✅ Maelekezo */}
           <View style={styles.instructions}>
             <Text style={styles.instructionsTitle}>{t('seller_sell.instructions_title')}</Text>
@@ -1379,6 +1377,94 @@ export default function UzaScreen() {
 
         <View style={styles.bottomSpacing} />
       </ScrollView>
+
+      {/* FLOATING CART — pinned to the bottom so the cart is always at hand.
+          It appears the moment a product is tapped (row 1 = the selected
+          product + quantity + Ongeza), so the seller never has to scroll to
+          the product panel to keep selling. */}
+      {(selectedProduct || cart.length > 0) && (
+        <View style={styles.floatingDock}>
+          {selectedProduct && (
+            <View style={styles.dockRow}>
+              <View style={styles.dockProd}>
+                <Text style={styles.dockName} numberOfLines={1}>
+                  {selectedProduct.name}
+                </Text>
+                <Text style={styles.dockPrice} numberOfLines={1}>
+                  {selectedProduct.expected_selling_price === null || selectedProduct.expected_selling_price === undefined
+                    ? t('seller_sell.selling_price_not_set')
+                    : formatCurrency(selectedProduct.expected_selling_price)}
+                  {' • '}{t('seller_sell.remaining')}: {selectedProduct.availableStock}
+                </Text>
+              </View>
+              <View style={styles.dockQty}>
+                <TouchableOpacity
+                  style={styles.dockQtyBtn}
+                  onPress={() => setQuantity(String(Math.max(1, (parseInt(quantity, 10) || 1) - 1)))}
+                >
+                  <Ionicons name="remove" size={16} color="#e74c3c" />
+                </TouchableOpacity>
+                <TextInput
+                  style={styles.dockQtyInput}
+                  value={quantity}
+                  onChangeText={(v) => setQuantity(v.replace(/[^0-9]/g, ''))}
+                  keyboardType="numeric"
+                  maxLength={4}
+                />
+                <TouchableOpacity
+                  style={styles.dockQtyBtn}
+                  onPress={() => setQuantity(String((parseInt(quantity, 10) || 0) + 1))}
+                >
+                  <Ionicons name="add" size={16} color="#2ecc71" />
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity
+                style={[styles.dockAdd, selectedProduct.availableStock === 0 && styles.dockAddDisabled]}
+                onPress={addToCart}
+                disabled={selectedProduct.availableStock === 0}
+              >
+                <Ionicons name="add" size={15} color="white" />
+                <Text style={styles.dockAddText}>
+                  {selectedProduct.availableStock === 0 ? t('seller_sell.no_stock') : t('seller_sell.add_to_cart')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          <View style={styles.dockRow}>
+            <TouchableOpacity
+              style={styles.dockCartInfo}
+              onPress={() => setShowCart(true)}
+              activeOpacity={0.85}
+            >
+              <View style={styles.dockCartBadge}>
+                <Text style={styles.dockCartBadgeText}>
+                  {cart.reduce((sum, item) => sum + item.quantity, 0)}
+                </Text>
+              </View>
+              <Text style={styles.dockCartTotal}>{formatCurrency(calculateCartTotal())}</Text>
+              <Text style={styles.dockCartHint} numberOfLines={1}>
+                {cart.length} {t('seller_sell.products_count')} • {t('seller_sell.cart_summary')} ›
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.dockCheckout, (loading || cart.length === 0) && styles.dockCheckoutDisabled]}
+              onPress={handleSale}
+              disabled={loading || cart.length === 0}
+            >
+              {loading ? (
+                <ActivityIndicator color="white" size="small" />
+              ) : (
+                <>
+                  <Ionicons name="checkmark-circle" size={18} color="white" />
+                  <Text style={styles.dockCheckoutText}>{t('seller_sell.complete_sale')}</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
 
       {/* MODAL YA KIKAPU */}
       <Modal
@@ -1537,31 +1623,6 @@ const styles = StyleSheet.create({
     color: '#95a5a6',
     fontStyle: 'italic',
     marginBottom: 6,
-  },
-  cartBadge: {
-    backgroundColor: '#2ecc71',
-    marginHorizontal: 20,
-    marginTop: 15,
-    marginBottom: 5,
-    borderRadius: 10,
-    padding: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 4,
-  },
-  cartBadgeContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  cartBadgeText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: 'bold',
-    flex: 1,
-    marginLeft: 10,
   },
   formContainer: {
     padding: 20,
@@ -2015,42 +2076,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontStyle: 'italic',
   },
-  saleButton: {
-    backgroundColor: '#2ecc71',
-    padding: 20,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  saleButtonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  saleButtonTextContainer: {
-    alignItems: 'center',
-  },
-  saleButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
-  },
-  saleButtonSubtext: {
-    color: '#e8f8f0',
-    fontSize: 12,
-    marginTop: 2,
-  },
-  saleButtonDisabled: {
-    backgroundColor: '#95a5a6',
-    opacity: 0.6,
-  },
   instructions: {
     backgroundColor: '#fff8e1',
     padding: 15,
@@ -2077,7 +2102,144 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   bottomSpacing: {
-    height: 40,
+    // Room for the two-row floating dock so the last controls are never hidden.
+    height: 210,
+  },
+  // Floating cart dock (fixed to the bottom of the screen, above the list).
+  floatingDock: {
+    position: 'absolute',
+    left: 12,
+    right: 12,
+    bottom: 12,
+    flexDirection: 'column',
+    gap: 8,
+    backgroundColor: 'white',
+    borderRadius: 18,
+    padding: 10,
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.22,
+    shadowRadius: 14,
+    elevation: 10,
+  },
+  dockRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  dockProd: {
+    flex: 1,
+    minWidth: 120,
+  },
+  dockName: {
+    fontWeight: '700',
+    fontSize: 14,
+    color: '#2c3e50',
+  },
+  dockPrice: {
+    fontSize: 12,
+    color: '#27ae60',
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  dockQty: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  dockQtyBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f3f4f6',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  dockQtyInput: {
+    width: 48,
+    textAlign: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 10,
+    fontSize: 15,
+    color: '#2c3e50',
+  },
+  dockAdd: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#2ecc71',
+    borderRadius: 12,
+    paddingVertical: 11,
+    paddingHorizontal: 14,
+  },
+  dockAddDisabled: {
+    backgroundColor: '#95a5a6',
+  },
+  dockAddText: {
+    color: 'white',
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  dockCartInfo: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: '#e8f8f0',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  dockCartBadge: {
+    minWidth: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#2ecc71',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+  },
+  dockCartBadgeText: {
+    color: 'white',
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  dockCartTextWrap: {
+    flex: 1,
+    minWidth: 0,
+  },
+  dockCartTotal: {
+    color: '#1e8449',
+    fontWeight: '800',
+    fontSize: 14,
+  },
+  dockCartHint: {
+    color: '#5d6d7e',
+    fontSize: 11,
+    marginLeft: 'auto',
+  },
+  dockCheckout: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#2ecc71',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  dockCheckoutDisabled: {
+    backgroundColor: '#95a5a6',
+  },
+  dockCheckoutText: {
+    color: 'white',
+    fontWeight: '800',
+    fontSize: 13,
   },
   modalOverlay: {
     flex: 1,

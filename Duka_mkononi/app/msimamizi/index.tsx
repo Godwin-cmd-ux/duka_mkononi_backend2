@@ -7,7 +7,6 @@ import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
-    Image,
     Modal,
     RefreshControl,
     ScrollView,
@@ -18,6 +17,7 @@ import {
     View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import ZoomableImage from '../../components/zoomable-image';
 import { useLang } from '../../context/LanguageContext';
 import { useSession } from '../../context/SessionContext';
 import { uploadToCloudinary } from '../../utils/cloudinary';
@@ -39,6 +39,18 @@ const BIZ_TYPES = [
   'beauty_salon', 'barbershop', 'auto_repair', 'phone_shop', 'computer_shop',
   'general_retail', 'wholesale', 'other',
 ];
+
+// The old shared 'admin:users' key is written by other msimamizi screens with
+// different shapes (seller+admin arrays, or the raw { users, stats } envelope
+// from background sync). Reading it here surfaced admins and other roles under
+// "Wauzaji". The sellers list keeps its own key and always re-applies the
+// seller rule to both the cached and the freshly fetched payload.
+const SELLERS_CACHE_KEY = 'admin:sellers';
+
+const pickSellers = (rows: any): any[] =>
+  (Array.isArray(rows) ? rows : []).filter(
+    (user: any) => user && user.role === 'seller' && user.status !== 'deleted'
+  );
 
 export default function MsimamiziHomeScreen() {
   const { t, lang } = useLang();
@@ -83,7 +95,7 @@ export default function MsimamiziHomeScreen() {
   useEffect(() => {
     if (!userData.businessName) return;
     const stop = registerLive<any[]>(
-      'admin:users',
+      SELLERS_CACHE_KEY,
       async () => {
         const token = await AsyncStorage.getItem('userToken');
         if (!token) throw new Error('sync failed');
@@ -106,12 +118,9 @@ export default function MsimamiziHomeScreen() {
         });
         if (!res.ok) throw new Error('sync failed');
         const data = await res.json();
-        const usersArray = data.users || [];
-        return usersArray.filter((user: any) =>
-          user.role === 'seller' && user.status !== 'deleted'
-        );
+        return pickSellers(data.users || data);
       },
-      (data) => { setSellersData(data); setLoading(false); }
+      (data) => { setSellersData(pickSellers(data)); setLoading(false); }
     );
     return stop;
   }, [lang, userData.businessName]);
@@ -193,8 +202,8 @@ export default function MsimamiziHomeScreen() {
         const token = await AsyncStorage.getItem('userToken');
         if (!token) return;
 
-        const cachedSellers = await getCache<any[]>('admin:users');
-        if (cachedSellers) { setSellersData(cachedSellers); }
+        const cachedSellers = await getCache<any[]>(SELLERS_CACHE_KEY);
+        if (cachedSellers) { setSellersData(pickSellers(cachedSellers)); }
 
         const response = await fetchWithTimeout(
             `${API_BASE_URL}/api/admin/users?role=seller`,
@@ -212,17 +221,11 @@ export default function MsimamiziHomeScreen() {
 
         if (response.ok) {
             const data = await response.json();
-            const usersArray = data.users || [];
-
-            const sellers = usersArray.filter((user: any) => {
-                const isSeller = user.role === 'seller';
-                const isNotDeleted = user.status !== 'deleted';
-                return isSeller && isNotDeleted;
-            });
+            const sellers = pickSellers(data.users || data);
 
             console.log('🛍️ Wauzaji waliofilter:', sellers.length);
             setSellersData(sellers);
-            setCache('admin:users', sellers).catch(() => {});
+            setCache(SELLERS_CACHE_KEY, sellers).catch(() => {});
         } else {
             const errorText = await response.text();
             console.error('❌ Error loading sellers:', errorText);
@@ -230,8 +233,8 @@ export default function MsimamiziHomeScreen() {
         }
     } catch (error) {
         console.error('❌ Error loading sellers data:', error);
-        const cachedSellers = await getCache<any[]>('admin:users');
-        if (cachedSellers) { setSellersData(cachedSellers); return; }
+        const cachedSellers = await getCache<any[]>(SELLERS_CACHE_KEY);
+        if (cachedSellers) { setSellersData(pickSellers(cachedSellers)); return; }
         Alert.alert(t('app.error'), t('admin_dashboard.error_network'));
     }
   };
@@ -900,7 +903,11 @@ export default function MsimamiziHomeScreen() {
       <View style={styles.businessCard}>
         <View style={styles.businessCardHeader}>
           {userData.businessLogo ? (
-            <Image source={{ uri: userData.businessLogo }} style={styles.businessLogo} />
+            <ZoomableImage
+              uri={userData.businessLogo}
+              style={styles.businessLogo}
+              name={userData.businessName}
+            />
           ) : (
             <View style={[styles.businessLogo, styles.businessLogoPlaceholder]}>
               <Ionicons name="storefront-outline" size={30} color="#3498db" />
@@ -973,7 +980,11 @@ export default function MsimamiziHomeScreen() {
                 <View style={styles.sellerHeader}>
                   <View style={styles.sellerNameRow}>
                     {seller.business_logo_url ? (
-                      <Image source={{ uri: seller.business_logo_url }} style={styles.sellerAvatar} />
+                      <ZoomableImage
+                        uri={seller.business_logo_url}
+                        style={styles.sellerAvatar}
+                        name={seller.full_name || seller.email}
+                      />
                     ) : (
                       <View style={[styles.sellerAvatar, styles.sellerAvatarPlaceholder]}>
                         <Ionicons name="person" size={16} color="#3498db" />

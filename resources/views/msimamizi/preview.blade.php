@@ -299,6 +299,7 @@
         .ev-sale { background: #eafaf1; color: #27ae60; }
         .ev-product { background: #eef4fa; color: #3498db; }
         .ev-warn { background: #fdf3e7; color: #e67e22; }
+        .ev-edit { background: #eef0ff; color: #5b6ee1; }
         .stat-badge { display: inline-flex; align-items: center; gap: 5px; }
         svg.icon { flex-shrink: 0; }
 
@@ -771,7 +772,17 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     const netProfit = totalProfit - totalExpenses;
                     // Only names actually recorded — drop the "Mteja" placeholder
                     // so the daily report lists real customers when they exist.
-                    const customers = [...new Set(daySales.map(s => s.customer_name).filter(n => n && n !== 'Mteja'))];
+                    const knownCustomers = [...new Set(daySales.map(s => s.customer_name).filter(n => n && n !== 'Mteja'))];
+                    // Every sale without customer data is one "unknown customer",
+                    // so the count = known customers + sales with no customer data.
+                    // A sale with several items becomes several rows sharing one id,
+                    // so count distinct ids (: sales, not rows).
+                    const unknownCustomerCount = new Set(daySales
+                        .filter(s => !s.customer_name || s.customer_name === 'Mteja')
+                        .map(s => s.id)).size;
+                    const customers = unknownCustomerCount > 0
+                        ? [...knownCustomers, ...Array(unknownCustomerCount).fill('Mteja Bila Jina')]
+                        : knownCustomers;
                     const daySellers = [...new Map(daySales.map(s => [s.seller_name, { name: s.seller_name }])).values()];
                     
                     return { date, totalSales, totalProducts, totalProfit, totalExpenses, netProfit, unknownProfitItems, sales: daySales, customers, sellers: daySellers, expenses: dayExpenses };
@@ -784,6 +795,24 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 summaries2.sort((a,b) => new Date(b.date) - new Date(a.date));
                 dailySummaries = summaries2;
 
+                // ---- Taarifa za mabadiliko ya mauzo -------------------------
+                // Every PUT /api/sales/{id} is audited as SALE_UPDATE. Pull this
+                // business's edit logs so each sale edit shows up as a taarifa.
+                let saleEditLogs = [];
+                try {
+                    const logParams = new URLSearchParams({ action: 'SALE_UPDATE' });
+                    if (filterStart) logParams.set('start_date', filterStart);
+                    // Inclusive end-of-day so the last day of the range is not lost.
+                    if (filterEnd) logParams.set('end_date', `${filterEnd}T23:59:59.999Z`);
+                    const logsRes = await fetch(`${API_BASE_URL}/api/admin/logs/search?${logParams.toString()}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (logsRes.ok) {
+                        const logsData = await logsRes.json();
+                        saleEditLogs = Array.isArray(logsData) ? logsData : [];
+                    }
+                } catch { /* taarifa za mabadiliko hazipatikani */ }
+
                 // Build events
                 const events = [];
                 sales.slice(0, 20).forEach(sale => {
@@ -795,6 +824,37 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 products.filter(p => p.stock < 5).forEach(product => {
                     events.push({ id: product.id + 2000, type: 'low_stock', title: 'Stock Inakaribia Kuisha', description: `Bidhaa ${product.name} ina stock ${product.stock} pekee`, product_name: product.name, event_date: new Date().toISOString().split('T')[0] });
                 });
+
+                // Mabadiliko ya mauzo -> taarifa. /api/admin/logs/search is
+                // platform-wide, so keep only logs written by this business's
+                // own members (the same list the page already scopes by).
+                const businessUserIds = new Set(sellers.map(s => s.id));
+                saleEditLogs
+                    .filter(log => log.action === 'SALE_UPDATE' && businessUserIds.has(log.user_id))
+                    .forEach(log => {
+                        let details = {};
+                        try {
+                            details = typeof log.details === 'string' ? JSON.parse(log.details) : (log.details || {});
+                        } catch { details = {}; }
+
+                        const changedItems = Array.isArray(details.items) ? details.items : [];
+                        const changeText = changedItems.length
+                            ? changedItems.map(it => `${it.product_name || 'Bidhaa'}: ${it.old_quantity} → ${it.new_quantity}`).join(', ')
+                            : `${details.items_changed || 0} mabadiliko`;
+
+                        events.push({
+                            id: 'edit_' + log.id,
+                            type: 'sale_edited',
+                            title: 'Mauzo Yamehaririwa',
+                            description: `Ankara ${details.invoice_number || '—'} — ${changeText}. Jumla: ${formatCurrency(details.old_total_amount || 0)} → ${formatCurrency(details.total_amount || 0)}.${details.customer_name ? ` Mteja: ${details.customer_name}.` : ''}`,
+                            amount: details.total_amount || 0,
+                            seller_name: log.users?.full_name || log.users?.email || 'Mtumiaji',
+                            // Full ISO timestamp so "mpya" detection stays accurate,
+                            // plus a display-only date for the card.
+                            event_date: log.created_at || new Date().toISOString(),
+                            display_date: (log.created_at || '').split('T')[0] || ''
+                        });
+                    });
                 events.sort((a,b) => new Date(b.event_date) - new Date(a.event_date));
                 businessEvents = events;
 
@@ -881,8 +941,8 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 <div style="background:white;border-radius:12px;padding:16px;margin-bottom:12px;${isEventUnread(event) ? 'border-left:4px solid #3498db;' : 'opacity:0.75;'}">
                     <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
                         <div style="display:flex;gap:8px;align-items:center;">
-                            <span class="event-ic ${event.type === 'sale' ? 'ev-sale' : event.type === 'product_added' ? 'ev-product' : 'ev-warn'}">${event.type === 'sale' ? ic('money', 15) : event.type === 'product_added' ? ic('box', 15) : ic('warning', 15)}</span>
-                            <div><strong>${event.title}</strong>${isEventUnread(event) ? '<span class="new-badge">MPYA</span>' : ''}<div style="font-size:11px;color:#7f8c8d;">${event.event_date}</div></div>
+                            <span class="event-ic ${eventIconClass(event.type)}">${eventIcon(event.type)}</span>
+                            <div><strong>${event.title}</strong>${isEventUnread(event) ? '<span class="new-badge">MPYA</span>' : ''}<div style="font-size:11px;color:#7f8c8d;">${event.display_date || event.event_date}</div></div>
                         </div>
                         ${event.amount ? `<strong style="color:#27ae60;">${formatCurrency(event.amount)}</strong>` : ''}
                     </div>
@@ -890,6 +950,22 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     ${event.seller_name ? `<div style="font-size:11px;color:#7f8c8d;margin-top:8px;">${ic('user', 12)} ${event.seller_name}</div>` : ''}
                 </div>
             `).join('');
+        }
+
+        // Event styling: an edited sale gets its own icon/colour so an admin can
+        // tell a stock/creation event from a "mauzo yamehaririwa" taarifa.
+        function eventIconClass(type) {
+            if (type === 'sale') return 'ev-sale';
+            if (type === 'product_added') return 'ev-product';
+            if (type === 'sale_edited') return 'ev-edit';
+            return 'ev-warn';
+        }
+
+        function eventIcon(type) {
+            if (type === 'sale') return ic('money', 15);
+            if (type === 'product_added') return ic('box', 15);
+            if (type === 'sale_edited') return ic('edit', 15);
+            return ic('warning', 15);
         }
 
         function isEventUnread(event) {

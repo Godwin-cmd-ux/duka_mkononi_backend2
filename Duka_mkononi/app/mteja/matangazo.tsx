@@ -18,6 +18,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLang } from '../../context/LanguageContext';
 import LogoutButton from '../../components/logout-button';
+import ZoomableImage from '../../components/zoomable-image';
 import { getCache, setCache } from '../../db/cache';
 import { registerLive, syncNow } from '../../lib/syncer';
 import { fetchWithTimeout, requireNetwork } from '../../lib/network';
@@ -26,8 +27,11 @@ const { width } = Dimensions.get('window');
 import { API_BASE_URL } from '../../constants/api';
 
 interface Matangazo {
-  id: number;
-  user_id: number;
+  // NB: ids are UUID STRINGS - matangazo.blade.php's render() calls this out
+  // ("ids are matched as STRINGS (UUIDs - parseInt mangles them)"). They were
+  // typed as `number` here, which is wrong.
+  id: string;
+  user_id: string;
   title: string;
   description: string;
   media_url: string;
@@ -77,13 +81,15 @@ export default function MatangazoScreen() {
   const [matangazo, setMatangazo] = useState<Matangazo[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [likedPosts, setLikedPosts] = useState<Set<number>>(new Set());
+  const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
   const [userToken, setUserToken] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
-  const [currentPlayingVideo, setCurrentPlayingVideo] = useState<number | null>(null);
+  const [currentPlayingVideo, setCurrentPlayingVideo] = useState<string | null>(null);
   
-  const videoRefs = useRef<{[key: number]: any}>({});
+  const videoRefs = useRef<{[key: string]: any}>({});
   const isMounted = useRef(true);
+  // One like request at a time per post (same double-tap guard as the Blade page).
+  const likeBusy = useRef<Set<string>>(new Set());
 
   // Cleanup effect
   useEffect(() => {
@@ -230,13 +236,16 @@ export default function MatangazoScreen() {
   };
 
   // Shughulikia kitendo cha kupenda
-  const handleLike = async (postId: number) => {
+  const handleLike = async (postId: string) => {
     if (!userToken) {
       Alert.alert(t('customer_dashboard.adverts_title'), `${t('customer_dashboard.login_needed')} ${t('customer_dashboard.like')}.`);
       return;
     }
 
-    if (!(await requireNetwork())) return;
+    if (likeBusy.current.has(postId)) return;
+    likeBusy.current.add(postId);
+
+    if (!(await requireNetwork())) { likeBusy.current.delete(postId); return; }
 
     try {
       console.log('Inapenda tangazo:', postId);
@@ -285,18 +294,24 @@ export default function MatangazoScreen() {
       console.log('Jibu la kupenda:', result);
 
       if (response.ok && isMounted.current) {
-        // Seva imethibitisha kitendo - hakikisha idadi ni sahihi
-        if (result.like_count !== undefined) {
-          setMatangazo(prev => prev.map(post => {
-            if (post.id === postId) {
-              return {
-                ...post,
-                like_count: result.like_count
-              };
-            }
-            return post;
-          }));
-        }
+        // Seva ndiyo chanzo cha ukweli (kama Blade): tumia `liked` na idadi
+        // zote mbili kutoka kwenye jibu, si sasisho la matumaini pekee.
+        setLikedPosts(prev => {
+          const newSet = new Set(prev);
+          if (result.liked) newSet.add(postId);
+          else newSet.delete(postId);
+          return newSet;
+        });
+        setMatangazo(prev => prev.map(post => {
+          if (post.id === postId) {
+            return {
+              ...post,
+              like_count: result.like_count !== undefined ? result.like_count : post.like_count,
+              report_count: result.report_count !== undefined ? result.report_count : post.report_count
+            };
+          }
+          return post;
+        }));
       } else if (isMounted.current) {
         // Rejesha sasisho la matumaini ikiwa kuna kosa
         setLikedPosts(prev => {
@@ -357,6 +372,8 @@ export default function MatangazoScreen() {
 
         Alert.alert(t('app.error'), `${t('customer_dashboard.error_like')} ${t('customer_dashboard.retry_network')}`);
       }
+    } finally {
+      likeBusy.current.delete(postId);
     }
   };
 
@@ -407,6 +424,13 @@ export default function MatangazoScreen() {
               });
 
               if (response.ok) {
+                // Reconcile with the server's authoritative count (Blade does this).
+                const data = await response.json().catch(() => ({} as any));
+                if (isMounted.current && data.report_count !== undefined) {
+                  setMatangazo(prev => prev.map(p => (
+                    p.id === post.id ? { ...p, report_count: data.report_count } : p
+                  )));
+                }
                 Alert.alert(t('customer_dashboard.thank_you'), t('customer_dashboard.reported'));
               } else if (isMounted.current) {
                 // Rejesha sasisho la matumaini kwa kosa
@@ -462,8 +486,6 @@ export default function MatangazoScreen() {
       return;
     }
 
-    const cleanPhone = phoneNumber.replace(/[\s\-\(\)]/g, '');
-    
     Alert.alert(
       `${t('customer_dashboard.contact')} ${businessName}`,
       `${t('customer_dashboard.choose_method')} ${businessName}:`,
@@ -471,19 +493,43 @@ export default function MatangazoScreen() {
         { text: t('app.cancel'), style: 'cancel' },
         { 
           text: `📞 ${t('customer_dashboard.call')}`, 
-          onPress: () => makePhoneCall(cleanPhone)
+          onPress: () => makePhoneCall(phoneNumber)
         },
         { 
           text: `💬 ${t('customer_dashboard.sms')}`, 
-          onPress: () => sendSMS(cleanPhone, businessName)
+          onPress: () => sendSMS(phoneNumber, businessName)
         }
       ]
     );
   };
 
+  // Normalise to the +255 international form - the same rule as the Blade
+  // page's formatPhoneNumber() and as mteja/biashara.tsx. This screen used to
+  // dial the raw number without the country code.
+  const formatPhoneNumber = (phoneNumber: string): string | null => {
+    if (!phoneNumber || phoneNumber === 'null' || phoneNumber === 'undefined' ||
+        phoneNumber === 'Haijajazwa' || phoneNumber === 'Hakuna namba ya simu') {
+      return null;
+    }
+    let clean = phoneNumber.replace(/[\s\-\(\)]/g, '');
+    if (!clean.startsWith('+255') && !clean.startsWith('255')) {
+      if (clean.length === 9) {
+        clean = `255${clean}`;
+      } else if (clean.length === 10 && clean.startsWith('0')) {
+        clean = `255${clean.substring(1)}`;
+      }
+    }
+    return clean;
+  };
+
   // Kazi ya kupiga simu
   const makePhoneCall = (phoneNumber: string) => {
-    const phoneURL = `tel:${phoneNumber}`;
+    const formatted = formatPhoneNumber(phoneNumber);
+    if (!formatted) {
+      Alert.alert(t('app.info'), t('customer_dashboard.no_phone'));
+      return;
+    }
+    const phoneURL = `tel:${formatted}`;
     
     Linking.canOpenURL(phoneURL)
       .then((supported) => {
@@ -506,12 +552,19 @@ export default function MatangazoScreen() {
 
   // Kazi ya kutuma ujumbe
   const sendSMS = (phoneNumber: string, businessName: string) => {
+    const formatted = formatPhoneNumber(phoneNumber);
+    if (!formatted) {
+      Alert.alert(t('app.info'), t('customer_dashboard.no_phone'));
+      return;
+    }
+
     let smsURL;
-    
+    const message = t('customer_dashboard.sms_message_advert').replace('{name}', businessName);
+
     if (Platform.OS === 'ios') {
-      smsURL = `sms:${phoneNumber}&body=Habari ${businessName}, naomba kufahamu zaidi kuhusu matangazo yako.`;
+      smsURL = `sms:${formatted}&body=${encodeURIComponent(message)}`;
     } else {
-      smsURL = `sms:${phoneNumber}?body=Habari ${businessName}, naomba kufahamu zaidi kuhusu matangazo yako.`;
+      smsURL = `sms:${formatted}?body=${encodeURIComponent(message)}`;
     }
 
     Linking.canOpenURL(smsURL)
@@ -534,7 +587,7 @@ export default function MatangazoScreen() {
   };
 
   // Kudhibiti uchezaji wa video
-  const handleVideoPlayback = async (postId: number, videoRef: any) => {
+  const handleVideoPlayback = async (postId: string, videoRef: any) => {
     if (currentPlayingVideo && currentPlayingVideo !== postId) {
       const previousVideoRef = videoRefs.current[currentPlayingVideo];
       if (previousVideoRef) {
@@ -623,7 +676,11 @@ export default function MatangazoScreen() {
         <View style={styles.header}>
           <View style={styles.businessInfo}>
             {item.users?.business_logo_url ? (
-              <Image source={{ uri: item.users.business_logo_url }} style={styles.avatar} />
+              <ZoomableImage
+                uri={item.users.business_logo_url}
+                style={styles.avatar}
+                name={businessName}
+              />
             ) : (
               <View style={styles.avatar}>
                 <Text style={styles.avatarText}>

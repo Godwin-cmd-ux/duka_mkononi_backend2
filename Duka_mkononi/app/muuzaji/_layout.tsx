@@ -1,12 +1,17 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Text } from 'react-native';
+import TabSwipe from '../../components/tab-swipe';
 import { useLang } from '../../context/LanguageContext';
+
+// Tab order — used by the swipe gesture to pick the neighbouring page.
+const MUUZAJI_TABS = ['/muuzaji/profaili', '/muuzaji/mauzo', '/muuzaji/matumizi', '/muuzaji/uza'];
 
 export default function MuuzajiLayout() {
   const { t } = useLang();
 
   return (
+    <TabSwipe tabs={MUUZAJI_TABS}>
     <Tabs
       screenOptions={{
         headerShown: false,
@@ -41,5 +46,6 @@ export default function MuuzajiLayout() {
         })}
       />
     </Tabs>
+    </TabSwipe>
   );
 }

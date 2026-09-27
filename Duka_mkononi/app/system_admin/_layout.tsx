@@ -2,7 +2,11 @@ import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
+import TabSwipe from '../../components/tab-swipe';
 import { useLang } from '../../context/LanguageContext';
+
+// Tab order — used by the swipe gesture to pick the neighbouring page.
+const SYSTEM_ADMIN_TABS = ['/system_admin/dashboard', '/system_admin/notify'];
 
 export default function SystemAdminLayout() {
   const router = useRouter();
@@ -42,17 +46,19 @@ export default function SystemAdminLayout() {
         })}
       </View>
 
-      {/* CONTENT */}
+      {/* CONTENT — swipe left/right to move between the pages */}
       <View style={styles.content}>
-        <Tabs
-          screenOptions={{
-            tabBarStyle: { display: 'none' },
-            headerShown: false,
-          }}
-        >
-          <Tabs.Screen name="dashboard" />
-          <Tabs.Screen name="notify" />
-        </Tabs>
+        <TabSwipe tabs={SYSTEM_ADMIN_TABS}>
+          <Tabs
+            screenOptions={{
+              tabBarStyle: { display: 'none' },
+              headerShown: false,
+            }}
+          >
+            <Tabs.Screen name="dashboard" />
+            <Tabs.Screen name="notify" />
+          </Tabs>
+        </TabSwipe>
       </View>
     </View>
   );

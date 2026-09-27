@@ -67,9 +67,17 @@ export async function runBackgroundSync(): Promise<boolean> {
   }
 
   if (role === 'admin') {
+    // Keep the shared user caches in the exact shape the screens read: a plain
+    // array. Storing the raw { users, stats } envelope under 'admin:users' made
+    // other msimamizi screens call .filter() on an object (and could surface
+    // rows outside the sellers list).
+    const normalizeUsers = (data: any): any[] | null =>
+      !data ? null : Array.isArray(data) ? data : data.users || null;
+
     await run([
       ['user:profile', () => fetchJson(base + '/api/user/profile', token)],
-      ['admin:users', () => fetchJson(base + '/api/admin/users', token)],
+      ['admin:users', () => fetchJson<any>(base + '/api/admin/users', token).then(normalizeUsers)],
+      ['admin:sellers', () => fetchJson<any>(base + '/api/admin/users?role=seller', token).then(normalizeUsers)],
       ['admin:products', () => fetchJson(base + '/api/admin/products', token)],
       ['admin:sales', () => fetchJson(base + '/api/admin/sales', token)],
       ['admin:stats', () => fetchJson(base + '/api/admin/stats', token)],

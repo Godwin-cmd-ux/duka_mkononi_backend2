@@ -125,6 +125,8 @@ export default function RipotiScreen() {
   const [soldProducts, setSoldProducts] = useState<Product[]>([]);
   const [unsoldProducts, setUnsoldProducts] = useState<Product[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
+  // Sales with no customer data — each counts as one "unknown customer".
+  const [unknownCustomers, setUnknownCustomers] = useState(0);
   const [sales, setSales] = useState<Sale[]>([]);
   const [sellers, setSellers] = useState<User[]>([]);
   
@@ -571,6 +573,9 @@ export default function RipotiScreen() {
         console.log('💰 Mauzo ya biashara:', allSales.length);
         setSales(allSales);
       }
+      // Each sale with no customer data counts as one "unknown customer".
+      const unknownCustomerSales = new Set(allSales.filter(s => !s.customer_id).map(s => s.id)).size;
+      setUnknownCustomers(unknownCustomerSales);
 
       // 5. Process products with sales data
       const { allProducts, soldProducts, unsoldProducts } = processProductsWithSalesData(rawProducts, allSales);
@@ -597,7 +602,7 @@ export default function RipotiScreen() {
 
         setBusinessStats({
           totalSales: totalSalesAmount,
-          totalCustomers: allCustomers.length,
+          totalCustomers: allCustomers.length + unknownCustomerSales,
           totalProducts: allProducts.length,
           totalSellers: allSellers.length,
           todaySales: todaySalesAmount,
@@ -679,6 +684,9 @@ export default function RipotiScreen() {
         console.log('💰 Mauzo ya seller:', allSales.length);
         setSales(allSales);
       }
+      // Each sale with no customer data counts as one "unknown customer".
+      const unknownSellerCustomerSales = new Set(allSales.filter(s => !s.customer_id).map(s => s.id)).size;
+      setUnknownCustomers(unknownSellerCustomerSales);
 
       // 3. Process products with sales data
       const { allProducts, soldProducts, unsoldProducts } = processProductsWithSalesData(rawProducts, allSales);
@@ -733,7 +741,7 @@ export default function RipotiScreen() {
 
         setBusinessStats({
           totalSales: totalSalesAmount,
-          totalCustomers: sellerCustomers.length,
+          totalCustomers: sellerCustomers.length + unknownSellerCustomerSales,
           totalProducts: allProducts.length,
           totalSellers: 1,
           todaySales: todaySalesAmount,
@@ -794,6 +802,8 @@ export default function RipotiScreen() {
     ? customers.filter(c => matchesSearch(c.name, c.phone, c.email))
     : customers;
   const noResultsText = () => `Hakuna matokeo yanayolingana na "${searchTerm}"`;
+  // Known customers + one entry per sale that has no customer data.
+  const totalCustomerCount = customers.length + unknownCustomers;
 
       const formatCurrency = (amount: number) => {
       if (!amount && amount !== 0) return 'TSh 0';
@@ -1290,7 +1300,7 @@ export default function RipotiScreen() {
       <View>
         <Text style={styles.sectionTitle}>
           {t('reports.customer_report')} - {isAdmin ? userData.businessName : t('reports.personal_report')}
-          {isAdmin && dataSource === 'admin' && ` (${customers.length} ${t('reports.customers')})`}
+          {isAdmin && dataSource === 'admin' && ` (${totalCustomerCount} ${t('reports.customers')})`}
         </Text>
         
         {customers && customers.length > 0 ? (
@@ -1492,7 +1502,7 @@ export default function RipotiScreen() {
             color={activeReport === 'customers' ? 'white' : '#666'} 
           />
           <Text style={[styles.navButtonText, activeReport === 'customers' && styles.activeNavButtonText]}>
-            {t('reports.customers')} ({customers.length})
+            {t('reports.customers')} ({totalCustomerCount})
           </Text>
         </TouchableOpacity>
       </View>
@@ -1556,7 +1566,7 @@ export default function RipotiScreen() {
           />
           <Text style={styles.statusText}>
             {dataSource === 'admin' 
-              ? t('reports.status_card_admin', { sellers: sellers.length, customers: customers.length, products: allProducts.length })
+              ? t('reports.status_card_admin', { sellers: sellers.length, customers: totalCustomerCount, products: allProducts.length })
               : t('reports.status_card_seller')
             }
           </Text>

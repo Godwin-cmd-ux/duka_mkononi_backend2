@@ -975,9 +975,8 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         async function updateSale() {
             if (!selectedSale) return;
             
-            // Server currently only supports GET /api/sales/my and POST /api/sales
-            // No PUT /api/sales/:id endpoint exists yet.
-            // We attempt the PUT call; if server returns 404, inform the user gracefully.
+            // PUT /api/sales/:id edits the sale line and moves stock by the
+            // difference. A 404 now means "sale not found / not yours".
             const token = localStorage.getItem('userToken');
             const quantity = parseInt(editForm.quantity) || selectedSale.sale_items?.[0]?.quantity || 1;
             
@@ -1001,7 +1000,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             try {
                 const response = await fetch(`${API_BASE_URL}/api/sales/${selectedSale.id}`, {
                     method: 'PUT',
-                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Accept': 'application/json' },
                     body: JSON.stringify(updateData)
                 });
                 
@@ -1010,15 +1009,29 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     closeEditModal();
                     await loadSalesData();
                 } else if (response.status === 404) {
-                    showToast('Kipengele cha kuhariri mauzo bado hakijaanzishwa kwenye server. Tafadhali subiri sasisho la kimataifa.', 'warning');
+                    // Two very different 404s arrive here: the sale is missing
+                    // or not ours (the API answers with `error`), or PUT
+                    // /api/sales/:id is not on the deployed server yet (Laravel
+                    // answers "The route ... could not be found.").
+                    const notFoundData = await response.json().catch(() => null);
+                    const routeMissing = !!notFoundData && !notFoundData.error &&
+                        typeof notFoundData.message === 'string' &&
+                        /could not be found/i.test(notFoundData.message);
+                    showToast(
+                        routeMissing
+                            ? 'Server haijasasishwa bado, kwa hivyo kuhariri mauzo hakujawasilishwa. Mwambie msimamizi wa mfumo asasishe server.'
+                            : (notFoundData && (notFoundData.error || notFoundData.message))
+                                || 'Imeshindikana kuhariri mauzo. Jaribu tena.',
+                        'error'
+                    );
                     closeEditModal();
                 } else {
                     const errData = await response.json().catch(() => ({}));
                     showToast(errData.error || 'Imeshindikana kuhariri mauzo', 'error');
                 }
             } catch (error) {
-                // If server returns non-JSON (e.g. 404 HTML), catch it
-                showToast('Kipengele cha kuhariri mauzo bado haipo. Tafadhali subiri sasisho la kimataifa.', 'warning');
+                // Non-JSON / network failure.
+                showToast('Imeshindikana kuhariri mauzo. Angalia muunganisho na ujaribu tena.', 'error');
                 closeEditModal();
             } finally {
                 setEditSaleBusy(false);
@@ -1095,8 +1108,25 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             document.getElementById('editModal').style.display = 'flex';
         }
 
+        // Live total = quantity × unit price, so the summary total follows the
+        // quantity the seller is typing (the server recomputes the same value on
+        // save). Falls back to the recorded total when there is no unit price.
+        function updateEditTotal() {
+            const el = document.getElementById('newTotalDisplay');
+            if (!el) return;
+            // Same quantity resolution as updateSale(), so the live total always
+            // matches what saving would produce.
+            const qty = parseFloat(editForm.quantity) || selectedSale?.sale_items?.[0]?.quantity || 1;
+            const price = parseFloat(editForm.unit_price) || 0;
+            const total = price > 0 ? qty * price : (selectedSale?.total_amount || 0);
+            el.innerText = formatCurrency(total);
+        }
+
         function renderEditModal() {
             const body = document.getElementById('editModalBody');
+            const editUnitPrice = parseFloat(editForm.unit_price) || 0;
+            const editQuantity = parseFloat(editForm.quantity) || selectedSale?.sale_items?.[0]?.quantity || 1;
+            const editTotal = editUnitPrice > 0 ? editQuantity * editUnitPrice : (selectedSale?.total_amount || 0);
             body.innerHTML = `
                 <div class="form-group">
                     <label class="form-label">Nambari ya Ankra</label>
@@ -1123,10 +1153,11 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     <div class="summary-row"><span>Bidhaa:</span><span>${escapeHtml(editForm.product_name)}</span></div>
                     <div class="summary-row"><span>Kiasi (Zamani):</span><span>${selectedSale?.sale_items?.[0]?.quantity || 0}</span></div>
                     <div class="summary-row"><span>Kiasi (Mpya):</span><span id="newQuantityDisplay">${editForm.quantity}</span></div>
-                    <div class="summary-row"><span>Bei ya Uuzaji:</span><span>${formatCurrency(parseFloat(editForm.unit_price))}</span></div>
+                    <div class="summary-row"><span>Bei ya Uuzaji:</span><span>${formatCurrency(editUnitPrice)}</span></div>
                     <div class="summary-row"><span>Mteja:</span><span id="newCustomerDisplay">${escapeHtml(editForm.customer_name) || 'Bila Jina'}</span></div>
                     <div class="summary-divider"></div>
-                    <div class="summary-row total-label"><span>Jumla kamili:</span><span class="total-value">${formatCurrency(selectedSale?.total_amount || 0)}</span></div>
+                    <div class="summary-row total-label"><span>Jumla kamili:</span><span class="total-value" id="newTotalDisplay">${formatCurrency(editTotal)}</span></div>
+                    <div style="font-size:11px;color:#7f8c8d;font-style:italic;margin-top:8px;line-height:1.4;">Kiongeza kiasi = kuuza zaidi; kupunguza = kurudisha stoo</div>
                 </div>
             `;
             
@@ -1137,6 +1168,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 quantityInput.addEventListener('input', (e) => {
                     editForm.quantity = e.target.value;
                     document.getElementById('newQuantityDisplay').innerText = e.target.value;
+                    updateEditTotal();
                 });
             }
             if (customerInput) {
@@ -1154,7 +1186,13 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
 
         function openConfirmModal() {
             const total = salesData.reduce((sum, s) => sum + (s.total_amount || 0), 0);
-            const customers = new Set(salesData.map(s => getCustomerName(s))).size;
+            // Known customers + one "unknown customer" per sale with no customer data.
+            const knownCustomers = new Set(salesData
+                .map(s => getCustomerName(s))
+                .filter(n => n && n !== 'Mteja Bila Jina')).size;
+            const unknownCustomers = salesData
+                .filter(s => { const n = getCustomerName(s); return !n || n === 'Mteja Bila Jina'; }).length;
+            const customers = knownCustomers + unknownCustomers;
             document.getElementById('confirmText').innerHTML = `
                 Mauzo ${salesData.length} ya leo yatafungwa na hayawezi kuhaririwa tena.<br><br>
                 Jumla ya leo: ${formatCurrency(total)}<br><br>

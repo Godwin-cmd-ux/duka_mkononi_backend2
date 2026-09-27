@@ -671,7 +671,7 @@ export default function PreviewScreen() {
       ? datesOverride
       : Object.keys(salesByDate);
     const summaries: DailySummary[] = summaryDates.map(date => {
-      const daySales = salesByDate[date];
+      const daySales = salesByDate[date] || [];
       const dayExpenses = expensesByDate[date] || [];
       
       // ✅ DEBUG: Angalia kama expenses zimepita
@@ -699,10 +699,24 @@ export default function PreviewScreen() {
       // NET PROFIT
       const netProfit = totalProfit - totalExpenses;
 
-      // Only genuinely recorded names — drop the placeholder (like the Blade page).
-      const customers = [...new Set(daySales
+      // Genuinely recorded names only — the placeholder is not a real name.
+      const placeholder = t('preview.default_customer');
+      const knownCustomers = [...new Set(daySales
         .map(sale => sale.customer_name)
-        .filter(name => name && name !== t('preview.default_customer')))];
+        .filter(name => name && name !== placeholder))];
+      // Every sale without customer data is one "unknown customer", so the
+      // customer count = known customers + sales with no customer data. A sale
+      // with several items appears as several rows sharing one id, so count
+      // distinct sale ids (: number of sales, not number of rows).
+      const unknownCustomerCount = new Set(
+        daySales
+          .filter(sale => !sale.customer_name || sale.customer_name === placeholder)
+          .map(sale => sale.id)
+      ).size;
+      const unknownLabel = t('seller_dashboard.unknown_customer');
+      const customers = unknownCustomerCount > 0
+        ? [...knownCustomers, ...Array(unknownCustomerCount).fill(unknownLabel)]
+        : knownCustomers;
       
       const daySellers = sellers.filter(seller => 
         daySales.some(sale => sale.user_id === seller.id)

@@ -2468,3 +2468,1113 @@ Supabase REST API. The default Laravel connection is a **local sqlite file**
 placeholder product and one user. Verifying real data through `DB::table(...)`
 silently reads that decoy instead of production. Always verify through the
 models or `C:\eas-temp\opencode\sql.php`.
+
+---
+
+## Expo sync - Muuzaji Uza (`uza`) [File 1 of Muuzaji]
+
+**Date:** 2026-09-27
+**Module:** Muuzaji (first page of the module; Msimamizi is complete)
+**Blade file inspected:** `resources/views/muuzaji/uza.blade.php`
+**Expo file modified:** `Duka_mkononi/app/muuzaji/uza.tsx`
+**Blade modified (migration-related only):** `resources/views/muuzaji/uza.blade.php`
+**Supporting files modified:** `Duka_mkononi/locales/*.json` (8 languages)
+
+**Laravel endpoints traced (routes/api.php, `auth.jwt` group):**
+- `GET  /api/user/profile` (ProfileController::show) - sidebar identity
+- `GET  /api/products/my` (ProductController::my)
+- `GET  /api/customers/my` (CustomerController::my)
+- `POST /api/customers` (CustomerController::store)
+- `POST /api/sales` (SaleController::store)
+- `POST /api/sales/ai-import` (AiImportController::salesImport)
+- `POST /api/sales/ai-commit` (AiImportController::commitAiSale)
+
+The mobile API base URL is already the Laravel host
+(`Duka_mkononi/constants/api.ts` -> `https://www.dukamkononi.com`), fixed in the
+Msimamizi dashboard pass, so no change was needed there.
+
+**Business / database-migration impact**
+
+The recent migration (`products.price` = buying price,
+`products.expected_selling_price` = selling price) is the only migration touch
+point on this page. Every price shown or sold on Uza must come from
+`expected_selling_price`; a row with no selling price must never fall back to
+`price`, or the seller sells the product at cost.
+
+Both clients used to do exactly that fallback
+(`product.expected_selling_price || product.price || 0`). This pass removes it
+in both clients and refuses to add a price-less product to the cart, matching
+the corrected semantics. `ProductController::my` already returns the buying and
+selling prices separately, so no Laravel controller change was required - the
+only Laravel/Blade edit is the display fix noted below.
+
+**Old / incomplete behaviour discovered**
+
+1. **Selling price shown as `TZS 0` (or hidden) when it was never set.** The
+   previous pass had added the `Haijawekwa` / `selling_price_not_set` wording,
+   but the Expo product row and the selected-product panel still wrapped the
+   whole price block in `{item.expected_selling_price && (...)}`. A `null` price
+   therefore rendered **nothing at all** and made the new "not set" branch dead
+   code. The blade `render()` still had a second, older product grid that read
+   `formatCurrency(p.expected_selling_price)` directly and printed `TZS 0` -
+   inconsistent with `renderProductGrid()`, which the same pass had already
+   switched to `sellingPriceLabel()`.
+2. **No idempotency key on the mobile sale.** The Blade page sends a
+   `clientSaleKey` on every attempt and retries once on a network hiccup;
+   `SaleController::store` recognises the key via `notes LIKE 'ai_dup_<key>%'`
+   and returns the **original** sale instead of creating a second one. This was
+   added to stop a double-tap / slow network deducting stock twice (progress.md
+   sections 18/21). The Expo `handleSale` sent no key and had no retry, so the
+   same double-deduction was still reachable from mobile.
+3. `/api/business/by-name/{business_name}` is still called by the Expo page as
+   a load gate. It is a **legacy name-based lookup** (returns the newest
+   approved admin whose `business_name` matches, plus `allMatches`); `uza`
+   never uses the result for scoping, and `ProductController::my` already scopes
+   by the authenticated user's business. Left in place (other Muuzaji/Msimamizi
+   pages share it) and recorded here rather than refactored in a one-file pass.
+
+**Changes made**
+
+- `Duka_mkononi/app/muuzaji/uza.tsx`
+  1. Removed the `|| product.price` selling-price fallback in both product-pipeline
+     sites (`registerLive` callback and `loadProducts`), keeping a missing
+     selling price as `null` (carried over from the previous pass).
+  2. `addToCart` now refuses a product with no selling price and explains why
+     (`seller_sell.selling_price_not_set` / `..._msg`).
+  3. Cart items are created with `unit_price = expected_selling_price` only
+     (no fallback to the buying price).
+  4. Product row and selected-product panel: the price block is now rendered
+     unconditionally, so a missing selling price shows the
+     `selling_price_not_set` label instead of an empty row.
+  5. `handleSale` sends a `clientSaleKey` (`uza-<ts>-<rand>`), identical across
+     the attempts of one sale, and retries the POST **once** on a network
+     failure. The 30s abort timeout is applied per attempt.
+- `resources/views/muuzaji/uza.blade.php` (migration-related display fix only)
+  6. The second product grid inside `render()` now uses the existing
+     `sellingPriceLabel(p)` helper instead of `formatCurrency(...)` directly, so
+     an unset selling price reads `Haijawekwa` on the first paint too.
+- `Duka_mkononi/locales/*.json`
+  7. Suggested by the previous pass and confirmed present and valid in all 8
+     files: `seller_sell.selling_price_not_set` and
+     `seller_sell.selling_price_not_set_msg`. No new keys were added here.
+
+**Verification performed**
+
+- `npx tsc --noEmit` in `Duka_mkononi` -> clean (exit 0, no diagnostics).
+- Parsed all 8 locale files and asserted both new keys are non-empty strings.
+- Re-read the blade script after the edit: `sellingPriceLabel` is defined before
+  both grids that call it (defined next to `formatCurrency`, line ~334).
+- Endpoints/methods/payloads re-checked by hand against `routes/api.php` and the
+  controllers: `GET products/my`, `GET customers/my`, `POST customers`,
+  `POST sales` all match the payloads the Expo code builds.
+
+**Remaining issues / not changed (dedicated feature pass needed)**
+
+- **AI paper-sales import ("Ingiza Mauzo kwa Picha") is missing from Expo.** The
+  Blade page has a full flow (camera/library -> `POST /api/sales/ai-import` ->
+  editable review table -> per-row `POST /api/sales/ai-commit` or "Hifadhi
+  Zote", with `STOCK_ISSUES`/`DUPLICATE` handling and its own idempotency).
+  `uza.tsx` has no equivalent. Porting it natively is a self-contained feature
+  (image picker + `expo-image-manipulator` compression, a results modal, ~40
+  localized strings) and, following the Msimamizi precedent for print/PDF and
+  the Rejea date filter, it is **flagged rather than implemented in this
+  one-file pass**. The two endpoints require nothing new from Laravel.
+- `ngrok-skip-browser-warning` headers remain app-wide (pre-existing note).
+- The Expo sale-result alert optimistically decrements local stock instead of
+  re-fetching (`loadProducts()`); Blade re-fetches. Functionally equivalent for
+  a normal sale; left as-is.
+- No OTA/deploy performed.
+
+---
+
+## Expo sync - Muuzaji Profaili (`profaili`) [File 2 of Muuzaji]
+
+**Date:** 2026-09-27
+**Module:** Muuzaji
+**Blade file inspected:** `resources/views/muuzaji/profaili.blade.php`
+**Expo file modified:** `Duka_mkononi/app/muuzaji/profaili.tsx`
+**Supporting files modified:** `Duka_mkononi/locales/*.json` (8 languages)
+
+**Laravel endpoints traced:**
+- `GET  /api/user/profile` (ProfileController::show)
+- `PUT  /api/user/profile` (ProfileController::update)
+- `GET  /api/business/by-name/{business_name}` (BusinessController::byName)
+- `GET  /api/products/my` (ProductController::my)
+- `GET  /api/sales/my?date_from=&date_to=` (SaleController::my)
+- Cloudinary upload is done directly by the client (no Laravel route)
+
+**Old / legacy behaviour discovered**
+
+1. **Two dead Node endpoints in the seller stats path.** `loadUserStats`
+   (non-admin branch) called `GET /api/business/{business_name}/sellers` and
+   then, per seller, `GET /api/products/seller/{id}`. Neither route exists in
+   `routes/api.php` any more (`/api/business/...` only has
+   `{businessName}/all-products`), so both returned 404 and a seller's
+   "Bidhaa" card stayed at 0 (or a stale cache). The Blade page simply reads
+   `/api/products/my`, which Laravel already scopes by the caller's business.
+2. **All-time sales were displayed as "today".** The Expo sales fetch was
+   `GET /api/sales/my` with **no** `date_from`/`date_to`, so the seller's entire
+   sales history was counted and summed under labels that said "today". This is
+   exactly the bug progress.md section 16 fixed on the Blade page (and section
+   17 fixed in `Supabase.php`); the mobile page never got it.
+3. **Customer count was the whole customer book.** It counted
+   `/api/customers/my` (and, for sellers, filtered on a `created_by` field that
+   does not exist), instead of the Blade rule: the number of **distinct**
+   `customer_id`s recorded in **today's** sales.
+4. **Admin vs seller branching that Laravel does not have.** Blade uses one
+   code path for both roles; Expo had separate admin/seller logic and two
+   diverging labels per card.
+5. The stats label strings themselves claimed the wrong scope
+   ("Business Sales", "Your Sales", "* All statistics are for the entire
+   business...") — under today-only numbers that would be a false claim. In
+   the **German and Chinese** locale files the whole profile stats block was
+   still untranslated Swahili.
+
+**Changes made**
+
+- `Duka_mkononi/app/muuzaji/profaili.tsx`
+  1. Rewrote `loadUserStats()` to mirror the Blade page exactly, with one code
+     path for every role:
+     - products: one `GET /api/products/my`, count = array length;
+     - sales: `GET /api/sales/my?date_from=<today>&date_to=<today>`, where
+       "today" is `toISOString().split('T')[0]` (the same convention the sale
+       screen stores), count = rows, revenue = sum of `total_amount`;
+     - customers: distinct `customer_id`s in those today rows.
+     The `/api/customers/my` download and the two dead Node endpoints are gone.
+  2. Removed the now-unnecessary `businessData` guard from `loadUserStats`.
+- `Duka_mkononi/locales/*.json` (all 8)
+  3. Reworded the `profile.*` stats keys to the today semantics used by the
+     Blade page: `stats_for` -> "... Today", `stats_biz_products` /
+     `stats_your_products` -> "Bidhaa za Biashara" (products stay business-wide),
+     `stats_*_sales` -> "Mauzo ya Leo", `stats_*_customers` -> "Wateja wa Leo",
+     `stats_*_income` -> "Mapato ya Leo", `business_all` -> "(Zako za Leo)", and
+     both notes -> "Mauzo na wateja wa leo tu — kuanzia usiku wa manane". German
+     and Chinese values, previously Swahili placeholders, are now translated too.
+     These keys are used **only** by `muuzaji/profaili.tsx`, so no other screen
+     is affected.
+
+**Verification performed**
+
+- `npx tsc --noEmit` in `Duka_mkononi` -> clean (exit 0).
+- Parsed all 8 locale files; asserted the changed keys exist and print the new
+  today-scoped wording.
+- Confirmed by grep that `profile.stats_*`, `profile.stats_for`,
+  `profile.business_all` and `profile.your_personal` are referenced only from
+  `muuzaji/profaili.tsx` before editing their values.
+- Re-checked the sale date range against `SaleController::my`, which filters on
+  `sale_date` with `date_from`/`date_to` (and the section-17 `Supabase.php` fix
+  that makes two filters on one column actually AND).
+
+**Remaining issues / not changed (dedicated feature pass needed)**
+
+- **GPS coordinates are missing from the mobile edit form.** Blade has
+  `business_latitude` / `business_longitude` inputs plus a "Pata Eneo la Sasa
+  (GPS)" button (`navigator.geolocation`) and sends them on
+  `PUT /api/user/profile`. `profaili.tsx` neither edits nor sends them
+  (`ProfileController::update` already accepts both keys). Adding it needs
+  `expo-location` permission handling, so it is flagged rather than bolted on.
+- The page still resolves the business through the legacy
+  `/api/business/by-name/{business_name}` lookup (shared with `uza`). It only
+  feeds display/is-admin hints; server scoping is by `business_id`. Left as a
+  module-wide cleanup item.
+- `ngrok-skip-browser-warning` headers remain app-wide (pre-existing note).
+- No OTA/deploy performed.
+
+### Follow-up correction: sellers cannot edit business info, but keep their photo (2026-09-27)
+
+**Rule (confirmed with the owner, second pass):** a muuzaji may edit only their
+**own** data — `full_name`, `phone` and their **profile photo**. Every other
+business field is **read-only** for a seller: `business_name`,
+`business_location`, `business_type`, `business_description`, and the GPS
+`business_latitude` / `business_longitude` coordinates. Those belong to the
+msimamizi. Scope chosen: both the Expo page and the Blade seller page (UI),
+keeping the Laravel API unchanged.
+
+**Photo note:** there is **no per-user photo column** in the schema. The avatar
+in both clients is `business_logo_url` (a `businesses` column, see
+`ProfileController::BUSINESS_FIELDS`). The owner explicitly confirmed the seller
+must still be able to change their photo, so `business_logo_url` stays editable
+on this page even though it is nominally a business field — it is the only photo
+the app can store. (This is the exception to the "logo is business info" rule.)
+
+**Important:** `ProfileController::update` does **not** enforce any of this — it
+will still write business name/location/type/description/coordinates sent by any
+authenticated user with a `business_id`, seller included. The clients simply no
+longer send the read-only fields. If the API must refuse a seller's business
+writes, that needs a separate controller change (flagged, not done here).
+
+**Blade (`resources/views/muuzaji/profaili.blade.php`)**
+- Edit modal: kept the profile-photo picker (*Picha ya Profaili* +
+  *Badilisha Picha*, still uploading through `uploadProfileImage()` → Cloudinary).
+  Removed the business-name, business-location and latitude/longitude inputs and
+  the GPS button. Only the photo, *Jina Kamili* and *Namba ya Simu* remain; the
+  subtitle now says the rest of the business info is managed by the msimamizi.
+- `updateProfile()` sends `{ full_name, phone }`, plus `business_logo_url` when
+  the photo changed. Business name/location/coordinates are never sent.
+- `partials.cloudinary-config` include restored (needed by the photo upload).
+- The avatar is still viewable (photo-viewer) as before.
+
+**Expo (`Duka_mkononi/app/muuzaji/profaili.tsx`)**
+- Edit modal: removed the business name/location inputs, the `BIZ_TYPES` chip
+  selector and the business-description field; only full name and phone remain.
+- Kept the avatar camera badge and `handleChangePhoto()` (uploads the photo to
+  Cloudinary and saves `business_logo_url` through `PUT /api/user/profile`), with
+  the `expo-image-picker` / `utils/cloudinary` imports and `photoUploading`
+  state restored.
+- `editFormData` is `{ full_name, phone }`; the `PUT /api/user/profile` body,
+  the post-save `setUserData`/AsyncStorage merges and the initial form fill carry
+  only those two fields. The "business name changed → reload business" branch
+  was removed. The photo is uploaded separately by `handleChangePhoto()`.
+- Business name/location/type/description are still **displayed** read-only
+  (profile card, account-info rows) — only their editing was removed.
+
+**Verification:** `npx tsc --noEmit` clean; the extracted Blade script passes
+`node --check`; grep confirms no remaining references to the removed DOM ids,
+handlers, `BIZ_TYPES` or the removed state in either file.
+
+---
+
+## Expo sync - Muuzaji Mauzo (`mauzo`) [File 3 of Muuzaji]
+
+**Date:** 2026-09-27
+**Module:** Muuzaji
+**Blade file inspected:** `resources/views/muuzaji/mauzo.blade.php`
+**Expo file modified:** `Duka_mkononi/app/muuzaji/mauzo.tsx`
+**Supporting files modified:** `Duka_mkononi/locales/*.json` (8 languages)
+
+**Laravel endpoints traced:**
+- `GET  /api/sales/my` (SaleController::my) - today's rows are filtered in the
+  client, exactly like the Blade page
+- `PUT  /api/sales/{id}` - **does not exist** in `routes/api.php`
+
+**Surprise: this pair was already almost fully in sync.** Unlike `uza`/`profaili`,
+`mauzo.tsx` already spoke to Laravel (`/api/sales/my`), filtered to today, and had
+the edit modal, the "Funga Mauzo ya Leo" flow (device-local flag
+`closed_sales_<today>`, same key as the Blade `localStorage`), the receipt
+(rendered as a real PDF via `expo-print` + share, versus the web print window)
+and the empty state. No legacy Node endpoint remained. Only two digressions were
+found and fixed.
+
+**Changes made**
+
+1. **`updateSale()` 404 handling** (`Duka_mkononi/app/muuzaji/mauzo.tsx`). The
+   Blade page recognises a 404 from `PUT /api/sales/{id}` and tells the seller the
+   feature "bado hakijaanzishwa kwenye server", whereas Expo fell through to a
+   generic "Imeshindikana kuhariri mauzo" (and, for the 404 HTML body, a JSON
+   parse failure). Expo now matches Blade with a dedicated message backed by a
+   new locale key `seller_dashboard.edit_not_available` (all 8 languages).
+2. **Internal idempotency marker removed from displayed notes.** Sales created
+   with a `clientSaleKey` store their notes as
+   `ai_dup_<clientSaleKey> | <real notes>` (`SaleController::store` /
+   `commitAiSale`). The list printed that raw string. Expo now strips the
+   `ai_dup_... | ` prefix for display via `stripInternalNotes()` (display only; the
+   stored value is untouched, so duplicate suppression still works). This is a
+   consequence of the idempotency work done in this migration pass.
+
+**Verification:** `npx tsc --noEmit` in `Duka_mkononi` -> clean; all 8 locale
+files parsed and asserted to contain `seller_dashboard.edit_not_available`.
+
+**Remaining issues / not changed (flagged, needs a decision)**
+
+- **Editing a sale is non-functional in BOTH clients.** There is no
+  `PUT /api/sales/{id}` route; both the Blade page and Expo send the PUT, get a
+  404 and show the "not available yet" message. Making it work needs a Laravel
+  controller/route change (upsert the sale + its items, re-check stock, update
+  the customer totals) - outside a client-sync pass.
+- **Blade does not read Laravel's `sale.customers` relation.**
+  `SaleController::my` hydrates each sale with `sale_items[].products` and
+  `customers` (the customer object). `mauzo.blade.php`'s `getCustomerName()`
+  checks `sale.customer` / `sale.customer_data` (neither exists in the Laravel
+  response) and never `sale.customers`, so the web page shows "Mteja Bila Jina"
+  for a sale recorded with only a `customer_id`. Expo *does* check `customers`,
+  so it shows the real name. The clients therefore disagree, and the mobile
+  behaviour is the correct one. Blade was **not** changed (this is not a
+  migration-compatibility fix) - recording the divergence here instead.
+- **Both clients still download the seller's entire sales history** and filter
+  to today client-side (`/api/sales/my` with no `date_from`/`date_to`), even
+  though the profile page was moved to server-side date filtering in sections
+  16/17. Left as-is because the Blade page is the reference; the same
+  optimization would need a Blade+Expo pass.
+- `ngrok-skip-browser-warning` headers remain app-wide (pre-existing note).
+- No OTA/deploy performed.
+
+---
+
+## Expo sync - Muuzaji Matumizi (`matumizi`) [File 4 of Muuzaji]
+
+**Date:** 2026-09-27
+**Module:** Muuzaji (final page of the module)
+**Blade file inspected:** `resources/views/muuzaji/matumizi.blade.php`
+**Expo file modified:** `Duka_mkononi/app/muuzaji/matumizi.tsx`
+**Supporting files modified:** `Duka_mkononi/locales/*.json` (8 languages)
+
+**Laravel endpoints traced (all exist):**
+- `GET  /api/office-expenses/categories` (ExpenseController::categories)
+- `GET  /api/office-expenses/range?start_date=&end_date=` (ExpenseController::range)
+- `GET  /api/profit/daily/{date}` (ProfitController::daily)
+- `POST /api/office-expenses` (ExpenseController::store)
+- `DELETE /api/office-expenses/{id}` (ExpenseController::destroy)
+
+**Migration impact (no client change needed)**
+
+`ExpenseController::range` (the endpoint both clients call for the day list) was
+migrated to `BusinessResolver::memberIds($businessId)`, i.e. it now scopes by
+`business_id` / membership rather than by the legacy `business_name` string -
+this is the fix for the "three Jerald expenses were invisible after a name
+respell" problem. `today`, `store` and `destroy` still scope/write
+`business_name`, so a POST continues to stamp the caller's `business_name`.
+Both clients call the migrated `range` endpoint, so the list is correct; no
+client-side change was required.
+
+**Surprise: this pair was already in sync too**, like `mauzo`. `matumizi.tsx`
+already spoke to every Laravel endpoint above, rendered the same profit card
+(gross revenue / cost of goods / gross profit / office expenses / net profit +
+sales & expense counts), the same category chips, the same date stepper (forward
+arrow disabled on today), the same add modal and delete confirmation, and read
+`data.expenses` / `data.success` exactly like the Blade page. No legacy Node
+endpoint remained. Only message-level bugs were found.
+
+**Changes made**
+
+- `Duka_mkononi/app/muuzaji/matumizi.tsx`
+  1. The success alert after adding an expense used
+     `seller_dashboard.success_edit` ("Mauzo yamehaririwa kikamilifu!" - *sale
+     updated*), so a saved expense reported the wrong thing. Now uses the
+     existing `seller_dashboard.success_add` ("Matumizi yameongezwa!").
+  2. The add-expense failure branch used `error_edit`; now `error_add`.
+  3. All three add-expense validation alerts used `quantity_placeholder`
+     ("Weka kiasi"). Now: `expense_amount_required` for the amount,
+     `expense_description_required` for the description, and the existing
+     `select_category` for the category - matching the Blade copy.
+- `Duka_mkononi/locales/*.json` (all 8)
+  4. `success_add` and `select_category` were **untranslated** in
+     `en`/`es`/`fr`/`hi`/`ur` (stored as parenthesised Swahili) and still
+     Swahili in `de`/`zh`. All seven are now translated.
+  5. Added `expense_amount_required` and `expense_description_required` in all 8
+     languages.
+
+**Verification:** `npx tsc --noEmit` in `Duka_mkononi` -> clean. Parsed all 8
+locale files and asserted all four keys exist, are non-empty and are not the
+parenthesised placeholder form.
+
+**Remaining issues / not changed (flagged)**
+
+- **`ProfitController::daily` hardcodes `sales_count => 0`.** The "Mauzo" stat
+  box in the profit card therefore always reads 0 in **both** clients (the
+  Blade renders `dailyProfit.sales_count`). The real count is available server-
+  side; fixing it means changing the controller, so it is flagged rather than
+  faked client-side.
+- **`ExpenseController` authorization is still weak** (pre-existing, already
+  recorded in the expenses audit earlier in this file): no role guard on any of
+  its six endpoints, and `destroy()` compares `business_name` so an ordinary
+  business admin can delete another business's expense by id. Untouched here -
+  it is a Laravel authorization change, not a client sync.
+- `ngrok-skip-browser-warning` headers remain app-wide (pre-existing note).
+- No OTA/deploy performed.
+
+---
+
+## Muuzaji module complete
+
+All four Muuzaji pages have now been synced one file at a time:
+
+1. `uza` (File 1) - selling-price null safety, `clientSaleKey` idempotency.
+2. `profaili` (File 2) - today-only stats, read-only business info (photo kept),
+   two dead Node endpoints removed.
+3. `mauzo` (File 3) - 404 graceful edit message, internal `ai_dup_` marker hidden.
+4. `matumizi` (File 4) - correct add/validation messages, missing translations.
+
+Per the protocol the next module is **Customer** (`mteja`) - to be started only
+on the next explicit instruction.
+
+---
+
+## Expo sync - Mteja Biashara (`biashara`) [File 1 of Mteja]
+
+**Date:** 2026-09-27
+**Module:** Mteja / Customer (first page of the module)
+**Blade file inspected:** `resources/views/mteja/biashara.blade.php` (1133 lines,
+inline JS starts at line 654)
+**Expo file modified:** `Duka_mkononi/app/mteja/biashara.tsx`
+**Supporting files modified:** `Duka_mkononi/locales/*.json` (8 languages)
+
+**Laravel endpoint traced (public, no auth):**
+- `GET /api/businesses` (`BusinessController::index`, line 146) - returns approved
+  `role=admin` users as businesses with `id,email,role,full_name,phone,
+  business_name,business_location,business_logo_url,business_latitude,
+  business_longitude,status,created_at`.
+
+**Scoping note.** The customer is a platform-level (tenant-less) role: the page
+lists ALL approved businesses, not one business's data. Both clients correctly
+call the un-scoped `/api/businesses`, so the `business_id` migration has no
+impact here. No Laravel change needed.
+
+**Result: this pair was already behaviorally in sync.** Expo already spoke to
+`/api/businesses`, kept an offline cache (`db/cache`) plus a live subscription
+(`lib/syncer` `registerLive('businesses', ...)`), filtered on the same five fields
+(name, location, manager name, phone, email), and implemented both actions:
+phone (`tel:`) / SMS (`sms:`) with the same TZ phone normalisation
+(`0XXXXXXXXX` -> `255XXXXXXXXX`), and "Twende Dukani" Google Maps driving
+ directions via `expo-location` + `Linking`. Differences that are *deliberate
+ native UX* and were left alone: the contact step is a native `Alert` action
+ sheet (Blade uses a modal), "Twende Dukani" uses a permission/position flow
+ instead of the web spinner+popup-blocker fallback, and the empty state carries
+ a Refresh button.
+
+**Changes made**
+
+- `Duka_mkononi/app/mteja/biashara.tsx`
+  1. `interface Business.id` was typed `number`, but ids are UUID **strings** -
+     the Blade file calls this out explicitly in `bindCardEvents()`
+     ("business ids are UUID STRINGS - parseInt mangles them"). Changed to
+     `string` (with a comment) to prevent future `parseInt`/numeric comparisons.
+  2. The SMS body was `t('customer_dashboard.contact') + ' ' + businessName`,
+     i.e. it texted literally **"Wasiliana <business>"** - the `contact` key is a
+     *button label* ("Contact"), not a sentence, and the resulting message was
+     meaningless. Blade's `sendSMS()` sends "Habari {business}, naomba kufahamu
+     zaidi kuhusu huduma zako.". Now uses a new localized
+     `customer_dashboard.sms_message` with a `{name}` placeholder, matching the
+     Blade wording in Swahili.
+- `Duka_mkononi/locales/*.json` (all 8)
+  3. Added `customer_dashboard.sms_message` (a proper greeting sentence,
+     translated per language). Also corrected the German and Chinese `sms` label
+     (both were still the Swahili "Tuma Ujumbe"; now "SMS senden" / "发送短信").
+
+**Verification:** `npx tsc --noEmit` in `Duka_mkononi` -> clean (exit 0). Parsed
+all 8 locale files and asserted `customer_dashboard.sms_message` exists,
+is non-empty and contains the `{name}` placeholder.
+
+**Remaining issues / not changed (flagged)**
+
+- **Blade is hardcoded Swahili, Expo is localized.** Every label on the Blade
+  page (`Biashara Zilizosajiliwa`, `Wasiliana`, `Twende Dukani`, `Jina la
+  Msimamizi`, `Imethibitishwa`, the empty states, the toasts) is a literal
+  Swahili string, while Expo routes all of them through
+  `customer_dashboard.*`. For a customer-facing screen this is backwards
+  (mobile is the more complete implementation). Blade was **not** changed -
+  localizing the web page is a larger UI pass, not a mobile-sync fix.
+- **Expo retries/handles failure more gracefully than Blade.** On error Blade
+  sets `businesses = []` and shows a toast; Expo falls back to its cache and
+  offers a localized Retry button. Kept.
+- **Expo raises an extra `Alert` when the API returns zero businesses**, in
+  addition to the on-screen empty state (Blade shows only the empty state).
+  Harmless but fires on every live re-sync; left as-is because it is native UX,
+  not a behaviour divergence.
+- **The `de` and `zh` `customer_dashboard` block is still largely untranslated**
+  (Swahili) for many keys (`no_businesses`, `manager_name`, `location`, `phone`,
+  `email`, `status`, `not_provided`, `verified`, `call`, `refresh`, ...). Only
+  the keys touched in this pass were corrected; the rest remains a known,
+  pre-existing locale defect.
+- `ngrok-skip-browser-warning` headers remain app-wide (pre-existing note).
+- No OTA/deploy performed.
+
+**Next file (awaiting the word `next`):** `resources/views/mteja/matangazo.blade.php`
+and `Duka_mkononi/app/mteja/matangazo.tsx`.
+
+---
+
+## Expo sync - Mteja Matangazo (`matangazo`) [File 2 of Mteja]
+
+**Date:** 2026-09-27
+**Module:** Mteja / Customer
+**Blade file inspected:** `resources/views/mteja/matangazo.blade.php` (1321 lines,
+inline JS starts at line 698)
+**Expo file modified:** `Duka_mkononi/app/mteja/matangazo.tsx`
+**Supporting files modified:** `Duka_mkononi/locales/*.json` (8 languages)
+
+**Laravel endpoints traced (all exist, reactions behind `auth.jwt`):**
+- `GET  /api/matangazo` (public, `AdvertisementController::publicIndex`, route line 53)
+- `GET  /api/reactions/user/likes` (`ReactionController::userLikes`, route line 97)
+- `POST /api/reactions/like` (`ReactionController::like`, route line 98)
+- `POST /api/reactions/report` (`ReactionController::report`, route line 99)
+
+**Response contract confirmed.** `ReactionController::like` returns
+`liked`, `like_count` AND `report_count`; `report` returns `report_count`
+(+ `like_count`). The Blade page already treats the server as the source of
+truth; Expo did not.
+
+**Changes made**
+
+- `Duka_mkononi/app/mteja/matangazo.tsx`
+  1. `Matangazo.id` / `user_id` were typed `number` but are UUID **strings** -
+     the Blade file explicitly warns about this in `render()` ("ids are matched
+     as STRINGS (UUIDs - parseInt mangles them)"). Changed to `string`, and
+     propagated to `likedPosts: Set<string>` and `currentPlayingVideo` /
+     `videoRefs` / `handleVideoPlayback` / `handleLike`.
+  2. **Like response was only partially consumed.** Expo ignored the server's
+     `liked` flag and `report_count`, keeping its optimistic guess for the like
+     membership. It now applies `result.liked` to the liked-set and takes both
+     `like_count` and `report_count` from the response - matching Blade's
+     `handleLike()`.
+  3. **Missing per-post double-tap guard.** Blade keeps a `likeBusy` Set so a
+     rapid double-tap cannot fire two POSTs. Added the same guard (a `likeBusy`
+     ref, released in a `finally`).
+  4. **Report count was never reconciled.** On success Expo left its optimistic
+     `+1` in place. It now applies the server's `report_count` (Blade does
+     this), on top of the existing optimistic/revert behaviour.
+  5. **Phone numbers were dialled/texted without a country code.** Blade runs
+     every number through `formatPhoneNumber()` ("0XXXXXXXXX" ->
+     "255XXXXXXXXX"); `mteja/biashara.tsx` does too, but `matangazo.tsx` passed
+     the raw number straight to `tel:`/`sms:`. Added the same
+     `formatPhoneNumber()` helper (plus the both `Haijajazwa` and "Hakuna namba
+     ya simu" sentinels) and used it in `makePhoneCall()` / `sendSMS()`; the
+     empty-number guard now shows the localized `no_phone` message.
+  6. **SMS body was hardcoded Swahili** ("Habari <name>, naomba kufahamu zaidi
+     kuhusu matangazo yako.") and not URL-encoded. It now uses a new localized
+     `customer_dashboard.sms_message_advert` (`{name}` placeholder) and
+     `encodeURIComponent`, matching the Blade outcome while being translatable.
+- `Duka_mkononi/locales/*.json` (all 8)
+  7. Added `customer_dashboard.sms_message_advert`, translated per language.
+
+**Verification:** `npx tsc --noEmit` in `Duka_mkononi` -> clean (exit 0). Parsed
+all 8 locale files and asserted `sms_message` and `sms_message_advert` exist,
+are non-empty and contain `{name}`.
+
+**Remaining issues / not changed (flagged)**
+
+- **Blade is hardcoded Swahili** ("Matangazo", "Penda", "Ripoti", "Agiza",
+  "Wasiliana Nasi", "Imechapishwa", "Karibu, ...", the login warning and every
+  toast), while Expo uses `customer_dashboard.*` in 8 languages. Same situation
+  as `mteja/biashara` - the mobile screen is the more complete implementation.
+- **Expo keeps its offline cache on failure; Blade clears the list.** On a
+  network error Blade sets `matangazo = []` and shows a toast; Expo falls back
+  to `db/cache` data. Kept (native offline-first UX).
+- **`/api/reactions/like` is a toggle, not idempotent.** A user who taps like
+  twice quickly is protected by the new `likeBusy` guard client-side, but the
+  server has no server-side duplicate window (unlike `SaleController`'s
+  `clientSaleKey`). Recorded, not changed (Laravel-side).
+- **`de` / `zh` `customer_dashboard` block remains largely untranslated**
+  (Swahili) for the keys this screen shows (`no_adverts`, `first_advert`,
+  `adverts_title`, `order`, `like`, `report`, `contact_us`, `published`, ...).
+  Pre-existing, wider than this pass.
+- `ngrok-skip-browser-warning` headers remain app-wide (pre-existing note).
+- No OTA/deploy performed.
+
+**Next file (awaiting the word `next`):** `resources/views/mteja/profaili.blade.php`
+and `Duka_mkononi/app/mteja/profaili.tsx` - the last page of the Mteja module.
+
+---
+
+## Expo sync - Mteja Profaili (`profaili`) [File 3 of Mteja]
+
+**Date:** 2026-09-27
+**Module:** Mteja / Customer (last page of the module)
+**Blade file inspected:** `resources/views/mteja/profaili.blade.php` (1203 lines,
+inline JS starts at line 642)
+**Expo file modified:** `Duka_mkononi/app/mteja/profaili.tsx`
+**Supporting files modified:** `Duka_mkononi/locales/*.json` (8 languages)
+
+**Laravel endpoints traced (auth):**
+- `GET /api/user/profile` (`ProfileController::show`, route line 66)
+- `PUT /api/user/profile` (`ProfileController::update`, route line 67) - both text
+  fields and the `business_logo_url` photo update.
+
+**Result: the pair was already in sync.** Expo already called the same endpoints,
+used `PUT` with `{ full_name, phone }` for the edit form, sent only the photo URL
+(`{ business_logo_url }`) after a Cloudinary upload, stored the notification
+preference under the same `notificationSettings` key, put the same fields on the
+screen (full name, email, phone, role, status, member since) and mapped
+role/status through the same localized strings. Cloudinary is also consistent:
+`utils/cloudinary.ts` uses API **v1_1** and the `react_native_uploads` preset,
+which is exactly what the Blade page's comment says it had to fix.
+
+**Changes made**
+
+- `Duka_mkononi/app/mteja/profaili.tsx`
+  1. `UserProfile.id` was typed `number` but user ids are UUID **strings** (same
+     finding as `mteja/biashara`, `mteja/matangazo` and the Blade comments).
+     Changed to `string`.
+  2. After a successful profile fetch the display name is now written back to
+     `AsyncStorage['userName']`, mirroring the Blade page's
+     `localStorage.setItem('userName', userData.full_name)`. Other screens (e.g.
+     the Matangazo greeting) read that key, so it could previously go stale when
+     a name was changed elsewhere.
+- `Duka_mkononi/locales/*.json` (8 languages) - the `profile.*` block, which is
+  shared by `mteja/profaili` and `muuzaji/profaili`, was substantially
+  untranslated:
+  3. **`de` and `zh` were entirely Swahili** for this whole section (`title`,
+     `full_name`, `phone`, `email`, `role`, `status`, `settings`, `save`,
+     `logout`, `cancel`, `greeting`, `success_update`, the `photo_*` messages,
+     ...). Both blocks are now fully translated.
+  4. **`es`, `fr`, `hi` and `ur` carried English leftovers** in the header of the
+     block (`title: "Profile"`, `full_name: "Full Name"`, `phone: "Phone
+     Number"`, `save: "Save Changes"`, `logout: "Logout"`, `cancel:
+     "Cancel"`, `success_update: "Profile updated successfully!"`,
+     `error_update: "Failed to update profile."`, `logout_confirm: "Are you
+     sure you want to logout?"`, ...). All translated.
+  5. `en` `working_as` was still the placeholder `"(Unauza kama:)"`; now
+     "Selling as:" (and translated in `de`/`zh` with the same block).
+
+**Verification:** `npx tsc --noEmit` in `Duka_mkononi` -> clean (exit 0). Parsed
+all 8 locale files, asserted every `profile.*` key used by this screen exists,
+is non-empty, and spot-checked `title` / `greeting` now read in the right
+language.
+
+**Remaining issues / not changed (flagged)**
+
+- **Blade shows two extra read-only fields that Expo omits**: `Eneo la Biashara`
+  (`business_location`) and `Koordineti za Ramani` (`business_latitude`,
+  `business_longitude`), each rendered only when set. Expo's profile screen does
+  not show them. Left out deliberately: a **customer** account has no business
+  fields, and the most recent user correction was that business info does not
+  belong on a personal profile. Flagged so the decision is explicit.
+- **Logout clears a different set of keys.** Blade removes `userToken, userData,
+  userId, userEmail, userRole, userName, userBusiness, notificationSettings`;
+  Expo's shared `SessionContext.signOut()` removes `SESSION_KEYS` +
+  `clearAllCache()`. The only difference is `notificationSettings` - Expo keeps
+  the user's notification preference across logouts (Blade wipes it). Treating
+  that as an intentional improvement; flagged.
+- **Blade is hardcoded Swahili** (labels, toasts, `getRoleName`/`getStatusName`)
+  while Expo is localized in 8 languages - consistent with the other two Mteja
+  pages.
+- **`working_as` in `sw` is fine; `es`/`fr`/`hi`/`ur` no longer placeholder** for
+  this block, but other sections of the locale files still contain
+  English/Swahili leftovers - a broader, pre-existing debt.
+- `ngrok-skip-browser-warning` headers remain app-wide (pre-existing note).
+- No OTA/deploy performed.
+
+---
+
+## Mteja module complete
+
+All three Customer pages have now been synced one file at a time:
+
+1. `biashara` (File 1) - `Business.id` UUID typing; SMS body was the literal
+   "Wasiliana <name>" - now a localized greeting (`sms_message`).
+2. `matangazo` (File 2) - `liked`/`report_count` reconciliation from the server,
+   per-post double-tap guard, +255 phone normalisation, localized encoded SMS
+   body (`sms_message_advert`), UUID typing.
+3. `profaili` (File 3) - UUID typing, `userName` cache sync, and the shared
+   `profile.*` translation debt (de/zh were fully Swahili; es/fr/hi/ur English).
+
+Per the protocol, all three modules (Msimamizi -> Muuzaji -> Customer) are now
+covered. Awaiting explicit instruction before any further work; no OTA/deploy has
+been performed.
+
+---
+
+## User request - live edit total on Muuzaji Mauzo
+
+**Date:** 2026-09-27
+**Request:** "in /muuzaji/mauzo i want when i edit quantity the total price change
+automatically according to price per item"
+**Blade file modified:** `resources/views/muuzaji/mauzo.blade.php`
+**Expo file modified:** `Duka_mkononi/app/muuzaji/mauzo.tsx`
+
+**Problem.** The edit-sale modal has an editable *Kiasi* (quantity) field and a
+read-only *Bei ya Uuzaji* (unit price), but the summary's *Jumla kamili* row
+rendered `selectedSale.total_amount` - the sale's **stored** total - so typing a
+new quantity changed *Kiasi (Mpya)* but left the total frozen at the old value.
+
+**Changes**
+
+- `resources/views/muuzaji/mauzo.blade.php`
+  1. Added `updateEditTotal()`, which recomputes `quantity x unit_price` and
+     writes it into the summary.
+  2. The total row now has `id="newTotalDisplay"` and is seeded with the same
+     computed value (`editTotal`) instead of `selectedSale.total_amount`.
+  3. The `editQuantity` `input` handler now calls `updateEditTotal()` on every
+     keystroke, so the total updates live as the seller types.
+- `Duka_mkononi/app/muuzaji/mauzo.tsx`
+  4. Same fix for parity: derived `editTotalAmount` (quantity x unit price) and
+     the summary total renders it instead of `selectedSale.total_amount`.
+     Reactivity is automatic because both are state.
+
+**Consistency detail.** Both totals resolve the quantity exactly like the save
+path does (`parseFloat(editForm.quantity) || saleItem.quantity || 1` in Blade,
+the equivalent in Expo), so a cleared/zero quantity shows - and saves - the same
+total. When there is no unit price on the item, both fall back to the recorded
+total rather than showing 0.
+
+**Verification:** `npx tsc --noEmit` in `Duka_mkononi` -> clean (exit 0); the
+Blade page's inline JS was extracted and passed `node --check`. No behaviour
+change to `updateSale()` / the (still non-functional, see the `mauzo` entry)
+`PUT /api/sales/{id}` path.
+
+---
+
+## User request - sale edits must sell/restock the DIFFERENCE (data integrity)
+
+**Date:** 2026-09-27
+**Request:** "i want it to do selling if quantity is increase and restock if
+quantity is reduced - make sure data integrity is a big deal"
+**Files modified:**
+- `app/Http/Controllers/Api/SaleController.php` (new `update()`, `planStockDeltas()`, `revertSaleItems()`, `revertSaleHeader()`)
+- `routes/api.php` (`PUT api/sales/{id}`)
+- `resources/views/muuzaji/mauzo.blade.php` (seller hint)
+- `Duka_mkononi/app/muuzaji/mauzo.tsx` (seller hint)
+- `Duka_mkononi/locales/*.json` (`seller_dashboard.stock_sync_note`, 8 languages)
+- `tests/Unit/SaleStockPlanTest.php` (new - 8 tests)
+
+**Why a backend change was needed.** Both clients already `PUT
+/api/sales/{id}`, but **no such route existed** (flagged in the `mauzo` pass): the edit form was cosmetic. Implementing it in the client
+only would have been impossible anyway - stock lives server-side.
+
+**Stock rule implemented.** The sale already decremented stock when it was
+created, so an edit moves stock by the DIFFERENCE, never by the whole quantity
+again:
+- quantity increased -> `delta > 0` -> sell the extra units -> `stock - delta`
+- quantity reduced   -> `delta < 0` -> restock those units -> `stock - delta`
+  (i.e. `stock + |delta|`)
+- quantity unchanged -> `delta = 0` -> no stock write at all
+
+**Data-integrity measures in `SaleController::update()`**
+1. **Ownership** - the sale is fetched with `where('seller_id', $userId)`; a
+   seller can only edit their own sale, and every line must belong to that sale
+   (`where('sale_id', $sale->id)`), so an item id from another sale is rejected.
+2. **Validation before any write** - positive quantity and unit price, item
+   exists on the sale.
+3. **Stock check before any write** - if the extra units exceed stock on hand
+   the request fails with `STOCK_ISSUES` (400) and nothing is touched.
+4. **Total is recomputed server-side** from the sale's own lines; the client's
+   `total_amount` is ignored, so the stored total can never disagree with the
+   lines it is made of.
+5. **Per-product aggregation** - a product appearing on several lines has its
+   deltas summed first, so opposing edits net out correctly.
+6. **No transaction available** - PostgREST is REST-only, so the writes are
+   ordered (sale header -> sale lines -> stock) and each later failure runs
+   compensating writes (`revertSaleItems` / `revertSaleHeader` plus a stock
+   rollback). Failures are logged as `SALE_UPDATE_FAILED`.
+7. **`ai_dup_<key>` marker preserved** - `store()` stamps an idempotency marker
+   into `notes`; the edit keeps it and replaces only the user-visible part.
+8. **Idempotent by construction** - a retried PUT recomputes `delta = 0`, so a
+   lost response can never move stock twice.
+9. **Customer totals** - `customers.total_purchases` is adjusted by the change
+   in the sale total (not re-added), so a repeat edit cannot inflate it.
+10. **Fresh stock read before write** - the absolute new stock value is derived
+    from a read taken immediately before the PATCH (same rule as `store()`),
+    with a `>= 0` clamp.
+
+**Tests.** `planStockDeltas()` was extracted as a pure static function so the
+rule itself is verifiable without a database. `tests/Unit/SaleStockPlanTest.php`
+covers: increase sells only the delta; reduce restocks with zero stock on hand;
+over-selling is rejected; selling exactly the available stock is allowed;
+multi-line aggregation; opposite edits netting to zero; missing product; lines
+without a product.
+
+**Seller-facing hint.** Both edit modals now explain the behaviour
+(`Kiongeza kiasi = kuuza zaidi; kupunguza = kurudisha stoo`), added to all 8
+locale files.
+
+**Verification**
+- `php -l app/Http/Controllers/Api/SaleController.php` -> no syntax errors
+- `php -l routes/api.php` -> no syntax errors
+- `php artisan route:list --path=api/sales` -> `PUT api/sales/{id} -> Api\SaleController@update` (confirmed)
+- `php vendor/bin/phpunit` -> OK (10 tests, 19 assertions)
+- `npx tsc --noEmit` (Duka_mkononi) -> clean (exit 0)
+- Blade inline JS extracted -> `node --check` passed
+- all 8 locale files parsed; `seller_dashboard.stock_sync_note` present
+
+**Remaining / not done**
+- No end-to-end run against live Supabase was performed (this environment has no
+  Supabase credentials); the request/response contract is unchanged from what
+  both clients already send.
+- Only the FIRST sale line is editable in the UI (both clients), which predates
+  this change; the server recomputes the total across all lines regardless.
+- "Today's sales are closed" is still enforced client-side only.
+
+---
+
+## User request - every Mauzo edit must appear as a taarifa in the admin preview
+
+**Date:** 2026-09-27
+**Request:** "any edition in mauzo file must go as new taarifa into the admin
+preview, make sure that"
+**Files modified:**
+- `app/Http/Controllers/Api/SaleController.php` (richer `SALE_UPDATE` log, rollback fix)
+- `resources/views/msimamizi/preview.blade.php` (Taarifa tab now lists sale edits)
+
+**How the admin preview works.** `resources/views/msimamizi/preview.blade.php`
+is business-scoped (JWT `business_id` on `/api/admin/sales`) and has two tabs:
+"Siku Zangu" and **"Taarifa"**. The Taarifa tab renders `businessEvents`, which
+the page builds client-side from sales / products (types `sale`,
+`product_added`, `low_stock`). There was no event type for an edit, and no
+server record the page could read - so an edit was invisible.
+
+**Chosen mechanism (no schema change).** `SaleController::update()` already
+writes an audit entry (`SALE_UPDATE`) through `AuditLogger` into `user_logs`,
+and `GET /api/admin/logs/search?action=...` already exposes those logs with the
+author embedded. So the edit record the preview needs **already exists** - the
+preview simply had to read it. This avoids inventing a new table (PostgREST
+cannot run DDL here) and avoids overloading the broadcast `notifications`
+("taarifa") table, whose `notification_type` CHECK constraint only allows
+all/admins/sellers/clients/specific.
+
+**Changes**
+
+- `app/Http/Controllers/Api/SaleController.php`
+  1. The `SALE_UPDATE` audit details now carry everything a taarifa needs:
+     `invoice_number`, `customer_name`, `old_total_amount`, `total_amount`,
+     `items_changed`, an `items[]` array of
+     `{product_id, product_name, old_quantity, new_quantity, unit_price}`, and
+     `stock_updates`.
+  2. **Rollback integrity fix:** the compensating `revertSaleHeader()` now
+     restores the sale's original `updated_at` instead of `now()`. Previously a
+     failed/rolled-back edit would still leave a fresh `updated_at`, i.e. the
+     sale would still look edited.
+- `resources/views/msimamizi/preview.blade.php`
+  3. `fetchData()` now also calls
+     `GET /api/admin/logs/search?action=SALE_UPDATE` (honouring the page's date
+     filter; the end date is sent as `<date>T23:59:59.999Z` so the last day of a
+     range is not silently dropped).
+  4. Each returned log is turned into an event of type **`sale_edited`** titled
+     "Mauzo Yamehaririwa", describing
+     `Ankara <invoice> — <product>: <old> → <new>. Jumla: <old> → <new>. Mteja: <name>.`,
+     with the editor's name and the log's timestamp.
+  5. **Scoping:** `/api/admin/logs/search` is platform-wide, so the events are
+     filtered to `log.user_id` present in the page's own business member list
+     (the `sellers` array it already fetches). One business's preview therefore
+     never shows another business's edits.
+  6. Rendering: added `eventIconClass()` / `eventIcon()` and a `.ev-edit` style,
+     so an edit is visually distinct (pen icon, indigo) from sale / product /
+     low-stock events. Unread badges, the "Taarifa (n)" counter and
+     "Zimesomwa" all work for the new type automatically.
+  7. Edit events carry the full ISO timestamp in `event_date` (accurate "MPYA"
+     detection) plus a `display_date` used only for the card caption.
+
+**Contract check (server writes = preview reads)**
+`invoice_number`, `customer_name`, `old_total_amount`, `total_amount`,
+`items_changed`, `items[].product_name`, `items[].old_quantity`,
+`items[].new_quantity` - all match between `SaleController` and
+`preview.blade.php`. `log.created_at`, `log.user_id`, `log.action` and
+`log.users.full_name` come from `AdminController::logsSearch()` +
+`embedLogUsers()`.
+
+**Verification**
+- `php -l app/Http/Controllers/Api/SaleController.php` -> no syntax errors
+- `php vendor/bin/phpunit` -> OK (10 tests, 19 assertions) - the stock-plan unit
+  tests from the previous pass still pass
+- `preview.blade.php` inline JS extracted -> `node --check` passed
+- grep cross-check that every field the preview reads is present in the log
+
+**Not done / assumptions**
+- Only the audit log records an edit; if `user_logs` is ever pruned by
+  `/api/admin/logs/cleanup` the older edit taarifa disappear with it (the
+  preview already has a date filter, so normal windows are unaffected).
+- No end-to-end run against live Supabase (no credentials here).
+- `preview.blade.php` was already, and remains, hardcoded Swahili.
+
+---
+
+## Pass 29 - Seller sale edit, floating cart dock, tap-to-zoom photos, sellers scoping, swipe between tabs (Sep 27, 2026)
+
+Five mobile bug reports, all five addressed. Nothing committed or deployed.
+
+### 1. Mauzo (mobile) - "kipengele cha kuhariri mauzo bado hakijaanzishwa"
+`PUT /api/sales/{id}` (`SaleController::update`) already exists, so the stale
+"not available yet" fallback was wrong. In `Duka_mkononi/app/muuzaji/mauzo.tsx`
+the 404 branch now shows the server's own reason and, failing that, the generic
+`seller_dashboard.error_edit` - never `seller_dashboard.edit_not_available`. The
+PUT now also sends `Accept: application/json` so Laravel answers errors with
+JSON instead of an HTML page and `response.json()` cannot throw. The same stale
+message was removed from the web counterpart `resources/views/muuzaji/mauzo.blade.php`
+(404 -> server reason / generic error; catch -> network error). The dead
+`seller_dashboard.edit_not_available` key was deleted from all 8 locale files.
+
+### 2. Uza (mobile) - cart dock must appear as soon as a product is tapped
+`Duka_mkononi/app/muuzaji/uza.tsx`: the floating dock used to render only when
+`cart.length > 0`, so the seller had to scroll to the product panel to add and
+only then saw the cart. It now renders whenever `selectedProduct || cart.length > 0`:
+- row 1 (when a product is selected): product name, selling price + remaining
+  stock, -/qty/+ controls and an **Ongeza** button (calls `addToCart`);
+- row 2: cart pill (opens the cart modal) + **KAMILISA** (disabled while the
+  cart is empty or a sale is in flight).
+`floatingDock` is now a column with `dockRow`/`dockProd`/`dockName`/`dockPrice`/
+`dockQty`/`dockQtyBtn`/`dockQtyInput`/`dockAdd` styles, and `bottomSpacing` grew
+to 210 so the last controls are never hidden by the two-row dock.
+
+### 3. All profile pictures now tap-to-zoom
+New `Duka_mkononi/components/zoomable-image.tsx`, the mobile counterpart of
+`resources/views/partials/photo-viewer.blade.php`: renders the inline image and
+opens a full-screen dark viewer on tap (name caption + close, tap anywhere to
+dismiss). Replaced the plain `<Image>` avatars/logos with it in:
+`muuzaji/profaili.tsx`, `mteja/profaili.tsx`, `mteja/biashara.tsx`,
+`mteja/matangazo.tsx`, `msimamizi/index.tsx` (business logo + each seller
+avatar). Unused `Image` imports removed where nothing else used them.
+
+### 4. Msimamizi "Wauzaji" sometimes showed non-business / non-seller users
+Root cause was the **shared `admin:users` cache/live key**. `msimamizi/preview.tsx`
+and `msimamizi/ripoti.tsx` write a *seller+admin* array to it, while
+`lib/background.ts` wrote the raw `{ users, stats }` envelope, and
+`msimamizi/index.tsx` read it and passed it straight to `setSellersData`
+without re-applying the seller filter - so admins (and malformed shapes)
+could surface under Wauzaji. Fixes:
+- `index.tsx` now uses its own `admin:sellers` key for both the live
+  registration and the cache, and a `pickSellers()` guard re-applies
+  `role === 'seller' && status !== 'deleted'` to cached and fresh payloads.
+- `lib/background.ts` normalises `/api/admin/users` to its `users` array under
+  `admin:users` (no more envelope hitting `.filter()`) and also refreshes
+  `admin:sellers` from `?role=seller`.
+Server-side scoping was already correct (`AdminController::users()` confines a
+business admin to the JWT `business_id`); this closes the client-side leak.
+
+### 5. Swipe left/right between tabs (page-turn)
+New `Duka_mkononi/components/tab-swipe.tsx`: a `PanResponder` + `Animated`
+wrapper around a `<Tabs>` navigator. A horizontal drag (dx > 14 and
+> 1.5x dy) slides the page under the finger; releasing past 60px or with a
+flick slides the current page out and the neighbouring tab in. Vertical drags
+are ignored so scrolling/pull-to-refresh still work; edges resist. It animates
+the wrapper itself on purpose - the navigator's `animation: 'shift'` has a known
+blank-screen bug while react-native-screens detaches inactive screens. Wired
+into `muuzaji/_layout.tsx`, `msimamizi/_layout.tsx`, `mteja/_layout.tsx` and
+`system_admin/_layout.tsx` (ordered tab-path arrays per module).
+
+### Verification
+- `npx tsc --noEmit` (in `Duka_mkononi`) -> clean
+- `node --check` on the extracted `mauzo.blade.php` inline JS -> OK
+- all 8 locale JSON files re-parsed with `JSON.parse` -> OK
+- `php artisan test` -> 10 passed / 19 assertions
+
+### Not done / assumptions
+- No end-to-end run against live Supabase (no credentials here); the Expo
+  changes are type-checked only.
+- `PUT /api/sales/{id}` must be present on the deployed server for edits to
+  succeed; the client no longer masks a missing route with the old "wait for an
+  update" text.
+
+## Pass 30 - Missing sale-edit route on the server, msimamizi swipe, paper-fold turn + sound (Sep 27, 2026)
+
+Three follow-ups from Pass 29: the sale edit that still failed, the swipe that
+only half worked in `msimamizi`, and a paper-fold page turn with a sound.
+Nothing committed or deployed.
+
+### 1. "The route api/sales/<id> could not be found." - the deployed server is behind
+Root cause found and proven, and it is not the client. `PUT /api/sales/{id}` is
+registered locally (`routes/api.php`, inside the `auth.jwt` group), but
+production answers a *route-level* 404:
+
+```
+GET  https://www.dukamkononi.com/api/sales/my     -> 401 {"error":"Token inahitajika"}
+PUT  https://www.dukamkononi.com/api/sales/my     -> 405 "The PUT method is not supported for route api/sales/my."
+PUT  https://www.dukamkononi.com/api/sales/<uuid> -> 404 "The route api/sales/<uuid> could not be found."
+```
+
+That last sentence is Laravel's own (`Illuminate\Routing\AbstractRouteCollection`
+line 45): no PUT route of the shape `sales/{param}` matched at all, so the sale
+was never even looked up. `routes/api.php` and
+`app/Http/Controllers/Api/SaleController.php` are still uncommitted locally
+(`git diff routes/api.php` shows `+ Route::put('sales/{id}', ...)`), so the
+deployment cannot have them; every other sales route (`sales/my`, POST `sales`)
+works because it predates the change.
+
+Fix = deploy `routes/api.php` + `SaleController::update()` (and
+`php artisan route:clear` / `config:clear` if the host caches routes). There is
+no client-side workaround: no endpoint on the current server can edit a sale.
+
+Client behaviour was still worth tightening. Both `mauzo.tsx` and
+`mauzo.blade.php` now tell the two 404s apart - the API's own
+`{error:'Mauzo hayakupatikana...', code:'SALE_NOT_FOUND'}` versus Laravel's
+route-not-found body (no `error` field, message matching `/could not be found/i`).
+The second case shows the new `seller_dashboard.server_not_updated` string
+instead of dumping the English route sentence on the seller; the web page
+(hardcoded Swahili) shows the matching Swahili sentence and now also sends
+`Accept: application/json`. The key was added to all 8 locale files, and the two
+sale `error_edit` strings in `de.json`/`zh.json` that were still Swahili were
+translated while there. `tests/Feature/SaleUpdateRouteTest.php` guards the route.
+
+### 2. Swipe in msimamizi - it was the tab index, not the gesture
+`components/tab-swipe.tsx` resolved the current tab with
+`tabs.findIndex(tab => pathname === tab || pathname.startsWith(tab + '/'))`.
+`MSIMAMIZI_TABS` starts with the bare `/msimamizi`, so *every* msimamizi page
+matched index 0 first and the wrapper always believed it was on the home tab:
+swiping left always navigated to `ripoti` and swiping right was always refused as
+"past the first page". Muuzaji, mteja and system_admin lists have no bare parent
+path, which is why those felt perfect. Now the longest matching tab wins
+(`resolveTabIndex`), so ripoti/preview/bidhaa-mpya/tangaza turn correctly.
+
+### 3. Paper-fold transition + fold sound
+`tab-swipe.tsx` no longer slides. One `Animated.Value` (0 flat, +/-1 folded shut)
+drives a 3D turn: `perspective: 1100`, a `rotateY` up to 80 deg, a lighter
+translate and a depth fade, hinged on the edge leading into the direction of
+travel (`transformOrigin` left going forwards, right going backwards) so the free
+edge lifts towards the reader. A committed swipe folds the page shut (170 ms),
+then navigates and unfolds the new page flat from the same spine (190 ms); a
+refused swipe springs back, and a `turning` flag blocks a second fold mid-flight.
+
+Sound: `lib/page-fold-sound.ts` (expo-av `Audio.Sound`, the library already used
+for the video players) loads one Sound, keeps it and replays it from the start on
+every committed fold, with `playsInSilentModeIOS` so the iPhone mute switch does
+not swallow it. Every call is wrapped in try/catch - a device without audio just
+stays silent. There was no audio asset in the repo, so
+`scripts/generate-page-fold-sound.js` synthesises one (deterministic noise swish
+plus a crease snap, mono 22.05 kHz 16-bit PCM) into
+`assets/sounds/page-fold.wav` (~14 KB; regenerate with
+`node scripts/generate-page-fold-sound.js`). Metro bundles `wav` by default
+(metro-config `assetExts`) and both ExoPlayer and AVFoundation play PCM wav.
+
+### Verification
+- `npx tsc --noEmit` (in `Duka_mkononi`) -> clean
+- `php -l resources/views/muuzaji/mauzo.blade.php` -> no syntax errors
+- `node --check` on the extracted inline JS of `mauzo.blade.php` -> OK
+- all 8 locale JSON files re-parsed with `JSON.parse` and checked for the new key -> OK
+- the generated wav checked (RIFF/WAVE header, 0.32 s, peak 0.85, RMS 0.14)
+- `php artisan test` -> 11 passed / 21 assertions (incl. the new route guard)
+
+### Not done / assumptions
+- The fold and the sound are type-checked only - there is no device here, so
+  neither has been watched or heard on a phone. The cue is deliberately quiet
+  (`volume: 0.4`); raise it in `lib/page-fold-sound.ts` if it is too subtle.
+- Editing a sale in the app still fails until the server is updated (item 1).
+- No OTA/deploy performed; nothing committed.
+
+---
+
+## Pass 31 - Paper-squash fold sound + sale-edit message traced to an undeployed route (Sep 27, 2026)
+
+### 1. The fold sound is now a "paper squash"
+
+The Pass 30 clip was a smooth band-passed swish with a single crease snap, which
+read as airy rather than papery. `scripts/generate-page-fold-sound.js` now
+synthesises a crumple/squash in three layers:
+
+1. a low **squash body** - two cascaded one-poles at ~300 Hz, 4 ms attack,
+   ~85 ms decay (the soft thud of a sheet being crushed),
+2. a **crinkle bed** - band-passed noise (~700-4000 Hz), 10 ms swell, ~150 ms
+   decay - the continuous body of the sound, so it never sounds gappy,
+3. a **crumple crackle** - sparse random impulses (~2600/s thinning to ~420/s),
+   each ~1.4 ms, band-passed 1400-6500 Hz - the crackling-paper texture.
+
+Deterministic PRNG seed `20260928`; normalised to 0.90 peak with a 12 ms tail
+fade. Still mono 22.05 kHz 16-bit PCM at the same path (no code change needed in
+`lib/page-fold-sound.ts`), `assets/sounds/page-fold.wav` = 13274 bytes / 0.300 s.
+Playback volume raised `0.4 -> 0.55` in `lib/page-fold-sound.ts`.
+
+Waveform check: RIFF/WAVE, ch 1, rate 22050, bits 16, 6615 samples, peak 0.900,
+RMS 0.143 (same loudness as the old clip, but with a full body), near-silent
+15.3 %, segment peaks 0.900 / 0.498 / 0.325 / 0.200.
+
+### 2. "Server haijasasishwa bado" in mauzo edit = a deploy gap, not a client bug
+
+Live probes against `https://www.dukamkononi.com` (no auth, no side effects):
+
+| request | result |
+| --- | --- |
+| `PUT /api/sales/<uuid>` | **404** `The route api/sales/<uuid> could not be found.` |
+| `PATCH` / `POST` / `DELETE /api/sales/<uuid>` | 404 |
+| `PUT /api/products/<uuid>` | 401 (route exists) |
+| `GET /api/sales/my` | 401 (route exists) |
+
+The deployed server therefore runs an older `routes/api.php`: `Route::put('sales/{id}',
+[SaleController::class, 'update'])` (`routes/api.php:89`) is still **uncommitted**,
+so production does not have it. `PUT /api/products/{id}` answering 401 while
+`PUT /api/sales/{id}` answers 404 proves it is a missing route, not a missing or
+bad token. No client-side workaround exists: no other deployed endpoint can mutate
+a sale, and method spoofing cannot reach a path with no route registered at all.
+
+The mobile `routeMissing` branch and the `seller_dashboard.server_not_updated`
+key are working as intended - they are reporting the truth.
+
+**Fix:** deploy `routes/api.php` + `app/Http/Controllers/Api/SaleController.php`,
+then run `php artisan route:clear` and `php artisan config:clear` on the server.
+
+### Verification
+- `node scripts/generate-page-fold-sound.js` -> wrote the asset; header + stats checked
+- `npx tsc --noEmit` (in `Duka_mkononi`) -> clean
+- `php -l app/Http/Controllers/Api/SaleController.php` -> no syntax errors
+- `php artisan test` -> 11 passed / 21 assertions
+
+### Not done / assumptions
+- The sound is measured, not heard - there is no device here, so tuning is based
+  on the waveform statistics and the user's description ("paper squash").
+- Nothing committed, no OTA, no deploy. The sale-edit route still has to be
+  deployed by whoever owns the server before editing works in the app.

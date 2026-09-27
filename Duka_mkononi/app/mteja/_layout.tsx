@@ -2,13 +2,18 @@ import { Tabs } from 'expo-router';
 import React from 'react';
 import { Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import TabSwipe from '../../components/tab-swipe';
 import { useLang } from '../../context/LanguageContext';
+
+// Tab order — used by the swipe gesture to pick the neighbouring page.
+const MTEJA_TABS = ['/mteja/biashara', '/mteja/matangazo', '/mteja/profaili'];
 
 export default function MtejaLayout() {
   const { t } = useLang();
   const insets = useSafeAreaInsets();
 
   return (
+    <TabSwipe tabs={MTEJA_TABS}>
     <Tabs
       screenOptions={{
         headerShown: false,
@@ -60,5 +65,6 @@ export default function MtejaLayout() {
         })}
       />
     </Tabs>
+    </TabSwipe>
   );
 }

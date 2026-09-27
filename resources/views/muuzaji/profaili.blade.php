@@ -498,7 +498,7 @@
     <div id="editModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-title">Badili Wasifu Wako</div>
-            <div class="modal-subtitle">Unaweza kubadili taarifa zako za wasifu</div>
+            <div class="modal-subtitle">Unaweza kubadili picha yako, jina lako na namba ya simu. Taarifa nyingine za biashara zinasimamiwa na msimamizi.</div>
             <label class="input-label">Picha ya Profaili</label>
             <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
                 <div id="editAvatarPreview" style="width:60px;height:60px;border-radius:50%;background:#2ecc71;display:flex;align-items:center;justify-content:center;color:white;font-size:24px;font-weight:bold;"></div>
@@ -511,16 +511,6 @@
             <input type="text" id="editFullName" class="input-field" placeholder="Weka jina lako kamili">
             <label class="input-label">Namba ya Simu</label>
             <input type="tel" id="editPhone" class="input-field" placeholder="Weka namba yako ya simu">
-            <label class="input-label">Jina la Biashara</label>
-            <input type="text" id="editBusinessName" class="input-field" placeholder="Weka jina la biashara yako">
-            <label class="input-label">Eneo la Biashara</label>
-            <input type="text" id="editBusinessLocation" class="input-field" placeholder="Weka eneo la biashara yako">
-            <label class="input-label">Eneo la Ramani (Koordineti)</label>
-            <div style="display:flex;gap:8px;margin-bottom:16px;">
-                <input type="number" id="editLatitude" class="input-field" placeholder="Latitude" step="any" style="flex:1;">
-                <input type="number" id="editLongitude" class="input-field" placeholder="Longitude" step="any" style="flex:1;">
-            </div>
-            <div id="getCoordinatesBtn" style="padding:10px 16px;background:#e8f8f0;border-radius:10px;cursor:pointer;text-align:center;font-size:13px;font-weight:600;color:#27ae60;margin-bottom:16px;"><i class="fa-solid fa-location-dot" style="font-size:13px;" aria-hidden="true"></i> Pata Eneo la Sasa (GPS)</div>
             <div class="modal-buttons">
                 <div class="modal-btn btn-cancel" id="cancelEditBtn" onclick="closeEditModal()">Ghairi</div>
                 <div class="modal-btn btn-save" id="saveProfileBtn" onclick="updateProfile()">Hifadhi</div>
@@ -734,10 +724,15 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     const list = Array.isArray(daySales) ? daySales : [];
                     totalSales = list.length || 0;
                     totalRevenue = list.reduce((sum, sale) => sum + (sale.total_amount || 0), 0);
-                    // Customers served today = distinct recorded customers in today's sales
+                    // Customers served today = distinct recorded customers in today's
+                    // sales, plus one "unknown customer" per sale with no customer data.
                     const ids = new Set();
-                    list.forEach(s => { if (s.customer_id) ids.add(s.customer_id); });
-                    totalCustomers = ids.size;
+                    let unknownCustomers = 0;
+                    list.forEach(s => {
+                        if (s.customer_id) ids.add(s.customer_id);
+                        else unknownCustomers += 1;
+                    });
+                    totalCustomers = ids.size + unknownCustomers;
                 }
             } catch (error) {
                 console.error('Error loading stats:', error);
@@ -753,10 +748,6 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         async function updateProfile() {
             const full_name = document.getElementById('editFullName').value;
             const phone = document.getElementById('editPhone').value;
-            const business_name = document.getElementById('editBusinessName').value;
-            const business_location = document.getElementById('editBusinessLocation').value;
-            const business_latitude = document.getElementById('editLatitude').value ? parseFloat(document.getElementById('editLatitude').value) : undefined;
-            const business_longitude = document.getElementById('editLongitude').value ? parseFloat(document.getElementById('editLongitude').value) : undefined;
             
             if (!full_name.trim()) {
                 showToast('Tafadhali weka jina lako kamili', 'warning');
@@ -768,10 +759,11 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             
             setProfileModalBusy(true);
             
-            const updateData = { full_name, phone, business_name, business_location };
+            // A seller may edit their own name, phone and profile photo. The
+            // rest of the business profile (name, location, type, description,
+            // coordinates) is read-only here - it belongs to the msimamizi.
+            const updateData = { full_name, phone };
             if (profileImageUrl) updateData.business_logo_url = profileImageUrl;
-            if (business_latitude !== undefined) updateData.business_latitude = business_latitude;
-            if (business_longitude !== undefined) updateData.business_longitude = business_longitude;
             
             try {
                 const response = await fetch(`${API_BASE_URL}/api/user/profile`, {
@@ -799,6 +791,24 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             }
         }
 
+        function openEditModal() {
+            document.getElementById('editFullName').value = userData?.full_name || '';
+            document.getElementById('editPhone').value = userData?.phone || '';
+            profileImageUrl = userData?.business_logo_url || '';
+            const avatarPreview = document.getElementById('editAvatarPreview');
+            if (profileImageUrl) {
+                avatarPreview.innerHTML = `<img src="${profileImageUrl}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+            } else {
+                const initials = getInitials(userData?.full_name || userData?.business_name || 'U');
+                avatarPreview.innerHTML = `<span>${initials}</span>`;
+            }
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
         // Upload profile image to Cloudinary
         async function uploadProfileImage(file) {
             const cloudName = (window.CLOUDINARY_CONFIG ? window.CLOUDINARY_CONFIG.cloudName : '');
@@ -820,28 +830,6 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 console.error('Upload error:', error);
                 showToast('Imeshindikana kupakia picha', 'error');
             }
-        }
-
-        function openEditModal() {
-            document.getElementById('editFullName').value = userData?.full_name || '';
-            document.getElementById('editPhone').value = userData?.phone || '';
-            document.getElementById('editBusinessName').value = userData?.business_name || '';
-            document.getElementById('editBusinessLocation').value = userData?.business_location || '';
-            document.getElementById('editLatitude').value = userData?.business_latitude || '';
-            document.getElementById('editLongitude').value = userData?.business_longitude || '';
-            profileImageUrl = userData?.business_logo_url || '';
-            const avatarPreview = document.getElementById('editAvatarPreview');
-            if (profileImageUrl) {
-                avatarPreview.innerHTML = `<img src="${profileImageUrl}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
-            } else {
-                const initials = getInitials(userData?.full_name || userData?.business_name || 'U');
-                avatarPreview.innerHTML = `<span>${initials}</span>`;
-            }
-            document.getElementById('editModal').style.display = 'flex';
-        }
-
-        function closeEditModal() {
-            document.getElementById('editModal').style.display = 'none';
         }
 
         function handleLogout() {
@@ -940,7 +928,9 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             if (logoutBtn) {
                 logoutBtn.addEventListener('click', handleLogout);
             }
-            // Profile image upload
+            // Profile photo: the seller may change their own photo. The rest of
+            // the business fields (name, location, type, description, GPS
+            // coordinates) are read-only, so there is no GPS button to wire.
             const changePhotoBtn = document.getElementById('changePhotoBtn');
             const profileImageInput = document.getElementById('profileImageInput');
             if (changePhotoBtn && profileImageInput) {
@@ -948,32 +938,6 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 profileImageInput.addEventListener('change', (e) => {
                     if (e.target.files && e.target.files[0]) {
                         uploadProfileImage(e.target.files[0]);
-                    }
-                });
-            }
-            // GPS coordinates
-            const getCoordinatesBtn = document.getElementById('getCoordinatesBtn');
-            if (getCoordinatesBtn) {
-                getCoordinatesBtn.addEventListener('click', () => {
-                    const gpsIdle = ic('location', 13) + ' Pata Eneo la Sasa (GPS)';
-                    if (navigator.geolocation) {
-                        getCoordinatesBtn.innerHTML = ic('spinner', 13, 'fa-spin') + ' Inapata eneo...';
-                        getCoordinatesBtn.style.pointerEvents = 'none';
-                        navigator.geolocation.getCurrentPosition(
-                            (position) => {
-                                document.getElementById('editLatitude').value = position.coords.latitude.toFixed(6);
-                                document.getElementById('editLongitude').value = position.coords.longitude.toFixed(6);
-                                getCoordinatesBtn.innerHTML = ic('check', 13) + ' Eneo limepatawa!';
-                                setTimeout(() => { getCoordinatesBtn.innerHTML = gpsIdle; getCoordinatesBtn.style.pointerEvents = 'auto'; }, 2000);
-                            },
-                            (error) => {
-                                getCoordinatesBtn.innerHTML = ic('x', 13) + ' Imeshindikana';
-                                setTimeout(() => { getCoordinatesBtn.innerHTML = gpsIdle; getCoordinatesBtn.style.pointerEvents = 'auto'; }, 2000);
-                                showToast('Imeshindikana kupata eneo. Tafadhali weka kwa mikono.', 'warning');
-                            }
-                        );
-                    } else {
-                        showToast('Kifaa chako hakina GPS', 'warning');
                     }
                 });
             }

@@ -2,12 +2,23 @@ import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { StyleSheet } from 'react-native';
+import TabSwipe from '../../components/tab-swipe';
 import { useLang } from '../../context/LanguageContext';
+
+// Tab order — used by the swipe gesture to pick the neighbouring page.
+const MSIMAMIZI_TABS = [
+  '/msimamizi',
+  '/msimamizi/ripoti',
+  '/msimamizi/preview',
+  '/msimamizi/bidhaa-mpya',
+  '/msimamizi/tangaza',
+];
 
 export default function MsimamiziLayout() {
   const { t } = useLang();
   
   return (
+    <TabSwipe tabs={MSIMAMIZI_TABS}>
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: '#e74c3c',
@@ -62,6 +73,7 @@ export default function MsimamiziLayout() {
         })}
       />
     </Tabs>
+    </TabSwipe>
   );
 }
 
