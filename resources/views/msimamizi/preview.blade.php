@@ -643,8 +643,10 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                                         sale_date: sale.sale_date?.split('T')[0] || new Date().toISOString().split('T')[0],
                                         customer_name: sale.customers?.name || 'Mteja',
                                         seller_name: seller.full_name || seller.email,
-                                        // "Bei ya Kununua" is products.price; legacy cost_price is ignored
-                                        cost_price: product?.price ?? 0
+                                        // "Bei ya Kununua" is products.price; legacy cost_price is ignored.
+                                        // null means the buying price was never recorded, so profit for
+                                        // this sale is unknown — it must not be treated as a cost of 0.
+                                        cost_price: product?.price ?? null
                                     });
                                 }
                             } else {
@@ -657,7 +659,9 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                                     sale_date: sale.sale_date?.split('T')[0] || new Date().toISOString().split('T')[0],
                                     customer_name: sale.customers?.name || 'Mteja',
                                     seller_name: seller.full_name || seller.email,
-                                    cost_price: 0
+                                    // No sale_items on this sale, so there is no product to read a
+                                    // buying price from: profit for it is unknown, not zero.
+                                    cost_price: null
                                 });
                             }
                         }
@@ -736,6 +740,22 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     salesByDate[sale.sale_date].push(sale);
                 });
 
+                // A buying price is only "known" when it was actually recorded.
+                // 0 is a real value here, so an explicit null/undefined check is
+                // required — `|| 0` would erase the distinction.
+                function hasKnownBuyingPrice(sale) {
+                    return sale.cost_price !== null && sale.cost_price !== undefined && sale.cost_price !== '';
+                }
+
+                // Profit for a sale is unknown, not zero, when the buying price was
+                // never recorded. A 0 cost would otherwise report the full selling
+                // price as profit.
+                function saleProfit(sale) {
+                    if (!hasKnownBuyingPrice(sale)) return 0;
+                    const profit = ((sale.unit_price || 0) - Number(sale.cost_price)) * (sale.quantity || 0);
+                    return Math.max(0, profit);
+                }
+
                 const summaryDates = [...new Set([...Object.keys(salesByDate), ...Object.keys(expensesByDate)])];
 
                 const summaries = summaryDates.map(date => {
@@ -743,10 +763,10 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     const dayExpenses = expensesByDate[date] || [];
                     const totalSales = daySales.reduce((s, sale) => s + (sale.total_amount || 0), 0);
                     const totalProducts = daySales.reduce((s, sale) => s + (sale.quantity || 0), 0);
-                    const totalProfit = daySales.reduce((s, sale) => {
-                        const profit = (sale.unit_price - (sale.cost_price || 0)) * sale.quantity;
-                        return s + Math.max(0, profit);
-                    }, 0);
+                    const totalProfit = daySales.reduce((s, sale) => s + saleProfit(sale), 0);
+                    // Sales whose buying price was never recorded are excluded from the
+                    // total and reported separately, matching the reports page.
+                    const unknownProfitItems = daySales.filter(sale => !hasKnownBuyingPrice(sale)).length;
                     const totalExpenses = dayExpenses.reduce((s, e) => s + (e.amount || 0), 0);
                     const netProfit = totalProfit - totalExpenses;
                     // Only names actually recorded — drop the "Mteja" placeholder
@@ -754,7 +774,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     const customers = [...new Set(daySales.map(s => s.customer_name).filter(n => n && n !== 'Mteja'))];
                     const daySellers = [...new Map(daySales.map(s => [s.seller_name, { name: s.seller_name }])).values()];
                     
-                    return { date, totalSales, totalProducts, totalProfit, totalExpenses, netProfit, sales: daySales, customers, sellers: daySellers, expenses: dayExpenses };
+                    return { date, totalSales, totalProducts, totalProfit, totalExpenses, netProfit, unknownProfitItems, sales: daySales, customers, sellers: daySellers, expenses: dayExpenses };
                 });
 
                 // Drop fully-empty days (defensive: neither sales nor expenses).
@@ -780,7 +800,8 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
 
                 // Stats
                 const totalSalesAmount = sales.reduce((s, sale) => s + (sale.total_amount || 0), 0);
-                const totalProfit = sales.reduce((s, sale) => s + Math.max(0, (sale.unit_price - (sale.cost_price || 0)) * sale.quantity), 0);
+                const totalProfit = sales.reduce((s, sale) => s + saleProfit(sale), 0);
+                const unknownProfitItemsAll = sales.filter(sale => !hasKnownBuyingPrice(sale)).length;
                 let totalExpensesAll = 0;
                 Object.values(expensesByDate).forEach(dayExps => dayExps.forEach(e => totalExpensesAll += e.amount));
                 businessStats = {
@@ -788,7 +809,8 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     totalProducts: products.length,
                     totalSalesAmount,
                     totalProfit,
-                    totalNetProfit: totalProfit - totalExpensesAll
+                    totalNetProfit: totalProfit - totalExpensesAll,
+                    unknownProfitItems: unknownProfitItemsAll
                 };
 
             } catch (error) {
@@ -1029,6 +1051,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                         <div style="display:flex;justify-content:space-between;"><span>Faida Ghafi:</span><strong>${formatCurrency(day.totalProfit)}</strong></div>
                         <div style="display:flex;justify-content:space-between;"><span>Jumla ya Matumizi:</span><strong>${formatCurrency(day.totalExpenses)}</strong></div>
                         <div style="display:flex;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:2px solid #3498db;"><span>Faida Halisi:</span><strong style="color:${day.netProfit >= 0 ? '#27ae60' : '#e74c3c'}">${formatCurrency(day.netProfit)}</strong></div>
+                        ${day.unknownProfitItems ? `<div style="display:flex;justify-content:space-between;margin-top:8px;color:#f39c12;font-size:12px;"><span>Kumbuka:</span><span style="text-align:right;">${day.unknownProfitItems} mauzo hayana bei ya kununwa; hazihesabiwi kwenye faida</span></div>` : ''}
                     </div>
                 </div>
             `;

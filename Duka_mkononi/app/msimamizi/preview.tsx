@@ -21,6 +21,27 @@ import { fetchWithTimeout } from '../../lib/network';
 // ✅ BADILISHA HII IWE URL YA SERVER YAKO
 import { API_BASE_URL } from '../../constants/api';
 
+// A buying price is only "known" when it was actually recorded. 0 is a real
+// value, so an explicit null check is required — `|| 0` would erase the
+// distinction and turn a missing buying price into a full-margin profit.
+const hasKnownBuyingPrice = (sale: { cost_price?: number | null }): boolean =>
+  sale.cost_price !== null &&
+  sale.cost_price !== undefined &&
+  sale.cost_price !== ('' as unknown as number);
+
+// Profit for a sale is unknown, not zero, when the buying price was never
+// recorded, so it is excluded from totals and reported separately. This matches
+// the reports page (ripoti) and the Laravel ProfitController.
+const saleProfit = (sale: {
+  cost_price?: number | null;
+  unit_price?: number | null;
+  quantity?: number | null;
+}): number => {
+  if (!hasKnownBuyingPrice(sale)) return 0;
+  const profit = ((sale.unit_price || 0) - Number(sale.cost_price)) * (sale.quantity || 0);
+  return Math.max(0, profit);
+};
+
 interface Sale {
   id: string;
   product_id: string;
@@ -34,7 +55,9 @@ interface Sale {
   business_name: string;
   user_id: string;
   invoice_number?: string;
-  cost_price?: number;
+  // null = the buying price was never recorded. That is "unknown", which is
+  // deliberately distinct from 0.
+  cost_price?: number | null;
 }
 
 interface Product {
@@ -43,7 +66,7 @@ interface Product {
   price: number;
   category: string;
   stock: number;
-  cost_price?: number;
+  cost_price?: number | null;
   seller_id: string;
   business_name?: string;
   created_at?: string;
@@ -75,6 +98,9 @@ interface DailySummary {
   totalProfit: number;
   totalExpenses: number;
   netProfit: number;
+  // Sales in this day whose buying price was never recorded, so their profit
+  // is unknown and excluded from totalProfit.
+  unknownProfitItems: number;
   sales: Sale[];
   customers: string[];
   sellers: Seller[];
@@ -133,7 +159,8 @@ export default function PreviewScreen() {
     totalProducts: 0,
     totalSalesAmount: 0,
     totalProfit: 0,
-    totalNetProfit: 0
+    totalNetProfit: 0,
+    unknownProfitItems: 0
   });
 
   // ✅ Expenses state
@@ -467,7 +494,8 @@ export default function PreviewScreen() {
                 sale.sale_items.forEach((item: any) => {
                   const product = allProducts.find(p => p.id === item.product_id);
                   // price IS the buying price ("Bei ya Kununua"); legacy cost_price is ignored.
-        const costPrice = product?.price || 0;
+                  // null = never recorded, so profit for this sale is unknown rather than zero.
+                  const costPrice = product?.price ?? null;
                   
                   const unitPrice = item.unit_price || 0;
                   const quantity = item.quantity || 1;
@@ -497,7 +525,8 @@ export default function PreviewScreen() {
                 
                 const product = allProducts.find(p => p.seller_id === sale.seller_id);
                 // price IS the buying price ("Bei ya Kununua"); legacy cost_price is ignored.
-        const costPrice = product?.price || 0;
+                // null = never recorded, so profit for this sale is unknown rather than zero.
+                const costPrice = product?.price ?? null;
                 
                 if (product) {
                   productName = product.name;
@@ -550,14 +579,11 @@ export default function PreviewScreen() {
         const totalSalesAmount = allSales.reduce((sum, sale) => sum + sale.total_amount, 0);
         
         // Calculate total gross profit
-        const totalGrossProfit = allSales.reduce((sum, sale) => {
-          const costPrice = sale.cost_price || 0;
-          const sellingPrice = sale.unit_price || 0;
-          const quantity = sale.quantity || 0;
-          const profitPerUnit = sellingPrice - costPrice;
-          const itemProfit = profitPerUnit * quantity;
-          return sum + Math.max(0, itemProfit);
-        }, 0);
+        const totalGrossProfit = allSales.reduce((sum, sale) => sum + saleProfit(sale), 0);
+
+        // Sales with no recorded buying price are excluded from the total above
+        // and surfaced separately instead of inflating it.
+        const unknownProfitItems = allSales.filter(sale => !hasKnownBuyingPrice(sale)).length;
         
         // ✅ Calculate total expenses using expensesData, not state
         let totalExpensesAllDays = 0;
@@ -575,7 +601,8 @@ export default function PreviewScreen() {
           totalProducts: allProducts.length,
           totalSalesAmount: totalSalesAmount,
           totalProfit: totalGrossProfit,
-          totalNetProfit: totalNetProfit
+          totalNetProfit: totalNetProfit,
+        unknownProfitItems
         });
         
         // ✅ 5. PATA MATUKIO (EVENTS) YA BIASHARA
@@ -590,7 +617,8 @@ export default function PreviewScreen() {
           totalProducts: allProducts.length,
           totalSalesAmount: 0,
           totalProfit: 0,
-          totalNetProfit: 0
+          totalNetProfit: 0,
+          unknownProfitItems: 0
         });
         
         await loadBusinessEvents(businessName, token, [], allProducts, allSellers);
@@ -662,25 +690,8 @@ export default function PreviewScreen() {
       }, 0);
 
       // GROSS PROFIT
-      const totalProfit = daySales.reduce((sum, sale) => {
-        try {
-          const costPrice = sale.cost_price || 0;
-          const sellingPrice = Number(sale.unit_price) || 0;
-          const quantity = Number(sale.quantity) || 0;
-          
-          if (isNaN(costPrice) || isNaN(sellingPrice) || isNaN(quantity)) {
-            return sum;
-          }
-
-          const profitPerUnit = sellingPrice - costPrice;
-          const totalItemProfit = profitPerUnit * quantity;
-          const finalProfit = Math.max(0, totalItemProfit);
-          
-          return sum + finalProfit;
-        } catch (error) {
-          return sum;
-        }
-      }, 0);
+      const totalProfit = daySales.reduce((sum, sale) => sum + saleProfit(sale), 0);
+      const unknownProfitItems = daySales.filter(sale => !hasKnownBuyingPrice(sale)).length;
 
       // ✅ TOTAL EXPENSES - Ensure it's calculated properly
       const totalExpenses = dayExpenses.reduce((sum, exp) => sum + (exp.amount || 0), 0);
@@ -706,6 +717,7 @@ export default function PreviewScreen() {
         totalProfit,
         totalExpenses,
         netProfit,
+        unknownProfitItems,
         sales: daySales,
         customers,
         sellers: daySellers,
@@ -1427,12 +1439,10 @@ export default function PreviewScreen() {
                     
                     <View style={styles.salesList}>
                       {selectedDay.sales.slice(0, 5).map((sale, index) => {
-                        const costPrice = sale.cost_price || 0;
+                        const known = hasKnownBuyingPrice(sale);
+                        const costPrice = sale.cost_price ?? 0;
                         const sellingPrice = sale.unit_price || 0;
-                        const quantity = sale.quantity || 0;
-                        const profitPerUnit = sellingPrice - costPrice;
-                        const totalItemProfit = profitPerUnit * quantity;
-                        const finalProfit = Math.max(0, totalItemProfit);
+                        const finalProfit = saleProfit(sale);
                         
                         return (
                           <View key={index} style={styles.saleItem}>
@@ -1445,14 +1455,14 @@ export default function PreviewScreen() {
                                 <Text style={styles.saleInvoice}>{t('preview.sale_label_invoice')} {sale.invoice_number}</Text>
                               )}
                               <Text style={styles.saleCostPrice}>
-                                {t('preview.sale_label_cost_price', {cost: formatCurrency(costPrice)})} • {t('preview.sale_label_sell_price', {sell: formatCurrency(sellingPrice)})}
+                                {t('preview.sale_label_cost_price', {cost: known ? formatCurrency(costPrice) : '-'})} • {t('preview.sale_label_sell_price', {sell: formatCurrency(sellingPrice)})}
                               </Text>
                             </View>
                             <View style={styles.saleAmount}>
                               <Text style={styles.saleQuantity}>{sale.quantity} x {formatCurrency(sale.unit_price)}</Text>
                               <Text style={styles.saleTotal}>{formatCurrency(sale.total_amount)}</Text>
-                              <Text style={[styles.saleProfit, { color: finalProfit >= 0 ? '#27ae60' : '#e74c3c' }]}>
-                                {t('preview.sale_label_profit', {amount: formatCurrency(finalProfit)})}
+                              <Text style={[styles.saleProfit, { color: known ? '#27ae60' : '#f39c12' }]}>
+                                {t('preview.sale_label_profit', {amount: known ? formatCurrency(finalProfit) : t('reports.cost_not_recorded')})}
                               </Text>
                             </View>
                           </View>
@@ -1519,6 +1529,17 @@ export default function PreviewScreen() {
                         {formatCurrency(selectedDay.netProfit || 0)}
                       </Text>
                     </View>
+
+                    {selectedDay.unknownProfitItems > 0 && (
+                      <View style={[styles.summaryItemRow, { marginTop: 8 }]}>
+                        <View style={styles.summaryItemLeft}>
+                          <Ionicons name="alert-circle" size={16} color="#f39c12" />
+                          <Text style={[styles.summaryItemLabel, { color: '#f39c12' }]}>
+                            {selectedDay.unknownProfitItems} {t('reports.cost_not_recorded')}
+                          </Text>
+                        </View>
+                      </View>
+                    )}
                     
                     <View style={styles.summaryItemRow}>
                       <View style={styles.summaryItemLeft}>
