@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Product;
 use App\Models\User;
+use App\Services\BusinessResolver;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -27,10 +28,11 @@ class ProductController extends BaseController
                     ->get()
                     ->toArray();
 
-                $processedProducts = array_map(function ($product) {
-                    $product['expected_selling_price'] = $product['expected_selling_price'] ?: ($product['price'] ?: 0);
-                    return $product;
-                }, $products);
+                // Do NOT invent a selling price. `price` is the buying price,
+                // so defaulting expected_selling_price to it reported a profit
+                // of exactly 0 for every product that has no selling price
+                // yet. Leave it null so the report can say "unknown".
+                $processedProducts = $products;
 
                 $this->log($userId, 'PRODUCTS_VIEW', '/api/products/my', [
                     'count' => count($processedProducts),
@@ -71,10 +73,9 @@ class ProductController extends BaseController
                 ->get()
                 ->toArray();
 
-            $processedProducts = array_map(function ($product) {
-                $product['expected_selling_price'] = $product['expected_selling_price'] ?: ($product['price'] ?: 0);
-                return $product;
-            }, $allProducts);
+            // See the note in my(): never derive a selling price from the
+            // buying price. A missing selling price stays missing.
+            $processedProducts = $allProducts;
 
             $productsWithSellerInfo = array_map(function ($product) use ($businessUsers) {
                 $seller = null;
@@ -275,7 +276,6 @@ class ProductController extends BaseController
                 'description' => trim((string) ($description ?? '')),
                 'category' => trim((string) ($category ?? '')),
                 'price' => $priceValue,
-                'cost_price' => $cost_price ? (float) $cost_price : null,
                 'expected_selling_price' => $expectedPriceValue,
                 'stock' => $stockValue,
                 'is_active' => true,
@@ -336,21 +336,17 @@ class ProductController extends BaseController
             $price = $request->input('price');
             $stock = $request->input('stock');
             $description = $request->input('description');
-            $cost_price = $request->input('cost_price');
             $expected_selling_price = $request->input('expected_selling_price');
 
             $this->touchLastSeen($userId);
 
-            if (!$expected_selling_price) {
-                $this->log($userId, 'PRODUCT_UPDATE_FAILED', '/api/products/:id', [
-                    'reason' => 'Missing expected selling price',
-                    'product_id' => $productId,
-                ], $this->ip($request), 'failed');
-
-                return $this->json([
-                    'success' => false,
-                    'error' => 'Bei ya kuuzia inahitajika',
-                ], 400);
+            // A partial update (e.g. the "add stock" button) only sends
+            // name/category/stock. Requiring the selling price there forced
+            // the client to send buying price as a stand-in, which silently
+            // set selling == buying. Only validate it when it is supplied.
+            $hasExpected = $request->has('expected_selling_price');
+            if ($hasExpected && ($expected_selling_price === null || $expected_selling_price === '')) {
+                $hasExpected = false;
             }
 
             $product = Product::where('id', $productId)
@@ -382,9 +378,9 @@ class ProductController extends BaseController
                 ], 403);
             }
 
-            $expectedPriceValue = (float) $expected_selling_price;
+            $expectedPriceValue = $hasExpected ? (float) $expected_selling_price : null;
 
-            if ($expectedPriceValue <= 0) {
+            if ($hasExpected && $expectedPriceValue <= 0) {
                 $this->log($userId, 'PRODUCT_UPDATE_FAILED', '/api/products/:id', [
                     'reason' => 'Invalid expected selling price',
                     'product_id' => $productId,
@@ -401,12 +397,37 @@ class ProductController extends BaseController
                 'name' => trim((string) $name),
                 'category' => trim((string) ($category ?? '')),
                 'description' => trim((string) ($description ?? '')),
-                'price' => (float) $price,
-                'cost_price' => $cost_price ? (float) $cost_price : null,
-                'expected_selling_price' => $expectedPriceValue,
                 'stock' => ((int) $stock) ?: 0,
                 'updated_at' => $this->isoNow(),
             ];
+
+            // Selling price is written only when supplied, so an add-stock
+            // call cannot invent one. An explicit null clears it.
+            if ($hasExpected) {
+                $updateData['expected_selling_price'] = $expectedPriceValue;
+            }
+
+            // `price` IS the buying price ("Bei ya Kununua"). It must only be
+            // written when the request carries the key. The previous
+            // unconditional `'price' => (float) $price` turned a client that
+            // omitted the field into `(float) null`, i.e. 0, which silently
+            // destroyed the buying price and made every product look free.
+            if ($request->has('price')) {
+                $priceValue = $price === null || $price === '' ? null : (float) $price;
+                if ($priceValue === null || $priceValue <= 0) {
+                    return response()->json([
+                        'success' => false,
+                        'error' => 'Bei ya kununua si sahihi (lazima iwe namba kubwa kuliko 0)',
+                    ], 400);
+                }
+                $updateData['price'] = $priceValue;
+            }
+
+            // cost_price is intentionally NOT written any more. "Bei ya
+            // Kununua" is stored in `products.price`; writing a second buying
+            // price into cost_price is what let the two disagree and produce
+            // a product whose buying and selling price both read 55000.
+            // Existing cost_price values are left untouched as a legacy copy.
 
             Product::where('id', $productId)->update($updateData);
 
@@ -496,12 +517,44 @@ class ProductController extends BaseController
         }
     }
 
-    public function businessAllProducts(Request $request, $businessName)
+    public function businessAllProducts(Request $request, $businessName = null)
     {
         try {
             $userId = $this->userId($request);
 
-            $businessUsers = User::where('business_name', $businessName)
+            // Business scoping after the business_id migration. The scope is
+            // taken from the verified JWT, never from the URL, so one admin can
+            // no longer read another business's catalogue by naming it in the
+            // path. system_admin keeps the cross-business lookup used by the
+            // platform pages, via ?business_id= or the legacy ?business=<name>
+            // resolved through BusinessResolver so spelling variants collapse.
+            $callerBusinessId = $this->businessId($request);
+            $isPlatformAdmin = $this->role($request) === 'system_admin';
+            $scopeBusinessId = null;
+
+            if ($isPlatformAdmin) {
+                $idFilter = trim((string) $request->query('business_id', ''));
+                $nameFilter = trim((string) ($request->query('business', '') ?: $request->query('business_name', '') ?: (string) $businessName));
+
+                if (preg_match('/^[0-9a-f-]{36}$/i', $idFilter)) {
+                    $scopeBusinessId = $idFilter;
+                } elseif ($nameFilter !== '' && strcasecmp($nameFilter, 'my') !== 0) {
+                    $scopeBusinessId = BusinessResolver::findByName($nameFilter)?->id;
+                }
+            } else {
+                $scopeBusinessId = $callerBusinessId;
+            }
+
+            if (!$scopeBusinessId) {
+                $this->log($userId, 'BUSINESS_PRODUCTS_FAILED', '/api/business/' . $businessName . '/all-products', [
+                    'reason' => $isPlatformAdmin ? 'No business resolved for platform admin' : 'Caller has no business_id',
+                    'business_name' => $businessName,
+                ], $this->ip($request), 'failed');
+
+                return $this->json([]);
+            }
+
+            $businessUsers = User::where('business_id', $scopeBusinessId)
                 ->whereIn('role', ['admin', 'seller'])
                 ->where('status', 'approved')
                 ->select(['id', 'email', 'full_name', 'role', 'status'])
@@ -554,7 +607,7 @@ class ProductController extends BaseController
             ], $this->ip($request), 'failed');
 
             try {
-                $adminUsers = User::where('business_name', $businessName)
+                $adminUsers = User::where('business_id', $scopeBusinessId)
                     ->where('role', 'admin')
                     ->where('status', 'approved')
                     ->select(['id'])

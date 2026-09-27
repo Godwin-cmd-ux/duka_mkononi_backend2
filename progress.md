@@ -1361,3 +1361,1019 @@ without the entry Gemini was told the business type was literally
 
 **Verification:** `npx tsc --noEmit` passes clean; `php -l` clean on both
 controllers; all 8 locale files parse.
+
+---
+
+## Msimamizi dashboard: business scoping moved from `business_name` to `business_id`
+
+**Date:** 2026-09-27
+**Module:** Msimamizi
+**Blade file:** `resources/views/msimamizi/index.blade.php`
+**Expo file:** `Duka_mkononi/app/msimamizi/index.tsx`
+**Laravel endpoints inspected:** `GET /api/admin/users`, `PUT /api/admin/users/{id}/status`,
+`DELETE /api/admin/users/{id}`, `GET|PUT /api/user/profile`
+**Legacy Node behaviour found:** none in this screen. `constants/api.ts` already points at
+`https://www.dukamkononi.com` and every call already used `Authorization: Bearer` +
+`AsyncStorage('userToken')`. The endpoints, HTTP methods and payloads on both sides matched.
+
+### Database/business migration impact
+
+The dashboard listed an admin's sellers by sending the business *name*:
+
+```
+GET /api/admin/users?business=<businessName>&role=seller
+```
+
+`AdminController::users()` matched that with `where('business_name', $businessFilter)` -
+a byte-exact comparison - and both frontends then re-filtered on
+`user.business_name === <admin's own string>`. After the `businesses` / `users.business_id`
+migration this silently hid sellers whose spelling differed from their admin's. Measured on
+`Shirima spare part`, which has 5 members across 2 spellings:
+
+| Filter | Rows returned |
+| --- | --- |
+| `?business=Shirima spare part` (old, exact) | **2 of 5** |
+| `LOWER(business_name)` match | 5 of 5 |
+| `business_id` (new) | **5 of 5** |
+
+### Changes made
+
+- `AdminController::users()` - business scope is now derived from the verified JWT
+  (`jwt_business_id`), never from a query parameter. A business `admin` is always confined
+  to their own business; `system_admin` keeps cross-business lookup via `?business_id=` or
+  the legacy `?business=<name>` (resolved through `BusinessResolver`, so spelling variants
+  collapse). An admin with no `business_id` gets an empty result and an `ADMIN_NO_BUSINESS`
+  audit entry rather than falling through to an unscoped query. This also closes a
+  cross-tenant hole: `admin/users` previously let any admin read another business's sellers
+  by passing that business's name.
+- `msimamizi/index.blade.php` - `loadSellersData()` no longer takes or sends a business name
+  and no longer re-filters on `business_name`.
+- `msimamizi/index.tsx` - same change; the `loadSellersData(adminBusinessName?)` parameter and
+  its 8 call sites were dropped, and the per-user `console.log` noise in the seller filter
+  was removed.
+- `app/Services/Supabase.php` - **bug fix, unrelated to this screen but found while testing
+  it.** `filterToString()` matched on `$val` alone, so `whereNotNull('col')`
+  (`op = 'not.is', val = 'null'`) fell into the generic null branch and emitted
+  `col=is.null`. `whereNotNull` was silently behaving as `whereNull` app-wide; verified
+  `whereNotNull('business_id')` returned 0 of 67 admins. Now emits `col=not.is.null`.
+  `whereNull` re-verified unchanged (7 rows, the customers).
+
+### Tests / checks performed
+
+- `npx tsc --noEmit` in `Duka_mkononi` - clean, no errors.
+- `php artisan test` - 2 passed.
+- `php -l` clean on `AdminController.php` and `Supabase.php`.
+- Blade inline JS extracted (lines 593-1248) and checked with `node --check` - syntax OK.
+- Live scoping test against production: 7/7 (business_id returns all members; two businesses
+  do not overlap; all spellings share one `business_id`; impossible-id scope returns 0).
+- End-to-end simulation of the endpoint as a real admin: 4/4 - every returned seller belongs
+  to the caller's business, every row is a seller, and two different admins share no sellers.
+
+### Remaining issues on this screen
+
+- `GET /api/user/profile` still selects `business_type` / `business_description` from
+  `users`, where those columns do not exist. The request always fails once and is retried
+  with the columns stripped, so the admin's business type and description are always `null`.
+  Not fixed here - it is shared by the profile screens, so it belongs to its own pass.
+- `PUT /api/user/profile` still lets an admin rename their own `business_name`. That no longer
+  orphans the seller list (scoping is by `business_id`), but it does leave `users.business_name`
+  and `businesses.business_name` describing the same shop differently.
+- The seller cards still render `seller.business_name` / `seller.business_location` from the
+  user row, so cards can show slightly different text from the business card at the top of
+  the same screen.
+- No OTA/deploy performed.
+
+---
+
+## Bidhaa Mpya: catalogue scoping + the dead AI business-profile feature
+
+**Date:** 2026-09-27
+**Module:** Msimamizi
+**Blade file:** `resources/views/msimamizi/bidhaa-mpya.blade.php`
+**Expo file:** `Duka_mkononi/app/msimamizi/bidhaa-mpya.tsx`
+**Laravel endpoints traced:** `GET /api/business/{businessName}/all-products`,
+`POST|PUT|DELETE /api/products[/{id}]`, `GET|PUT /api/user/profile`,
+`POST /api/inventory/ai-import`, `POST /api/inventory/ai-import/verify`
+**Legacy Node behaviour found:** none. `API_BASE_URL` is the same
+`https://www.dukamkononi.com` host, all calls use `Authorization: Bearer` +
+`AsyncStorage('userToken')`, and every method and payload shape already matched
+Laravel on both sides. Feature parity for this screen is otherwise complete:
+categories + custom category, quick-fill, price/margin preview, existing-products
+modal with owner badges, add / add-stock / edit / delete, and the AI import flow
+(single + per-row verification) are all present on both.
+
+### 1. Product catalogue was scoped by business name (and leaked across tenants)
+
+Both clients called:
+
+```
+GET /api/business/<userData.business_name>/all-products
+```
+
+`ProductController::businessAllProducts()` resolved that with
+`User::where('business_name', $businessName)` - byte-exact - then fetched
+products for those users. Two problems:
+
+- **Spelling fragmentation.** A shop whose members spell the name differently
+  had its members silently split, and each spelling only ever saw its own slice
+  of the catalogue.
+- **Cross-tenant read.** The business name came straight from the URL and the
+  caller was never checked against it, so any authenticated user could read any
+  other business's catalogue by naming it. Same class of bug fixed in
+  `AdminController::users()` in the previous entry.
+
+Measured on `Shirima spare part`:
+
+| Scope | Members | Active products |
+| --- | --- | --- |
+| `business_name` (old) | 2 | 107 |
+| `business_id` (new) | **3** | **177** |
+
+That admin could not see **70 of its own products** before this change.
+
+**Fix:** `businessAllProducts()` now takes the scope from the verified JWT
+(`business_id`) and never from the path. `system_admin` keeps cross-business
+lookup via `?business_id=` or the legacy `?business=<name>` resolved through
+`BusinessResolver`. A caller with no business gets an empty list plus a
+`BUSINESS_PRODUCTS_FAILED` audit entry rather than an unscoped query. The
+catch-block fallback that also matched on `business_name` was converted too.
+
+A static route was added ahead of the parameterised one so neither client has to
+put a name in the URL at all:
+
+```
+GET /api/business/my/all-products        (new, static - matched first)
+GET /api/business/{businessName}/all-products  (kept, platform admins)
+```
+
+### 2. The AI business-profile feature could never save anything
+
+This screen lets the admin set "Aina ya Biashara" and "Maelezo mafupi ya
+Biashara" and tells the user *"AI itazitumia kuchambua picha zako"*. The values
+are stored with `PUT /api/user/profile`. `ProfileController` still selected
+`business_type` / `business_description` from `users`, where those columns do not
+exist since the migration. The request therefore failed, was silently retried
+with the columns stripped, and the response reported both fields as `null`. Every
+save was a no-op, and the AI prompt was built with no business context.
+
+`AiImportController` had the same dead reads in three places
+(`import()`, `businessTypeOf()`, `businessDescriptionOf()`), plus
+`ensureAiImportSchema()` still listed
+`ALTER TABLE users ADD COLUMN business_type TEXT` as a required migration, so
+`POST /api/setup/ai-import-migration` reported permanent failure for two columns
+that should not exist there at all.
+
+**Fix:**
+- `ProfileController` now reads business fields from `businesses` via the user's
+  `business_id` and merges them into the **same flat top-level keys** the clients
+  already consume, so no client change was needed. Personal fields
+  (`full_name`, `phone`) still write to `users`; business fields write to
+  `businesses`. Renaming a business also refreshes `legacy_name_key`.
+  The previous "fail, then retry without the columns" dance is gone, along with
+  the two `preg_match` error-sniffing fallbacks it required.
+  If an account has no business row (customers, unmigrated accounts) its legacy
+  `users` columns are left intact so the screen still shows a name, and only
+  `business_type` / `business_description` report `null`.
+- `AiImportController` reads both values through `BusinessResolver::forUser()`,
+  and `getBusinessSellerIds()` is scoped by `business_id`.
+- The two stale `ALTER TABLE users` entries were removed from
+  `ensureAiImportSchema()`.
+
+Verified by writing a real `business_type` / `business_description` through the
+new path, reading it back, then restoring the original values.
+
+### 3. Expo wiped the value it had just saved
+
+`saveBizProfile()` in the Expo file preferred the echoed profile over local
+state:
+
+```ts
+parsed.business_type = savedUser ? savedUser.business_type : finalType;
+```
+
+`payload.user` is always present, so the `else` never ran. Against the broken
+server that meant a successful save wrote `null` back over the cached
+`userData.business_type` and `business_description`, so the fields visibly
+cleared themselves. Now `??` is used, so a `null` echo falls back to what was
+sent. The Blade equivalent did not have this bug.
+
+### Changes made
+
+| File | Change |
+| --- | --- |
+| `app/Http/Controllers/Api/ProductController.php` | `businessAllProducts()` scoped by JWT `business_id`; `system_admin` override; fallback path converted |
+| `routes/api.php` | static `business/my/all-products` route ahead of the parameterised one |
+| `app/Http/Controllers/Api/ProfileController.php` | business fields read/written on `businesses`, flat response shape preserved, error-sniffing fallbacks removed |
+| `app/Http/Controllers/Api/AiImportController.php` | business type/description + seller ids via `BusinessResolver`; stale `users` ALTER checks removed |
+| `resources/views/msimamizi/bidhaa-mpya.blade.php` | `fetchExistingProducts()` no longer takes or sends a business name |
+| `Duka_mkononi/app/msimamizi/bidhaa-mpya.tsx` | same, including the `registerLive('products')` subscription; `fetchExistingProducts()` lost its `businessName` parameter (7 call sites); `??` fallback on save |
+
+### Tests / checks performed
+
+- `npx tsc --noEmit` in `Duka_mkononi` - clean, exit 0.
+- `php artisan test` - 2 passed.
+- `php -l` clean on `ProfileController`, `ProductController`, `AiImportController`,
+  `Supabase`, `routes/api.php`.
+- Both Blade `<script>` blocks extracted and checked with `node --check` - OK.
+- `php artisan route:list --path=api/business` - the static route is registered
+  and listed before the parameterised one.
+- Live production test: 9/9. Business-type/description round-trip and restore;
+  `business_id` never returns fewer members; the `Shirima spare part` split above
+  is reproduced and fixed; two businesses share zero members; and the
+  aggregate regression guard shows **70 products newly visible and 0 lost**
+  (1782 -> 1852 reachable).
+- The 217 active products still unreachable belong to `status='pending'` admins.
+  The `status='approved'` filter in the query excludes them in the old code too,
+  so this is pre-existing and not a regression from this change.
+
+### Remaining issues on this screen
+
+- **No "Thibitisha Zote" on mobile.** The Blade screen has a batch
+  `verifyAllAiRows()` that validates every pending row, asks once, then verifies
+  them in sequence with progress. The Expo screen only has per-row
+  "Thibitisha" (`aiVerifyButton`); there is no batch button and no
+  `verify_all` locale key. This is a missing feature rather than a broken one,
+  so it was not added here - it is a product decision.
+- Product create / update / delete were already correct: `store()` sets
+  `seller_id` to the caller, and `update()` / `destroy()` both reject anything
+  where `$product->seller_id !== $userId`. No `business_id` change was needed
+  there.
+- `AiImportController` still has ~6 other `where('business_name', ...)` reads
+  and its `sales/ai-import` path resolves sellers the same old way. Those belong
+  to the Tangaza / Ripoti screens, not this file.
+- `whereNotNull` in `app/Services/Supabase.php` was fixed in the previous entry
+  but `ensureAiImportSchema()`'s `columnExists()` helper is now only used for
+  the `ai_import_verifications` table check and its column branch is dead.
+- No OTA/deploy performed.
+
+---
+
+## Tangaza: delete-warning parity, stale numeric ID types, canonical ad title
+
+**Date:** 2026-09-27
+**Module:** Msimamizi
+**Blade file:** `resources/views/msimamizi/tangaza.blade.php`
+**Expo file:** `Duka_mkononi/app/msimamizi/tangaza.tsx`
+**Laravel endpoints traced:** `GET|POST /api/matangazo`, `GET /api/matangazo/my`,
+`DELETE /api/matangazo/{id}`, `POST /api/payments/pesapal/initiate`,
+`GET /api/payments/pesapal/status/{order_tracking_id}`, plus a direct
+client-side upload to Cloudinary
+**Tables:** `matangazo` (22 cols), `payments`, `reactions`
+**Legacy Node behaviour found:** none. Same `https://www.dukamkononi.com`
+host, `Authorization: Bearer` + `AsyncStorage('userToken')` on mobile and
+`localStorage('userToken')` on web, and every method and payload shape already
+matched Laravel. Mobile is in fact slightly ahead: it polls
+`/api/payments/pesapal/status/{id}` after redirect and special-cases
+`PESAPAL_NOT_CONFIGURED`, neither of which the Blade screen does.
+
+### No business_id migration work was needed on this screen
+
+`matangazo` is owned by `user_id`, and this screen only ever manages the
+caller's own posts. Verified the scoping is already correct:
+
+| Operation | Guard |
+| --- | --- |
+| `GET /matangazo/my` | `Advertisement::where('user_id', $userId)` |
+| `POST /matangazo` | `user_id` set to the caller |
+| `DELETE /matangazo/{id}` | rejects with 403 when `$matangazo->user_id !== $userId` |
+| `POST /payments/pesapal/initiate` | rejects with 403 when the `matangazo_id` is not the caller's |
+
+`business_name` appears in this flow only as a display fallback for the ad
+title, never as a scope. So unlike the previous two files, there was no
+name-based scoping to convert here, and none was invented.
+
+### 1. Mobile lost the "your subscription fee is not refundable" warning
+
+`deleteAdvertisement()` on the web checks whether the post still has paid time
+left and, if so, appends a warning before deleting:
+
+```js
+const hasActiveSub = ad && ad.expires_at &&
+    (ad.payment_status === 'completed') &&
+    (new Date(ad.expires_at).getTime() > Date.now());
+```
+
+The Expo version showed a bare `t('adverts.delete_confirm_message')` with no
+`hasActiveSub` check at all, so on mobile a paid, still-running post and an
+unpaid pending one produced an identical "are you sure?" dialog. This is porting
+existing web behaviour rather than adding a feature, so it was brought across:
+`deleteAdvertisement()` now takes the whole `UserMatangazo` and appends the
+warning. A new key `adverts.delete_confirm_active_sub` was added to all 8
+locale files (translated, not English placeholders).
+
+**Honest scope note:** measured against live data, this changes nothing a user
+sees *today*. Of 13 advertisements, 9 are `payment_status='completed'` but every
+one has already expired (the latest `expires_at` is 2026-09-01), so
+`completed + unexpired` is 0 and the warning would not fire on either platform.
+It restores parity and starts mattering as soon as someone renews, which is
+exactly the moment the money is at stake.
+
+### 2. ID types were still typed as `number` after ids became UUIDs
+
+`UserMatangazo.id` and `.user_id` were declared `number`, as were
+`currentUser.id` and the parameters of `initiatePayment()`,
+`runPaymentForMatangazo()` and `deleteAdvertisement()`. `matangazo.id`,
+`matangazo.user_id` and `users.id` are all `uuid` in the database. The lie went
+unnoticed because the API JSON arrives as `any`, so nothing ever type-checked
+the real response shape.
+
+Both clients then compounded it:
+
+```ts
+id: parseInt(userId)     // Expo,  userId is a UUID  -> NaN
+id: parseInt(localStorage.getItem('userId') || user.id || '0')   // Blade -> NaN
+```
+
+`parseInt('7b6184b6-fd13-…')` is `NaN`. Nothing currently reads
+`currentUser.id` on either platform, so this was latent rather than visibly
+broken — but it is a trap for the next person who does read it.
+
+All of these are now `string`, and both `parseInt` calls are gone. Every use of
+an ad `id` was checked first: React `key`, a translation interpolation, and
+`JSON.stringify` / template-literal request bodies. None of them do arithmetic
+or compare against a numeric literal, so the change is type-only with no
+runtime effect.
+
+### 3. Ad titles preferred the legacy name over the canonical one
+
+`AdvertisementController::store()` built the title from
+`$user->business_name ?: ($user->full_name ?: 'Matangazo')`. After the
+`business_id` migration the authoritative display name lives on
+`businesses.business_name`, while `users.business_name` is a legacy snapshot
+that can still carry an older spelling. The title now prefers
+`BusinessResolver::forUser()?->business_name` and falls back to the user
+columns unchanged, so customers and unmigrated accounts still resolve a title.
+
+Across all 120 linked admin/seller accounts the legacy and canonical names are
+currently identical (`name differs=0`), so this is preventive rather than a
+visible fix today - but it means an ad created after a business rename will
+carry the current name.
+
+### Changes made
+
+| File | Change |
+| --- | --- |
+| `Duka_mkononi/app/msimamizi/tangaza.tsx` | active-subscription delete warning ported from web; `id`/`user_id` retyped `number` -> `string`; `parseInt(userId)` -> `userId`; `deleteAdvertisement` now receives the ad |
+| `resources/views/msimamizi/tangaza.blade.php` | `parseInt(...)` on a UUID removed from `currentUser.id` |
+| `app/Http/Controllers/Api/AdvertisementController.php` | ad title prefers the canonical `businesses.business_name` |
+| `Duka_mkononi/locales/{de,en,es,fr,hi,sw,ur,zh}.json` | new `adverts.delete_confirm_active_sub` key, translated per locale |
+
+### Tests / checks performed
+
+- `npx tsc --noEmit` in `Duka_mkononi` - clean, exit 0.
+- `php artisan test` - 2 passed.
+- `php -l` clean on `AdvertisementController.php`.
+- All 8 locale files re-parsed as JSON after editing, and the new key confirmed
+  present under `adverts` in each.
+- Blade inline JS extracted and checked with `node --check` - OK.
+- Live production test: 9/9. Canonical title resolution; the customer fallback
+  chain still yields a real name instead of the literal "Matangazo"; the delete
+  predicate is now byte-equivalent between Blade and Expo; no `parseInt`
+  remains on a UUID in either file; and the warning's real-world trigger rate
+  measured at 0 of 9 completed ads.
+
+### Remaining issues on this screen
+
+- Four advertisements are `is_active = true` while already expired. This is
+  harmless today because `publicIndex()` filters on
+  `isFree || (completed && expires_at > now)` and ignores `is_active`, so they
+  are correctly hidden from the public feed. The stale flag is just untidy and
+  was left alone; the feed logic itself is right.
+- The mobile screen has no bulk "delete several ads" and no edit-after-post.
+  Neither exists on the web either, so this is not a parity gap.
+- `POST /api/matangazo` accepts `payment_status` from the client and stores
+  `'pending'` accordingly; the price is then fixed server-side by
+  `matangazoPrice()` on the payment path, so a client cannot underpay, but the
+  field is still client-supplied.
+- No OTA/deploy performed.
+
+---
+
+## Ripoti: name-based report scoping, and a real double-counted-money bug found alongside it
+
+**Date:** 2026-09-27
+**Module:** Msimamizi
+**Blade file:** `resources/views/msimamizi/ripoti.blade.php`
+**Expo file:** `Duka_mkononi/app/msimamizi/ripoti.tsx`
+**Laravel endpoints:** `GET /api/admin/products`, `GET /api/admin/sales`,
+`GET /api/admin/customers`, `GET /api/admin/users`, plus the seller path
+`GET /api/products/my`, `/api/sales/my`, `/api/customers/my`
+**Tables:** `products`, `sales`, `sale_items`, `customers`, `users`, `businesses`
+**Legacy Node behaviour found:** none. Same `https://www.dukamkononi.com` host
+and `Authorization: Bearer` + `userToken` scheme. The Expo screen is actually
+richer than the web one: it renders from a SQLite/AsyncStorage cache first
+(`db/cache.ts`) and revalidates in the background, and it subscribes to a live
+`seller` sync channel. Those were left intact.
+
+### 1. The report scoped itself by a business name it read out of client storage
+
+`/api/admin/products`, `/api/admin/sales` and `/api/admin/customers` all
+resolved their scope like this:
+
+```php
+$businessName = trim((string) $request->query('business_name', ''));
+if ($businessName !== '') {
+    $businessUserIds = User::where('business_name', $businessName)
+        ->whereIn('role', ['admin', 'seller'])->where('status', 'approved')
+        ->pluck('id')->all();
+    $query->whereIn('seller_id', $businessUserIds ?: ['0000...']);
+}
+```
+
+Both clients then re-applied the same test in the browser:
+`users.filter(u => u.business_name === userData.businessName)`.
+
+This is a three-link chain that can silently produce a completely empty
+report, and the trigger is **our own migration work**:
+
+1. Login returns `users.business_name` (legacy), e.g. `Jerald Stationari`.
+2. The profile screen fetches `/api/profile`, and `ProfileController::readProfile()`
+   now **overwrites `business_name` with the canonical
+   `businesses.business_name`** — `Jerald Stationaria`. `muuzaji/profaili.blade.php`
+   and `mteja/profaili.blade.php` then write that value back to
+   `localStorage('userData')`.
+3. Opening Ripoti compares the canonical name against the still-legacy
+   `users.business_name`. Nothing matches, `sellers` becomes `[]`, and because
+   products, customers and sales are *all* intersected with `sellers`, the
+   entire report renders blank.
+
+Measured, with the real rows: the old lookup returned **0 products, 0 sales and
+0 customers** for that admin, versus **19 products, 63 sales, 27 customers**
+via `business_id`. One business in the database currently has a
+canonical-vs-legacy mismatch (`Jerald Stationaria` / `Jerald Stationari`, 2
+members), so this was reachable, not hypothetical.
+
+Fixed on both sides:
+
+- Server: all three endpoints now scope from the verified JWT
+  `businessId()` via `BusinessResolver::memberIds($businessId, ['admin','seller'], 'approved')`.
+  A query parameter can no longer widen or redirect the scope. A caller with no
+  `business_id` is forced to an empty result instead of falling through
+  unscoped.
+- Clients: the redundant `business_name === businessName` re-filters are gone
+  from both files (seller list, products, customers, sales builder, and the
+  live-sync callback). Seller *membership* (`seller_id` present in the approved
+  seller set) is the only client-side test now, plus the genuine
+  `status === 'approved'` rule.
+
+`BusinessResolver::memberIds()` gained optional `$roles` / `$status` arguments
+so it reproduces the old `whereIn('role', ...)` / `where('status', ...)`
+semantics. It was previously defined but unused, so nothing else was affected.
+
+### 2. Omitting the parameter leaked the entire platform to any business admin
+
+The old filter was optional, and with no `business_name` the query was
+completely unconstrained. Any business admin could call
+`GET /api/admin/products` with no parameters and receive the whole platform:
+
+| Caller (Dismas spare parts) | Old, no param | New, no param |
+| --- | --- | --- |
+| products | **2077** (all) | 154 |
+| sales | **544** (all) | 0 |
+| customers | **46** (all) | 0 |
+
+Closed by the same change, since the JWT scope is now always applied.
+
+### 3. A genuine pre-existing bug: customer purchase totals are double-counted
+
+Found while auditing the numbers this screen prints, and **deliberately not
+fixed here** — see "Not fixed" below.
+
+`customers.total_purchases` and `purchases_count` are incremented in **two
+places at once**:
+
+- application code, `SaleController.php:310-324` and
+  `AiImportController.php:1630-1643` (`+= total_amount`, `+= 1`);
+- a database trigger, `update_customer_after_sale` AFTER INSERT ON `sales` ->
+  `update_customer_stats()`, which does the same arithmetic.
+
+So every sale counts twice. The trigger itself is correct — it is the
+duplication that is wrong.
+
+Evidence:
+
+- The `sales` rows are clean: 543 of 544 have
+  `total_amount = sum(sale_items.total_price)`, and **0** are 2x. Items are
+  self-consistent 544/544. No duplicate sale ids (544 rows, 544 distinct ids)
+  and no two sales share a `(customer_id, created_at)`.
+- The `customers` rollup is the broken part: **41 of 46** customers are stored
+  at exactly 2x the sum of their real sales.
+- The trigger is **not ours** — it is absent from the repo and from
+  `progress.md`, and it began double-counting around **2025-12-08**. Sales
+  exist from 2025-12-06; the pre-trigger customers are exactly 1x and the
+  post-trigger ones exactly 2x. Two customers (Brian, Gerald) straddle the
+  boundary and are 1.5x and 1.167x.
+- **It is still happening.** Three customers whose only sale is dated
+  **2026-09-25** (two days ago) are all at exactly 2x.
+
+This matters beyond the database: the trigger fires on *any* `sales` insert, so
+even a sale created outside this codebase double-counts, and the rollup cannot
+be reconciled by reading application code.
+
+### 4. The `/2` in both clients is a band-aid over that bug — left in place
+
+Both ripoti clients "correct" the doubled figures client-side:
+
+```js
+total_purchases: c.total_purchases / 2,
+purchases_count: Math.round(c.purchases_count / 2)
+```
+
+This is why the bug has gone unnoticed. It is **correct for the 41 exactly-2x
+customers and wrong for the rest** (Brian shows 1500 instead of 2000, Gerald
+14000 instead of 24000, one already-correct customer is halved, and two
+zero-total customers stay zero).
+
+I removed neither the `/2` nor the trigger's counterpart, deliberately:
+removing the `/2` alone would show *doubled* money for 41 of 46 customers,
+which is strictly worse than today. The honest fix is to stop the
+double-increment, repair the stored rollup, and only then drop the `/2` — and
+that means a production data migration plus a decision about which layer owns
+the counter. That is a separate workstream with a real restore requirement, not
+something to fold into a one-file-pair change.
+
+### 5. Stale numeric ID types
+
+`Sale.id`, `Sale.product_id`, `Sale.customer_id`, `Product.id` and
+`Customer.id` were declared `number`, and the `customerNameById` /
+`productSalesMap` maps were `Map<number, …>`, while every one of those columns
+is a `uuid`. As on the Tangaza screen, nothing caught it because the API JSON
+arrives as `any`. Unlike Tangaza there is no `parseInt` here, so this one was
+purely a type lie with no runtime effect; the map lookups keep working because
+JS compares keys by value. All retyped to `string`.
+
+### Changes made
+
+| File | Change |
+| --- | --- |
+| `app/Http/Controllers/Api/AdminController.php` | `products()`, `sales()`, `customers()` scoped by JWT `business_id`; client param can no longer redirect or widen the scope; no-business caller forced empty |
+| `app/Services/BusinessResolver.php` | `memberIds()` gained optional `$roles` / `$status` to match the old filter semantics |
+| `Duka_mkononi/app/msimamizi/ripoti.tsx` | removed 5 `business_name` equality filters; seller membership is the test; UUID id fields retyped `number` -> `string` |
+| `resources/views/msimamizi/ripoti.blade.php` | removed 2 `business_name` equality filters; same membership-based test |
+
+### Tests / checks performed
+
+- `npx tsc --noEmit` - clean, exit 0.
+- `php artisan test` - 2 passed. `php -l` clean on both PHP files.
+- Blade inline JS extracted and checked with `node --check` - OK.
+- `test_ripoti.php` - 10/10 against production through the real controller,
+  with the JWT attributes set exactly as `AuthenticateJwt` sets them.
+- `test_ripoti2.php` - 17/17, including a deliberate reproduction of the old
+  name-based query to prove it returned 0 rows, the platform-leak comparison
+  above, a row-by-row check that every returned product/sale/customer belongs
+  to the caller's business, a cross-tenant probe across all three endpoints (0
+  foreign rows), and an assertion that the `/2` was left untouched.
+
+Two test-harness bugs were hit and fixed rather than worked around: a synthetic
+`system_admin` id violated the `user_logs` FK, so `log()` threw and the
+controller's `catch` returned `{"error":...}`, which `json_decode` reported as
+a 1-element payload; and PostgREST timed out once, so reads are now retried.
+
+### Correction to the file 1 notes
+
+`AdminController::users()` guards on `role !== 'admin'`, so a `system_admin` is
+refused with 403 *before* the `isPlatformAdmin` branch added in file 1 is
+reached. The same is true of the branch added here for the three new
+endpoints. So the "system_admin may cross businesses" behaviour described after
+file 1 is **not actually reachable** on these endpoints today, and no privilege
+was changed here — the 403 stands. There is also no `system_admin` row in the
+database, so the platform branch is currently unexercised. I left the branches
+in place as forward-compatible, but granting `system_admin` access to these
+report endpoints is a privilege change and should be an explicit decision.
+
+### Not fixed here (needs a decision)
+
+- **Customer totals double-count** (section 3). Needs: stop the duplicate
+  increment, repair the 46 stored rollups from real sales, then remove the
+  client `/2`. Involves production data and a choice of owner for the counter.
+- `SaleController::my()` and `ProductController::my()` still find a seller's
+  admin via `User::where('business_name', $businessName)`, so the seller path
+  still depends on a name matching. `CustomerController::my()` is already
+  `seller_id`-scoped and needs nothing.
+- `preview.blade.php` / `preview.tsx` still send `?business_name=`. That is now
+  inert for a business admin (verified: the same call returns the same rows)
+  but the parameter should be dropped when those files are processed.
+- The `admin:*` / `d:*` cache keys are global rather than per-business. They
+  are cleared on sign-out via `SessionContext`, so there is no leak today, but
+  a stale cache is not keyed by the business it came from.
+- No OTA/deploy performed.
+
+---
+
+## Urgent fix: every business-profile save failed with "Imeshindikana kusasisha wasifu"
+
+**Date:** 2026-09-27
+**Reported as:** saving the business profile on `msimamizi/index` always shows
+"Imeshindikana kusasisha wasifu", and the **Hifadhi** button gives no click
+response at all.
+**Files:** `app/Http/Controllers/Api/ProfileController.php`,
+`resources/views/msimamizi/index.blade.php`
+**Cause:** regression introduced by the file-1 `ProfileController` rewrite.
+
+### The error, from the audit log
+
+```
+PROFILE_UPDATE_ERROR  failed
+Supabase update failed: 409 {"code":"23505",
+  "details":"Key (legacy_name_key)=(jerald stationary) already exists.",
+  "message":"duplicate key value violates unique constraint
+             \"businesses_legacy_name_key_uniq\""}
+```
+
+Six consecutive failures for user `3189fba8` between 00:37 and 00:58.
+
+### Why it happened
+
+The migration created **two** Jerald businesses, both created in the same
+migration batch:
+
+| id | business_name | legacy_name_key |
+| --- | --- | --- |
+| `2a994f07` | Jerald stationary | `jerald stationary` |
+| `7b6184b6` | Jerald Stationaria | `jerald stationaria` |
+
+This is the suspicious spelling group flagged after the migration and left
+unmerged. The affected admin belongs to `7b6184b6`, but `login` returns the
+**legacy** `users.business_name` = "Jerald Stationari", which is what the page
+kept in `localStorage`.
+
+So every save of a field the user was *not even touching* did this:
+
+1. `saveEditModal()` unconditionally sends `business_name: editFormData.businessName`,
+   and `editFormData` is seeded from `localStorage.userData` (index.blade.php:680),
+   i.e. the legacy "Jerald Stationari".
+2. My file-1 code did `$businessUpdate['legacy_name_key'] = BusinessResolver::key($business_name)`
+   -> `jerald stationary`.
+3. That is `2a994f07`'s key, so the update of `7b6184b6` hit the unique index
+   and threw. Because it is a single PostgREST update, the **location, type and
+   description edits were discarded too** - the user could not save anything
+   at all, only rename.
+
+My file-1 mistake was re-keying on *every* save instead of on an actual rename,
+which made a cosmetic profile edit hostage to a global unique name constraint.
+
+### Fix 1 - only a real rename re-keys (ProfileController)
+
+`business_name`/`legacy_name_key` are now written **only when the submitted
+name is genuinely not already one of this business's own names**. Own names =
+the canonical `businesses.business_name` plus any legacy spelling still carried
+by that business's own members. Echoing "Jerald Stationari" is therefore
+recognised as *unchanged*, which is what it is.
+
+A genuine rename still re-keys, and now checks the target first: if another
+business already holds the key the save is rejected with **409** and a real
+message instead of a generic 500, and **nothing** is written - the co-sent
+location is not silently saved either. Logged as `PROFILE_UPDATE_NAME_TAKEN`.
+
+### Fix 2 - the modal stops sending a stale name (index.blade.php)
+
+`loadProfileIntoEditForm()` already adopted `business_type` /
+`business_description` from the authoritative profile but **not** the name, so
+the modal kept the pre-migration spelling forever. It now also adopts
+`business_name` / `business_location` and writes both the camelCase and legacy
+`business_name` cache keys, so the other screens stop inheriting the stale value.
+
+### Fix 3 - the Hifadhi button now has a spinner
+
+`updatingProfile` was dead state: it was set to `true` at line 843 and read
+nowhere, and the button was a static `<div onclick="saveEditModal()">` that was
+never disabled. Hence no feedback, and a double click fired the same PUT twice.
+
+- `setSaveBtnState()` now drives an inline spinner + "Inahifadhi..." label,
+  dims the button and switches the cursor; reset in `finally` and on modal open.
+- `updateProfile()` returns early if already saving (re-entry guard).
+- Added the missing `@keyframes btnSpin`.
+- The blanket `throw new Error('Update failed')` is gone; the server's message
+  is surfaced, so a name collision now reads "Jina la biashara limeshughulikiwa
+  na biashara nyingine. Chagua jina lingine." instead of "Imeshindikana".
+- On success the cache is written from the **server's** returned values rather
+  than the submitted ones, so a rejected/normalised name cannot leave the cache
+  disagreeing with the database.
+
+### Verification
+
+`test_profile_save.php` - **20/20** against production through the real
+controller, with the JWT attributes set exactly as `AuthenticateJwt` sets them.
+It reproduces the reported failure byte-for-byte (stale legacy name + a real
+location change) and asserts the location now persists. Also covered: canonical
+no-op save, a real rename re-keying, a rename onto another business's name
+(409, nothing written, the other business untouched), and a case/whitespace-only
+edit not being treated as a rename. All writes were snapshot-restored and
+restoration was then confirmed independently by SQL - no residue anywhere.
+
+`php -l` clean, Blade inline JS `node --check` OK, `php artisan test` 2 passed.
+`tsc` unaffected (no Expo file touched). No deploy, no OTA, nothing committed.
+
+### Still open (unchanged, needs the user's ruling)
+
+- The **two Jerald businesses are still separate rows**. The save is now safe
+  against the collision, but until they are merged this admin's business is
+  `Jerald Stationaria` while their legacy name says `Jerald Stationari`, and any
+  *other* code path that still matches on `users.business_name` (e.g.
+  `SaleController::my()` / `ProductController::my()`, noted in the ripoti entry)
+  will keep disagreeing with `business_id` for this account.
+- `ProfileController` is shared by msimamizi, muuzaji/profaili, mteja/profaili
+  and Expo. Those screens keep their own localStorage handling; they benefit
+  from the server fix, but their modals were not audited for the same stale-name
+  seeding in this pass.
+
+---
+
+## Preview (File 5): same name-equality trap, plus 8,500 TSh of expenses nobody could see
+
+**Date:** 2026-09-27
+**Module:** Msimamizi
+**Blade file:** `resources/views/msimamizi/preview.blade.php`
+**Expo file:** `Duka_mkononi/app/msimamizi/preview.tsx`
+**Laravel endpoints:** `GET /api/admin/users`, `/api/admin/products`,
+`/api/admin/sales`, `GET /api/office-expenses/range`
+**Tables:** `office_expenses`, `users`, `products`, `sales`, `businesses`
+
+### 1. The identical client-side name-equality chain, 9 times
+
+Both files re-filtered the server's rows against the name in localStorage:
+
+- `preview.blade.php`: `u.business_name === userData.businessName`
+- `preview.tsx`: five `user.business_name === businessName` tests plus three
+  `productSeller.business_name === businessName` and one
+  `saleSeller.business_name === businessName`
+
+Same trap as Ripoti, and it was one page visit away from firing: the test only
+passes while localStorage still holds the **legacy** name, but `profaili.blade.php`
+(and the index fix in the previous entry) now write the **canonical** name there.
+The moment this account saved its profile, preview would have silently dropped to
+just the fallback seller at `preview.tsx:361-369` - which fabricates a synthetic
+seller from the current user, so the report would look *plausible* while quietly
+showing a fraction of the real data.
+
+All nine now test seller **membership** in the server-returned approved list
+(`return !!productSeller` / `if (saleSeller)`), which is the same substitution
+used in Ripoti.
+
+### 2. The inert `?business=` / `?business_name=` parameters are gone
+
+Both clients sent the business name on every call. After the server started
+scoping from the JWT, those parameters could not narrow or redirect anything, so
+they only implied an identity that does not exist. Dropped from all four calls in
+both files; the sales call now sends only the date range, and omits the `?`
+entirely when empty.
+
+### 3. Found here: office expenses were invisible, and the net was silently wrong
+
+`preview` is the only screen that nets **sales against expenses** to produce a
+daily profit. Sales are scoped by business membership; expenses were not:
+
+```php
+$user = User::where('id', $userId)->select('business_name')->first();
+$query = OfficeExpense::where('business_name', $user->business_name);
+```
+
+`office_expenses` has **no `business_id`** - the only reliable link is
+`user_id`. So the three Jerald expenses are stored as `business_name =
+'Jerald Stationary'`, while *both* of that business's members now read
+`users.business_name = 'Jerald Stationari'`. The exact-string match returned
+**zero rows**, for both the admin and the seller who recorded them:
+
+| business_name as stored | rows | total |
+| --- | --- | --- |
+| Jerald Stationary | 3 | 8,500 |
+| SANDE GARAGE | 2 | 2,000 |
+| Dismas spare parts | 1 | 1,000 |
+
+That is a **third** spelling of Jerald, on top of `Jerald stationary` and
+`Jerald Stationaria`. An expense becomes permanently unreachable the moment the
+business is respelled, and nothing warns.
+
+`range()` now scopes by the recording `user_id` via
+`BusinessResolver::memberIds($businessId)`, with the zero-UUID fallback so a
+caller with no business gets an empty list instead of an unscoped dump. The
+three rows now come back (8,500 total: Kodisho za Nguvu 3,500 / Maji 5,000) and
+the daily net actually has expenses in it.
+
+**Deliberate consequence:** a seller now sees the whole business's expenses
+rather than only rows matching their own name spelling. That is required for the
+arithmetic to be meaningful - the sales side has always been business-wide - and
+it matches every other report in this migration. It is a widening of what a
+seller can read, so it is called out here rather than buried.
+
+### 4. Stale numeric UUID types
+
+`Sale.id`, `Sale.product_id`, `Sale.user_id`, `Product.id`, `Product.seller_id`,
+`Seller.id` and `BusinessEvent.id` were `number` (and `let productId = 0`),
+while `Expense.id` in the same file was already correctly `string`. All retyped
+to `string`.
+
+### 5. A hazard this change makes *worse*, deliberately not half-fixed
+
+Removing the client-side name filter means the cached seller/product/sales lists
+are no longer filtered by business on the way out of the cache. Those caches use
+**global keys** (`admin:users`, `admin:products`, `admin:sales`) shared by
+index, Ripoti and preview. They are cleared on sign-out by `SessionContext`, so
+there is no leak today, but a stale cache is not keyed by the business or even
+the account it came from.
+
+Scoping only preview's keys would have left `admin:products` / `admin:sales`
+still global and produced a false sense of safety, so I left all of them alone.
+This is now the top item on the cache-key follow-up list.
+
+### Changes made
+
+| File | Change |
+| --- | --- |
+| `app/Http/Controllers/Api/ExpenseController.php` | `range()` scopes by `user_id IN memberIds(business_id)` instead of the caller's legacy `users.business_name`; no-business caller returns empty |
+| `resources/views/msimamizi/preview.blade.php` | dropped `?business=` and `?business_name=`; removed the seller name-equality filter |
+| `Duka_mkononi/app/msimamizi/preview.tsx` | dropped `?business=` and both `?business_name=`; removed 9 name-equality tests in favour of seller membership; 7 UUID fields retyped `number` -> `string` |
+
+`today()`, `byDate()` and `categories()` in the same controller still scope by
+the legacy name and have the identical bug; only `range()` was changed because
+that is the one this screen calls. See "Not fixed".
+
+### Verification
+
+- `npx tsc --noEmit` - clean, exit 0.
+- `php -l` clean; Blade inline JS extracted and `node --check` OK.
+- `php artisan test` - 2 passed.
+- `test_preview.php` - **21/21** live against production through the real
+  controllers, JWT attributes set as `AuthenticateJwt` sets them. Proves the old
+  exact-name scope returned 0 rows while the new one returns all 3; that a
+  different business sees none of them; that a no-business caller gets 400 and a
+  memberless business gets an empty list; that users/products/sales every row
+  belongs to the caller (`users=2 products=20 sales=63`, 0 foreign); and that
+  passing a foreign `?business=` / `?business_name=` cannot redirect any of the
+  three scopes now that the clients stopped sending them. Read-only: office
+  expense rows re-counted afterwards and unchanged.
+
+### Not fixed here (needs a decision)
+
+- **`today()`, `byDate()`, `categories()`** carry the identical name-scoping bug
+  and are used by other screens. Left alone to keep this to one pair.
+- **`ExpenseController` has no role guard at all** on any of its six endpoints -
+  any authenticated user, including a customer, can call them. That is the
+  pre-existing "role-only expense authorization" backlog item, now confirmed in
+  the source.
+- **`ExpenseController::destroy()` has a cross-tenant hole**: the guard is
+  `if ($expense->business_name !== $businessName && $userRole !== 'admin')`, so
+  an ordinary business admin can delete **any other business's** expense by id.
+- **`DebugController`** is reachable in production and both `checkBusiness` (called
+  by `preview.tsx:161`) and `expenses/{date}` scope by the same legacy name and
+  return the caller's email/role/status. Self-scoped, so not a leak, but it is a
+  debug surface that should not ship.
+- No OTA/deploy performed.
+
+---
+
+## Bidhaa buying price + Ripoti profit: root-cause fix (2026-09-27)
+
+Two bugs were reported from the Msimamizi pair: the AI import of `World Choice
+Perfume` showed `55000` in **both** the buying and selling columns of Ripoti, and
+editing an existing product "did not work". Both were real and independent. The
+stored data was never wrong.
+
+### What the database actually held
+
+`products.id = 4d92cfc6-b80f-46bd-8285-73d432de5f19`
+
+| column | value | meaning |
+|---|---|---|
+| `cost_price` | 45000 | buying price (what the user typed) |
+| `price` | 55000 | current selling price |
+| `expected_selling_price` | 55000 | target selling price |
+
+`AiImportController` maps `buyingPrice -> cost_price` and
+`sellingPrice -> price` + `expected_selling_price` in both the create and the
+update branch, and both clients send the same three fields. So the AI import was
+correct; the money was being lost on the way out.
+
+### Bug 1: the report used the selling price as the cost basis
+
+`ripoti.blade.php` and `ripoti.tsx` both built the cost basis from
+`product.price`, which is the **selling** price. Consequences:
+
+- "Bei ya Ununuzi" printed the selling price, which is why both columns read
+  55000.
+- Projected/expected profit was `selling - selling = 0` for every product.
+- The moment the real buying price was lost, the same code turned a missing
+  buying price into "profit = entire sale amount", because `null` was read as
+  `0`.
+
+Fix in both clients: the cost basis is now nullable `cost_price`, and an
+unrecorded buying price renders as `-` (report) or
+`reports.cost_not_recorded` (Expo) instead of a number. Aggregate profit sums
+only known-cost sales, and both clients disclose how many sales were excluded,
+including a "Kumbuka" row in the exported CSV so a spreadsheet cannot be read as
+a complete total.
+
+### Bug 2: editing a product destroyed its buying price
+
+`ProductController::update()` unconditionally wrote
+`'cost_price' => $cost_price ? (float) $cost_price : null`. The product form had
+no buying-price field, so the key was never sent, so **every** edit nulled the
+stored buying price. The endpoint returned 200, which is why it looked like
+"editing does not work" rather than like data loss.
+
+Fix: `cost_price` is written only when `$request->has('cost_price')`. Omitting
+it preserves the stored value; sending a number sets it; sending an explicit
+`null` clears it. The product form now has an optional buying-price field in both
+clients that pre-fills from the product and is never required for submission.
+
+### Files changed
+
+- `app/Http/Controllers/Api/ProductController.php` - conditional `cost_price`
+  write in `update()`.
+- `resources/views/msimamizi/ripoti.blade.php` - `costBasis()`,
+  `applyProfit()`, `sumProfit()`, `unknownCostCount()`, `profitCoverageNote()`;
+  unknown buying price/profit render as `-`; `total_profit_known`; CSV note row.
+- `Duka_mkononi/app/msimamizi/ripoti.tsx` - nullable `cost_price` /
+  `profit` / `profit_margin` in the `Sale` and `Product` types, `unknownMoney()`
+  helper, the two `product.price` cost-basis sites, sale-row profit cells, and
+  the same coverage disclosure.
+- `resources/views/msimamizi/bidhaa-mpya.blade.php` - `cost_price` in form
+  state, the three pre-fill sites, the submit payload, the input markup, its
+  listener, the live preview, and the product list.
+- `Duka_mkononi/app/msimamizi/bidhaa-mpya.tsx` - same, plus the buying price on
+  the product card.
+- `Duka_mkononi/locales/*.json` - `products.cost_price_label`,
+  `products.cost_price_placeholder`, `products.cost_price_hint`,
+  `reports.cost_not_recorded` in all 8 languages.
+
+### Verification
+
+- `test_product_prices.php` rewritten to assert the **fixed** behaviour and now
+  **27/27**: stored prices correct; an edit that omits `cost_price` preserves
+  45000; explicit value writes; explicit `null` clears; non-owner still 403 and
+  leaves the row untouched; profit on 3 units at 55000 is 30000 and the old code
+  would have said 0; a `null` buying price is reported unknown and is provably
+  not the sale amount; every mutated field verified restored.
+- Full regression, all green: `test_ripoti` 10/10, `test_ripoti2` 17/17,
+  `test_bidhaa` 9/9, `test_resolver` 21/21, `test_scope` 7/7,
+  `test_writepath` 17/17, `test_tangaza` 9/9, `test_preview` 21/21,
+  `test_profile_save` 20/20, `test_e2e_admin` 4/4, plus
+  `test_cross_branch_sales` and `test_shop_filters` exit 0.
+- `npx tsc --noEmit` clean. Both Ripoti and bidhaa-mpya Blade script blocks
+  parse (`check_blade_js.js`). `php -l` clean on `ProductController`.
+
+### Not fixed here (needs a decision)
+
+- **2072 of 2078 products have no `cost_price`** and cannot be backfilled - the
+  buying price was never captured, and inventing it from the selling price is
+  exactly the bug that was just removed. Their Ripoti profit now honestly reads
+  unknown. Entering buying prices going forward is the only real remedy.
+- The **customer purchase-stat double count** and the two **Jerald** business
+  rows are untouched, as agreed.
+- No OTA/deploy performed.
+
+### Follow-up: which column holds "bei ya kununulia", and does the AI path use it too?
+
+Asked directly, so answered directly and proved it rather than asserted it.
+`test_cost_column.php` -> **29/29**, and the temporary rows it creates are
+deleted and the absence independently confirmed (`0` rows matching `ZZTMP%`).
+
+**The column is `products.cost_price`.** It is the only cost-like column in the
+schema - there is no `cost`, `buying_price` or `purchase_price` on `products`.
+The other numeric price columns are `price` (selling), `expected_selling_price`
+(target selling) and `min_stock_level` (not money). The signature that confirms
+`cost_price` is a buying price and not a second selling price: on **every** row
+that has one, `cost_price < price`.
+
+| product | cost_price | price | expected |
+|---|---|---|---|
+| Kalamu | 300 | 500 | NULL |
+| Marker pen | 300 | 500 | NULL |
+| Pencil | 500 | 700 | NULL |
+| World Chioice Perfume | 35000 | 45000 | 45000 |
+| World Choice Perfume | 45000 | 55000 | 55000 |
+| Louis Vuitton Imagination | 5000 | 7000 | 7000 |
+| Amouage Guidance 46 | 1600000 | 1695000 | 1695000 |
+
+**Both entry paths already write to that one column**, which is what was asked
+for - the AI result and a hand-typed product are indistinguishable to the
+report:
+
+- Manual: `POST /api/products` -> `cost_price` (create 201), and on
+  `PUT /api/products/{id}` it is written only when the request carries the key.
+- AI: `POST /api/inventory/ai-import/verify` -> `buyingPrice` becomes
+  `cost_price` in **both** branches: `AiImportController` line 1004 for a
+  matched existing product, line 1114 for a newly created one.
+
+Verified by driving the real controllers: manual create put 45000 in
+`cost_price`; an edit that omitted the field preserved it; an edit that supplied
+47000 wrote it; the AI new branch put `buyingPrice=45000` in `cost_price` and
+`sellingPrice=55000` in `price`; the AI existing branch overwrote `cost_price`
+with its own `buyingPrice` and increased stock. The report cost basis then read
+45000 and produced profit of 10000/unit, 40000 over the 4 units in stock.
+
+**The 2072 products without a buying price still have none, and that is not
+recoverable from the database.** The one table that could have held it,
+`inventory_transactions.unit_cost` (with `total_cost`, `supplier_name`,
+`supplier_invoice`), exists and is **completely empty - 0 rows**. So the stock
+ledger that would have recorded historical buying prices was never written to.
+There is no third source. The only remedy is entering buying prices going
+forward, which the new optional field in both clients makes possible.
+
+### Data safety note
+
+No product was deleted and no schema change was made in this work. Every live
+test created its own uniquely-named temporary row and removed it, and every
+mutated existing row was snapshot-restored and then re-verified. Independent
+count after the run: `2079` products total, `7` with a buying price - the same
+`7` that existed before, all intact.

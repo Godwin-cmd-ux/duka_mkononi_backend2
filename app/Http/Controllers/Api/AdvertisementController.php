@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Models\Advertisement;
 use App\Models\Reaction;
 use App\Models\User;
+use App\Services\BusinessResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -123,7 +124,12 @@ class AdvertisementController extends BaseController
                 throw new \RuntimeException('User not found');
             }
 
-            $title = $user->business_name ?: ($user->full_name ?: 'Matangazo');
+            // Prefer the canonical business name from `businesses`. After the
+            // business_id migration that is the authoritative display name;
+            // users.business_name is a legacy snapshot that can still carry an
+            // older spelling. Falls back to the user columns unchanged.
+            $businessName = BusinessResolver::forUser($userId)?->business_name;
+            $title = ($businessName ?: $user->business_name) ?: ($user->full_name ?: 'Matangazo');
 
             $isPendingPayment = $request->input('payment_status') === 'pending';
 

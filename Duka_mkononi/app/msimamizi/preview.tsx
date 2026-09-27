@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+﻿import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect, useState } from 'react';
 import {
@@ -18,12 +18,12 @@ import LogoutButton from '../../components/logout-button';
 import { getCache, setCache } from '../../db/cache';
 import { fetchWithTimeout } from '../../lib/network';
 
-// ✅ BADILISHA HII IWE URL YA SERVER YAKO
+// âœ… BADILISHA HII IWE URL YA SERVER YAKO
 import { API_BASE_URL } from '../../constants/api';
 
 interface Sale {
-  id: number;
-  product_id: number;
+  id: string;
+  product_id: string;
   product_name: string;
   quantity: number;
   unit_price: number;
@@ -32,25 +32,25 @@ interface Sale {
   customer_name: string;
   seller_name: string;
   business_name: string;
-  user_id: number;
+  user_id: string;
   invoice_number?: string;
   cost_price?: number;
 }
 
 interface Product {
-  id: number;
+  id: string;
   name: string;
   price: number;
   category: string;
   stock: number;
   cost_price?: number;
-  seller_id: number;
+  seller_id: string;
   business_name?: string;
   created_at?: string;
 }
 
 interface Seller {
-  id: number;
+  id: string;
   email: string;
   full_name: string;
   business_name: string;
@@ -82,7 +82,7 @@ interface DailySummary {
 }
 
 interface BusinessEvent {
-  id: number;
+  id: string;
   type: 'sale' | 'product_added' | 'product_updated' | 'seller_joined' | 'low_stock' | 'payment' | 'announcement';
   title: string;
   description: string;
@@ -136,14 +136,14 @@ export default function PreviewScreen() {
     totalNetProfit: 0
   });
 
-  // ✅ Expenses state
+  // âœ… Expenses state
   const [dailyExpenses, setDailyExpenses] = useState<{[key: string]: Expense[]}>({});
   const [expensesLoading, setExpensesLoading] = useState(false);
 
-  // ✅ Tabs state
+  // âœ… Tabs state
   const [activeTab, setActiveTab] = useState<'days' | 'events'>('days');
   
-  // ✅ Events state
+  // âœ… Events state
   const [businessEvents, setBusinessEvents] = useState<BusinessEvent[]>([]);
   const [eventsLoading, setEventsLoading] = useState(false);
 
@@ -151,10 +151,10 @@ export default function PreviewScreen() {
     loadUserData();
   }, [lang]);
 
-  // ✅ DEBUG: Check business data
+  // âœ… DEBUG: Check business data
   const checkBusinessData = async (token: string) => {
     try {
-      console.log('🔍 Running business debug check...');
+      console.log('ðŸ” Running business debug check...');
       const cachedDebug = await getCache<any>('d:debug:check-business');
       if (cachedDebug) { setDebugData(cachedDebug); }
 
@@ -167,12 +167,12 @@ export default function PreviewScreen() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ DEBUG BUSINESS DATA:', JSON.stringify(data, null, 2));
+        console.log('âœ… DEBUG BUSINESS DATA:', JSON.stringify(data, null, 2));
         setDebugData(data);
         setCache('d:debug:check-business', data).catch(() => {});
         
         if (data.all_expenses_count === 0) {
-          console.log('⚠️ Hakuna expenses kabisa kwa business hii!');
+          console.log('âš ï¸ Hakuna expenses kabisa kwa business hii!');
           Alert.alert(
             'Taarifa ya Debug',
             `Business: ${data.user.business_name}\n` +
@@ -184,14 +184,14 @@ export default function PreviewScreen() {
             `2. User ameapproved?`
           );
         } else {
-          console.log(`✅ Business ina expenses ${data.all_expenses_count} kwa jumla`);
-          console.log(`✅ Leo ina expenses ${data.today_expenses_count} zenye thamani ${data.today_expenses_total}`);
+          console.log(`âœ… Business ina expenses ${data.all_expenses_count} kwa jumla`);
+          console.log(`âœ… Leo ina expenses ${data.today_expenses_count} zenye thamani ${data.today_expenses_total}`);
         }
       } else {
-        console.log('❌ Debug endpoint failed:', response.status);
+        console.log('âŒ Debug endpoint failed:', response.status);
       }
     } catch (error) {
-      console.error('❌ Debug error:', error);
+      console.error('âŒ Debug error:', error);
       const cachedDebug = await getCache<any>('d:debug:check-business');
       if (cachedDebug) { setDebugData(cachedDebug); }
     }
@@ -202,8 +202,8 @@ export default function PreviewScreen() {
       const userDataStr = await AsyncStorage.getItem('userData');
       const token = await AsyncStorage.getItem('userToken');
       
-      console.log('📱 AsyncStorage - userData exists:', !!userDataStr);
-      console.log('📱 AsyncStorage - token exists:', !!token);
+      console.log('ðŸ“± AsyncStorage - userData exists:', !!userDataStr);
+      console.log('ðŸ“± AsyncStorage - token exists:', !!token);
       
       if (!userDataStr || !token) {
         Alert.alert(t('app.error'), t('admin_dashboard.error_auth'));
@@ -211,10 +211,10 @@ export default function PreviewScreen() {
       }
 
       const user = JSON.parse(userDataStr);
-      console.log('👤 Parsed user:', user);
+      console.log('ðŸ‘¤ Parsed user:', user);
       
       const businessName = user.businessName || user.business_name;
-      console.log('🏢 Business Name from storage:', businessName);
+      console.log('ðŸ¢ Business Name from storage:', businessName);
       
       if (!businessName) {
         Alert.alert(t('app.error'), t('admin_dashboard.error_network'));
@@ -228,7 +228,7 @@ export default function PreviewScreen() {
         userRole: user.role || ''
       });
 
-      // ✅ Run debug check first
+      // âœ… Run debug check first
       await checkBusinessData(token);
 
       // Load all data for the business
@@ -240,9 +240,9 @@ export default function PreviewScreen() {
     }
   };
 
-  // ✅ Matumizi: ONE range request for the whole window (the old code made a
+  // âœ… Matumizi: ONE range request for the whole window (the old code made a
   // separate request per sale date and missed days that had expenses but no
-  // sales — the same fix the Blade page made).
+  // sales â€” the same fix the Blade page made).
   const loadExpensesRange = async (startDate: string, endDate: string, token: string) => {
     const expensesByDate: {[key: string]: Expense[]} = {};
     try {
@@ -271,7 +271,7 @@ export default function PreviewScreen() {
             }
           }
         } catch (error) {
-          console.warn('⚠️ Expenses range fetch failed, using cache:', error);
+          console.warn('âš ï¸ Expenses range fetch failed, using cache:', error);
         }
       }
 
@@ -283,7 +283,7 @@ export default function PreviewScreen() {
       });
 
       setDailyExpenses(expensesByDate);
-      console.log('💰 Matumizi ya range yamepakuliwa:', Object.keys(expensesByDate).length, 'siku');
+      console.log('ðŸ’° Matumizi ya range yamepakuliwa:', Object.keys(expensesByDate).length, 'siku');
       return expensesByDate;
     } catch (error) {
       console.error('Error loading expenses range:', error);
@@ -296,26 +296,27 @@ export default function PreviewScreen() {
   const loadBusinessData = async (businessName: string, token: string) => {
     try {
       setLoading(true);
-      console.log('🏢 Inapakua data ya biashara:', businessName);
+      console.log('ðŸ¢ Inapakua data ya biashara:', businessName);
 
-      // ✅ 1. PATA WAUZAJI WOTE WA BIASHARA HII
-      console.log('🔍 Inatafuta wauzaji wa biashara:', businessName);
+      // âœ… 1. PATA WAUZAJI WOTE WA BIASHARA HII
+      console.log('ðŸ” Inatafuta wauzaji wa biashara:', businessName);
       
       let allSellers: Seller[] = [];
       
       try {
         const cachedSellers = await getCache<any[]>('admin:users');
         if (cachedSellers) {
-          allSellers = cachedSellers.filter((user: any) => 
-            (user.role === 'seller' || user.role === 'admin') && 
-            user.business_name === businessName &&
+          allSellers = cachedSellers.filter((user: any) =>
+            (user.role === 'seller' || user.role === 'admin') &&
             user.status === 'approved'
           );
         }
 
         // role=seller,admin keeps the admin's own records (Blade passes it too).
+        // No ?business= parameter: the endpoint scopes from the verified JWT
+        // business_id, so a name can no longer redirect or widen it.
         const sellersResponse = await fetchWithTimeout(
-          `${API_BASE_URL}/api/admin/users?business=${encodeURIComponent(businessName)}&role=seller,admin`,
+          `${API_BASE_URL}/api/admin/users?role=seller,admin`,
           {
             method: 'GET',
             headers: {
@@ -332,14 +333,12 @@ export default function PreviewScreen() {
           if (responseData && Array.isArray(responseData)) {
             allSellers = responseData.filter((user: any) => 
               (user.role === 'seller' || user.role === 'admin') && 
-              user.business_name === businessName &&
               user.status === 'approved'
             );
             setCache('admin:users', allSellers).catch(() => {});
           } else if (responseData && responseData.users && Array.isArray(responseData.users)) {
             allSellers = responseData.users.filter((user: any) => 
               (user.role === 'seller' || user.role === 'admin') && 
-              user.business_name === businessName &&
               user.status === 'approved'
             );
             setCache('admin:users', allSellers).catch(() => {});
@@ -351,7 +350,6 @@ export default function PreviewScreen() {
         if (cachedSellers) {
           allSellers = cachedSellers.filter((user: any) => 
             (user.role === 'seller' || user.role === 'admin') && 
-            user.business_name === businessName &&
             user.status === 'approved'
           );
         }
@@ -359,7 +357,7 @@ export default function PreviewScreen() {
 
       // If no sellers found, use current user
       if (allSellers.length === 0) {
-        console.log('⚠️ Hakuna wauzaji walipatikana, tumia mtumiaji wa sasa');
+        console.log('âš ï¸ Hakuna wauzaji walipatikana, tumia mtumiaji wa sasa');
         const currentUserId = userData.userId || '';
         allSellers = [{
           id: currentUserId as any,
@@ -371,11 +369,11 @@ export default function PreviewScreen() {
         }];
       }
       
-      console.log('👥 Wauzaji wa biashara walipatikana:', allSellers.length);
+      console.log('ðŸ‘¥ Wauzaji wa biashara walipatikana:', allSellers.length);
       setSellers(allSellers);
 
-      // ✅ 2. PATA BIDHAA ZOTE ZA BIASHARA HII
-      console.log('📦 Inapata bidhaa za biashara nzima...');
+      // âœ… 2. PATA BIDHAA ZOTE ZA BIASHARA HII
+      console.log('ðŸ“¦ Inapata bidhaa za biashara nzima...');
       let allProducts: Product[] = [];
       
       try {
@@ -383,12 +381,12 @@ export default function PreviewScreen() {
         if (cachedProducts) {
           allProducts = cachedProducts.filter((product: any) => {
             const productSeller = allSellers.find(s => s.id === product.seller_id);
-            return productSeller && productSeller.business_name === businessName;
+            return !!productSeller;
           });
         }
 
         const productsResponse = await fetchWithTimeout(
-          `${API_BASE_URL}/api/admin/products?business_name=${encodeURIComponent(businessName)}`,
+          `${API_BASE_URL}/api/admin/products`,
           {
           method: 'GET',
           headers: {
@@ -411,9 +409,9 @@ export default function PreviewScreen() {
 
           allProducts = productsArray.filter((product: any) => {
             const productSeller = allSellers.find(s => s.id === product.seller_id);
-            return productSeller && productSeller.business_name === businessName;
+            return !!productSeller;
           });
-          console.log('📦 Bidhaa za biashara:', allProducts.length);
+          console.log('ðŸ“¦ Bidhaa za biashara:', allProducts.length);
         }
       } catch (error) {
         console.error('Error fetching products:', error);
@@ -421,15 +419,15 @@ export default function PreviewScreen() {
         if (cachedProducts) {
           allProducts = cachedProducts.filter((product: any) => {
             const productSeller = allSellers.find(s => s.id === product.seller_id);
-            return productSeller && productSeller.business_name === businessName;
+            return !!productSeller;
           });
         }
       }
 
       setProducts(allProducts);
 
-      // ✅ 3. PATA MAUZO YOTE YA BIASHARA HII
-      console.log('💰 Inapata mauzo ya biashara nzima...');
+      // âœ… 3. PATA MAUZO YOTE YA BIASHARA HII
+      console.log('ðŸ’° Inapata mauzo ya biashara nzima...');
       let allSales: Sale[] = [];
 
       const cachedSales = await getCache<Sale[]>('d:preview:sales');
@@ -437,7 +435,7 @@ export default function PreviewScreen() {
       
       try {
         const salesResponse = await fetchWithTimeout(
-          `${API_BASE_URL}/api/admin/sales?business_name=${encodeURIComponent(businessName)}`,
+          `${API_BASE_URL}/api/admin/sales`,
           {
           method: 'GET',
           headers: {
@@ -459,7 +457,7 @@ export default function PreviewScreen() {
           allSales = [];
           salesArray.forEach((sale: any) => {
             const saleSeller = allSellers.find(s => s.id === sale.seller_id);
-            if (saleSeller && saleSeller.business_name === businessName) {
+            if (saleSeller) {
               let customerName = t('preview.default_customer');
               if (sale.customers && sale.customers.name) {
                 customerName = sale.customers.name;
@@ -468,7 +466,8 @@ export default function PreviewScreen() {
               if (sale.sale_items && sale.sale_items.length > 0) {
                 sale.sale_items.forEach((item: any) => {
                   const product = allProducts.find(p => p.id === item.product_id);
-                  const costPrice = product?.cost_price || product?.price || 0;
+                  // price IS the buying price ("Bei ya Kununua"); legacy cost_price is ignored.
+        const costPrice = product?.price || 0;
                   
                   const unitPrice = item.unit_price || 0;
                   const quantity = item.quantity || 1;
@@ -492,12 +491,13 @@ export default function PreviewScreen() {
                 });
               } else {
                 let productName = t('preview.default_product');
-                let productId = 0;
+                let productId = '';
                 let quantity = 1;
                 let unitPrice = sale.total_amount || 0;
                 
                 const product = allProducts.find(p => p.seller_id === sale.seller_id);
-                const costPrice = product?.cost_price || product?.price || 0;
+                // price IS the buying price ("Bei ya Kununua"); legacy cost_price is ignored.
+        const costPrice = product?.price || 0;
                 
                 if (product) {
                   productName = product.name;
@@ -524,27 +524,27 @@ export default function PreviewScreen() {
             }
           });
           setCache('d:preview:sales', allSales).catch(() => {});
-          console.log('💰 Mauzo ya biashara:', allSales.length);
+          console.log('ðŸ’° Mauzo ya biashara:', allSales.length);
         }
       } catch (error) {
         console.error('Error fetching sales:', error);
       }
 
-      // ✅ 4. ANDAA DATA KWA KILA SIKU - WITH EXPENSES
+      // âœ… 4. ANDAA DATA KWA KILA SIKU - WITH EXPENSES
       const salesDates = [...new Set(allSales.map(sale =>
         sale.sale_date.split('T')[0]
       ))];
 
       // ONE range request (no date filter on mobile yet) so days that have
-      // expenses but no sales are included too — matching the Blade page.
+      // expenses but no sales are included too â€” matching the Blade page.
       const expensesData = await loadExpensesRange('2000-01-01', '2100-01-01', token);
       const expenseDates = Object.keys(expensesData);
       const allDates = [...new Set([...salesDates, ...expenseDates])];
 
       if (allDates.length > 0) {
-        console.log('📅 Tarehe zote (mauzo + matumizi):', allDates.length);
+        console.log('ðŸ“… Tarehe zote (mauzo + matumizi):', allDates.length);
 
-        // ✅ Process with the actual data
+        // âœ… Process with the actual data
         processDailyData(allSales, allProducts, allSellers, expensesData, allDates);
         
         const totalSalesAmount = allSales.reduce((sum, sale) => sum + sale.total_amount, 0);
@@ -559,7 +559,7 @@ export default function PreviewScreen() {
           return sum + Math.max(0, itemProfit);
         }, 0);
         
-        // ✅ Calculate total expenses using expensesData, not state
+        // âœ… Calculate total expenses using expensesData, not state
         let totalExpensesAllDays = 0;
         Object.values(expensesData).forEach(dayExpenses => {
           dayExpenses.forEach(exp => {
@@ -578,11 +578,11 @@ export default function PreviewScreen() {
           totalNetProfit: totalNetProfit
         });
         
-        // ✅ 5. PATA MATUKIO (EVENTS) YA BIASHARA
+        // âœ… 5. PATA MATUKIO (EVENTS) YA BIASHARA
         await loadBusinessEvents(businessName, token, allSales, allProducts, allSellers);
         
       } else {
-        console.log('⚠️ Hakuna mauzo ya biashara yaliyopatikana');
+        console.log('âš ï¸ Hakuna mauzo ya biashara yaliyopatikana');
         setDailySummaries([]);
         
         setBusinessData({
@@ -604,17 +604,17 @@ export default function PreviewScreen() {
     }
   };
 
-  // ✅ FIXED: processDailyData with better debugging
+  // âœ… FIXED: processDailyData with better debugging
   const processDailyData = (sales: Sale[], products: Product[], sellers: Seller[], expensesByDate: {[key: string]: Expense[]} = {}, datesOverride?: string[]) => {
     if (sales.length === 0 && (!datesOverride || datesOverride.length === 0)) {
-      console.log('⚠️ Hakuna mauzo ya kuandaa');
+      console.log('âš ï¸ Hakuna mauzo ya kuandaa');
       setDailySummaries([]);
       return;
     }
 
-    console.log('💰 processDailyData received expenses for dates:', Object.keys(expensesByDate));
-    console.log('💰 processDailyData PARAMETER expensesByDate:', JSON.stringify(expensesByDate, null, 2));
-    console.log('💰 expensesByDate["2026-03-01"]:', expensesByDate['2026-03-01']);
+    console.log('ðŸ’° processDailyData received expenses for dates:', Object.keys(expensesByDate));
+    console.log('ðŸ’° processDailyData PARAMETER expensesByDate:', JSON.stringify(expensesByDate, null, 2));
+    console.log('ðŸ’° expensesByDate["2026-03-01"]:', expensesByDate['2026-03-01']);
 
     const salesByDate: { [key: string]: Sale[] } = {};
     
@@ -636,7 +636,7 @@ export default function PreviewScreen() {
       salesByDate[date].push(sale);
     });
 
-    console.log('📅 Tarehe zilizopatikana:', Object.keys(salesByDate).length);
+    console.log('ðŸ“… Tarehe zilizopatikana:', Object.keys(salesByDate).length);
 
     // Include expense-only days (no sales but with expenses).
     const summaryDates = datesOverride && datesOverride.length
@@ -646,11 +646,11 @@ export default function PreviewScreen() {
       const daySales = salesByDate[date];
       const dayExpenses = expensesByDate[date] || [];
       
-      // ✅ DEBUG: Angalia kama expenses zimepita
+      // âœ… DEBUG: Angalia kama expenses zimepita
       if (date === '2026-03-01') {
-        console.log('🔍 DEBUG - 2026-03-01 expenses from parameter:', dayExpenses);
-        console.log('🔍 DEBUG - 2026-03-01 expenses count:', dayExpenses.length);
-        console.log('🔍 DEBUG - 2026-03-01 expenses total:', dayExpenses.reduce((sum, e) => sum + e.amount, 0));
+        console.log('ðŸ” DEBUG - 2026-03-01 expenses from parameter:', dayExpenses);
+        console.log('ðŸ” DEBUG - 2026-03-01 expenses count:', dayExpenses.length);
+        console.log('ðŸ” DEBUG - 2026-03-01 expenses total:', dayExpenses.reduce((sum, e) => sum + e.amount, 0));
       }
       
       const totalSales = daySales.reduce((sum, sale) => {
@@ -682,13 +682,13 @@ export default function PreviewScreen() {
         }
       }, 0);
 
-      // ✅ TOTAL EXPENSES - Ensure it's calculated properly
+      // âœ… TOTAL EXPENSES - Ensure it's calculated properly
       const totalExpenses = dayExpenses.reduce((sum, exp) => sum + (exp.amount || 0), 0);
 
       // NET PROFIT
       const netProfit = totalProfit - totalExpenses;
 
-      // Only genuinely recorded names — drop the placeholder (like the Blade page).
+      // Only genuinely recorded names â€” drop the placeholder (like the Blade page).
       const customers = [...new Set(daySales
         .map(sale => sale.customer_name)
         .filter(name => name && name !== t('preview.default_customer')))];
@@ -697,7 +697,7 @@ export default function PreviewScreen() {
         daySales.some(sale => sale.user_id === seller.id)
       );
 
-      console.log(`📈 Siku: ${date}, Mauzo: ${totalSales}, Faida Ghafi: ${totalProfit}, Matumizi: ${totalExpenses}, Faida Halisi: ${netProfit}`);
+      console.log(`ðŸ“ˆ Siku: ${date}, Mauzo: ${totalSales}, Faida Ghafi: ${totalProfit}, Matumizi: ${totalExpenses}, Faida Halisi: ${netProfit}`);
 
       return {
         date,
@@ -716,12 +716,12 @@ export default function PreviewScreen() {
     summaries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     
     setDailySummaries(summaries);
-    console.log('✅ Muhtasari wa siku ulioandaliwa:', summaries.length);
+    console.log('âœ… Muhtasari wa siku ulioandaliwa:', summaries.length);
     
-    // ✅ DEBUG: Angalia muhtasari wa 2026-03-01
+    // âœ… DEBUG: Angalia muhtasari wa 2026-03-01
     const march1Summary = summaries.find(s => s.date === '2026-03-01');
     if (march1Summary) {
-      console.log('🔍 FINAL SUMMARY for 2026-03-01:', {
+      console.log('ðŸ” FINAL SUMMARY for 2026-03-01:', {
         date: march1Summary.date,
         totalExpenses: march1Summary.totalExpenses,
         expensesCount: march1Summary.expenses.length,
@@ -825,7 +825,7 @@ export default function PreviewScreen() {
       events.sort((a, b) => new Date(b.event_date).getTime() - new Date(a.event_date).getTime());
       
       setBusinessEvents(events);
-      console.log('📢 Matukio yamepakuliwa:', events.length);
+      console.log('ðŸ“¢ Matukio yamepakuliwa:', events.length);
       
     } catch (error) {
       console.error('Hitilafu ya kupakua matukio:', error);
@@ -841,7 +841,7 @@ export default function PreviewScreen() {
   };
 
   const handleDayPress = (day: DailySummary) => {
-    console.log('📱 Kubonyeza siku:', day.date, 'na expenses:', day.expenses?.length || 0);
+    console.log('ðŸ“± Kubonyeza siku:', day.date, 'na expenses:', day.expenses?.length || 0);
     setSelectedDay(day);
     setModalVisible(true);
   };
@@ -947,7 +947,7 @@ export default function PreviewScreen() {
                 <Text style={styles.dateBadgeText}>{getShortDate(day.date)}</Text>
               </View>
               <Text style={styles.dayStats}>
-                {day.sales.length} {t('preview.summary_mauzo')} • {day.sellers.length} {t('preview.summary_wauzaji')}
+                {day.sales.length} {t('preview.summary_mauzo')} â€¢ {day.sellers.length} {t('preview.summary_wauzaji')}
               </Text>
             </View>
 
@@ -1150,7 +1150,7 @@ export default function PreviewScreen() {
                 <Text style={styles.debugSubtitle}>Sample Expenses:</Text>
                 {debugData.sample_expenses.map((exp, idx) => (
                   <Text key={idx} style={styles.debugSample}>
-                    • {exp.expense_date}: {exp.category} - {formatCurrency(exp.amount)} ({exp.description})
+                    â€¢ {exp.expense_date}: {exp.category} - {formatCurrency(exp.amount)} ({exp.description})
                   </Text>
                 ))}
               </>
@@ -1439,13 +1439,13 @@ export default function PreviewScreen() {
                             <View style={styles.saleInfo}>
                               <Text style={styles.saleProduct}>{sale.product_name}</Text>
                               <Text style={styles.saleDetails}>
-                                {t('preview.sale_label_customer')} {sale.customer_name} • {t('preview.sale_label_seller')} {sale.seller_name}
+                                {t('preview.sale_label_customer')} {sale.customer_name} â€¢ {t('preview.sale_label_seller')} {sale.seller_name}
                               </Text>
                               {sale.invoice_number && (
                                 <Text style={styles.saleInvoice}>{t('preview.sale_label_invoice')} {sale.invoice_number}</Text>
                               )}
                               <Text style={styles.saleCostPrice}>
-                                {t('preview.sale_label_cost_price', {cost: formatCurrency(costPrice)})} • {t('preview.sale_label_sell_price', {sell: formatCurrency(sellingPrice)})}
+                                {t('preview.sale_label_cost_price', {cost: formatCurrency(costPrice)})} â€¢ {t('preview.sale_label_sell_price', {sell: formatCurrency(sellingPrice)})}
                               </Text>
                             </View>
                             <View style={styles.saleAmount}>

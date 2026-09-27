@@ -590,24 +590,22 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             try {
                 // Fetch sellers
                 let sellers = [];
-                const sellersRes = await fetch(`${API_BASE_URL}/api/admin/users?business=${encodeURIComponent(userData.businessName)}&role=seller,admin`, {
+                // No ?business= parameter: the endpoint scopes from the verified
+                // JWT business_id, so a name can no longer redirect or widen it.
+                const sellersRes = await fetch(`${API_BASE_URL}/api/admin/users?role=seller,admin`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                // Server-side business filter (?business=): only this
-                // business's users leave the database. Admin is included so
-                // their own sales/products match, like the products endpoint.
+                // The server returns only this business's approved members, so
+                // the only client-side test left is the role/status one.
                 if (sellersRes.ok) {
                     const data = await sellersRes.json();
                     const users = data.users || (Array.isArray(data) ? data : []);
-                    sellers = users.filter(u => (u.role === 'seller' || u.role === 'admin') && u.business_name === userData.businessName && u.status === 'approved');
+                    sellers = users.filter(u => (u.role === 'seller' || u.role === 'admin') && u.status === 'approved');
                 }
 
-                // Fetch products — server-side business filter (?business_name=):
-                // only this business's products are downloaded (previously ALL
-                // businesses' products arrived and were filtered in the browser,
-                // which is what made the page crawl).
+                // Fetch products — the endpoint scopes from the JWT business_id.
                 let products = [];
-                const productsRes = await fetch(`${API_BASE_URL}/api/admin/products?business_name=${encodeURIComponent(userData.businessName)}`, {
+                const productsRes = await fetch(`${API_BASE_URL}/api/admin/products`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (productsRes.ok) {
@@ -616,13 +614,14 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 }
                 const productsById = new Map(products.map(p => [p.id, p]));
 
-                // Fetch sales — server-side business + date-range filter, so the
-                // database returns exactly the rows this page displays.
+                // Fetch sales — server-side business (JWT) + date-range filter, so
+                // the database returns exactly the rows this page displays.
                 let sales = [];
-                const salesParams = new URLSearchParams({ business_name: userData.businessName });
+                const salesParams = new URLSearchParams();
                 if (filterStart) salesParams.set('date_from', filterStart);
                 if (filterEnd) salesParams.set('date_to', filterEnd);
-                const salesRes = await fetch(`${API_BASE_URL}/api/admin/sales?${salesParams.toString()}`, {
+                const salesQuery = salesParams.toString();
+                const salesRes = await fetch(`${API_BASE_URL}/api/admin/sales${salesQuery ? '?' + salesQuery : ''}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (salesRes.ok) {

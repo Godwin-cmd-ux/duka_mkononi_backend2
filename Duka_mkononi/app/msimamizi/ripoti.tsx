@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+﻿import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -22,32 +22,39 @@ import { fetchWithTimeout } from '../../lib/network';
 import { API_BASE_URL } from '../../constants/api';
 
 interface Sale {
-  id: number;
-  product_id: number;
+  // sales.id / sale_items.product_id / sales.customer_id are UUIDs. They were
+  // typed `number` back when ids were sequential; nothing caught it because the
+  // API JSON arrives as `any`. See the same fix in tangaza.tsx.
+  id: string;
+  product_id: string;
   product_name: string;
   quantity: number;
   unit_price: number;
   total_amount: number;
   sale_date: string;
-  customer_id: number | null;
+  customer_id: string | null;
   customer_name: string;
   seller_name: string;
   business_name: string;
   user_id: string;
   invoice_number?: string;
-  cost_price?: number;
-  profit?: number;
-  profit_margin?: number;
+  // `cost_price` here is the BUYING price, copied from products.price, which
+  // is NOT NULL. It stays nullable in the type only as a defensive guard.
+  cost_price?: number | null;
+  profit?: number | null;
+  profit_margin?: number | null;
 }
 
 interface Product {
-  id: number;
+  id: string;
   name: string;
+  // price = BUYING price ("Bei ya Kununua"), NOT NULL
   price: number;
-  expected_selling_price: number;
+  // expected_selling_price = SELLING price ("Bei ya Kuuzia"), may be null
+  expected_selling_price: number | null;
   category: string | null;
   stock: number;
-  cost_price?: number;
+  cost_price?: number | null;
   seller_id: string;
   description: string | null;
   is_active: boolean;
@@ -60,7 +67,7 @@ interface Product {
 }
 
 interface Customer {
-  id: number;
+  id: string;
   name: string;
   phone: string | null;
   email: string | null;
@@ -97,6 +104,10 @@ interface BusinessStats {
   todayProfit: number;
   totalProfit: number;
   averageProfitMargin: number;
+  // How many sales were excluded from totalProfit / todayProfit because their
+  // product has no recorded buying price.
+  unknownCostSales: number;
+  unknownCostSalesToday: number;
 }
 
 export default function RipotiScreen() {
@@ -152,7 +163,10 @@ export default function RipotiScreen() {
         return Array.isArray(data) ? data : data.users || [];
       },
       (data) => {
-        const filtered = data.filter((u: any) => u.business_name === userData.businessName && u.status === 'approved');
+        // Server already returns only this business's members; filter on the
+        // approval rule only (see fetchBusinessData for why the business_name
+        // compare was removed).
+        const filtered = data.filter((u: any) => u.status === 'approved');
         setSellers(filtered);
       }
     );
@@ -201,7 +215,7 @@ export default function RipotiScreen() {
 
   const processProductsWithSalesData = (products: Product[], sales: Sale[]) => {
     // Create map of product sales
-    const productSalesMap = new Map<number, {
+    const productSalesMap = new Map<string, {
       totalSold: number;
       totalRevenue: number;
       totalCost: number;
@@ -250,11 +264,14 @@ export default function RipotiScreen() {
     return { allProducts: enrichedProducts, soldProducts: sold, unsoldProducts: unsold };
   };
 
-  const buildBusinessSales = (rawSales: any[], allSellers: User[], rawProducts: Product[], businessName: string, customerNameById: Map<number, string> = new Map()): Sale[] => {
+  const buildBusinessSales = (rawSales: any[], allSellers: User[], rawProducts: Product[], businessName: string, customerNameById: Map<string, string> = new Map()): Sale[] => {
     const allSales: Sale[] = [];
     rawSales.forEach((sale: any) => {
+      // Seller membership only â€” the server already scoped the payload to this
+      // business, and comparing business_name here re-introduced the
+      // canonical-vs-legacy empty-report bug.
       const saleSeller = allSellers.find(s => s.id === sale.seller_id);
-      if (saleSeller && saleSeller.business_name === businessName) {
+      if (saleSeller) {
         // The slim sales payload has no embedded `customers` relation, so
         // resolve the name from the customers map by customer_id (same as
         // the Blade page). Full payloads still use the embedded relation.
@@ -272,20 +289,24 @@ export default function RipotiScreen() {
         if (sale.sale_items && sale.sale_items.length > 0) {
           sale.sale_items.forEach((item: any) => {
             const product = rawProducts.find(p => p.id === item.product_id);
-            const costPrice = product?.price || 0;
-            const sellingPrice = product?.expected_selling_price || product?.price || 0;
+            // PRICE RULES: products.price = BUYING price ("Bei ya Kununua"),
+            // products.expected_selling_price = SELLING price, profit =
+            // selling - buying. The buying price is NOT NULL so a realised
+            // sale profit is always computable.
+            const costPrice = product?.price ?? null;
+            const sellingPrice = product?.expected_selling_price ?? null;
 
             const unitPrice = item.unit_price || sellingPrice || 0;
             const quantity = item.quantity || 1;
             const totalAmount = item.total_price || unitPrice * quantity;
 
-            const profitPerUnit = unitPrice - costPrice;
-            const itemProfit = profitPerUnit * quantity;
-            const profitMargin = costPrice > 0 ? (profitPerUnit / costPrice) * 100 : 0;
+            const profitPerUnit = costPrice === null ? null : unitPrice - costPrice;
+            const itemProfit = profitPerUnit === null ? null : profitPerUnit * quantity;
+            const profitMargin = profitPerUnit === null || !costPrice ? null : (profitPerUnit / costPrice) * 100;
 
             allSales.push({
               id: sale.id,
-              product_id: item.product_id || 0,
+              product_id: item.product_id || '',
               product_name: product?.name || item.products?.name || 'Bidhaa',
               quantity: quantity,
               unit_price: unitPrice,
@@ -298,8 +319,8 @@ export default function RipotiScreen() {
               user_id: sale.seller_id,
               invoice_number: sale.invoice_number,
               cost_price: costPrice,
-              profit: Math.max(0, itemProfit),
-              profit_margin: profitMargin
+              profit: itemProfit === null ? undefined : itemProfit,
+              profit_margin: profitMargin === null ? undefined : profitMargin
             });
           });
         }
@@ -324,19 +345,19 @@ export default function RipotiScreen() {
         sale.sale_items.forEach((item: any) => {
           const product = rawProducts.find(p => p.id === item.product_id);
           const costPrice = product?.price || 0;
-          const sellingPrice = product?.expected_selling_price || product?.price || 0;
+          const sellingPrice = product?.expected_selling_price ?? null;
 
           const unitPrice = item.unit_price || sellingPrice || 0;
           const quantity = item.quantity || 1;
           const totalAmount = item.total_price || unitPrice * quantity;
 
-          const profitPerUnit = unitPrice - costPrice;
-          const itemProfit = profitPerUnit * quantity;
-          const profitMargin = costPrice > 0 ? (profitPerUnit / costPrice) * 100 : 0;
+          const profitPerUnit = costPrice === null ? null : unitPrice - costPrice;
+          const itemProfit = profitPerUnit === null ? null : profitPerUnit * quantity;
+          const profitMargin = profitPerUnit === null || !costPrice ? null : (profitPerUnit / costPrice) * 100;
 
           allSales.push({
             id: sale.id,
-            product_id: item.product_id || 0,
+            product_id: item.product_id || '',
             product_name: product?.name || item.products?.name || 'Bidhaa',
             quantity: quantity,
             unit_price: unitPrice,
@@ -349,8 +370,8 @@ export default function RipotiScreen() {
             user_id: userData.id,
             invoice_number: sale.invoice_number,
             cost_price: costPrice,
-            profit: Math.max(0, itemProfit),
-            profit_margin: profitMargin
+            profit: itemProfit === null ? undefined : itemProfit,
+            profit_margin: profitMargin === null ? undefined : profitMargin
           });
         });
       }
@@ -394,12 +415,12 @@ export default function RipotiScreen() {
 
   const fetchBusinessData = async (headers: any, businessName: string) => {
     try {
-      console.log('🏢 Inapakua data ya biashara:', businessName);
+      console.log('ðŸ¢ Inapakua data ya biashara:', businessName);
 
       // 1. Pata wauzaji wote wa biashara
       let usersRaw: any[] | null = await getCache<any[]>('admin:users');
       try {
-        // Server-side filtering — Laravel returns only this business's members.
+        // Server-side filtering â€” Laravel returns only this business's members.
         const sellersResponse = await fetchWithTimeout(
           `${API_BASE_URL}/api/admin/users?business=${encodeURIComponent(businessName)}&role=seller,admin`,
           {
@@ -413,19 +434,25 @@ export default function RipotiScreen() {
           setCache('admin:users', usersRaw).catch(() => {});
         }
       } catch (error) {
-        console.warn('⚠️ Sellers fetch failed, using cache:', error);
+        console.warn('âš ï¸ Sellers fetch failed, using cache:', error);
         if (!usersRaw) throw error;
       }
 
       let allSellers: User[] = [];
       if (usersRaw) {
-        allSellers = usersRaw.filter((user: User) => 
-          user.business_name === businessName && 
-          user.status === 'approved'
-        );
-        
+        // The server already scopes this to the caller's own business
+        // (JWT business_id). Re-filtering on `business_name === businessName`
+        // here was actively harmful: businessName comes from client storage,
+        // which the profile screen now rewrites with the *canonical*
+        // businesses.business_name ("Jerald Stationaria") while the users rows
+        // still carry the legacy spelling ("Jerald Stationari"). The strict
+        // compare then matched nobody, sellers became [], and because
+        // products/customers/sales are all intersected with sellers, the entire
+        // report rendered empty. Only the approval rule is applied here.
+        allSellers = usersRaw.filter((user: User) => user.status === 'approved');
+
         setSellers(allSellers);
-        console.log('👥 Wauzaji walipatikana:', allSellers.length);
+        console.log('ðŸ‘¥ Wauzaji walipatikana:', allSellers.length);
       }
 
       // 2. Pata bidhaa zote za biashara
@@ -445,23 +472,25 @@ export default function RipotiScreen() {
           setCache('admin:products', productsRaw).catch(() => {});
         }
       } catch (error) {
-        console.warn('⚠️ Products fetch failed, using cache:', error);
+        console.warn('âš ï¸ Products fetch failed, using cache:', error);
         if (!productsRaw) throw error;
       }
 
       let rawProducts: Product[] = [];
       if (productsRaw) {
-        rawProducts = productsRaw.filter((product: any) => {
-          const productSeller = allSellers.find(s => s.id === product.seller_id);
-          return productSeller && productSeller.business_name === businessName;
-        }).map((product: any) => ({
+        // Keep only rows owned by a seller of this business. `seller_id`
+        // membership is now the test â€” the previous `business_name` compare
+        // repeated the same fragility as the seller filter above.
+        rawProducts = productsRaw.filter((product: any) =>
+          allSellers.some((s) => s.id === product.seller_id)
+        ).map((product: any) => ({
           id: product.id,
           name: product.name,
           price: product.price || 0,
-          expected_selling_price: product.expected_selling_price || product.price || 0,
+          expected_selling_price: product.expected_selling_price ?? null,
           category: product.category || null,
           stock: product.stock || 0,
-          cost_price: product.cost_price,
+          cost_price: product.price,
           seller_id: product.seller_id,
           description: product.description || null,
           is_active: product.is_active !== false,
@@ -469,7 +498,7 @@ export default function RipotiScreen() {
           updated_at: product.updated_at || new Date().toISOString()
         }));
         
-        console.log('📦 Bidhaa za biashara:', rawProducts.length);
+        console.log('ðŸ“¦ Bidhaa za biashara:', rawProducts.length);
       }
 
       // 3. Pata wateja wote wa biashara (server-filtered by business_name).
@@ -490,21 +519,20 @@ export default function RipotiScreen() {
           setCache('admin:customers', customersRaw).catch(() => {});
         }
       } catch (error) {
-        console.warn('⚠️ Customers fetch failed, using cache:', error);
+        console.warn('âš ï¸ Customers fetch failed, using cache:', error);
         if (!customersRaw) throw error;
       }
 
-      const customerNameById = new Map<number, string>();
+      const customerNameById = new Map<string, string>();
       let allCustomers: Customer[] = [];
       if (customersRaw) {
         const customersData = customersRaw;
         customersData.forEach((c: any) => {
           if (c && c.id != null) customerNameById.set(c.id, c.name);
         });
-        allCustomers = customersData.filter((customer: any) => {
-          const customerSeller = allSellers.find(s => s.id === customer.seller_id);
-          return customerSeller && customerSeller.business_name === businessName;
-        }).map((customer: any) => ({
+        allCustomers = customersData.filter((customer: any) =>
+          allSellers.some((s) => s.id === customer.seller_id)
+        ).map((customer: any) => ({
           ...customer,
           seller_name: allSellers.find(s => s.id === customer.seller_id)?.full_name || 
                       allSellers.find(s => s.id === customer.seller_id)?.email || 
@@ -514,7 +542,7 @@ export default function RipotiScreen() {
         allCustomers = allCustomers.map(customer => adjustCustomerPurchases(customer));
         
         setCustomers(allCustomers);
-        console.log('👥 Wateja wa biashara:', allCustomers.length);
+        console.log('ðŸ‘¥ Wateja wa biashara:', allCustomers.length);
       }
 
       // 4. Pata mauzo yote ya biashara (server-filtered + slim=1).
@@ -533,14 +561,14 @@ export default function RipotiScreen() {
           setCache('admin:sales', salesRaw).catch(() => {});
         }
       } catch (error) {
-        console.warn('⚠️ Sales fetch failed, using cache:', error);
+        console.warn('âš ï¸ Sales fetch failed, using cache:', error);
         if (!salesRaw) throw error;
       }
 
       let allSales: Sale[] = [];
       if (salesRaw) {
         allSales = buildBusinessSales(salesRaw, allSellers, rawProducts, businessName, customerNameById);
-        console.log('💰 Mauzo ya biashara:', allSales.length);
+        console.log('ðŸ’° Mauzo ya biashara:', allSales.length);
         setSales(allSales);
       }
 
@@ -549,7 +577,7 @@ export default function RipotiScreen() {
       setAllProducts(allProducts);
       setSoldProducts(soldProducts);
       setUnsoldProducts(unsoldProducts);
-      console.log('📊 Bidhaa zimeuzwa:', soldProducts.length, '| Hazijauzwa:', unsoldProducts.length);
+      console.log('ðŸ“Š Bidhaa zimeuzwa:', soldProducts.length, '| Hazijauzwa:', unsoldProducts.length);
 
       // 6. Hesabu takwimu za biashara
       if (allSales.length > 0) {
@@ -575,7 +603,9 @@ export default function RipotiScreen() {
           todaySales: todaySalesAmount,
           todayProfit: todayProfit,
           totalProfit: totalProfit,
-          averageProfitMargin: averageProfitMargin
+          averageProfitMargin: averageProfitMargin,
+          unknownCostSales: allSales.filter(s => s.cost_price == null).length,
+          unknownCostSalesToday: todaySales.filter(s => s.cost_price == null).length
         });
       }
 
@@ -601,7 +631,7 @@ export default function RipotiScreen() {
           setCache('d:products:my', productsRaw).catch(() => {});
         }
       } catch (error) {
-        console.warn('⚠️ Seller products fetch failed, using cache:', error);
+        console.warn('âš ï¸ Seller products fetch failed, using cache:', error);
         if (!productsRaw) throw error;
       }
 
@@ -611,10 +641,10 @@ export default function RipotiScreen() {
           id: product.id,
           name: product.name,
           price: product.price || 0,
-          expected_selling_price: product.expected_selling_price || product.price || 0,
+          expected_selling_price: product.expected_selling_price ?? null,
           category: product.category || null,
           stock: product.stock || 0,
-          cost_price: product.cost_price,
+          cost_price: product.price,
           seller_id: userData.id,
           description: product.description || null,
           is_active: product.is_active !== false,
@@ -622,7 +652,7 @@ export default function RipotiScreen() {
           updated_at: product.updated_at || new Date().toISOString()
         }));
         
-        console.log('📦 Bidhaa za seller:', rawProducts.length);
+        console.log('ðŸ“¦ Bidhaa za seller:', rawProducts.length);
       }
 
       // 2. Pata mauzo ya seller
@@ -639,14 +669,14 @@ export default function RipotiScreen() {
           setCache('d:sales:my', salesRaw).catch(() => {});
         }
       } catch (error) {
-        console.warn('⚠️ Seller sales fetch failed, using cache:', error);
+        console.warn('âš ï¸ Seller sales fetch failed, using cache:', error);
         if (!salesRaw) throw error;
       }
 
       let allSales: Sale[] = [];
       if (salesRaw) {
         allSales = buildSellerSales(salesRaw, rawProducts);
-        console.log('💰 Mauzo ya seller:', allSales.length);
+        console.log('ðŸ’° Mauzo ya seller:', allSales.length);
         setSales(allSales);
       }
 
@@ -655,7 +685,7 @@ export default function RipotiScreen() {
       setAllProducts(allProducts);
       setSoldProducts(soldProducts);
       setUnsoldProducts(unsoldProducts);
-      console.log('📊 Bidhaa zimeuzwa:', soldProducts.length, '| Hazijauzwa:', unsoldProducts.length);
+      console.log('ðŸ“Š Bidhaa zimeuzwa:', soldProducts.length, '| Hazijauzwa:', unsoldProducts.length);
 
       // 4. Pata wateja wa seller
       let customersRaw: any[] | null = await getCache<any[]>('d:customers:my');
@@ -671,7 +701,7 @@ export default function RipotiScreen() {
           setCache('d:customers:my', customersRaw).catch(() => {});
         }
       } catch (error) {
-        console.warn('⚠️ Seller customers fetch failed, using cache:', error);
+        console.warn('âš ï¸ Seller customers fetch failed, using cache:', error);
         if (!customersRaw) throw error;
       }
 
@@ -682,7 +712,7 @@ export default function RipotiScreen() {
         sellerCustomers = sellerCustomers.map(customer => adjustCustomerPurchases(customer));
         
         setCustomers(sellerCustomers);
-        console.log('👥 Wateja wa seller:', sellerCustomers.length);
+        console.log('ðŸ‘¥ Wateja wa seller:', sellerCustomers.length);
       }
 
       // 5. Hesabu takwimu za seller
@@ -709,7 +739,9 @@ export default function RipotiScreen() {
           todaySales: todaySalesAmount,
           todayProfit: todayProfit,
           totalProfit: totalProfit,
-          averageProfitMargin: averageProfitMargin
+          averageProfitMargin: averageProfitMargin,
+          unknownCostSales: allSales.filter(s => s.cost_price == null).length,
+          unknownCostSalesToday: todaySales.filter(s => s.cost_price == null).length
         });
       }
 
@@ -763,15 +795,21 @@ export default function RipotiScreen() {
     : customers;
   const noResultsText = () => `Hakuna matokeo yanayolingana na "${searchTerm}"`;
 
-  const formatCurrency = (amount: number) => {
-    if (!amount && amount !== 0) return 'TSh 0';
-    if (isNaN(amount)) return 'TSh 0';
-    const formatted = new Intl.NumberFormat('en-TZ', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount);
-    return `TSh ${formatted}`;
-  };
+      const formatCurrency = (amount: number) => {
+      if (!amount && amount !== 0) return 'TSh 0';
+      if (isNaN(amount)) return 'TSh 0';
+      const formatted = new Intl.NumberFormat('en-TZ', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(amount);
+      return `TSh ${formatted}`;
+    };
+
+    // Money derived from a cost_price that was never recorded is unknown, not
+    // zero. formatCurrency(null) would print "TSh 0" and read like a real
+    // total, so those cells get a dash instead.
+    const unknownMoney = (v: number | null | undefined) =>
+      (typeof v === 'number' && Number.isFinite(v) ? formatCurrency(v) : '-');
 
   const localeMap: Record<string, string> = {
     sw: 'sw-TZ',
@@ -850,6 +888,11 @@ export default function RipotiScreen() {
                 <Text style={styles.statLabel}>
                   {t('reports.total_profit')}
                 </Text>
+                {businessStats.unknownCostSales > 0 && (
+                  <Text style={{ color: '#f39c12', fontSize: 10, marginTop: 2 }}>
+                    {businessStats.unknownCostSales} {t('reports.cost_not_recorded')}
+                  </Text>
+                )}
               </View>
               
               <View style={styles.statCard}>
@@ -884,7 +927,7 @@ export default function RipotiScreen() {
               </View>
               <View style={styles.extraStat}>
                 <Ionicons name="trending-up" size={16} color="#27ae60" />
-                <Text style={styles.extraStatText}>{t('reports.today_profit')}: {formatCurrency(businessStats.todayProfit)}</Text>
+                <Text style={styles.extraStatText}>{t('reports.today_profit')}: {formatCurrency(businessStats.todayProfit)}{businessStats.unknownCostSalesToday > 0 ? ` (${businessStats.unknownCostSalesToday} ${t('reports.cost_not_recorded')})` : ''}</Text>
               </View>
               <View style={styles.extraStat}>
                 <Ionicons name="analytics" size={16} color="#9b59b6" />
@@ -906,21 +949,23 @@ export default function RipotiScreen() {
                   <Text style={styles.saleDate}>
                     {formatDate(sale.sale_date)} - {sale.customer_name}
                     {isAdmin && sale.seller_name && (
-                      <Text style={styles.sellerName}> • {sale.seller_name}</Text>
+                      <Text style={styles.sellerName}> â€¢ {sale.seller_name}</Text>
                     )}
                   </Text>
                   <Text style={styles.saleMeta}>
-                    {sale.quantity} x {formatCurrency(sale.unit_price)} • 
-                    {t('reports.total_sales')}: {formatCurrency(sale.total_amount)} • 
-                    {t('reports.profit_label')}: <Text style={{ color: (sale.profit || 0) >= 0 ? '#27ae60' : '#e74c3c', fontWeight: 'bold' }}>
-                      {formatCurrency(sale.profit || 0)}
+                    {sale.quantity} x {formatCurrency(sale.unit_price)} â€¢ 
+                    {t('reports.total_sales')}: {formatCurrency(sale.total_amount)} â€¢ 
+                    {t('reports.profit_label')}: <Text style={{ color: typeof sale.profit === 'number' && sale.profit < 0 ? '#e74c3c' : '#27ae60', fontWeight: 'bold' }}>
+                      {unknownMoney(sale.profit)}
                     </Text>
                   </Text>
                 </View>
                 <View style={styles.saleAmount}>
                   <Text style={styles.saleTotal}>{formatCurrency(sale.total_amount)}</Text>
-                  <Text style={[styles.profitText, { color: (sale.profit_margin || 0) >= 0 ? '#27ae60' : '#e74c3c' }]}>
-                    {t('reports.margin_percent', { percent: (sale.profit_margin || 0).toFixed(1) })}
+                  <Text style={[styles.profitText, { color: typeof sale.profit === 'number' && sale.profit < 0 ? '#e74c3c' : '#27ae60' }]}>
+                    {typeof sale.profit_margin === 'number'
+                      ? t('reports.margin_percent', { percent: sale.profit_margin.toFixed(1) })
+                      : t('reports.cost_not_recorded')}
                   </Text>
                 </View>
               </View>
@@ -954,23 +999,23 @@ export default function RipotiScreen() {
               <View style={styles.reportItemMain}>
                 <Text style={styles.reportItemTitle}>{sale.product_name}</Text>
                 <Text style={styles.reportItemSubtitle}>
-                  {sale.customer_name} • {formatDate(sale.sale_date)}
+                  {sale.customer_name} â€¢ {formatDate(sale.sale_date)}
                   {isAdmin && sale.seller_name && (
-                    <Text style={styles.sellerName}> • {sale.seller_name}</Text>
+                    <Text style={styles.sellerName}> â€¢ {sale.seller_name}</Text>
                   )}
                 </Text>
                 <Text style={styles.reportItemMeta}>
-                  {sale.quantity} x {formatCurrency(sale.unit_price)} • 
+                  {sale.quantity} x {formatCurrency(sale.unit_price)} â€¢ 
                   {t('reports.invoice_number', { number: sale.invoice_number || 'N/A' })}
                 </Text>
               </View>
               <View style={styles.reportItemSide}>
                 <Text style={styles.reportItemAmount}>{formatCurrency(sale.total_amount)}</Text>
-                <Text style={[styles.profitText, { color: (sale.profit || 0) >= 0 ? '#27ae60' : '#e74c3c' }]}>
-                  {t('reports.profit_label')} {formatCurrency(sale.profit || 0)}
+                <Text style={[styles.profitText, { color: typeof sale.profit === 'number' && sale.profit < 0 ? '#e74c3c' : '#27ae60' }]}>
+                  {t('reports.profit_label')} {unknownMoney(sale.profit)}
                 </Text>
                 <Text style={styles.reportItemMargin}>
-                  {(sale.profit_margin || 0).toFixed(1)}% margin
+                  {typeof sale.profit_margin === 'number' ? `${sale.profit_margin.toFixed(1)}% margin` : t('reports.cost_not_recorded')}
                 </Text>
               </View>
             </View>
@@ -1000,16 +1045,18 @@ export default function RipotiScreen() {
       <View>
         <Text style={styles.productTabHeader}>
           {t('reports.sold_products')} ({soldProducts.length})
-          {isAdmin && dataSource === 'admin' && ` • ${t('reports.all_products_count', { total: allProducts.length })}`}
+          {isAdmin && dataSource === 'admin' && ` â€¢ ${t('reports.all_products_count', { total: allProducts.length })}`}
         </Text>
         
         {soldProducts.length > 0 ? (
           getFilteredSoldProducts().length > 0 ? (
           getFilteredSoldProducts().map((product) => {
-            const purchasePrice = product.price || 0;
-            const sellingPrice = product.expected_selling_price || product.price || 0;
-            const profitPerUnit = sellingPrice - purchasePrice;
-            const profitMargin = purchasePrice > 0 ? (profitPerUnit / purchasePrice) * 100 : 0;
+            // is the selling price, so the report printed the selling price in
+            // both columns and every profit figure came out as zero.
+            const purchasePrice = product.price ?? null;
+            const sellingPrice = product.expected_selling_price ?? null;
+            const profitPerUnit = (purchasePrice === null || sellingPrice === null) ? null : sellingPrice - purchasePrice;
+            const profitMargin = profitPerUnit === null || !purchasePrice ? null : (profitPerUnit / purchasePrice) * 100;
 
             return (
               <View key={product.id} style={styles.productItem}>
@@ -1017,19 +1064,19 @@ export default function RipotiScreen() {
                   <Text style={styles.productItemTitle}>{product.name}</Text>
                   <Text style={styles.productItemSubtitle}>{product.category || t('reports.no_category')}</Text>
                   <Text style={styles.productItemMeta}>
-                    {t('reports.stock')}: {product.stock} • 
-                    {t('reports.purchase_price')}: <Text style={{color: '#e74c3c', fontWeight: 'bold'}}> {formatCurrency(purchasePrice)}</Text> • 
-                    {t('reports.expected_selling_price')}: <Text style={{color: '#27ae60', fontWeight: 'bold'}}> {formatCurrency(sellingPrice)}</Text>
+                    {t('reports.stock')}: {product.stock} â€¢ 
+                    {t('reports.purchase_price')}: <Text style={{color: '#e74c3c', fontWeight: 'bold'}}> {unknownMoney(purchasePrice)}</Text> â€¢ 
+                    {t('reports.expected_selling_price')}: <Text style={{color: '#27ae60', fontWeight: 'bold'}}> {unknownMoney(sellingPrice)}</Text>
                   </Text>
                   
                   <Text style={styles.productSalesData}>
-                    {t('reports.quantity_sold')}: <Text style={{color: '#3498db', fontWeight: 'bold'}}>{product.total_sold}</Text> • 
-                    {t('reports.total_revenue')}: {formatCurrency(product.total_revenue || 0)} • 
+                    {t('reports.quantity_sold')}: <Text style={{color: '#3498db', fontWeight: 'bold'}}>{product.total_sold}</Text> â€¢ 
+                    {t('reports.total_revenue')}: {formatCurrency(product.total_revenue || 0)} â€¢ 
                     {t('reports.total_profit_product')}: {formatCurrency(product.total_profit || 0)}
                   </Text>
                   
                   <Text style={[styles.profitText, { color: (product.total_profit || 0) >= 0 ? '#27ae60' : '#e74c3c', fontSize: 12 }]}>
-                    {t('reports.product_profit')}: {formatCurrency(profitPerUnit)} ({profitMargin.toFixed(1)}%)
+                    {t('reports.product_profit')}: {unknownMoney(profitPerUnit)}{profitMargin === null ? '' : ' (' + profitMargin.toFixed(1) + '%)'}
                   </Text>
                   
                   {isAdmin && (
@@ -1082,16 +1129,18 @@ export default function RipotiScreen() {
       <View>
         <Text style={styles.productTabHeader}>
           {t('reports.unsold_products')} ({unsoldProducts.length})
-          {isAdmin && dataSource === 'admin' && ` • ${t('reports.all_products_count', { total: allProducts.length })}`}
+          {isAdmin && dataSource === 'admin' && ` â€¢ ${t('reports.all_products_count', { total: allProducts.length })}`}
         </Text>
         
         {unsoldProducts.length > 0 ? (
           getFilteredUnsoldProducts().length > 0 ? (
           getFilteredUnsoldProducts().map((product) => {
-            const purchasePrice = product.price || 0;
-            const sellingPrice = product.expected_selling_price || product.price || 0;
-            const profitPerUnit = sellingPrice - purchasePrice;
-            const profitMargin = purchasePrice > 0 ? (profitPerUnit / purchasePrice) * 100 : 0;
+            // is the selling price, so the report printed the selling price in
+            // both columns and every profit figure came out as zero.
+            const purchasePrice = product.price ?? null;
+            const sellingPrice = product.expected_selling_price ?? null;
+            const profitPerUnit = (purchasePrice === null || sellingPrice === null) ? null : sellingPrice - purchasePrice;
+            const profitMargin = profitPerUnit === null || !purchasePrice ? null : (profitPerUnit / purchasePrice) * 100;
 
             return (
               <View key={product.id} style={[styles.productItem, { borderLeftWidth: 3, borderLeftColor: '#f39c12' }]}>
@@ -1099,22 +1148,22 @@ export default function RipotiScreen() {
                   <Text style={styles.productItemTitle}>{product.name}</Text>
                   <Text style={styles.productItemSubtitle}>{product.category || t('reports.no_category')}</Text>
                   <Text style={styles.productItemMeta}>
-                    Hisa: <Text style={{color: '#e74c3c', fontWeight: 'bold'}}>{product.stock}</Text> • 
-                    Bei ya Ununuzi: <Text style={{color: '#e74c3c', fontWeight: 'bold'}}> {formatCurrency(purchasePrice)}</Text> • 
-                    Bei ya Kuuzia: <Text style={{color: '#27ae60', fontWeight: 'bold'}}> {formatCurrency(sellingPrice)}</Text>
+                    Hisa: <Text style={{color: '#e74c3c', fontWeight: 'bold'}}>{product.stock}</Text> â€¢ 
+                    Bei ya Ununuzi: <Text style={{color: '#e74c3c', fontWeight: 'bold'}}> {unknownMoney(purchasePrice)}</Text> â€¢ 
+                    Bei ya Kuuzia: <Text style={{color: '#27ae60', fontWeight: 'bold'}}> {unknownMoney(sellingPrice)}</Text>
                   </Text>
                   
                   <Text style={styles.unsoldInfo}>
                     <Ionicons name="alert-circle" size={12} color="#f39c12" />
                     <Text style={{color: '#f39c12', marginLeft: 4}}>
-                      {t('reports.unsold_status')} • {t('reports.expected_profit', { amount: formatCurrency(profitPerUnit) })} ({profitMargin.toFixed(1)}%)
+                      {t('reports.unsold_status')} â€¢ {t('reports.expected_profit', { amount: unknownMoney(profitPerUnit) })}{profitMargin === null ? ' (' + t('reports.cost_not_recorded') + ')' : ' (' + profitMargin.toFixed(1) + '%)'}
                     </Text>
                   </Text>
                   
                   <Text style={styles.productPotential}>
                     {t('reports.expected_revenue', { stock: product.stock })}: 
-                    <Text style={{color: '#27ae60', fontWeight: 'bold'}}> {formatCurrency(sellingPrice * product.stock)}</Text> mapato • 
-                    {t('reports.profit_label')} <Text style={{color: '#27ae60', fontWeight: 'bold'}}> {formatCurrency(profitPerUnit * product.stock)}</Text>
+                    <Text style={{color: '#27ae60', fontWeight: 'bold'}}> {formatCurrency(sellingPrice * product.stock)}</Text> mapato â€¢ 
+                    {t('reports.profit_label')} <Text style={{color: '#27ae60', fontWeight: 'bold'}}> {unknownMoney(profitPerUnit === null ? null : profitPerUnit * product.stock)}</Text>
                   </Text>
                   
                   {isAdmin && (
@@ -1124,11 +1173,11 @@ export default function RipotiScreen() {
                   )}
                 </View>
                 <View style={styles.productItemSide}>
-                  <Text style={[styles.profitText, { color: profitPerUnit >= 0 ? '#27ae60' : '#e74c3c' }]}>
-                    {t('reports.product_profit')}: {formatCurrency(profitPerUnit)}
+                  <Text style={[styles.profitText, { color: (profitPerUnit ?? 0) >= 0 ? '#27ae60' : '#e74c3c' }]}>
+                    {t('reports.product_profit')}: {unknownMoney(profitPerUnit)}
                   </Text>
                   <Text style={styles.productItemMargin}>
-                    {t('reports.margin_percent', { percent: profitMargin.toFixed(1) })}
+                    {profitMargin === null ? t('reports.cost_not_recorded') : t('reports.margin_percent', { percent: profitMargin.toFixed(1) })}
                   </Text>
                   <Text style={styles.productItemRevenue}>
                     {t('reports.unsold_status')}
@@ -1381,7 +1430,7 @@ export default function RipotiScreen() {
           <Text style={styles.title}>{t('reports.title')}</Text>
           <Text style={styles.userEmail}>{userData.email}</Text>
           <Text style={styles.roleBadge}>
-            {isAdmin ? t('reports.status_admin') : t('reports.status_seller')} • {dataSource === 'admin' ? t('reports.data_business') : t('reports.data_seller')}
+            {isAdmin ? t('reports.status_admin') : t('reports.status_seller')} â€¢ {dataSource === 'admin' ? t('reports.data_business') : t('reports.data_seller')}
           </Text>
           <Text style={styles.adjustmentNote}>
             {t('reports.purchase_price_note')}

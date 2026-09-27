@@ -283,7 +283,10 @@
             }
             const user = JSON.parse(userStr);
             currentUser = {
-                id: parseInt(localStorage.getItem('userId') || user.id || '0'),
+                // userId is a UUID, so parseInt() produced NaN. Nothing read
+                // this field, but it was a lie that invited the same bug on a
+                // real code path later.
+                id: localStorage.getItem('userId') || user.id || '',
                 email: user.email || '',
                 name: user.full_name || user.business_name || 'Mtumiaji',
                 role: user.role || '',

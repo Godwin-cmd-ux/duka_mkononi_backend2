@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\OfficeExpense;
 use App\Models\User;
+use App\Services\BusinessResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -236,18 +237,28 @@ class ExpenseController extends BaseController
                 ], 400);
             }
 
-            $user = User::where('id', $userId)->select('business_name')->first();
+            $businessId = $this->businessId($request) ?: BusinessResolver::idForUser($userId);
 
-            if (!$user || empty($user->business_name)) {
+            if (!$businessId) {
                 return $this->json([
                     'success' => false,
                     'error' => 'Biashara haijapatikana',
                 ], 400);
             }
 
-            $businessName = $user->business_name;
+            // office_expenses has no business_id, so the only reliable link is
+            // the user_id that recorded the row. The previous
+            // `where('business_name', $user->business_name)` match meant an
+            // expense was invisible the moment the business name was respelled:
+            // three Jerald expenses are stored as "Jerald Stationary" while
+            // both members' users.business_name reads "Jerald Stationari", so
+            // the report returned nothing at all for that business.
+            // Membership is also the same scope the sales/products totals this
+            // report nets against are already using.
+            $memberIds = BusinessResolver::memberIds($businessId);
 
-            $query = OfficeExpense::where('business_name', $businessName)->orderByDesc('expense_date');
+            $query = OfficeExpense::whereIn('user_id', $memberIds ?: ['00000000-0000-0000-0000-000000000000'])
+                ->orderByDesc('expense_date');
 
             if ($startDate) {
                 $query->where('expense_date', '>=', $startDate);

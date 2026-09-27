@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\User;
+use App\Services\BusinessResolver;
 use App\Services\JwtToken;
 use Firebase\JWT\ExpiredException;
 use UnexpectedValueException;
@@ -135,6 +136,31 @@ class AuthController extends BaseController
             $userStatus = ($role === 'seller') ? 'pending' : 'approved';
             $now = $this->isoNow();
 
+            // Business identity is resolved before the user row so business_type
+            // and business_description have a home: they were previously written
+            // to users, where the columns do not exist, and silently discarded.
+            $businessId = null;
+            if ($business_name) {
+                $business = BusinessResolver::resolveOrCreate($business_name, [
+                    'business_type' => $business_type ?: null,
+                    'business_description' => $business_description ?: null,
+                ]);
+                $businessId = $business?->id;
+
+                if ($businessId && ($business_location || $business_type)) {
+                    $patch = [];
+                    if ($business_location) {
+                        $patch['business_location'] = $business_location;
+                    }
+                    if ($business_type && ! $business?->business_type) {
+                        $patch['business_type'] = $business_type;
+                    }
+                    if ($patch) {
+                        \App\Models\Business::where('id', $businessId)->update($patch);
+                    }
+                }
+            }
+
             $userData = [
                 'id' => (string) Str::uuid(),
                 'email' => $email,
@@ -143,9 +169,8 @@ class AuthController extends BaseController
                 'full_name' => $full_name ?: null,
                 'phone' => $phone ?: null,
                 'business_name' => $business_name ?: null,
+                'business_id' => $businessId,
                 'business_location' => $business_location ?: null,
-                'business_type' => $business_type ?: null,
-                'business_description' => $business_description ?: null,
                 'language' => $language ?: 'sw',
                 'status' => $userStatus,
                 'is_online' => false,
@@ -154,23 +179,9 @@ class AuthController extends BaseController
                 'updated_at' => $now
             ];
 
-            $newUser = null;
-            try {
-                $id = $userData['id'];
-                User::create($userData);
-                $newUser = User::where('id', $id)->first();
-            } catch (\Throwable $insertError) {
-                if (preg_match('/does not exist|column.*not found|no such column|could not find|PGRST/i', $insertError->getMessage())) {
-                    $safeUserData = $userData;
-                    unset($safeUserData['business_type']);
-                    unset($safeUserData['business_description']);
-                    $id = $safeUserData['id'];
-                    User::create($safeUserData);
-                    $newUser = User::where('id', $id)->first();
-                } else {
-                    throw $insertError;
-                }
-            }
+            $id = $userData['id'];
+            User::create($userData);
+            $newUser = User::where('id', $id)->first();
 
             $this->log($newUser->id, 'REGISTER_SUCCESS', '/api/register', [
                 'role' => $newUser->role,

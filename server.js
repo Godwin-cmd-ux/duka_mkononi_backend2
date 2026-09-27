@@ -3745,7 +3745,7 @@ app.get('/api/products/dummy', authenticateToken, async (req, res) => {
 app.post('/api/products', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
-        const { name, category, price, stock, description, cost_price, expected_selling_price } = req.body;
+        const { name, category, price, stock, description, expected_selling_price } = req.body;
         
         console.log('📨 Creating new product for user:', userId, 'Data:', req.body);
         
@@ -3818,8 +3818,11 @@ app.post('/api/products', authenticateToken, async (req, res) => {
             name: name.trim(),
             description: (description || '').trim(),
             category: (category || '').trim(),
+            // `price` is the BUYING price ("Bei ya Kununua"),
+            // `expected_selling_price` is the SELLING price. cost_price is
+            // not written - storing a second buying price is what let the two
+            // disagree and show the same number in both price fields.
             price: priceValue,
-            cost_price: cost_price ? parseFloat(cost_price) : null,
             expected_selling_price: expectedPriceValue,
             stock: stockValue,
             is_active: true,
@@ -3886,7 +3889,7 @@ app.put('/api/products/:id', authenticateToken, async (req, res) => {
     try {
         const productId = req.params.id;
         const userId = req.user.id;
-        const { name, category, price, stock, description, cost_price, expected_selling_price } = req.body;
+        const { name, category, price, stock, description, expected_selling_price } = req.body;
         
         console.log(`✏️ Updating product ${productId} by user ${userId}, Data:`, req.body);
         
@@ -3939,9 +3942,13 @@ app.put('/api/products/:id', authenticateToken, async (req, res) => {
             });
         }
         
-        const expectedPriceValue = parseFloat(expected_selling_price);
+        // A partial update (the "add stock" button) sends only
+        // name/category/stock. Validate the selling price only when supplied.
+        const hasExpected = Object.prototype.hasOwnProperty.call(req.body, 'expected_selling_price')
+            && expected_selling_price !== null && expected_selling_price !== undefined && expected_selling_price !== '';
+        const expectedPriceValue = hasExpected ? parseFloat(expected_selling_price) : null;
         
-        if (isNaN(expectedPriceValue) || expectedPriceValue <= 0) {
+        if (hasExpected && (isNaN(expectedPriceValue) || expectedPriceValue <= 0)) {
             await logUserAction(userId, 'PRODUCT_UPDATE_FAILED', '/api/products/:id', { 
                 reason: 'Invalid expected selling price',
                 product_id: productId,
@@ -3954,16 +3961,33 @@ app.put('/api/products/:id', authenticateToken, async (req, res) => {
             });
         }
         
+        // `price` is the BUYING price. It must only be written when the
+        // request actually carries it. The old unconditional
+        // `'price' => parseFloat(price)` turned an omitted field into NaN/0
+        // and destroyed the buying price on partial updates (for example the
+        // "add stock" button, which never sends `price`).
         const updateData = {
             name: name.trim(),
             category: (category || '').trim(),
             description: (description || '').trim(),
-            price: parseFloat(price),
-            cost_price: cost_price ? parseFloat(cost_price) : null,
-            expected_selling_price: expectedPriceValue,
             stock: parseInt(stock) || 0,
             updated_at: new Date().toISOString()
         };
+
+        // written only when supplied, so add-stock cannot invent a price
+        if (hasExpected) {
+            updateData.expected_selling_price = expectedPriceValue;
+        }
+
+        if (Object.prototype.hasOwnProperty.call(req.body, 'price')) {
+            if (price === null || price === undefined || price === '' || !(parseFloat(price) > 0)) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Bei ya kununua si sahihi (lazima iwe namba kubwa kuliko 0)'
+                });
+            }
+            updateData.price = parseFloat(price);
+        }
         
         if (product.expected_selling_price !== expectedPriceValue) {
             console.log(`💰 Price change for product ${productId}: ${product.expected_selling_price} → ${expectedPriceValue}`);
@@ -8685,11 +8709,12 @@ app.get('/api/profit/daily/:date?', authenticateToken, async (req, res) => {
         // 1. Get today's sales (revenue) from all business users
         let grossRevenue = 0;
         let costOfGoods = 0;
+        let itemsWithUnknownCost = 0;
         
         if (userIds.length > 0) {
             const { data: sales, error: salesError } = await supabase
                 .from('sales')
-                .select('total_amount, sale_items(quantity, unit_price, products(cost_price))')
+                .select('total_amount, sale_items(quantity, unit_price, products(price))')
                 .in('seller_id', userIds)
                 .eq('sale_date', targetDate);
             
@@ -8698,10 +8723,16 @@ app.get('/api/profit/daily/:date?', authenticateToken, async (req, res) => {
             sales?.forEach(sale => {
                 grossRevenue += sale.total_amount || 0;
                 
-                // FIXED: Remove :any
+                // `products.price` is the buying price. Treating a missing
+                // price as 0 would add the whole sale amount to profit, so
+                // such items are counted and reported instead.
                 sale.sale_items?.forEach((item) => {
-                    const costPrice = item.products?.cost_price || 0;
-                    costOfGoods += (item.quantity || 0) * costPrice;
+                    const buyingPrice = item.products?.price;
+                    if (buyingPrice === null || buyingPrice === undefined) {
+                        itemsWithUnknownCost += 1;
+                        return;
+                    }
+                    costOfGoods += (item.quantity || 0) * Number(buyingPrice);
                 });
             });
         }
@@ -8747,7 +8778,8 @@ app.get('/api/profit/daily/:date?', authenticateToken, async (req, res) => {
             business_name: businessName,
             revenue: {
                 gross: parseFloat(grossRevenue.toFixed(2)),
-                cost_of_goods: parseFloat(costOfGoods.toFixed(2))
+                cost_of_goods: parseFloat(costOfGoods.toFixed(2)),
+                items_with_unknown_buying_price: itemsWithUnknownCost
             },
             gross_profit: parseFloat(grossProfit.toFixed(2)),
             expenses: {
@@ -8811,11 +8843,12 @@ app.get('/api/profit/monthly/:year/:month', authenticateToken, async (req, res) 
         // Get all sales in month
         let totalRevenue = 0;
         let totalCostOfGoods = 0;
+        let itemsWithUnknownCost = 0;
         
         if (userIds.length > 0) {
             const { data: sales, error: salesError } = await supabase
                 .from('sales')
-                .select('total_amount, sale_date, sale_items(quantity, unit_price, products(cost_price))')
+                .select('total_amount, sale_date, sale_items(quantity, unit_price, products(price))')
                 .in('seller_id', userIds)
                 .gte('sale_date', startDate)
                 .lte('sale_date', endDate);
@@ -8825,10 +8858,14 @@ app.get('/api/profit/monthly/:year/:month', authenticateToken, async (req, res) 
             sales?.forEach(sale => {
                 totalRevenue += sale.total_amount || 0;
                 
-                // FIXED: Remove :any
+                // `products.price` is the buying price; unknown is not zero.
                 sale.sale_items?.forEach((item) => {
-                    const costPrice = item.products?.cost_price || 0;
-                    totalCostOfGoods += (item.quantity || 0) * costPrice;
+                    const buyingPrice = item.products?.price;
+                    if (buyingPrice === null || buyingPrice === undefined) {
+                        itemsWithUnknownCost += 1;
+                        return;
+                    }
+                    totalCostOfGoods += (item.quantity || 0) * Number(buyingPrice);
                 });
             });
         }
@@ -8868,6 +8905,7 @@ app.get('/api/profit/monthly/:year/:month', authenticateToken, async (req, res) 
                 total_sales: 0, // You can calculate this
                 total_revenue: parseFloat(totalRevenue.toFixed(2)),
                 total_cost_of_goods: parseFloat(totalCostOfGoods.toFixed(2)),
+                items_with_unknown_buying_price: itemsWithUnknownCost,
                 gross_profit: parseFloat(grossProfit.toFixed(2)),
                 total_expenses: parseFloat(totalExpenses.toFixed(2)),
                 net_profit: parseFloat(netProfit.toFixed(2)),
@@ -9544,7 +9582,8 @@ app.post('/api/inventory/ai-import', authenticateToken, async (req, res) => {
             if (row.status === 'EXISTING' && row.matchedExistingItemId) {
                 const p = allowedIds.get(row.matchedExistingItemId);
                 row.currentStock = p.stock ?? 0;
-                row.buyingPrice = row.buyingPrice ?? p.cost_price ?? null;
+                // "Bei ya Kununua" is products.price; legacy cost_price only as fallback.
+    row.buyingPrice = row.buyingPrice ?? (p.price ?? p.cost_price ?? null);
                 row.sellingPrice = row.sellingPrice ?? (p.expected_selling_price || p.price) ?? null;
             }
             const key = row.status === 'EXISTING' && row.matchedExistingItemId
@@ -9674,8 +9713,13 @@ app.post('/api/inventory/ai-import/verify', authenticateToken, async (req, res) 
             const buying = parseFloat(body.buyingPrice) || 0;
             const selling = parseFloat(body.sellingPrice) || 0;
             const price = parseFloat(body.price) || 0;
-            if (buying > 0) updateData.cost_price = buying;
-            if (selling > 0) updateData.price = selling;
+            // `price` is the BUYING price, `expected_selling_price` is the
+            // SELLING price. The old code did `if (selling > 0) updateData.price
+            // = selling;` which overwrote the buying price with the selling
+            // price - that is why "Bei ya Kununua" and "Bei ya Kuuzia" both
+            // showed the same number.
+            if (buying > 0) updateData.price = buying;
+            if (selling > 0) updateData.expected_selling_price = selling;
             if (price > 0) updateData.price = price;
 
             const { error: uErr } = await supabaseAdmin
@@ -9758,8 +9802,8 @@ app.post('/api/inventory/ai-import/verify', authenticateToken, async (req, res) 
             name,
             category,
             description: String(body.description || '').trim().slice(0, 500),
-            price: validPrice,
-            cost_price: validBuying,
+            // buying price -> `price`, selling price -> `expected_selling_price`
+            price: validBuying || validPrice,
             expected_selling_price: validSelling,
             stock: quantity,
             is_active: true,

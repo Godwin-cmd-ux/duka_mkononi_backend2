@@ -9,6 +9,7 @@ use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\User;
 use App\Models\UserLog;
+use App\Services\BusinessResolver;
 use App\Services\Supabase;
 use Illuminate\Http\Request;
 
@@ -39,15 +40,33 @@ class AdminController extends BaseController
                 return $this->json(['error' => 'Unauthorized'], 403);
             }
 
-            // Optional server-side business/role filters: pages like the
-            // msimamizi dashboard pass ?business=&role=seller so only that
-            // business's sellers leave the database (previously the whole
-            // users table was sent and filtered in the browser — slow on
-            // large tables). No params = all users (system admin view).
+            // Business scoping after the business_id migration. A business admin
+            // is always confined to their own business and the scope is taken
+            // from the verified JWT, never from a query parameter, so one admin
+            // cannot enumerate another business's sellers. system_admin keeps
+            // the cross-business lookup used by the platform pages. The legacy
+            // ?business=<name> filter still works but is resolved through
+            // BusinessResolver so spelling variants collapse to one business.
             $usersQuery = User::query()->orderByDesc('created_at');
-            $businessFilter = trim((string) ($request->query('business', '') ?: $request->query('business_name', '')));
-            if ($businessFilter !== '') {
-                $usersQuery->where('business_name', $businessFilter);
+            $callerBusinessId = $this->businessId($request);
+            $isPlatformAdmin = $this->role($request) === 'system_admin';
+
+            if ($isPlatformAdmin) {
+                $businessIdFilter = trim((string) $request->query('business_id', ''));
+                $businessNameFilter = trim((string) ($request->query('business', '') ?: $request->query('business_name', '')));
+
+                if (preg_match('/^[0-9a-f-]{36}$/i', $businessIdFilter)) {
+                    $usersQuery->where('business_id', $businessIdFilter);
+                } elseif ($businessNameFilter !== '') {
+                    $usersQuery->where('business_id', BusinessResolver::findByName($businessNameFilter)?->id);
+                }
+            } elseif ($callerBusinessId) {
+                $usersQuery->where('business_id', $callerBusinessId);
+            } else {
+                // A business admin with no business row yet must never fall
+                // through to an unscoped query.
+                $this->log($userId, 'ADMIN_NO_BUSINESS', '/api/admin/users', ['reason' => 'Caller has no business_id'], $this->ip($request), 'failed');
+                $usersQuery->whereRaw('id = ?', ['00000000-0000-0000-0000-000000000000']);
             }
             $roleFilter = trim((string) $request->query('role', ''));
             if ($roleFilter !== '') {
@@ -118,22 +137,36 @@ class AdminController extends BaseController
                 return $this->json(['error' => 'Unauthorized'], 403);
             }
 
-            // Optional server-side business filter: when the caller passes a
-            // business name, only products owned by that business's approved
-            // admin/sellers are returned. Without it, behaviour is unchanged
-            // (all products, for system-admin style usage).
+            // Business scoping after the business_id migration. A business admin
+            // is confined to their own business and the scope comes from the
+            // verified JWT, never from a query parameter: the report screen used
+            // to send ?business_name=<name> taken from client storage, so a
+            // stale or canonical-vs-legacy spelling difference silently produced
+            // an empty report. system_admin keeps the explicit cross-business
+            // lookup used by the platform pages.
             $query = Product::query();
-            $businessName = trim((string) $request->query('business_name', ''));
-            if ($businessName !== '') {
-                $businessUserIds = User::where('business_name', $businessName)
-                    ->whereIn('role', ['admin', 'seller'])
-                    ->where('status', 'approved')
-                    ->select(['id'])
-                    ->get()
-                    ->pluck('id')
-                    ->all();
+            $callerBusinessId = $this->businessId($request);
+            $isPlatformAdmin = $this->role($request) === 'system_admin';
 
-                $query->whereIn('seller_id', $businessUserIds ?: ['00000000-0000-0000-0000-000000000000']);
+            if ($isPlatformAdmin) {
+                $businessIdFilter = trim((string) $request->query('business_id', ''));
+                $businessNameFilter = trim((string) $request->query('business_name', ''));
+
+                if (preg_match('/^[0-9a-f-]{36}$/i', $businessIdFilter)) {
+                    $query->whereIn('seller_id', BusinessResolver::memberIds($businessIdFilter, ['admin', 'seller'], 'approved')
+                        ?: ['00000000-0000-0000-0000-000000000000']);
+                } elseif ($businessNameFilter !== '') {
+                    $query->whereIn('seller_id', BusinessResolver::memberIds(BusinessResolver::findByName($businessNameFilter)?->id ?? '', ['admin', 'seller'], 'approved')
+                        ?: ['00000000-0000-0000-0000-000000000000']);
+                }
+            } elseif ($callerBusinessId) {
+                $query->whereIn('seller_id', BusinessResolver::memberIds($callerBusinessId, ['admin', 'seller'], 'approved')
+                    ?: ['00000000-0000-0000-0000-000000000000']);
+            } else {
+                // Never fall through to an unscoped query for a caller with no
+                // business row.
+                $this->log($userId, 'ADMIN_NO_BUSINESS', '/api/admin/products', ['reason' => 'Caller has no business_id'], $this->ip($request), 'failed');
+                $query->whereRaw('id = ?', ['00000000-0000-0000-0000-000000000000']);
             }
 
             // slim=1: report pages only need a handful of columns and no
@@ -181,20 +214,31 @@ class AdminController extends BaseController
                 return $this->json(['error' => 'Unauthorized'], 403);
             }
 
-            // Optional server-side business filter (see products()): restrict
-            // sales to those made by the named business's approved members.
+            // Business scoping after the business_id migration: see products().
+            // The caller no longer chooses their own business with a query
+            // parameter, which is what let a stale business name silently
+            // empty the whole report.
             $salesQuery = Sale::query();
-            $businessName = trim((string) $request->query('business_name', ''));
-            if ($businessName !== '') {
-                $businessUserIds = User::where('business_name', $businessName)
-                    ->whereIn('role', ['admin', 'seller'])
-                    ->where('status', 'approved')
-                    ->select(['id'])
-                    ->get()
-                    ->pluck('id')
-                    ->all();
+            $callerBusinessId = $this->businessId($request);
+            $isPlatformAdmin = $this->role($request) === 'system_admin';
 
-                $salesQuery->whereIn('seller_id', $businessUserIds ?: ['00000000-0000-0000-0000-000000000000']);
+            if ($isPlatformAdmin) {
+                $businessIdFilter = trim((string) $request->query('business_id', ''));
+                $businessNameFilter = trim((string) $request->query('business_name', ''));
+
+                if (preg_match('/^[0-9a-f-]{36}$/i', $businessIdFilter)) {
+                    $salesQuery->whereIn('seller_id', BusinessResolver::memberIds($businessIdFilter, ['admin', 'seller'], 'approved')
+                        ?: ['00000000-0000-0000-0000-000000000000']);
+                } elseif ($businessNameFilter !== '') {
+                    $salesQuery->whereIn('seller_id', BusinessResolver::memberIds(BusinessResolver::findByName($businessNameFilter)?->id ?? '', ['admin', 'seller'], 'approved')
+                        ?: ['00000000-0000-0000-0000-000000000000']);
+                }
+            } elseif ($callerBusinessId) {
+                $salesQuery->whereIn('seller_id', BusinessResolver::memberIds($callerBusinessId, ['admin', 'seller'], 'approved')
+                    ?: ['00000000-0000-0000-0000-000000000000']);
+            } else {
+                $this->log($userId, 'ADMIN_NO_BUSINESS', '/api/admin/sales', ['reason' => 'Caller has no business_id'], $this->ip($request), 'failed');
+                $salesQuery->whereRaw('id = ?', ['00000000-0000-0000-0000-000000000000']);
             }
 
             // Optional server-side date range so report pages can request
@@ -300,19 +344,28 @@ class AdminController extends BaseController
                 return $this->json(['error' => 'Unauthorized'], 403);
             }
 
-            // Optional server-side business filter (see products()).
+            // Business scoping after the business_id migration: see products().
             $query = Customer::query();
-            $businessName = trim((string) $request->query('business_name', ''));
-            if ($businessName !== '') {
-                $businessUserIds = User::where('business_name', $businessName)
-                    ->whereIn('role', ['admin', 'seller'])
-                    ->where('status', 'approved')
-                    ->select(['id'])
-                    ->get()
-                    ->pluck('id')
-                    ->all();
+            $callerBusinessId = $this->businessId($request);
+            $isPlatformAdmin = $this->role($request) === 'system_admin';
 
-                $query->whereIn('seller_id', $businessUserIds ?: ['00000000-0000-0000-0000-000000000000']);
+            if ($isPlatformAdmin) {
+                $businessIdFilter = trim((string) $request->query('business_id', ''));
+                $businessNameFilter = trim((string) $request->query('business_name', ''));
+
+                if (preg_match('/^[0-9a-f-]{36}$/i', $businessIdFilter)) {
+                    $query->whereIn('seller_id', BusinessResolver::memberIds($businessIdFilter, ['admin', 'seller'], 'approved')
+                        ?: ['00000000-0000-0000-0000-000000000000']);
+                } elseif ($businessNameFilter !== '') {
+                    $query->whereIn('seller_id', BusinessResolver::memberIds(BusinessResolver::findByName($businessNameFilter)?->id ?? '', ['admin', 'seller'], 'approved')
+                        ?: ['00000000-0000-0000-0000-000000000000']);
+                }
+            } elseif ($callerBusinessId) {
+                $query->whereIn('seller_id', BusinessResolver::memberIds($callerBusinessId, ['admin', 'seller'], 'approved')
+                    ?: ['00000000-0000-0000-0000-000000000000']);
+            } else {
+                $this->log($userId, 'ADMIN_NO_BUSINESS', '/api/admin/customers', ['reason' => 'Caller has no business_id'], $this->ip($request), 'failed');
+                $query->whereRaw('id = ?', ['00000000-0000-0000-0000-000000000000']);
             }
 
             $customers = $query->orderByDesc('total_purchases')->get()->toArray();

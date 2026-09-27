@@ -78,7 +78,11 @@ use Illuminate\Support\Facades\Route;
         Route::post('products', [ProductController::class, 'store']);
         Route::put('products/{id}', [ProductController::class, 'update']);
         Route::delete('products/{id}', [ProductController::class, 'destroy']);
-        Route::get('business/{businessName}/all-products', [ProductController::class, 'businessAllProducts']);
+        // Static segment first: Laravel prefers it over the {businessName} pattern
+    // below. Lets the admin screens ask for their own catalogue without ever
+    // putting a business name in the URL.
+    Route::get('business/my/all-products', [ProductController::class, 'businessAllProducts']);
+    Route::get('business/{businessName}/all-products', [ProductController::class, 'businessAllProducts']);
 
         Route::get('sales/my', [SaleController::class, 'my']);
         Route::post('sales', [SaleController::class, 'store']);

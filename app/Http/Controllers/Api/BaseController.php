@@ -28,6 +28,15 @@ abstract class BaseController
         return $request->attributes->get('jwt_business_name');
     }
 
+    /**
+     * Stable business identity for the authenticated user. Never accept this
+     * from client input - scope every business query with this instead.
+     */
+    protected function businessId(Request $request): ?string
+    {
+        return $request->attributes->get('jwt_business_id');
+    }
+
     protected function ip(Request $request): ?string
     {
         return $request->attributes->get('jwt_ip');

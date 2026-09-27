@@ -149,13 +149,15 @@ export default function BidhaaMpyaScreen() {
   }, []);
 
   useEffect(() => {
-    if (!userData?.business_name) return;
+    if (!userData?.id) return;
     const stop = registerLive<any[]>(
       'products',
       async () => {
         const token = await AsyncStorage.getItem('userToken');
         if (!token) throw new Error('sync failed');
-        const res = await fetchWithTimeout(`${API_BASE_URL}/api/business/${encodeURIComponent(userData.business_name)}/all-products`, {
+        // Server-derived scope: the JWT's business_id decides whose catalogue
+        // this is, so no business name travels in the URL.
+        const res = await fetchWithTimeout(`${API_BASE_URL}/api/business/my/all-products`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -170,7 +172,7 @@ export default function BidhaaMpyaScreen() {
       (data) => { setExistingProducts(data); setLoadingProducts(false); }
     );
     return stop;
-  }, [userData?.business_name]);
+  }, [userData?.id]);
 
   useEffect(() => {
     if (!processingAI) return;
@@ -479,10 +481,8 @@ export default function BidhaaMpyaScreen() {
 
       Alert.alert(t('app.success'), successMsg);
 
-      if (userData?.business_name) {
-        const t2 = await AsyncStorage.getItem('userToken');
-        if (t2) fetchExistingProducts(userData.business_name, t2);
-      }
+      const t2 = await AsyncStorage.getItem('userToken');
+      if (t2) fetchExistingProducts(t2);
     } catch (error: any) {
       console.error('❌ Kosa la verify:', error);
       Alert.alert(t('app.error'), t('aiImport.error_network'));
@@ -546,13 +546,15 @@ export default function BidhaaMpyaScreen() {
       }
 
       // The API echoes the saved profile back, so prefer it over the local
-      // values and only fall back to what we sent.
+      // values and only fall back to what we sent. `??` matters: an older
+      // server can echo null, and writing that over the cache would wipe the
+      // value the user just saved.
       const savedUser = (payload && payload.user) || null;
       const cached = await AsyncStorage.getItem('userData');
       if (cached) {
         const parsed = JSON.parse(cached);
-        parsed.business_type = savedUser ? savedUser.business_type : finalType;
-        parsed.business_description = savedUser ? savedUser.business_description : finalDesc;
+        parsed.business_type = (savedUser && savedUser.business_type) ?? finalType;
+        parsed.business_description = (savedUser && savedUser.business_description) ?? finalDesc;
         await AsyncStorage.setItem('userData', JSON.stringify(parsed));
         setUserData(parsed);
       }
@@ -601,9 +603,10 @@ export default function BidhaaMpyaScreen() {
         }
       } catch (_) { /* keep cached values */ }
       
-      if (user.business_name) {
-        fetchExistingProducts(user.business_name, userToken);
-      }
+      // No business name is sent: the server scopes the catalogue from the
+      // verified JWT's business_id. Passing a name both re-introduced the
+      // spelling bug and let a client ask for another business's products.
+      fetchExistingProducts(userToken);
       
     } catch (error) {
       console.error('❌ Kosa wakati wa upakuaji wa data ya mtumiaji:', error);
@@ -611,7 +614,7 @@ export default function BidhaaMpyaScreen() {
     }
   };
 
-  const fetchExistingProducts = async (businessName: string, token: string) => {
+  const fetchExistingProducts = async (token: string) => {
     try {
       setLoadingProducts(true);
       
@@ -619,7 +622,7 @@ export default function BidhaaMpyaScreen() {
       if (cachedProducts) { setExistingProducts(cachedProducts); }
 
       const response = await fetchWithTimeout(
-        `${API_BASE_URL}/api/business/${encodeURIComponent(businessName)}/all-products`,
+        `${API_BASE_URL}/api/business/my/all-products`,
         {
           method: 'GET',
           headers: {
@@ -747,7 +750,7 @@ export default function BidhaaMpyaScreen() {
       console.log('✅ Stock updated:', result);
       
       if (userData?.business_name) {
-        await fetchExistingProducts(userData.business_name, token);
+        await fetchExistingProducts(token);
       }
       
       return true;
@@ -787,7 +790,7 @@ export default function BidhaaMpyaScreen() {
       console.log('✅ Product updated:', result);
       
       if (userData?.business_name) {
-        await fetchExistingProducts(userData.business_name, token);
+        await fetchExistingProducts(token);
       }
       
       return true;
@@ -826,7 +829,7 @@ export default function BidhaaMpyaScreen() {
       console.log('✅ Product deleted:', result);
       
       if (userData?.business_name) {
-        await fetchExistingProducts(userData.business_name, token);
+        await fetchExistingProducts(token);
       }
       
       return true;
@@ -965,7 +968,7 @@ export default function BidhaaMpyaScreen() {
           category: formData.category,
           price: parseFloat(formData.price),
           stock: parseInt(formData.stock),
-          expected_selling_price: parseFloat(formData.expected_selling_price)
+          expected_selling_price: parseFloat(formData.expected_selling_price),
         };
         
         const success = await editProduct(selectedProduct, updateData);
@@ -999,7 +1002,8 @@ export default function BidhaaMpyaScreen() {
           category: formData.category,
           price: parseFloat(formData.price),
           stock: parseInt(formData.stock) + parseInt(existingProduct.stock || '0'),
-          expected_selling_price: parseFloat(formData.expected_selling_price)
+          expected_selling_price: parseFloat(formData.expected_selling_price),
+          // Blank means the buying price is still unknown, so it is sent as
         };
       } else {
         productData = {
@@ -1007,7 +1011,7 @@ export default function BidhaaMpyaScreen() {
           category: formData.category,
           price: parseFloat(formData.price),
           stock: parseInt(formData.stock),
-          expected_selling_price: parseFloat(formData.expected_selling_price)
+          expected_selling_price: parseFloat(formData.expected_selling_price),
         };
       }
 
@@ -1057,7 +1061,7 @@ export default function BidhaaMpyaScreen() {
       );
 
       if (userData?.business_name) {
-        await fetchExistingProducts(userData.business_name, token);
+        await fetchExistingProducts(token);
       }
 
     } catch (error: any) {
@@ -1102,7 +1106,7 @@ export default function BidhaaMpyaScreen() {
         category: formData.category,
         price: parseFloat(formData.price),
         stock: parseInt(formData.stock),
-        expected_selling_price: parseFloat(formData.expected_selling_price)
+        expected_selling_price: parseFloat(formData.expected_selling_price),
       };
 
       console.log('🆕 Adding as new product:', productData);
@@ -1133,7 +1137,7 @@ export default function BidhaaMpyaScreen() {
       );
       
       if (userData?.business_name) {
-        await fetchExistingProducts(userData.business_name, token);
+        await fetchExistingProducts(token);
       }
     } catch (error) {
       console.error('❌ Kosa wakati wa kuongeza bidhaa mpya:', error);
@@ -1244,7 +1248,7 @@ export default function BidhaaMpyaScreen() {
     
     return (
       <View key={product.id} style={[styles.productItem, isOwner && styles.ownerProductItem]}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.productItemContent}
           onPress={() => selectExistingProduct(product)}
           activeOpacity={0.7}
@@ -1267,51 +1271,51 @@ export default function BidhaaMpyaScreen() {
               <Text style={styles.productItemStock}>
                 {t('products.product_stock_label')} {product.stock || '0'}
               </Text>
+              {/* "Bei ya Kununua" is the BUYING price and lives in products.price */}
               <Text style={styles.productItemPrice}>
                 {t('products.product_price_label')} {formatCurrency(product.price?.toString() || '0')}
               </Text>
+              {product.expected_selling_price ? (
+                <Text style={styles.productItemExpectedPrice}>
+                  {t('products.product_selling_price_label')} {formatCurrency(product.expected_selling_price.toString())}
+                </Text>
+              ) : null}
             </View>
-            {product.expected_selling_price && (
-              <Text style={styles.productItemExpectedPrice}>
-                {t('products.product_selling_price_label')} {formatCurrency(product.expected_selling_price.toString())}
-              </Text>
-            )}
-          </View>
-          
-          <View style={styles.productActions}>
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={(e) => {
-                e.stopPropagation();
-                handleAddStock(product);
-              }}
-            >
-              <Ionicons name="add-circle" size={28} color="#2ecc71" />
-            </TouchableOpacity>
-            
-            {isOwner && (
-              <>
-                <TouchableOpacity
-                  style={styles.actionButton}
-                  onPress={(e) => {
-                    e.stopPropagation();
-                    handleEditProduct(product);
-                  }}
-                >
-                  <Ionicons name="create-outline" size={28} color="#3498db" />
-                </TouchableOpacity>
-                
-                <TouchableOpacity
-                  style={styles.actionButton}
-                  onPress={(e) => {
-                    e.stopPropagation();
-                    handleDeleteProduct(product);
-                  }}
-                >
-                  <Ionicons name="trash-outline" size={28} color="#e74c3c" />
-                </TouchableOpacity>
-              </>
-            )}
+            <View style={styles.productActions}>
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  handleAddStock(product);
+                }}
+              >
+                <Ionicons name="add-circle" size={28} color="#2ecc71" />
+              </TouchableOpacity>
+
+              {isOwner && (
+                <>
+                  <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      handleEditProduct(product);
+                    }}
+                  >
+                    <Ionicons name="create-outline" size={28} color="#3498db" />
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      handleDeleteProduct(product);
+                    }}
+                  >
+                    <Ionicons name="trash-outline" size={28} color="#e74c3c" />
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
           </View>
         </TouchableOpacity>
       </View>
@@ -1924,7 +1928,7 @@ export default function BidhaaMpyaScreen() {
               )}
             </View>
 
-            {/* Current Price */}
+            {/* Buying Price ("Bei ya Kununua") = products.price */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>{t('products.price_label')}</Text>
               <View style={styles.priceContainer}>
@@ -1953,6 +1957,7 @@ export default function BidhaaMpyaScreen() {
                 </Text>
               )}
             </View>
+
 
             {/* Expected Selling Price */}
             <View style={styles.inputGroup}>

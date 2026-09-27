@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\User;
+use App\Services\BusinessResolver;
 use App\Services\Supabase;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -360,7 +361,9 @@ Return exactly:
                 'id' => (string) $p['id'],
                 'name' => $p['name'],
                 'sellingPrice' => $p['expected_selling_price'] ?: ($p['price'] ?? null),
-                'buyingPrice' => $p['cost_price'] ?? null,
+                // "Bei ya Kununua" is products.price. Fall back to the legacy
+            // cost_price copy for the few products that still have one.
+            'buyingPrice' => $p['price'] ?? ($p['cost_price'] ?? null),
                 'quantity' => $p['stock'] ?? null,
                 'category' => $p['category'] ?? null,
             ];
@@ -550,7 +553,16 @@ Return exactly:
 
     private function getBusinessSellerIds(string $businessName): array
     {
-        $businessUsers = User::where('business_name', $businessName)
+        // Scoped by business_id after the migration. business_name is display
+        // text and fragments one shop across spellings, so matching on it both
+        // hid sellers and could pull in another business's users.
+        $businessId = BusinessResolver::findByName($businessName)?->id;
+
+        if (!$businessId) {
+            return [];
+        }
+
+        $businessUsers = User::where('business_id', $businessId)
             ->whereIn('role', ['admin', 'seller'])
             ->where('status', 'approved')
             ->select('id')
@@ -648,9 +660,11 @@ Return exactly:
 
     private function ensureAiImportSchema(): array
     {
+        // business_type / business_description moved to `businesses` in the
+        // business_id migration, so they are no longer users columns and must
+        // not be reported as missing here (that report made the setup endpoint
+        // look permanently broken).
         $migrations = [
-            'ALTER TABLE users ADD COLUMN business_type TEXT',
-            'ALTER TABLE users ADD COLUMN business_description TEXT',
             'CREATE TABLE ai_import_verifications',
         ];
         $results = [];
@@ -659,10 +673,6 @@ Return exactly:
                 if ($migration === 'CREATE TABLE ai_import_verifications') {
                     $exists = $this->tableExists('ai_import_verifications');
                     $results[] = ['migration' => 'CREATE TABLE IF NOT EXISTS ai_import_verifications', 'status' => $exists ? 'success' : 'failed', 'error' => $exists ? null : 'Table ai_import_verifications is missing in Supabase; create it in the Supabase SQL Editor.'];
-                } else {
-                    $col = $migration === 'ALTER TABLE users ADD COLUMN business_type TEXT' ? 'business_type' : 'business_description';
-                    $hasCol = $this->columnExists('users', $col);
-                    $results[] = ['migration' => $migration, 'status' => $hasCol ? 'success' : 'failed', 'error' => $hasCol ? null : 'Column users.' . $col . ' is missing in Supabase; add it in the Supabase SQL Editor.'];
                 }
             } catch (Throwable $error) {
                 $results[] = ['migration' => substr($migration, 0, 60), 'status' => 'failed', 'error' => $error->getMessage()];
@@ -730,7 +740,7 @@ Return exactly:
             $businessType = null;
             $businessDescription = null;
             try {
-                $bizRow = User::where('id', $userId)->select('business_type', 'business_description')->first();
+                $bizRow = BusinessResolver::forUser($userId);
                 if ($bizRow) {
                     $businessType = $bizRow->business_type;
                     $businessDescription = $bizRow->business_description;
@@ -832,7 +842,8 @@ Return exactly:
                     $p = $rowIndexById[$row['matchedExistingItemId']] ?? null;
                     if ($p) {
                         $row['currentStock'] = $p['stock'] ?? 0;
-                        $row['buyingPrice'] = $row['buyingPrice'] ?? ($p['cost_price'] ?? null);
+                        // "Bei ya Kununua" is products.price (legacy cost_price as fallback).
+        $row['buyingPrice'] = $row['buyingPrice'] ?? ($p['price'] ?? ($p['cost_price'] ?? null));
                         $row['sellingPrice'] = $row['sellingPrice'] ?? ($p['expected_selling_price'] ?? null);
                     } else {
                         $row['status'] = 'NEW';
@@ -993,14 +1004,15 @@ Return exactly:
                 ];
                 $buying = (float) ($body['buyingPrice'] ?? 0);
                 $selling = (float) ($body['sellingPrice'] ?? 0);
-                if (is_finite($buying) && $buying > 0) $updateData['cost_price'] = $buying;
-                // The selling price the user confirmed wins over any stale
-                // "price" payload, otherwise their table edits never stick.
+                // `price` is the BUYING price, `expected_selling_price` is the
+                // SELLING price. The old code did
+                //   $updateData['price'] = $selling;
+                // which overwrote the buying price with the selling price, so
+                // "Bei ya Kununua" then read 55000 on a product bought at
+                // 45000 and both columns showed the same number.
+                if (is_finite($buying) && $buying > 0) $updateData['price'] = $buying;
                 if (is_finite($selling) && $selling > 0) {
-                    $updateData['price'] = $selling;
                     $updateData['expected_selling_price'] = $selling;
-                } else {
-                    $updateData['expected_selling_price'] = $product->expected_selling_price ?: ($product->price ?? 0);
                 }
 
                 try {
@@ -1102,8 +1114,8 @@ Return exactly:
                 'name' => $name,
                 'category' => $category,
                 'description' => substr(trim((string) ($body['description'] ?? '')), 0, 500),
-                'price' => $validSelling,
-                'cost_price' => $validBuying,
+                // buying price -> `price`, selling price -> `expected_selling_price`
+                'price' => $validBuying ?? $validSelling,
                 'expected_selling_price' => $validSelling,
                 'stock' => $quantityRaw,
                 'is_active' => true,
@@ -1433,8 +1445,8 @@ OUTPUT SCHEMA (strict JSON only, no markdown fences)
     private function businessTypeOf(string $userId): ?string
     {
         try {
-            $row = User::where('id', $userId)->select('business_type')->first();
-            return $row->business_type ?? null;
+            $business = BusinessResolver::forUser($userId);
+            return $business?->business_type ?? null;
         } catch (Throwable $e) {
             return null;
         }
@@ -1443,8 +1455,8 @@ OUTPUT SCHEMA (strict JSON only, no markdown fences)
     private function businessDescriptionOf(string $userId): ?string
     {
         try {
-            $row = User::where('id', $userId)->select('business_description')->first();
-            return $row->business_description ?? null;
+            $business = BusinessResolver::forUser($userId);
+            return $business?->business_description ?? null;
         } catch (Throwable $e) {
             return null;
         }

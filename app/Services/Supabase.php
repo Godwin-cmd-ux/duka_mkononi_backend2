@@ -521,6 +521,10 @@ class Supabase
             return $col . '=' . $op . '.' . (string) $val;
         }
 
+        if ($op === 'not.is' && $val === 'null') {
+            return $col . '=not.is.null';
+        }
+
         if ($val === null || $val === 'null') {
             return $col . '=is.null';
         }

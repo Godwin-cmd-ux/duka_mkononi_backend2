@@ -88,8 +88,12 @@ const checkFileSize = async (fileUri: string, type: 'image' | 'video'): Promise<
 
 
 interface UserMatangazo {
-  id: number;
-  user_id: number;
+  // maturation id / user_id are UUIDs, not numbers. They were typed as numbers
+  // back when ids were sequential; nothing type-checked them because the API
+  // JSON arrives as `any`, so the lie survived. Treating them as strings keeps
+  // them intact through the payment + delete calls below.
+  id: string;
+  user_id: string;
   title: string;
   description: string;
   media_url: string;
@@ -124,7 +128,7 @@ export default function TangazaScreen() {
   const [isOnline, setIsOnline] = useState(true);
   
   const [currentUser, setCurrentUser] = useState<{
-    id: number;
+    id: string;
     email: string;
     name: string;
     role: string;
@@ -169,7 +173,7 @@ export default function TangazaScreen() {
       if (userDataString && userId) {
         const userData = JSON.parse(userDataString);
         setCurrentUser({
-          id: parseInt(userId),
+          id: userId,
           email: userEmail || userData.email,
           name: userData.full_name || userData.business_name || 'Mtumiaji',
           role: userData.role,
@@ -290,7 +294,7 @@ export default function TangazaScreen() {
   };
 
   // 💳 START PESAPAL PAYMENT FOR AN EXISTING MATANGAZO (TZS 3,000 / 30 days)
-  const initiatePayment = async (matangazoId: number, description: string): Promise<{ orderTrackingId: string; redirectUrl: string }> => {
+  const initiatePayment = async (matangazoId: string, description: string): Promise<{ orderTrackingId: string; redirectUrl: string }> => {
     const token = await AsyncStorage.getItem('userToken');
     if (!token) {
       throw new Error(t('adverts.error_auth'));
@@ -372,7 +376,7 @@ export default function TangazaScreen() {
   };
 
   // 💳 OPEN PESAPAL PAGE + CONFIRM PAYMENT (shared by new posts and renewals)
-  const runPaymentForMatangazo = async (matangazoId: number, description: string) => {
+  const runPaymentForMatangazo = async (matangazoId: string, description: string) => {
     setProcessPhase('redirecting');
     try {
       const { orderTrackingId, redirectUrl } = await initiatePayment(matangazoId, description);
@@ -567,11 +571,24 @@ export default function TangazaScreen() {
     return { label: t('adverts.ad_status_paid'), bg: '#d4edda', fg: '#155724', action: 'live', note: '' };
   };
 
-  const deleteAdvertisement = async (id: number) => {
+  const deleteAdvertisement = async (ad: UserMatangazo) => {
     try {
+      // A still-running paid subscription is real money already spent. The web
+      // version warns before deleting; without this the mobile confirm looked
+      // identical whether the post was unpaid or had 20 days left, so a user
+      // could destroy a TZS 3,000 subscription with a generic "are you sure?".
+      const hasActiveSub =
+        !!ad.expires_at &&
+        ad.payment_status === 'completed' &&
+        new Date(ad.expires_at).getTime() > Date.now();
+
+      const confirmMessage =
+        t('adverts.delete_confirm_message') +
+        (hasActiveSub ? '\n\n' + t('adverts.delete_confirm_active_sub') : '');
+
       Alert.alert(
         t('adverts.delete_confirm_title'),
-        t('adverts.delete_confirm_message'),
+        confirmMessage,
         [
           { text: t('adverts.delete_confirm_cancel'), style: 'cancel' },
           { 
@@ -582,7 +599,7 @@ export default function TangazaScreen() {
               const token = await AsyncStorage.getItem('userToken');
               
               const response = await fetchWithTimeout(
-                `${API_BASE_URL}/api/matangazo/${id}`,
+                `${API_BASE_URL}/api/matangazo/${ad.id}`,
                 {
                   method: 'DELETE',
                   headers: {
@@ -863,7 +880,7 @@ export default function TangazaScreen() {
                 
                 <TouchableOpacity 
                   style={styles.deleteButton}
-                  onPress={() => deleteAdvertisement(ad.id)}
+                  onPress={() => deleteAdvertisement(ad)}
                 >
                   <Text style={styles.deleteButtonText}>{t('adverts.delete_button')}</Text>
                 </TouchableOpacity>

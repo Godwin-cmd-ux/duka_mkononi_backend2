@@ -519,6 +519,7 @@
             animation: spin 0.6s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes btnSpin { to { transform: rotate(360deg); } }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
 </head>
@@ -719,15 +720,19 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             return true;
         }
 
-        async function loadSellersData(businessName) {
+        async function loadSellersData() {
             const token = localStorage.getItem('userToken');
             if (!token) return false;
             
             try {
-                // Server-side filtering: only this business's SELLERS cross the
-                // network (previously the entire users table was fetched and
-                // filtered in the browser — the dashboard's main slowdown).
-                const response = await fetch(`${API_BASE_URL}/api/admin/users?business=${encodeURIComponent(businessName || '')}&role=seller`, {
+                // Business scoping comes from the verified JWT (business_id) on
+                // the server. This used to send ?business=<name> and re-filter on
+                // user.business_name, but that comparison was byte-exact, so
+                // sellers whose spelling differed from their admin's were dropped
+                // (e.g. "Shirima Spare Part" vs "Shirima spare part"). Do not
+                // re-add a name filter: AdminController::users() already returns
+                // only this admin's business.
+                const response = await fetch(`${API_BASE_URL}/api/admin/users?role=seller`, {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -739,11 +744,9 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 if (response.ok) {
                     const data = await response.json();
                     const usersArray = data.users || [];
-                    const businessNameToFilter = businessName || userData.businessName;
                     
                     const sellers = usersArray.filter(user => 
                         user.role === 'seller' && 
-                        user.business_name === businessNameToFilter &&
                         user.status !== 'deleted'
                     );
                     
@@ -779,7 +782,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 
                 if (response.ok) {
                     showAlert('Mafanikio', `Muuzaji ${actionName} kikamilifu`);
-                    await loadSellersData(userData.businessName);
+                    await loadSellersData();
                     renderDashboard();
                     return true;
                 } else {
@@ -814,7 +817,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     
                     if (response.ok) {
                         showAlert('Mafanikio', `Muuzaji "${sellerName}" amefutwa kabisa`);
-                        await loadSellersData(userData.businessName);
+                        await loadSellersData();
                         renderDashboard();
                     } else {
                         throw new Error('Delete failed');
@@ -829,6 +832,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         }
 
         async function updateProfile() {
+            if (updatingProfile) return;
             if (!editFormData.businessName.trim() || !editFormData.businessLocation.trim()) {
                 showAlert('Hitilafu', 'Tafadhali jaza jina la biashara na eneo');
                 return;
@@ -839,6 +843,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             editFormData.businessDescription = (editFormData.businessDescription || '').trim();
             
             updatingProfile = true;
+            setSaveBtnState(true);
             const token = localStorage.getItem('userToken');
             
             try {
@@ -860,11 +865,20 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 });
                 
                 if (response.ok) {
+                    const payload = await response.json().catch(() => ({}));
+                    const saved = payload.user || {};
+                    // Prefer the server's stored values so a rename rejected or
+                    // normalised server-side cannot leave the cache lying.
+                    const savedBusinessName = saved.business_name || editFormData.businessName;
+                    const savedBusinessLocation = saved.business_location || editFormData.businessLocation;
+
                     const currentUser = JSON.parse(localStorage.getItem('userData') || '{}');
                     const updatedUser = {
                         ...currentUser,
-                        business_name: editFormData.businessName,
-                        business_location: editFormData.businessLocation,
+                        business_name: savedBusinessName,
+                        businessName: savedBusinessName,
+                        business_location: savedBusinessLocation,
+                        businessLocation: savedBusinessLocation,
                         phone: editFormData.phone,
                         full_name: editFormData.name,
                         business_type: editFormData.businessType,
@@ -872,24 +886,30 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     };
                     localStorage.setItem('userData', JSON.stringify(updatedUser));
                     
-                    userData.businessName = editFormData.businessName;
-                    userData.businessLocation = editFormData.businessLocation;
+                    userData.businessName = savedBusinessName;
+                    userData.businessLocation = savedBusinessLocation;
                     userData.phone = editFormData.phone;
+                    editFormData.businessName = savedBusinessName;
+                    editFormData.businessLocation = savedBusinessLocation;
                     
                     document.getElementById('userName').innerHTML = escapeHtml(editFormData.name);
                     document.getElementById('userAvatar').innerHTML = editFormData.name.charAt(0).toUpperCase();
                     
                     closeEditModal();
                     showAlert('Mafanikio', 'Wasifu umesasishwa');
-                    await loadSellersData(editFormData.businessName);
+                    await loadSellersData();
                     renderDashboard();
                 } else {
-                    throw new Error('Update failed');
+                    // Was a blanket 'Imeshindikana kusasisha wasifu', which hid
+                    // the reason (e.g. a business name already taken).
+                    const err = await response.json().catch(() => ({}));
+                    throw new Error(err.error || 'Imeshindikana kusasisha wasifu');
                 }
             } catch (error) {
-                showAlert('Hitilafu', 'Imeshindikana kusasisha wasifu');
+                showAlert('Hitilafu', error.message || 'Imeshindikana kusasisha wasifu');
             } finally {
                 updatingProfile = false;
+                setSaveBtnState(false);
             }
         }
 
@@ -925,6 +945,20 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             }
             const descEl = document.getElementById('editBusinessDescription');
             if (descEl) descEl.value = editFormData.businessDescription || '';
+            setSaveBtnState(false);
+        }
+
+        // The save button used to be a static div, so `updatingProfile` was
+        // never read: clicking gave no feedback and a double click fired the
+        // same PUT twice.
+        function setSaveBtnState(saving) {
+            const btn = document.getElementById('editSaveBtn');
+            if (!btn) return;
+            btn.style.opacity = saving ? '0.75' : '1';
+            btn.style.cursor = saving ? 'wait' : 'pointer';
+            btn.innerHTML = saving
+                ? '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.45);border-top-color:#fff;border-radius:50%;animation:btnSpin 0.7s linear infinite;vertical-align:-2px;margin-right:7px;"></span>Inahifadhi...'
+                : 'Hifadhi';
         }
         
         function closeEditModal() {
@@ -948,7 +982,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             refreshing = true;
             renderDashboard();
             try {
-                const ok = await loadSellersData(userData.businessName);
+                const ok = await loadSellersData();
                 if (!ok) {
                     showAlert('Hitilafu', 'Imeshindikana kusasisha data. Hakikisha umeunganishwa kwenye internet kisha ujaribu tena.');
                 }
@@ -1218,11 +1252,29 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 if (!profile) return;
                 editFormData.businessType = profile.business_type || '';
                 editFormData.businessDescription = profile.business_description || '';
+                // The stored business_name is the canonical one from
+                // `businesses`. localStorage still holds the legacy spelling
+                // from login, so adopting it here stops the modal from echoing
+                // a stale name back on every save.
+                if (profile.business_name) {
+                    editFormData.businessName = profile.business_name;
+                }
+                if (profile.business_location) {
+                    editFormData.businessLocation = profile.business_location;
+                }
                 // Keep the localStorage cache in sync for other pages.
                 try {
                     const cached = JSON.parse(localStorage.getItem('userData') || '{}');
                     cached.business_type = editFormData.businessType;
                     cached.business_description = editFormData.businessDescription;
+                    if (editFormData.businessName) {
+                        cached.businessName = editFormData.businessName;
+                        cached.business_name = editFormData.businessName;
+                    }
+                    if (editFormData.businessLocation) {
+                        cached.businessLocation = editFormData.businessLocation;
+                        cached.business_location = editFormData.businessLocation;
+                    }
                     localStorage.setItem('userData', JSON.stringify(cached));
                 } catch (e) {}
             } catch (e) { /* offline: modal falls back to cached values */ }
@@ -1235,7 +1287,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             // The profile refresh only feeds the edit modal (which already
             // falls back to the localStorage cache), so it must NOT delay
             // the dashboard's first paint — run it in the background.
-            const sellersPromise = loadSellersData(userData.businessName);
+            const sellersPromise = loadSellersData();
             loadProfileIntoEditForm();
             await sellersPromise;
             loading = false;
@@ -1280,7 +1332,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             </div>
             <div class="modal-buttons">
                 <div class="modal-btn btn-cancel" onclick="closeEditModal()">Ghairi</div>
-                <div class="modal-btn btn-save" onclick="saveEditModal()">Hifadhi</div>
+                <div class="modal-btn btn-save" id="editSaveBtn" onclick="saveEditModal()">Hifadhi</div>
             </div>
         </div>
     </div>

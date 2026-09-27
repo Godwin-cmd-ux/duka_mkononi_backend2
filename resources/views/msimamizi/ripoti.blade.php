@@ -1,4 +1,4 @@
-@verbatim
+﻿@verbatim
 <!DOCTYPE html>
 <html lang="sw">
 <head>
@@ -185,7 +185,7 @@
 @include('partials.photo-viewer')
 @verbatim
 <body>
-    <div class="mobile-menu-toggle" id="mobileMenuToggle">☰</div>
+    <div class="mobile-menu-toggle" id="mobileMenuToggle">â˜°</div>
     <div class="msimamizi-layout">
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header"><div class="logo-area"><div class="logo-icon">D</div><div class="logo-text"><h2>DukaMkononi</h2><p>Msimamizi Portal</p></div></div></div>
@@ -282,6 +282,52 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             return true;
         }
 
+        // PRICE RULES (confirmed by the owner):
+        //   products.price                = BUYING price  -> "Bei ya Kununua"
+        //   products.expected_selling_price = SELLING price -> "Bei ya Kuuzia"
+        //   profit = selling - buying
+        // `price` is NOT NULL, so the buying price is always available and a
+        // real sale profit is always computable. What can be missing is the
+        // SELLING price, in which case only the *expected* profit is unknown.
+        function costBasis(product) {
+            if (!product) return null;
+            const c = product.price;
+            if (c === null || c === undefined || c === '') return null;
+            const n = Number(c);
+            return Number.isFinite(n) ? n : null;
+        }
+
+        function sellingBasis(product) {
+            if (!product) return null;
+            const s = product.expected_selling_price;
+            if (s === null || s === undefined || s === '') return null;
+            const n = Number(s);
+            return Number.isFinite(n) ? n : null;
+        }
+
+        function applyProfit(list) {
+            return list.map(s => s.cost_price === null
+                ? s
+                : { ...s, profit: (s.unit_price - s.cost_price) * s.quantity });
+        }
+
+        function sumProfit(list) {
+            return list.reduce((s, sale) => s + (typeof sale.profit === 'number' ? sale.profit : 0), 0);
+        }
+
+        // The buying price (products.price) is NOT NULL, so this is normally
+        // 0. It stays as a guard for any row where it is somehow missing.
+        function unknownCostCount(list) {
+            return list.filter(s => s.cost_price === null).length;
+        }
+
+        // A profit total is only meaningful if every sale it covers had a
+        // recorded buying price. Without this the owner sees a clean number
+        // that silently excludes unsold-cost rows.
+        function profitCoverageNote(unknown) {
+            if (!unknown) return '';
+            return `<div style="color:#f39c12;font-size:10px;margin-top:2px;">${unknown} haijaweka bei ya kununua</div>`;
+        }
         async function fetchAllReports() {
             if (!userToken) return;
             loading = true; renderLoading();
@@ -303,7 +349,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
 
             // All four reads fire in PARALLEL (they used to run strictly
             // one-after-another) and products/sales use slim=1 payloads
-            // (no embedded user/product objects — those made the page
+            // (no embedded user/product objects â€” those made the page
             // download megabytes before anything could render).
             const [sellersRes, productsRes, salesRes, customersRes] = await Promise.all([
                 fetch(`${API_BASE_URL}/api/admin/users?business=${encodeURIComponent(userData.businessName)}&role=seller,admin`, { headers }),
@@ -315,7 +361,16 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             if (sellersRes.ok) {
                 const data = await sellersRes.json();
                 const users = data.users || (Array.isArray(data) ? data : []);
-                sellers = users.filter(u => u.business_name === userData.businessName && u.status === 'approved');
+                // The server already scopes this to the caller's own business
+                // (JWT business_id), so the old
+                // `u.business_name === userData.businessName` test only ever
+                // re-introduced risk: userData.businessName comes from client
+                // storage, which the profile screen rewrites with the canonical
+                // businesses.business_name while the users rows keep the legacy
+                // spelling. A mismatch emptied sellers, and because
+                // products/customers/sales are all intersected with sellers,
+                // the whole report went blank. Approval is the only real rule.
+                sellers = users.filter(u => u.status === 'approved');
             }
 
             let rawProducts = [];
@@ -323,7 +378,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 const data = await productsRes.json();
                 const prods = data.products || (Array.isArray(data) ? data : []);
                 rawProducts = prods.filter(p => sellers.some(s => s.id === p.seller_id)).map(p => ({
-                    id: p.id, name: p.name, price: p.price || 0, expected_selling_price: p.expected_selling_price || p.price || 0,
+                    id: p.id, name: p.name, price: p.price || 0, expected_selling_price: p.expected_selling_price ?? null,
                     category: p.category, stock: p.stock || 0, seller_id: p.seller_id, created_at: p.created_at
                 }));
             }
@@ -344,7 +399,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 const salesData = data.sales || (Array.isArray(data) ? data : []);
                 salesData.forEach(sale => {
                     const seller = sellers.find(s => s.id === sale.seller_id);
-                    if (seller && seller.business_name === userData.businessName && sale.sale_items) {
+                    if (seller && sale.sale_items) {
                         sale.sale_items.forEach(item => {
                             const product = rawProducts.find(p => p.id === item.product_id);
                             allSales.push({
@@ -353,12 +408,12 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                                 total_amount: item.total_price || (item.unit_price * item.quantity),
                                 sale_date: sale.sale_date?.split('T')[0] || new Date().toISOString().split('T')[0],
                                 customer_name: (sale.customer_id && customerNameById.get(sale.customer_id)) || 'Mteja', seller_name: seller.full_name || seller.email,
-                                cost_price: product?.price || 0, profit: 0
+                                cost_price: costBasis(product), profit: null
                             });
                         });
                     }
                 });
-                allSales = allSales.map(s => ({ ...s, profit: (s.unit_price - s.cost_price) * s.quantity }));
+                allSales = applyProfit(allSales);
                 sales = allSales;
             }
             
@@ -373,20 +428,20 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             });
             allProducts = rawProducts.map(p => {
                 const salesData = productSalesMap.get(p.id);
-                return { ...p, total_sold: salesData?.totalSold || 0, total_revenue: salesData?.totalRevenue || 0, total_profit: salesData?.totalProfit || 0, has_sales: !!salesData };
+                return { ...p, total_sold: salesData?.totalSold || 0, total_revenue: salesData?.totalRevenue || 0, total_profit: salesData?.totalProfit || 0, total_profit_known: costBasis(p) !== null, has_sales: !!salesData };
             });
             soldProducts = allProducts.filter(p => p.has_sales);
             unsoldProducts = allProducts.filter(p => !p.has_sales);
             
             // Stats
             const totalSales = sales.reduce((s, sale) => s + sale.total_amount, 0);
-            const totalProfit = sales.reduce((s, sale) => s + sale.profit, 0);
+            const totalProfit = sumProfit(sales);
             const today = new Date().toISOString().split('T')[0];
             const todaySales = sales.filter(s => s.sale_date === today).reduce((s, sale) => s + sale.total_amount, 0);
-            const todayProfit = sales.filter(s => s.sale_date === today).reduce((s, sale) => s + sale.profit, 0);
-            const totalCost = sales.reduce((s, sale) => s + (sale.cost_price * sale.quantity), 0);
+            const todayProfit = sumProfit(sales.filter(s => s.sale_date === today));
+            const totalCost = sales.reduce((s, sale) => s + (typeof sale.cost_price === 'number' ? sale.cost_price * sale.quantity : 0), 0);
             const avgMargin = totalCost > 0 ? (totalProfit / totalCost) * 100 : 0;
-            businessStats = { totalSales, totalProfit, totalCustomers: customers.length, totalProducts: allProducts.length, totalSellers: sellers.length, todaySales, todayProfit, averageProfitMargin: avgMargin };
+            businessStats = { totalSales, totalProfit, totalCustomers: customers.length, totalProducts: allProducts.length, totalSellers: sellers.length, todaySales, todayProfit, averageProfitMargin: avgMargin, unknownCostSales: unknownCostCount(sales), unknownCostSalesToday: unknownCostCount(sales.filter(s => s.sale_date === today)) };
         }
 
         async function fetchSellerData(headers) {
@@ -396,7 +451,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             if (productsRes.ok) {
                 const data = await productsRes.json();
                 rawProducts = (Array.isArray(data) ? data : []).map(p => ({
-                    id: p.id, name: p.name, price: p.price || 0, expected_selling_price: p.expected_selling_price || p.price || 0,
+                    id: p.id, name: p.name, price: p.price || 0, expected_selling_price: p.expected_selling_price ?? null,
                     category: p.category, stock: p.stock || 0, seller_id: userData.id
                 }));
             }
@@ -416,12 +471,12 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                                 total_amount: item.total_price || (item.unit_price * item.quantity),
                                 sale_date: sale.sale_date?.split('T')[0] || new Date().toISOString().split('T')[0],
                                 customer_name: sale.customers?.name || 'Mteja', seller_name: userData.businessName,
-                                cost_price: product?.price || 0, profit: 0
+                                cost_price: costBasis(product), profit: null
                             });
                         });
                     }
                 });
-                allSales = allSales.map(s => ({ ...s, profit: (s.unit_price - s.cost_price) * s.quantity }));
+                allSales = applyProfit(allSales);
                 sales = allSales;
             }
             // Process products
@@ -435,7 +490,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             });
             allProducts = rawProducts.map(p => {
                 const salesData = productSalesMap.get(p.id);
-                return { ...p, total_sold: salesData?.totalSold || 0, total_revenue: salesData?.totalRevenue || 0, total_profit: salesData?.totalProfit || 0, has_sales: !!salesData };
+                return { ...p, total_sold: salesData?.totalSold || 0, total_revenue: salesData?.totalRevenue || 0, total_profit: salesData?.totalProfit || 0, total_profit_known: costBasis(p) !== null, has_sales: !!salesData };
             });
             soldProducts = allProducts.filter(p => p.has_sales);
             unsoldProducts = allProducts.filter(p => !p.has_sales);
@@ -447,13 +502,13 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             }
             // Stats
             const totalSales = sales.reduce((s, sale) => s + sale.total_amount, 0);
-            const totalProfit = sales.reduce((s, sale) => s + sale.profit, 0);
+            const totalProfit = sumProfit(sales);
             const today = new Date().toISOString().split('T')[0];
             const todaySales = sales.filter(s => s.sale_date === today).reduce((s, sale) => s + sale.total_amount, 0);
-            const todayProfit = sales.filter(s => s.sale_date === today).reduce((s, sale) => s + sale.profit, 0);
-            const totalCost = sales.reduce((s, sale) => s + (sale.cost_price * sale.quantity), 0);
+            const todayProfit = sumProfit(sales.filter(s => s.sale_date === today));
+            const totalCost = sales.reduce((s, sale) => s + (typeof sale.cost_price === 'number' ? sale.cost_price * sale.quantity : 0), 0);
             const avgMargin = totalCost > 0 ? (totalProfit / totalCost) * 100 : 0;
-            businessStats = { totalSales, totalProfit, totalCustomers: customers.length, totalProducts: allProducts.length, totalSellers: 1, todaySales, todayProfit, averageProfitMargin: avgMargin };
+            businessStats = { totalSales, totalProfit, totalCustomers: customers.length, totalProducts: allProducts.length, totalSellers: 1, todaySales, todayProfit, averageProfitMargin: avgMargin, unknownCostSales: unknownCostCount(sales), unknownCostSalesToday: unknownCostCount(sales.filter(s => s.sale_date === today)) };
             sellers = [{ id: userData.id, full_name: userData.businessName, email: userData.email }];
         }
 
@@ -471,19 +526,19 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 ${businessStats ? `
                 <div class="stats-grid">
                     <div class="stat-card"><div class="stat-icon" style="background:#3498db20;color:#3498db;">${ic('money', 22)}</div><div class="stat-number">${formatCurrency(businessStats.totalSales)}</div><div class="stat-label">Jumla ya Mauzo</div></div>
-                    <div class="stat-card"><div class="stat-icon" style="background:#27ae6020;color:#27ae60;">${ic('chart', 22)}</div><div class="stat-number" style="color:#27ae60;">${formatCurrency(businessStats.totalProfit)}</div><div class="stat-label">Jumla ya Faida</div></div>
+                    <div class="stat-card"><div class="stat-icon" style="background:#27ae6020;color:#27ae60;">${ic('chart', 22)}</div><div class="stat-number" style="color:#27ae60;">${formatCurrency(businessStats.totalProfit)}</div><div class="stat-label">Jumla ya Faida</div>${profitCoverageNote(businessStats.unknownCostSales)}</div>
                     <div class="stat-card"><div class="stat-icon" style="background:#2ecc7120;color:#2c7e5f;">${ic('users', 22)}</div><div class="stat-number">${businessStats.totalCustomers}</div><div class="stat-label">Wateja</div></div>
                     <div class="stat-card"><div class="stat-icon" style="background:#e74c3c20;color:#e74c3c;">${ic('box', 22)}</div><div class="stat-number">${businessStats.totalProducts}</div><div class="stat-label">Bidhaa Zote</div></div>
                 </div>
                 <div class="extra-stats">
                     <div class="extra-stat">${ic('calendar', 13)} Mauzo ya Leo: ${formatCurrency(businessStats.todaySales)}</div>
-                    <div class="extra-stat">${ic('chart', 13)} Faida ya Leo: ${formatCurrency(businessStats.todayProfit)}</div>
+                    <div class="extra-stat">${ic('chart', 13)} Faida ya Leo: ${formatCurrency(businessStats.todayProfit)}${businessStats.unknownCostSalesToday ? ` <span style="color:#f39c12;">(${businessStats.unknownCostSalesToday} haijui bei ya kununua)</span>` : ''}</div>
                     <div class="extra-stat">${ic('report', 13)} Wastani wa Margin: ${businessStats.averageProfitMargin.toFixed(1)}%</div>
                 </div>
                 ` : ''}
                 <div class="section"><div class="section-title">Mauzo ya Hivi Karibuni</div>
                 ${sales.length > 0 ? sales.slice(0,5).map(sale => `
-                    <div class="item-card"><div class="item-info"><div class="item-title">${escapeHtml(sale.product_name)}</div><div class="item-subtitle">${formatDate(sale.sale_date)} - ${escapeHtml(sale.customer_name)}</div><div class="item-meta">${sale.quantity} × ${formatCurrency(sale.unit_price)}</div></div>
+                    <div class="item-card"><div class="item-info"><div class="item-title">${escapeHtml(sale.product_name)}</div><div class="item-subtitle">${formatDate(sale.sale_date)} - ${escapeHtml(sale.customer_name)}</div><div class="item-meta">${sale.quantity} Ã— ${formatCurrency(sale.unit_price)}</div></div>
                     <div class="item-side"><div class="item-amount">${formatCurrency(sale.total_amount)}</div><div class="profit-text" style="color:${sale.profit >= 0 ? '#27ae60' : '#e74c3c'}">Faida: ${formatCurrency(sale.profit)}</div></div></div>
                 `).join('') : '<div class="no-data"><div class="no-data-icon">' + ic('doc', 44) + '</div><div>Hakuna mauzo bado</div></div>'}</div>
             `;
@@ -539,7 +594,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 <div class="report-search">
                     <span class="search-icon">${ic('search', 15)}</span>
                     <input type="text" id="reportSearch" placeholder="${placeholders[activeReport] || 'Tafuta...'}" value="${safeTerm}" oninput="handleSearchInput(this)">
-                    <span class="search-clear" id="searchClear" style="display:${searchTerm ? 'block' : 'none'};" onclick="clearSearch()" title="Futa utafutaji">✕</span>
+                    <span class="search-clear" id="searchClear" style="display:${searchTerm ? 'block' : 'none'};" onclick="clearSearch()" title="Futa utafutaji">âœ•</span>
                 </div>
             `;
         }
@@ -550,10 +605,14 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 ? '<div class="no-data"><div class="no-data-icon">' + ic('doc', 44) + '</div><div>Hakuna mauzo bado</div></div>'
                 : filtered.length === 0
                     ? noResultsHtml('doc')
-                    : filtered.map(sale => `
-                    <div class="item-card"><div class="item-info"><div class="item-title">${escapeHtml(sale.product_name)}</div><div class="item-subtitle">${escapeHtml(sale.customer_name)} • ${formatDate(sale.sale_date)}</div><div class="item-meta">${sale.quantity} × ${formatCurrency(sale.unit_price)}</div></div>
-                    <div class="item-side"><div class="item-amount">${formatCurrency(sale.total_amount)}</div><div class="profit-text" style="color:${sale.profit >= 0 ? '#27ae60' : '#e74c3c'}">Faida: ${formatCurrency(sale.profit)}</div><div style="font-size:11px;color:#7f8c8d;">${((sale.profit/(sale.cost_price*sale.quantity||1))*100).toFixed(1)}% margin</div></div></div>
-                `).join('');
+                    : filtered.map(sale => {
+                    const known = typeof sale.profit === 'number';
+                    const basis = typeof sale.cost_price === 'number' ? sale.cost_price * sale.quantity : null;
+                    const margin = known && basis ? (sale.profit / basis) * 100 : null;
+                    return `
+                    <div class="item-card"><div class="item-info"><div class="item-title">${escapeHtml(sale.product_name)}</div><div class="item-subtitle">${escapeHtml(sale.customer_name)} â€¢ ${formatDate(sale.sale_date)}</div><div class="item-meta">${sale.quantity} Ã— ${formatCurrency(sale.unit_price)}</div></div>
+                    <div class="item-side"><div class="item-amount">${formatCurrency(sale.total_amount)}</div><div class="profit-text" style="color:${known && sale.profit >= 0 ? '#27ae60' : '#e74c3c'}">Faida: ${known ? formatCurrency(sale.profit) : '-'}</div><div style="font-size:11px;color:#7f8c8d;">${margin === null ? 'bei ya kununua haijasumbuliwa' : margin.toFixed(1) + '% margin'}</div></div></div>
+                `}).join('');
             return `<div class="section"><div class="section-title">Ripoti ya Mauzo - ${escapeHtml(userData.businessName)}</div>
                 ${searchResultsText(filtered.length, sales.length)}${listHtml}</div>`;
         }
@@ -565,18 +624,25 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             return `
                 ${searchResultsText(currentProducts.length, allInTab.length)}
                 <div class="product-tabs">
-                    <div class="product-tab ${activeProductTab === 'sold' ? 'active' : ''}" onclick="setProductTab('sold')">✓ Zimeuzwa (${soldProducts.length})</div>
+                    <div class="product-tab ${activeProductTab === 'sold' ? 'active' : ''}" onclick="setProductTab('sold')">âœ“ Zimeuzwa (${soldProducts.length})</div>
                     <div class="product-tab ${activeProductTab === 'unsold' ? 'active' : ''}" onclick="setProductTab('unsold')">${ic('clock', 14)} Hazijauzwa (${unsoldProducts.length})</div>
                 </div>
                 ${allInTab.length === 0 ? `<div class="no-data"><div class="no-data-icon">${ic('box', 44)}</div><div>${isSold ? 'Hakuna bidhaa zilizouzwa bado' : 'Bidhaa zote zimeuzwa!'}</div></div>` : currentProducts.length === 0 ? noResultsHtml('box') : currentProducts.map(p => {
-                    const profitPerUnit = p.expected_selling_price - p.price;
+                    const cost = costBasis(p);
+                    const sellTarget = sellingBasis(p);
+                    // Projected profit = target selling price - buying price.
+                    // Either side being unknown means the profit is unknown.
+                    const profitPerUnit = (cost === null || sellTarget === null) ? null : sellTarget - cost;
+                    const marginPct = profitPerUnit === null || !cost ? null : (profitPerUnit / cost) * 100;
+                    const buyCell = cost === null ? '-' : formatCurrency(cost);
+                    const sellCell = sellTarget === null ? '-' : formatCurrency(sellTarget);
                     return `<div class="item-card" style="${!isSold ? 'border-left:3px solid #f39c12' : ''}">
                         <div class="item-info"><div class="item-title">${escapeHtml(p.name)}</div><div class="item-subtitle">${p.category || 'Hakuna kategoria'}</div>
-                        <div class="item-meta">Hisa: ${p.stock} • Bei Ununuzi: ${formatCurrency(p.price)} • Bei Kuuzia: ${formatCurrency(p.expected_selling_price)}</div>
-                        ${isSold ? `<div class="item-meta">Zimeuzwa: ${p.total_sold} • Mapato: ${formatCurrency(p.total_revenue)} • Faida: ${formatCurrency(p.total_profit)}</div>` : `<div class="item-meta">Inatarajiwa faida: ${formatCurrency(profitPerUnit)} (${((profitPerUnit/p.price)*100).toFixed(1)}%)</div>`}
+                        <div class="item-meta">Hisa: ${p.stock} â€¢ Bei Ununuzi: ${buyCell} â€¢ Bei Kuuzia: ${sellCell}</div>
+                        ${isSold ? `<div class="item-meta">Zimeuzwa: ${p.total_sold} â€¢ Mapato: ${formatCurrency(p.total_revenue)} â€¢ Faida: ${p.total_profit_known ? formatCurrency(p.total_profit) : '-'}</div>` : `<div class="item-meta">Inatarajiwa faida: ${profitPerUnit === null ? '-' : formatCurrency(profitPerUnit)}${marginPct === null ? '' : ' (' + marginPct.toFixed(1) + '%)'}</div>`}
                         </div>
                         <div class="item-side"><div class="item-amount">${isSold ? formatCurrency(p.total_revenue) : 'Bado'}</div>
-                        <div class="profit-text" style="color:${isSold && p.total_profit >= 0 ? '#27ae60' : '#f39c12'}">${isSold ? `Faida: ${formatCurrency(p.total_profit)}` : `Faida/Bidhaa: ${formatCurrency(profitPerUnit)}`}</div>
+                        <div class="profit-text" style="color:${isSold && p.total_profit >= 0 ? '#27ae60' : '#f39c12'}">${isSold ? `Faida: ${p.total_profit_known ? formatCurrency(p.total_profit) : '-'}` : `Faida/Bidhaa: ${profitPerUnit === null ? '-' : formatCurrency(profitPerUnit)}`}</div>
                         <div class="badge ${isSold ? 'badge-success' : 'badge-warning'}">${isSold ? ic('check', 10) + ' Imeuzwa' : ic('clock', 10) + ' Hajauzwa'}</div></div>
                     </div>`;
                 }).join('')}
@@ -597,7 +663,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     : filtered.map(c => `
                     <div class="customer-item"><div class="customer-avatar">${ic('user', 26)}</div><div class="customer-info"><div class="customer-name">${escapeHtml(c.name)}</div>
                     <div class="customer-contact">${c.phone ? `${ic('phone', 12)} ${escapeHtml(c.phone)}` : ''} ${c.email ? `${ic('mail', 12)} ${escapeHtml(c.email)}` : ''}</div>
-                    <div class="customer-meta">${ic('doc', 12)} ${c.purchases_count} mauzo • ${ic('calendar', 12)} ${c.last_purchase_date ? formatDate(c.last_purchase_date) : 'Hajapata'}</div></div>
+                    <div class="customer-meta">${ic('doc', 12)} ${c.purchases_count} mauzo â€¢ ${ic('calendar', 12)} ${c.last_purchase_date ? formatDate(c.last_purchase_date) : 'Hajapata'}</div></div>
                     <div class="customer-stats"><div class="customer-total">${formatCurrency(c.total_purchases)}</div><div>Jumla ya Kununua</div></div></div>
                 `).join('');
             return `<div class="section"><div class="section-title">Ripoti ya Wateja - ${escapeHtml(userData.businessName)}</div>
@@ -609,7 +675,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             const container = document.getElementById('mainContent');
             container.innerHTML = `
                 <div class="container">
-                    <div class="header-card"><div class="title">Ripoti Kamili</div><div class="user-email">${escapeHtml(userData.email)}</div><div class="role-badge">${isAdmin ? ic('crown', 12) + ' Admin' : ic('user', 12) + ' Seller'} • ${dataSource === 'admin' ? 'Data ya Biashara Nzima' : 'Data ya Seller'}</div></div>
+                    <div class="header-card"><div class="title">Ripoti Kamili</div><div class="user-email">${escapeHtml(userData.email)}</div><div class="role-badge">${isAdmin ? ic('crown', 12) + ' Admin' : ic('user', 12) + ' Seller'} â€¢ ${dataSource === 'admin' ? 'Data ya Biashara Nzima' : 'Data ya Seller'}</div></div>
                     <div class="report-nav">
                         <div class="nav-tab ${activeReport === 'overview' ? 'active' : ''}" onclick="setReport('overview')">${ic('report', 15)} Mapitio</div>
                         <div class="nav-tab ${activeReport === 'sales' ? 'active' : ''}" onclick="setReport('sales')">${ic('money', 15)} Mauzo (${sales.length})</div>
@@ -647,12 +713,12 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             if (activeReport === 'sales') {
                 title = 'Ripoti ya Mauzo - ' + userData.businessName;
                 rows = [['Bidhaa', 'Mteja', 'Muuzaji', 'Tarehe', 'Idadi', 'Bei', 'Jumla', 'Faida'],
-                    ...sales.map(s => [s.product_name, s.customer_name, s.seller_name, s.sale_date, s.quantity, s.unit_price, s.total_amount, s.profit])];
+                    ...sales.map(s => [s.product_name, s.customer_name, s.seller_name, s.sale_date, s.quantity, s.unit_price, s.total_amount, typeof s.profit === 'number' ? s.profit : ''])];
             } else if (activeReport === 'products') {
                 const list = activeProductTab === 'sold' ? soldProducts : unsoldProducts;
                 title = (activeProductTab === 'sold' ? 'Bidhaa Zilizouzwa' : 'Bidhaa Zisizouzwa') + ' - ' + userData.businessName;
                 rows = [['Bidhaa', 'Kategoria', 'Hisa', 'Bei Ununuzi', 'Bei Kuuzia', 'Zilizouzwa', 'Mapato', 'Faida'],
-                    ...list.map(p => [p.name, p.category || '', p.stock, p.price, p.expected_selling_price, p.total_sold || 0, p.total_revenue || 0, p.total_profit || 0])];
+                    ...list.map(p => [p.name, p.category || '', p.stock, costBasis(p) === null ? '' : costBasis(p), p.expected_selling_price, p.total_sold || 0, p.total_revenue || 0, p.total_profit_known ? (p.total_profit || 0) : ''])];
             } else if (activeReport === 'customers') {
                 title = 'Ripoti ya Wateja - ' + userData.businessName;
                 rows = [['Jina', 'Simu', 'Email', 'Mauzo', 'Jumla'],
@@ -668,12 +734,17 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     ['Mauzo ya Leo', businessStats ? businessStats.todaySales : 0],
                     ['Faida ya Leo', businessStats ? businessStats.todayProfit : 0],
                     ['Wastani wa Margin %', businessStats ? businessStats.averageProfitMargin.toFixed(1) : 0]];
+                // The profit rows above only cover sales with a recorded
+                // buying price, so say so rather than let the number stand.
+                if (businessStats && businessStats.unknownCostSales) {
+                    rows.push(['Kumbuka', businessStats.unknownCostSales + ' mauzo hayana bei ya kununwa; jumla ya faida hawahesabiwa']);
+                }
             }
             const head = rows[0].map(th).join('');
             const body = rows.slice(1).map(r => `<tr>${r.map(td).join('')}</tr>`).join('');
             return `<html><head><meta charset="UTF-8"><title>${escapeHtml(title)}</title></head>
                 <body><h2 style="font-family:sans-serif;">${escapeHtml(title)}</h2>
-                <p style="font-family:sans-serif;font-size:12px;color:#555;">Imetolewa ${new Date().toLocaleString('sw-TZ')} — DukaMkononi</p>
+                <p style="font-family:sans-serif;font-size:12px;color:#555;">Imetolewa ${new Date().toLocaleString('sw-TZ')} â€” DukaMkononi</p>
                 <table style="border-collapse:collapse;font-family:sans-serif;font-size:12px;"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></body></html>`;
         }
 
@@ -708,11 +779,11 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             const lines = [];
             if (activeReport === 'sales') {
                 lines.push(row(['Bidhaa', 'Mteja', 'Muuzaji', 'Tarehe', 'Idadi', 'Bei', 'Jumla', 'Faida']));
-                sales.forEach(s => lines.push(row([s.product_name, s.customer_name, s.seller_name, s.sale_date, s.quantity, s.unit_price, s.total_amount, s.profit])));
+                sales.forEach(s => lines.push(row([s.product_name, s.customer_name, s.seller_name, s.sale_date, s.quantity, s.unit_price, s.total_amount, typeof s.profit === 'number' ? s.profit : ''])));
             } else if (activeReport === 'products') {
                 const list = activeProductTab === 'sold' ? soldProducts : unsoldProducts;
                 lines.push(row(['Bidhaa', 'Kategoria', 'Hisa', 'Bei Ununuzi', 'Bei Kuuzia', 'Zilizouzwa', 'Mapato', 'Faida']));
-                list.forEach(p => lines.push(row([p.name, p.category || '', p.stock, p.price, p.expected_selling_price, p.total_sold || 0, p.total_revenue || 0, p.total_profit || 0])));
+                list.forEach(p => lines.push(row([p.name, p.category || '', p.stock, costBasis(p) === null ? '' : costBasis(p), p.expected_selling_price, p.total_sold || 0, p.total_revenue || 0, p.total_profit_known ? (p.total_profit || 0) : ''])));
             } else if (activeReport === 'customers') {
                 lines.push(row(['Jina', 'Simu', 'Email', 'Mauzo', 'Jumla']));
                 customers.forEach(c => lines.push(row([c.name, c.phone || '', c.email || '', c.purchases_count || 0, c.total_purchases || 0])));
@@ -726,6 +797,9 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 lines.push(row(['Mauzo ya Leo', businessStats ? businessStats.todaySales : 0]));
                 lines.push(row(['Faida ya Leo', businessStats ? businessStats.todayProfit : 0]));
                 lines.push(row(['Wastani wa Margin %', businessStats ? businessStats.averageProfitMargin.toFixed(1) : 0]));
+                if (businessStats && businessStats.unknownCostSales) {
+                    lines.push(row(['Kumbuka', businessStats.unknownCostSales + ' mauzo hayana bei ya kununwa; jumla ya faida hawahesabiwa']));
+                }
             }
             const blob = new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
             const a = document.createElement('a');

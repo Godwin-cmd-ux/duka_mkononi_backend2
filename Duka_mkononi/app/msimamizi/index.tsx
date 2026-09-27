@@ -87,11 +87,14 @@ export default function MsimamiziHomeScreen() {
       async () => {
         const token = await AsyncStorage.getItem('userToken');
         if (!token) throw new Error('sync failed');
-        // Server-side filtering (Laravel AdminController::users accepts
-        // ?business= and ?role=): only this business's sellers cross the
-        // network instead of the whole users table.
+        // Business scoping comes from the verified JWT (business_id) on the
+        // server. The name used to be sent as ?business=..., but that matched
+        // users.business_name byte-for-byte, so sellers whose spelling differed
+        // from their admin's were silently dropped. Do not re-add a name filter
+        // here: AdminController::users() already returns only this admin's
+        // business.
         const res = await fetchWithTimeout(
-          `${API_BASE_URL}/api/admin/users?business=${encodeURIComponent(userData.businessName || '')}&role=seller`,
+          `${API_BASE_URL}/api/admin/users?role=seller`,
           {
           method: 'GET',
           headers: {
@@ -104,9 +107,8 @@ export default function MsimamiziHomeScreen() {
         if (!res.ok) throw new Error('sync failed');
         const data = await res.json();
         const usersArray = data.users || [];
-        const businessNameToFilter = userData.businessName;
         return usersArray.filter((user: any) =>
-          user.role === 'seller' && user.business_name === businessNameToFilter && user.status !== 'deleted'
+          user.role === 'seller' && user.status !== 'deleted'
         );
       },
       (data) => { setSellersData(data); setLoading(false); }
@@ -160,7 +162,7 @@ export default function MsimamiziHomeScreen() {
         });
 
         // ✅ KUBADILISHWA: Pita business name kwa loadSellersData
-        await loadSellersData(businessName);
+        await loadSellersData();
 
         // Pull the authoritative profile so the edit form always shows the
         // stored business type/description. Runs in the background (it only
@@ -182,8 +184,11 @@ export default function MsimamiziHomeScreen() {
     router.push('/system_admin');
   };
 
-  // ✅ KUBADILISHWA: Accept businessName kama parameter
-  const loadSellersData = async (adminBusinessName?: string) => {
+  // Business scoping is derived server-side from the JWT's business_id, so no
+  // business name is passed in and none is compared here. Comparing
+  // user.business_name against the admin's own string was what hid sellers
+  // whose spelling differed (e.g. "Shirima Spare Part" vs "Shirima spare part").
+  const loadSellersData = async () => {
     try {
         const token = await AsyncStorage.getItem('userToken');
         if (!token) return;
@@ -191,14 +196,8 @@ export default function MsimamiziHomeScreen() {
         const cachedSellers = await getCache<any[]>('admin:users');
         if (cachedSellers) { setSellersData(cachedSellers); }
 
-        const businessNameToFilter = adminBusinessName || userData.businessName;
-
-        console.log('📡 Inapakua data ya wauzaji kutoka:', `${API_BASE_URL}/api/admin/users?business=...&role=seller`);
-        console.log('🏢 Jina la biashara la msimamizi:', businessNameToFilter);
-        
-        // Server-side filtering — Laravel only returns this business's sellers.
         const response = await fetchWithTimeout(
-            `${API_BASE_URL}/api/admin/users?business=${encodeURIComponent(businessNameToFilter || '')}&role=seller`,
+            `${API_BASE_URL}/api/admin/users?role=seller`,
             {
             method: 'GET',
             headers: {
@@ -210,27 +209,18 @@ export default function MsimamiziHomeScreen() {
         });
 
         console.log('📊 Sellers response status:', response.status);
-        
+
         if (response.ok) {
             const data = await response.json();
-            console.log('📦 Full response data:', data);
-            console.log('👥 Watu wote walio patikana:', data.users?.length || 0);
-            
-            // ✅ KUBADILISHWA: Access the users array from the response
             const usersArray = data.users || [];
-            
-            // ✅ KUBADILISHWA: Filter wauzaji kulingana na business_name ya msimamizi
+
             const sellers = usersArray.filter((user: any) => {
                 const isSeller = user.role === 'seller';
-                const hasMatchingBusiness = user.business_name === businessNameToFilter;
                 const isNotDeleted = user.status !== 'deleted';
-                
-                console.log(`🔍 Checking user: ${user.email}, Role: ${user.role}, Business: ${user.business_name}, Status: ${user.status}, Match: ${hasMatchingBusiness}`);
-                
-                return isSeller && hasMatchingBusiness && isNotDeleted;
+                return isSeller && isNotDeleted;
             });
-            
-            console.log('🛍️ Wauzaji waliofilter (business match):', sellers.length);
+
+            console.log('🛍️ Wauzaji waliofilter:', sellers.length);
             setSellersData(sellers);
             setCache('admin:users', sellers).catch(() => {});
         } else {
@@ -291,7 +281,7 @@ export default function MsimamiziHomeScreen() {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      await loadSellersData(userData.businessName);
+      await loadSellersData();
     } catch (error) {
       console.error('Error refreshing data:', error);
       const errorMessage = error instanceof Error ? error.message : t('admin_dashboard.error_update');
@@ -372,7 +362,7 @@ export default function MsimamiziHomeScreen() {
         Alert.alert(t('app.success'), t('admin_dashboard.success_update'));
         
         // ✅ KUBADILISHWA: Reload wauzaji baada ya kubadilisha jina la biashara
-        await loadSellersData(editFormData.businessName);
+        await loadSellersData();
       } else {
         const errorText = await response.text();
         console.error('❌ Profile update failed:', response.status, errorText);
@@ -417,7 +407,7 @@ export default function MsimamiziHomeScreen() {
         const result = await response.json();
         console.log('✅ Seller approval successful:', result);
         Alert.alert(t('app.success'), t('admin_dashboard.success_approve'));
-        await loadSellersData(userData.businessName);
+        await loadSellersData();
       } else {
         const errorText = await response.text();
         console.error('❌ Server error:', errorText);
@@ -461,7 +451,7 @@ export default function MsimamiziHomeScreen() {
         const result = await response.json();
         console.log('✅ Seller rejection successful:', result);
         Alert.alert(t('app.success'), t('admin_dashboard.success_reject'));
-        await loadSellersData(userData.businessName);
+        await loadSellersData();
       } else {
         const errorText = await response.text();
         console.error('❌ Server error:', errorText);
@@ -525,7 +515,7 @@ export default function MsimamiziHomeScreen() {
                   `${t('admin_dashboard.delete_success', { name: sellerName })}${warningExtra}`,
                   [{ 
                     text: t('app.ok'), 
-                    onPress: () => loadSellersData(userData.businessName)
+                    onPress: () => loadSellersData()
                   }]
                 );
               } else {
@@ -582,7 +572,7 @@ export default function MsimamiziHomeScreen() {
           `${t('admin_dashboard.delete_fallback_success', { name: sellerName })}\n\n${t('admin_dashboard.delete_fallback_contact')}`,
           [{ 
             text: t('app.ok'), 
-            onPress: () => loadSellersData(userData.businessName)
+            onPress: () => loadSellersData()
           }]
         );
       } else {
@@ -636,7 +626,7 @@ export default function MsimamiziHomeScreen() {
                 const result = await response.json();
                 console.log('✅ Seller deactivated:', result);
                 Alert.alert(t('app.success'), t('admin_dashboard.success_reject'));
-                await loadSellersData(userData.businessName);
+                await loadSellersData();
               } else {
                 const errorText = await response.text();
                 console.error('❌ Server error:', errorText);
