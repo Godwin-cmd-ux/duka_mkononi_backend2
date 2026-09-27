@@ -185,7 +185,7 @@
 @include('partials.photo-viewer')
 @verbatim
 <body>
-    <div class="mobile-menu-toggle" id="mobileMenuToggle">â˜°</div>
+    <div class="mobile-menu-toggle" id="mobileMenuToggle">☰</div>
     <div class="msimamizi-layout">
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header"><div class="logo-area"><div class="logo-icon">D</div><div class="logo-text"><h2>DukaMkononi</h2><p>Msimamizi Portal</p></div></div></div>
@@ -349,7 +349,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
 
             // All four reads fire in PARALLEL (they used to run strictly
             // one-after-another) and products/sales use slim=1 payloads
-            // (no embedded user/product objects â€” those made the page
+            // (no embedded user/product objects — those made the page
             // download megabytes before anything could render).
             const [sellersRes, productsRes, salesRes, customersRes] = await Promise.all([
                 fetch(`${API_BASE_URL}/api/admin/users?business=${encodeURIComponent(userData.businessName)}&role=seller,admin`, { headers }),
@@ -538,7 +538,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 ` : ''}
                 <div class="section"><div class="section-title">Mauzo ya Hivi Karibuni</div>
                 ${sales.length > 0 ? sales.slice(0,5).map(sale => `
-                    <div class="item-card"><div class="item-info"><div class="item-title">${escapeHtml(sale.product_name)}</div><div class="item-subtitle">${formatDate(sale.sale_date)} - ${escapeHtml(sale.customer_name)}</div><div class="item-meta">${sale.quantity} Ã— ${formatCurrency(sale.unit_price)}</div></div>
+                    <div class="item-card"><div class="item-info"><div class="item-title">${escapeHtml(sale.product_name)}</div><div class="item-subtitle">${formatDate(sale.sale_date)} - ${escapeHtml(sale.customer_name)}</div><div class="item-meta">${sale.quantity} × ${formatCurrency(sale.unit_price)}</div></div>
                     <div class="item-side"><div class="item-amount">${formatCurrency(sale.total_amount)}</div><div class="profit-text" style="color:${sale.profit >= 0 ? '#27ae60' : '#e74c3c'}">Faida: ${formatCurrency(sale.profit)}</div></div></div>
                 `).join('') : '<div class="no-data"><div class="no-data-icon">' + ic('doc', 44) + '</div><div>Hakuna mauzo bado</div></div>'}</div>
             `;
@@ -594,7 +594,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 <div class="report-search">
                     <span class="search-icon">${ic('search', 15)}</span>
                     <input type="text" id="reportSearch" placeholder="${placeholders[activeReport] || 'Tafuta...'}" value="${safeTerm}" oninput="handleSearchInput(this)">
-                    <span class="search-clear" id="searchClear" style="display:${searchTerm ? 'block' : 'none'};" onclick="clearSearch()" title="Futa utafutaji">âœ•</span>
+                    <span class="search-clear" id="searchClear" style="display:${searchTerm ? 'block' : 'none'};" onclick="clearSearch()" title="Futa utafutaji">✕</span>
                 </div>
             `;
         }
@@ -610,7 +610,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     const basis = typeof sale.cost_price === 'number' ? sale.cost_price * sale.quantity : null;
                     const margin = known && basis ? (sale.profit / basis) * 100 : null;
                     return `
-                    <div class="item-card"><div class="item-info"><div class="item-title">${escapeHtml(sale.product_name)}</div><div class="item-subtitle">${escapeHtml(sale.customer_name)} â€¢ ${formatDate(sale.sale_date)}</div><div class="item-meta">${sale.quantity} Ã— ${formatCurrency(sale.unit_price)}</div></div>
+                    <div class="item-card"><div class="item-info"><div class="item-title">${escapeHtml(sale.product_name)}</div><div class="item-subtitle">${escapeHtml(sale.customer_name)} • ${formatDate(sale.sale_date)}</div><div class="item-meta">${sale.quantity} × ${formatCurrency(sale.unit_price)}</div></div>
                     <div class="item-side"><div class="item-amount">${formatCurrency(sale.total_amount)}</div><div class="profit-text" style="color:${known && sale.profit >= 0 ? '#27ae60' : '#e74c3c'}">Faida: ${known ? formatCurrency(sale.profit) : '-'}</div><div style="font-size:11px;color:#7f8c8d;">${margin === null ? 'bei ya kununua haijasumbuliwa' : margin.toFixed(1) + '% margin'}</div></div></div>
                 `}).join('');
             return `<div class="section"><div class="section-title">Ripoti ya Mauzo - ${escapeHtml(userData.businessName)}</div>
@@ -624,7 +624,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             return `
                 ${searchResultsText(currentProducts.length, allInTab.length)}
                 <div class="product-tabs">
-                    <div class="product-tab ${activeProductTab === 'sold' ? 'active' : ''}" onclick="setProductTab('sold')">âœ“ Zimeuzwa (${soldProducts.length})</div>
+                    <div class="product-tab ${activeProductTab === 'sold' ? 'active' : ''}" onclick="setProductTab('sold')">✓ Zimeuzwa (${soldProducts.length})</div>
                     <div class="product-tab ${activeProductTab === 'unsold' ? 'active' : ''}" onclick="setProductTab('unsold')">${ic('clock', 14)} Hazijauzwa (${unsoldProducts.length})</div>
                 </div>
                 ${allInTab.length === 0 ? `<div class="no-data"><div class="no-data-icon">${ic('box', 44)}</div><div>${isSold ? 'Hakuna bidhaa zilizouzwa bado' : 'Bidhaa zote zimeuzwa!'}</div></div>` : currentProducts.length === 0 ? noResultsHtml('box') : currentProducts.map(p => {
@@ -638,8 +638,8 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     const sellCell = sellTarget === null ? '-' : formatCurrency(sellTarget);
                     return `<div class="item-card" style="${!isSold ? 'border-left:3px solid #f39c12' : ''}">
                         <div class="item-info"><div class="item-title">${escapeHtml(p.name)}</div><div class="item-subtitle">${p.category || 'Hakuna kategoria'}</div>
-                        <div class="item-meta">Hisa: ${p.stock} â€¢ Bei Ununuzi: ${buyCell} â€¢ Bei Kuuzia: ${sellCell}</div>
-                        ${isSold ? `<div class="item-meta">Zimeuzwa: ${p.total_sold} â€¢ Mapato: ${formatCurrency(p.total_revenue)} â€¢ Faida: ${p.total_profit_known ? formatCurrency(p.total_profit) : '-'}</div>` : `<div class="item-meta">Inatarajiwa faida: ${profitPerUnit === null ? '-' : formatCurrency(profitPerUnit)}${marginPct === null ? '' : ' (' + marginPct.toFixed(1) + '%)'}</div>`}
+                        <div class="item-meta">Hisa: ${p.stock} • Bei Ununuzi: ${buyCell} • Bei Kuuzia: ${sellCell}</div>
+                        ${isSold ? `<div class="item-meta">Zimeuzwa: ${p.total_sold} • Mapato: ${formatCurrency(p.total_revenue)} • Faida: ${p.total_profit_known ? formatCurrency(p.total_profit) : '-'}</div>` : `<div class="item-meta">Inatarajiwa faida: ${profitPerUnit === null ? '-' : formatCurrency(profitPerUnit)}${marginPct === null ? '' : ' (' + marginPct.toFixed(1) + '%)'}</div>`}
                         </div>
                         <div class="item-side"><div class="item-amount">${isSold ? formatCurrency(p.total_revenue) : 'Bado'}</div>
                         <div class="profit-text" style="color:${isSold && p.total_profit >= 0 ? '#27ae60' : '#f39c12'}">${isSold ? `Faida: ${p.total_profit_known ? formatCurrency(p.total_profit) : '-'}` : `Faida/Bidhaa: ${profitPerUnit === null ? '-' : formatCurrency(profitPerUnit)}`}</div>
@@ -663,7 +663,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     : filtered.map(c => `
                     <div class="customer-item"><div class="customer-avatar">${ic('user', 26)}</div><div class="customer-info"><div class="customer-name">${escapeHtml(c.name)}</div>
                     <div class="customer-contact">${c.phone ? `${ic('phone', 12)} ${escapeHtml(c.phone)}` : ''} ${c.email ? `${ic('mail', 12)} ${escapeHtml(c.email)}` : ''}</div>
-                    <div class="customer-meta">${ic('doc', 12)} ${c.purchases_count} mauzo â€¢ ${ic('calendar', 12)} ${c.last_purchase_date ? formatDate(c.last_purchase_date) : 'Hajapata'}</div></div>
+                    <div class="customer-meta">${ic('doc', 12)} ${c.purchases_count} mauzo • ${ic('calendar', 12)} ${c.last_purchase_date ? formatDate(c.last_purchase_date) : 'Hajapata'}</div></div>
                     <div class="customer-stats"><div class="customer-total">${formatCurrency(c.total_purchases)}</div><div>Jumla ya Kununua</div></div></div>
                 `).join('');
             return `<div class="section"><div class="section-title">Ripoti ya Wateja - ${escapeHtml(userData.businessName)}</div>
@@ -675,7 +675,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             const container = document.getElementById('mainContent');
             container.innerHTML = `
                 <div class="container">
-                    <div class="header-card"><div class="title">Ripoti Kamili</div><div class="user-email">${escapeHtml(userData.email)}</div><div class="role-badge">${isAdmin ? ic('crown', 12) + ' Admin' : ic('user', 12) + ' Seller'} â€¢ ${dataSource === 'admin' ? 'Data ya Biashara Nzima' : 'Data ya Seller'}</div></div>
+                    <div class="header-card"><div class="title">Ripoti Kamili</div><div class="user-email">${escapeHtml(userData.email)}</div><div class="role-badge">${isAdmin ? ic('crown', 12) + ' Admin' : ic('user', 12) + ' Seller'} • ${dataSource === 'admin' ? 'Data ya Biashara Nzima' : 'Data ya Seller'}</div></div>
                     <div class="report-nav">
                         <div class="nav-tab ${activeReport === 'overview' ? 'active' : ''}" onclick="setReport('overview')">${ic('report', 15)} Mapitio</div>
                         <div class="nav-tab ${activeReport === 'sales' ? 'active' : ''}" onclick="setReport('sales')">${ic('money', 15)} Mauzo (${sales.length})</div>
@@ -744,7 +744,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             const body = rows.slice(1).map(r => `<tr>${r.map(td).join('')}</tr>`).join('');
             return `<html><head><meta charset="UTF-8"><title>${escapeHtml(title)}</title></head>
                 <body><h2 style="font-family:sans-serif;">${escapeHtml(title)}</h2>
-                <p style="font-family:sans-serif;font-size:12px;color:#555;">Imetolewa ${new Date().toLocaleString('sw-TZ')} â€” DukaMkononi</p>
+                <p style="font-family:sans-serif;font-size:12px;color:#555;">Imetolewa ${new Date().toLocaleString('sw-TZ')} — DukaMkononi</p>
                 <table style="border-collapse:collapse;font-family:sans-serif;font-size:12px;"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></body></html>`;
         }
 

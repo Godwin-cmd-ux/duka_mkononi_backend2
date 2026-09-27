@@ -643,7 +643,8 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                                         sale_date: sale.sale_date?.split('T')[0] || new Date().toISOString().split('T')[0],
                                         customer_name: sale.customers?.name || 'Mteja',
                                         seller_name: seller.full_name || seller.email,
-                                        cost_price: product?.cost_price || product?.price || 0
+                                        // "Bei ya Kununua" is products.price; legacy cost_price is ignored
+                                        cost_price: product?.price ?? 0
                                     });
                                 }
                             } else {

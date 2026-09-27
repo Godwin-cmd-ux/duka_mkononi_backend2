@@ -206,7 +206,6 @@ class ProductController extends BaseController
             $price = $request->input('price');
             $stock = $request->input('stock');
             $description = $request->input('description');
-            $cost_price = $request->input('cost_price');
             $expected_selling_price = $request->input('expected_selling_price');
 
             $this->touchLastSeen($userId);

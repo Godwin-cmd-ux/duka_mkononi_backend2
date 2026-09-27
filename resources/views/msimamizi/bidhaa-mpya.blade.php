@@ -30,7 +30,7 @@ svg.icon{flex-shrink:0}
 </aside>
 <main class="main-content"><div class="bidhaa-container" id="bidhaaContainer"><div style="text-align:center;padding:60px;">Loading...</div></div></main>
 </div>
-<div id="productModal" class="modal-overlay"><div class="modal-content"><div class="modal-header"><div class="modal-title">Chagua Bidhaa Ilipo</div><div class="modal-close" onclick="closeProductModal()">âœ–</div></div><input type="text" class="modal-search" id="productSearch" placeholder="Tafuta bidhaa..." oninput="filterProducts()"><div class="modal-body" id="productModalBody"><div class="no-products">Inapakia bidhaa...</div></div></div></div>
+<div id="productModal" class="modal-overlay"><div class="modal-content"><div class="modal-header"><div class="modal-title">Chagua Bidhaa Ilipo</div><div class="modal-close" onclick="closeProductModal()">✖</div></div><input type="text" class="modal-search" id="productSearch" placeholder="Tafuta bidhaa..." oninput="filterProducts()"><div class="modal-body" id="productModalBody"><div class="no-products">Inapakia bidhaa...</div></div></div></div>
 <script>
 const API_BASE_URL='';const categories=['Vyakula','Vinywaji','Matunda','Mboga','Nguo','Viatu','Vifaa vya Nyumbani','Vifaa vya Umeme','Simu na Vifaa','Matibabu','Vifaa vya Usafi','Engine','Sehemu za Gari','Vifaa vya Ujenzi','Vifaa vya Kilimo','Vifaa vya Ofisi','Vitabu na Vifaa vya Kuelimisha','Bidhaa za Watoto','Bidhaa za Urembo','Bidhaa za Kijamii','Michezo na Burudani','Wanyama wa Kufugwa','Vifaa vya Kusafiri','Vifaa vya Teknolojia','Vifaa vya Kudumisha Usalama','Vifaa vya Redio na TV','Vifaa vya Muziki','Vifaa vya Pikipiki','Vifaa vya Baiskeli','Vifaa vya Ushonaji','Vifaa vya Uchoraji','Vifaa vya Ufundi','Vifaa vya Umeme wa Nyumbani','Vifaa vya Jikoni','Vifaa vya Kupimia','Vifaa vya Kukarabati','Vifaa vya Usalama','Vifaa vya Biashara','Vifaa vya Hotelini','Vifaa vya Huduma','Vifaa vya Viwanda','Nyingine'];
 const quickFillData={'Vyakula':{name:'Mchele Super',price:'2500',expected_selling_price:'3000',stock:'50'},'Vinywaji':{name:'Maji ya Kunywa',price:'500',expected_selling_price:'700',stock:'100'},'Matunda':{name:'Maembe Dodo',price:'800',expected_selling_price:'1000',stock:'30'},'Mboga':{name:'Nyanya Fresh',price:'1200',expected_selling_price:'1500',stock:'25'},'Nguo':{name:'T-Shirt Rangi',price:'8000',expected_selling_price:'10000',stock:'15'},'Viatu':{name:'Viatu vya Kawaida',price:'25000',expected_selling_price:'30000',stock:'10'}};
@@ -71,16 +71,16 @@ function getPriceDiff(){const cp=parseFloat(formData.price||'0'),ep=parseFloat(f
 function validateForm(){const e=[];if(!formData.name.trim())e.push('Jina linahitajika');if(!formData.category)e.push('Kategoria inahitajika');if(!formData.price||parseFloat(formData.price)<=0)e.push('Bei ya kununua inahitajika');if(!formData.expected_selling_price||parseFloat(formData.expected_selling_price)<=0)e.push('Bei ya kuuzia inahitajika');if(!formData.stock||parseInt(formData.stock)<0)e.push('Idadi inahitajika');if(parseFloat(formData.expected_selling_price)<parseFloat(formData.price))e.push('Bei ya kuuzia ndogo kuliko bei ya kununua');return e;}
 async function handleSubmit(){const errs=validateForm();if(errs.length){showAlert('Hitilafu',errs.join('\n'));return;}if(loading)return;loading=true;renderUI();try{const pd={name:formData.name.trim(),category:formData.category,price:parseFloat(formData.price),stock:parseInt(formData.stock),expected_selling_price:parseFloat(formData.expected_selling_price)};const h={'Content-Type':'application/json','Authorization':'Bearer '+token};if(selectedProduct&&modalMode==='add'){const qty=parseInt(formData.stock||'0');if(qty<=0){showAlert('Hitilafu','Weka idadi');loading=false;renderUI();return;}const ns=parseInt(selectedProduct.stock||'0')+qty;const r=await fetch(API_BASE_URL+'/api/products/'+selectedProduct.id,{method:'PUT',headers:h,body:JSON.stringify({name:selectedProduct.name,category:selectedProduct.category,stock:ns})});if(r.ok){showAlert('Mafanikio!','Hisa imeongezwa: '+selectedProduct.name+'\nJumla: '+ns);await fetchExistingProducts();resetForm();}else showAlert('Hitilafu','Imeshindwa');loading=false;renderUI();return;}if(selectedProduct&&modalMode==='edit'){const r=await fetch(API_BASE_URL+'/api/products/'+selectedProduct.id,{method:'PUT',headers:h,body:JSON.stringify(pd)});if(r.ok){showAlert('Mafanikio!','Bidhaa imesasishwa');await fetchExistingProducts();resetForm();}else showAlert('Hitilafu','Imeshindwa');loading=false;renderUI();return;}const ex=existingProducts.find(p=>p.name.toLowerCase()===formData.name.toLowerCase().trim());if(ex&&ex.seller_id==userData?.id){const ns=parseInt(ex.stock||'0')+parseInt(formData.stock);const r=await fetch(API_BASE_URL+'/api/products/'+ex.id,{method:'PUT',headers:h,body:JSON.stringify({...pd,stock:ns})});if(r.ok){showAlert('Mafanikio!','Hisa jumla: '+ns);await fetchExistingProducts();resetForm();}else showAlert('Hitilafu','Imeshindwa');loading=false;renderUI();return;}const r=await fetch(API_BASE_URL+'/api/products',{method:'POST',headers:h,body:JSON.stringify(pd)});const txt=await r.text();if(r.ok){showAlert('Mafanikio!','Bidhaa imeongezwa\nKununua: '+formatCurrency(formData.price)+'\nKuuzia: '+formatCurrency(formData.expected_selling_price)+'\nHisa: '+formData.stock);await fetchExistingProducts();resetForm();}else if(r.status===403){showAlert('Bidhaa Ipopo','Bidhaa "'+formData.name+'" tayariipo.\nKuongeza kama mpya?',async()=>{const r2=await fetch(API_BASE_URL+'/api/products',{method:'POST',headers:h,body:JSON.stringify(pd)});if(r2.ok){showAlert('Mafanikio!','Bidhaa mpya imeongezwa');await fetchExistingProducts();resetForm();}else showAlert('Hitilafu','Imeshindwa');});}else showAlert('Hitilafu',txt||'Imeshindwa');}catch(e){showAlert('Hitilafu',e.message);}loading=false;renderUI();}
 function resetForm(){formData={name:'',category:'',price:'',expected_selling_price:'',stock:''};customCategory='';showCustomCategory=false;selectedProduct=null;isOwnerOfSelected=false;modalMode='add';renderUI();}
-function renderUI(){const c=document.getElementById('bidhaaContainer');const pe=isPriceEditable();const pd=getPriceDiff();const iv=formData.name&&formData.category&&formData.price&&formData.expected_selling_price&&formData.stock;const sc=modalMode==='edit'?'update':(selectedProduct&&modalMode==='add'?'addstock':'add');const sl=modalMode==='edit'?ic('refresh')+' SASISHA BIDHAA':(selectedProduct&&modalMode==='add'?ic('plus')+' ONGEZA HISA':ic('plus')+' ONGEZA BIDHAA MPYA');const ch=categories.map(cat=>'<div class="category-chip '+(formData.category===cat?'selected':'')+'" data-cat="'+cat+'">'+escapeHtml(cat)+'</div>').join('');c.innerHTML='<div class="form-card"><h2 style="color:#2c3e50;margin-bottom:4px">'+(modalMode==='edit'?ic('edit',20)+' Hariri Bidhaa':ic('plus',20)+' Ongeza Bidhaa Mpya')+'</h2><p style="color:#7f8c8d;margin-bottom:20px">'+(modalMode==='edit'?'Sasisha taarifa':'Jaza taarifa za bidhaa')+'</p><div class="ai-import-btn" onclick="openAiImportModal()"><span class="card-ic" style="color:#7c5cbf">'+ic('ai',26)+'</span><div style="flex:1"><div style="font-weight:700;color:#2c3e50">Ingiza Kwa Picha (AI)</div><div style="font-size:13px;color:#7f8c8d">Chambua orodha ya bidhaa kutoka kwenye picha na uongeze hisa kwa haraka</div></div><span style="color:#95a5a6;font-size:20px">â€º</span></div><div class="existing-btn" onclick="openProductModal()"><span class="card-ic" style="color:#28a745">'+ic('folder',26)+'</span><div style="flex:1"><div style="font-weight:700;color:#2c3e50">Bidhaa Zilizopo</div><div style="font-size:13px;color:#7f8c8d">Chagua bidhaa ('+existingProducts.length+' bidhaa)</div></div><span style="color:#95a5a6;font-size:20px">â€º</span></div>'+(selectedProduct?'<div class="selected-banner '+(isOwnerOfSelected?'':'non-owner')+'"><div class="selected-banner-header"><div class="selected-banner-title">'+(modalMode==='edit'?ic('edit',13)+' Unahariri':ic('box',13)+' Ongeza Hisa')+': '+escapeHtml(selectedProduct.name)+'</div><div class="selected-banner-close" onclick="clearSelectedProduct()">âœ–</div></div><div style="font-size:12px;color:#7f8c8d">Kategoria: '+escapeHtml(selectedProduct.category||'N/A')+' â€¢ Hisa: '+(selectedProduct.stock||0)+' â€¢ Bei: '+formatCurrency(selectedProduct.price)+(selectedProduct.expected_selling_price?' â€¢ Kuuzia: '+formatCurrency(selectedProduct.expected_selling_price):'')+'</div></div>':'')+'<div class="input-group"><label class="label">Jina la Bidhaa *</label><input type="text" id="fName" placeholder="Weka jina kamili" value="'+escapeHtml(formData.name)+'" '+(selectedProduct&&modalMode==='add'?'disabled':'')+'></div><div class="input-group"><label class="label">Kategoria *</label><div class="categories-scroll">'+ch+'</div><div id="customCatWrap" style="margin-top:12px;padding:12px;background:#e8f4fd;border-radius:14px;border-left:4px solid #3498db;display:'+(showCustomCategory?'block':'none')+'"><input type="text" id="fCustomCat" placeholder="Andika kategoria yako" value="'+escapeHtml(customCategory)+'"></div></div><div class="input-group"><label class="label">Bei ya Kununua *</label><div class="price-container"><input type="number" id="fPrice" placeholder="Bei ya kununua" value="'+formData.price+'" '+(!pe?'disabled':'')+'><div class="price-preview" id="pp1" style="display:'+(formData.price?'block':'none')+'"><small>TZS</small> <strong id="ppv1">'+(formData.price?parseInt(formData.price).toLocaleString():'')+'</strong></div></div>'+(!pe&&selectedProduct?'<div style="font-size:12px;color:#e74c3c;margin-top:4px;font-style:italic">Bei haibadilishwi unapoongeza hisa</div>':'')+'</div><div class="input-group"><label class="label">Bei ya Kuuzia *</label><div class="price-container"><input type="number" id="fExpPrice" placeholder="Bei unayotaka kauzia" value="'+formData.expected_selling_price+'" '+(!pe?'disabled':'')+'><div class="price-preview" id="pp2" style="display:'+(formData.expected_selling_price?'block':'none')+'"><small>TZS</small> <strong id="ppv2">'+(formData.expected_selling_price?parseInt(formData.expected_selling_price).toLocaleString():'')+'</strong></div></div></div>'+(pd?'<div class="price-diff '+(pd.diff>=0?'positive':'negative')+'"><div style="font-weight:700;color:#2c3e50">'+(pd.diff>=0?'Faida':'Hasara')+'</div><div class="price-diff-row"><span>Faida/bidhaa:</span><strong style="color:'+(pd.diff>=0?'#27ae60':'#e74c3c')+'">'+pd.formatted+'</strong></div><div class="price-diff-row"><span>Asilimia:</span><strong style="color:'+(pd.diff>=0?'#27ae60':'#e74c3c')+'">'+pd.pctFormatted+'</strong></div></div>':'')+'<div class="input-group"><label class="label">'+(modalMode==='edit'?'Idadi Mpya':(selectedProduct&&modalMode==='add'?'Idadi ya Kuongeza':'Idadi ya Bidhaa'))+' *</label><input type="number" id="fStock" placeholder="'+(selectedProduct&&modalMode==='add'?'Weka idadi ya kuongeza':'Weka idadi')+'" value="'+formData.stock+'">'+(selectedProduct&&modalMode==='add'?'<div style="font-size:13px;color:#27ae60;margin-top:6px">Sasa: '+(selectedProduct.stock||0)+' â†’ Jumla: '+(parseInt(selectedProduct.stock||0)+parseInt(formData.stock||0))+'</div>':'')+'</div><button id="submitBtn" class="submit-btn '+sc+' '+(!iv?'disabled':'')+'" '+(!iv?'disabled':'')+'>'+(loading?'<div class="loading-spinner"></div>':sl)+'</button></div><div id="previewArea"></div>';
+function renderUI(){const c=document.getElementById('bidhaaContainer');const pe=isPriceEditable();const pd=getPriceDiff();const iv=formData.name&&formData.category&&formData.price&&formData.expected_selling_price&&formData.stock;const sc=modalMode==='edit'?'update':(selectedProduct&&modalMode==='add'?'addstock':'add');const sl=modalMode==='edit'?ic('refresh')+' SASISHA BIDHAA':(selectedProduct&&modalMode==='add'?ic('plus')+' ONGEZA HISA':ic('plus')+' ONGEZA BIDHAA MPYA');const ch=categories.map(cat=>'<div class="category-chip '+(formData.category===cat?'selected':'')+'" data-cat="'+cat+'">'+escapeHtml(cat)+'</div>').join('');c.innerHTML='<div class="form-card"><h2 style="color:#2c3e50;margin-bottom:4px">'+(modalMode==='edit'?ic('edit',20)+' Hariri Bidhaa':ic('plus',20)+' Ongeza Bidhaa Mpya')+'</h2><p style="color:#7f8c8d;margin-bottom:20px">'+(modalMode==='edit'?'Sasisha taarifa':'Jaza taarifa za bidhaa')+'</p><div class="ai-import-btn" onclick="openAiImportModal()"><span class="card-ic" style="color:#7c5cbf">'+ic('ai',26)+'</span><div style="flex:1"><div style="font-weight:700;color:#2c3e50">Ingiza Kwa Picha (AI)</div><div style="font-size:13px;color:#7f8c8d">Chambua orodha ya bidhaa kutoka kwenye picha na uongeze hisa kwa haraka</div></div><span style="color:#95a5a6;font-size:20px">›</span></div><div class="existing-btn" onclick="openProductModal()"><span class="card-ic" style="color:#28a745">'+ic('folder',26)+'</span><div style="flex:1"><div style="font-weight:700;color:#2c3e50">Bidhaa Zilizopo</div><div style="font-size:13px;color:#7f8c8d">Chagua bidhaa ('+existingProducts.length+' bidhaa)</div></div><span style="color:#95a5a6;font-size:20px">›</span></div>'+(selectedProduct?'<div class="selected-banner '+(isOwnerOfSelected?'':'non-owner')+'"><div class="selected-banner-header"><div class="selected-banner-title">'+(modalMode==='edit'?ic('edit',13)+' Unahariri':ic('box',13)+' Ongeza Hisa')+': '+escapeHtml(selectedProduct.name)+'</div><div class="selected-banner-close" onclick="clearSelectedProduct()">✖</div></div><div style="font-size:12px;color:#7f8c8d">Kategoria: '+escapeHtml(selectedProduct.category||'N/A')+' • Hisa: '+(selectedProduct.stock||0)+' • Bei ya Kununua: '+formatCurrency(selectedProduct.price)+(selectedProduct.expected_selling_price?' • Kuuzia: '+formatCurrency(selectedProduct.expected_selling_price):'')+'</div></div>':'')+'<div class="input-group"><label class="label">Jina la Bidhaa *</label><input type="text" id="fName" placeholder="Weka jina kamili" value="'+escapeHtml(formData.name)+'" '+(selectedProduct&&modalMode==='add'?'disabled':'')+'></div><div class="input-group"><label class="label">Kategoria *</label><div class="categories-scroll">'+ch+'</div><div id="customCatWrap" style="margin-top:12px;padding:12px;background:#e8f4fd;border-radius:14px;border-left:4px solid #3498db;display:'+(showCustomCategory?'block':'none')+'"><input type="text" id="fCustomCat" placeholder="Andika kategoria yako" value="'+escapeHtml(customCategory)+'"></div></div><div class="input-group"><label class="label">Bei ya Kununua *</label><div class="price-container"><input type="number" id="fPrice" placeholder="Bei ya kununua" value="'+formData.price+'" '+(!pe?'disabled':'')+'><div class="price-preview" id="pp1" style="display:'+(formData.price?'block':'none')+'"><small>TZS</small> <strong id="ppv1">'+(formData.price?parseInt(formData.price).toLocaleString():'')+'</strong></div></div>'+(!pe&&selectedProduct?'<div style="font-size:12px;color:#e74c3c;margin-top:4px;font-style:italic">Bei haibadilishwi unapoongeza hisa</div>':'')+'</div><div class="input-group"><label class="label">Bei ya Kuuzia *</label><div class="price-container"><input type="number" id="fExpPrice" placeholder="Bei unayotaka kauzia" value="'+formData.expected_selling_price+'" '+(!pe?'disabled':'')+'><div class="price-preview" id="pp2" style="display:'+(formData.expected_selling_price?'block':'none')+'"><small>TZS</small> <strong id="ppv2">'+(formData.expected_selling_price?parseInt(formData.expected_selling_price).toLocaleString():'')+'</strong></div></div></div>'+(pd?'<div class="price-diff '+(pd.diff>=0?'positive':'negative')+'"><div style="font-weight:700;color:#2c3e50">'+(pd.diff>=0?'Faida':'Hasara')+'</div><div class="price-diff-row"><span>Faida/bidhaa:</span><strong style="color:'+(pd.diff>=0?'#27ae60':'#e74c3c')+'">'+pd.formatted+'</strong></div><div class="price-diff-row"><span>Asilimia:</span><strong style="color:'+(pd.diff>=0?'#27ae60':'#e74c3c')+'">'+pd.pctFormatted+'</strong></div></div>':'')+'<div class="input-group"><label class="label">'+(modalMode==='edit'?'Idadi Mpya':(selectedProduct&&modalMode==='add'?'Idadi ya Kuongeza':'Idadi ya Bidhaa'))+' *</label><input type="number" id="fStock" placeholder="'+(selectedProduct&&modalMode==='add'?'Weka idadi ya kuongeza':'Weka idadi')+'" value="'+formData.stock+'">'+(selectedProduct&&modalMode==='add'?'<div style="font-size:13px;color:#27ae60;margin-top:6px">Sasa: '+(selectedProduct.stock||0)+' → Jumla: '+(parseInt(selectedProduct.stock||0)+parseInt(formData.stock||0))+'</div>':'')+'</div><button id="submitBtn" class="submit-btn '+sc+' '+(!iv?'disabled':'')+'" '+(!iv?'disabled':'')+'>'+(loading?'<div class="loading-spinner"></div>':sl)+'</button></div><div id="previewArea"></div>';
 document.getElementById('submitBtn')?.addEventListener('click',handleSubmit);document.getElementById('fName')?.addEventListener('input',e=>{formData.name=e.target.value;updateDynamic();});document.getElementById('fPrice')?.addEventListener('input',e=>{formData.price=e.target.value.replace(/[^0-9]/g,'');updateDynamic();});document.getElementById('fExpPrice')?.addEventListener('input',e=>{formData.expected_selling_price=e.target.value.replace(/[^0-9]/g,'');updateDynamic();});document.getElementById('fStock')?.addEventListener('input',e=>{formData.stock=e.target.value.replace(/[^0-9]/g,'');updateDynamic();});document.getElementById('fCustomCat')?.addEventListener('input',e=>{customCategory=e.target.value;formData.category=customCategory;updateDynamic();});document.querySelectorAll('.category-chip').forEach(el=>{el.addEventListener('click',()=>{const cat=el.getAttribute('data-cat');if(cat==='Nyingine'){showCustomCategory=true;formData.category='';document.getElementById('customCatWrap').style.display='block';}else{showCustomCategory=false;formData.category=cat;document.getElementById('customCatWrap').style.display='none';const q=quickFillData[cat];if(q&&!formData.name){formData.name=q.name;formData.price=q.price;formData.expected_selling_price=q.expected_selling_price;formData.stock=q.stock;const fn=document.getElementById('fName'),fp=document.getElementById('fPrice'),fe=document.getElementById('fExpPrice'),fs=document.getElementById('fStock');if(fn)fn.value=q.name;if(fp)fp.value=q.price;if(fe)fe.value=q.expected_selling_price;if(fs)fs.value=q.stock;}}updateDynamic();});});updateDynamic();}
-function updateDynamic(){document.querySelectorAll('.category-chip').forEach(el=>{el.classList.toggle('selected',formData.category===el.getAttribute('data-cat'));});const p1=document.getElementById('pp1'),v1=document.getElementById('ppv1');if(p1&&v1){p1.style.display=formData.price?'block':'none';v1.textContent=formData.price?parseInt(formData.price).toLocaleString():'';}const p2=document.getElementById('pp2'),v2=document.getElementById('ppv2');if(p2&&v2){p2.style.display=formData.expected_selling_price?'block':'none';v2.textContent=formData.expected_selling_price?parseInt(formData.expected_selling_price).toLocaleString():'';}const sb=document.getElementById('submitBtn');if(sb){sb.disabled=!iv;sb.classList.toggle('disabled',!iv);}const pa=document.getElementById('previewArea');if(pa&&(formData.name||formData.price||formData.expected_selling_price)){const d=getPriceDiff();pa.innerHTML='<div class="preview-card"><div class="preview-inner"><div style="font-weight:700;margin-bottom:12px">Hakiki:</div><div><strong>'+escapeHtml(formData.name||'Jina')+'</strong></div><div style="font-size:13px;color:#7f8c8d">Kategoria: '+escapeHtml(formData.category||'N/A')+'</div><div style="display:flex;justify-content:space-between;margin-top:10px"><div>Bei: <strong style="color:#3498db">'+formatCurrency(formData.price)+'</strong></div><div>Kuuzia: <strong style="color:#27ae60">'+formatCurrency(formData.expected_selling_price)+'</strong></div></div>'+(d?'<div style="margin-top:8px;font-size:13px">Faida: <strong style="color:'+(d.diff>=0?'#27ae60':'#e74c3c')+'">'+d.formatted+' ('+d.pctFormatted+')</strong></div>':'')+'<div style="margin-top:8px">Idadi: '+(formData.stock||0)+'</div></div></div>';}else if(pa)pa.innerHTML='';}
+function updateDynamic(){document.querySelectorAll('.category-chip').forEach(el=>{el.classList.toggle('selected',formData.category===el.getAttribute('data-cat'));});const p1=document.getElementById('pp1'),v1=document.getElementById('ppv1');if(p1&&v1){p1.style.display=formData.price?'block':'none';v1.textContent=formData.price?parseInt(formData.price).toLocaleString():'';}const p2=document.getElementById('pp2'),v2=document.getElementById('ppv2');if(p2&&v2){p2.style.display=formData.expected_selling_price?'block':'none';v2.textContent=formData.expected_selling_price?parseInt(formData.expected_selling_price).toLocaleString():'';}const sb=document.getElementById('submitBtn');if(sb){sb.disabled=!iv;sb.classList.toggle('disabled',!iv);}const pa=document.getElementById('previewArea');if(pa&&(formData.name||formData.price||formData.expected_selling_price)){const d=getPriceDiff();pa.innerHTML='<div class="preview-card"><div class="preview-inner"><div style="font-weight:700;margin-bottom:12px">Hakiki:</div><div><strong>'+escapeHtml(formData.name||'Jina')+'</strong></div><div style="font-size:13px;color:#7f8c8d">Kategoria: '+escapeHtml(formData.category||'N/A')+'</div><div style="display:flex;justify-content:space-between;margin-top:10px"><div>Bei ya Kununua: <strong style="color:#3498db">'+formatCurrency(formData.price)+'</strong></div><div>Kuuzia: <strong style="color:#27ae60">'+formatCurrency(formData.expected_selling_price)+'</strong></div></div>'+(d?'<div style="margin-top:8px;font-size:13px">Faida: <strong style="color:'+(d.diff>=0?'#27ae60':'#e74c3c')+'">'+d.formatted+' ('+d.pctFormatted+')</strong></div>':'')+'<div style="margin-top:8px">Idadi: '+(formData.stock||0)+'</div></div></div>';}else if(pa)pa.innerHTML='';}
 function setupSidebar(){document.getElementById('mobileMenuToggle')?.addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('open'));document.getElementById('logoutBtn')?.addEventListener('click',()=>{localStorage.clear();window.location.href='../login?role=msimamizi';});}
 async function init(){setupSidebar();if(!loadUserData())return;await fetchExistingProducts();renderUI();}
 init();
 </script>
 <div id="aiImportModal" class="ai-modal-overlay">
 <div class="ai-modal-content">
-<div class="ai-modal-header"><div class="ai-modal-title">Ingiza Kwa Picha (AI)</div><div class="ai-modal-close" onclick="closeAiImportModal()">âœ–</div></div>
+<div class="ai-modal-header"><div class="ai-modal-title">Ingiza Kwa Picha (AI)</div><div class="ai-modal-close" onclick="closeAiImportModal()">✖</div></div>
 <div class="ai-modal-body">
 <div id="aiBanner" class="ai-banner"></div>
 <div class="ai-biz-card">
@@ -167,7 +167,7 @@ ov.addEventListener('click',function(e){if(e.target===ov)done(false);});
 }
 function populateAiBizTypes(){
 var sel=$('aiBizType');if(!sel)return;
-if(sel.options.length===0){sel.innerHTML='<option value="">â€” Chagua Aina ya Biashara â€”</option>'+AI_BIZ_TYPES.map(function(t){return '<option value="'+esc(t[0])+'">'+esc(t[1])+'</option>';}).join('');}
+if(sel.options.length===0){sel.innerHTML='<option value="">— Chagua Aina ya Biashara —</option>'+AI_BIZ_TYPES.map(function(t){return '<option value="'+esc(t[0])+'">'+esc(t[1])+'</option>';}).join('');}
 sel.onchange=function(){var w=$('aiBizTypeCustomWrap');if(w)w.style.display=sel.value==='__custom__'?'block':'none';};
 }
 // Sets the business-type select from a stored value; unknown/custom values
@@ -243,7 +243,7 @@ var list=Array.prototype.slice.call(files||[]);
 for(var i=0;i<list.length;i++){
 var f=list[i];
 var okType=f.type.indexOf('image/')===0||/\.(png|jpe?g|webp|heic|heif|bmp|tiff?)$/i.test(f.name);
-if(!okType){showAiBanner('error','Picha "'+(f.name||'')+'" imekataliwa â€” aina ya faili haikubaliki.');continue;}
+if(!okType){showAiBanner('error','Picha "'+(f.name||'')+'" imekataliwa — aina ya faili haikubaliki.');continue;}
 if(aiImages.length>=AI_MAX_IMAGES){showAiBanner('error','Umechagua picha '+aiImages.length+'. Upeo ni picha '+AI_MAX_IMAGES+'.');break;}
 var item={id:'ai'+Date.now()+'_'+i+Math.random().toString(36).slice(2,6),name:f.name||('image'+(i+1)),base64:null,preview:null};
 aiImages.push(item);
@@ -263,7 +263,7 @@ if(aiImages.length===0){grid.innerHTML='';}
 else{
 grid.innerHTML=aiImages.map(function(im){
 var src=im.preview||'';
-return '<div class="ai-preview-item"><img src="'+esc(src)+'" alt=""><span class="ai-preview-remove" onclick="removeAiImage(\''+im.id+'\')">âœ•</span><div class="ai-preview-name">'+esc(im.name)+'</div></div>';
+return '<div class="ai-preview-item"><img src="'+esc(src)+'" alt=""><span class="ai-preview-remove" onclick="removeAiImage(\''+im.id+'\')">✕</span><div class="ai-preview-name">'+esc(im.name)+'</div></div>';
 }).join('');
 }
 var pb=$('aiProcessBtn');
@@ -384,8 +384,13 @@ return '<tr>'+
 '</tr>';
 }).join('');
 }
-async function verifyAiRow(i){
-if(aiVerifyBusy||aiBatchBusy||aiProcessing)return;
+async function verifyAiRow(i,fromBatch){
+// aiBatchBusy is set by verifyAllAiRows, which then calls this function for each
+// row. Without the fromBatch flag the batch blocks the very rows it is meant to
+// submit, so nothing would ever be saved.
+if(aiProcessing)return;
+if(aiVerifyBusy&&!fromBatch)return;
+if(aiBatchBusy&&!fromBatch)return;
 var row=aiRows[i];
 if(!row||row.verified)return;
 var nameEl=$('aiName'+i),qtyEl=$('aiQty'+i),buyEl=$('aiBuy'+i),sellEl=$('aiSell'+i);
@@ -398,7 +403,7 @@ var sellRaw=sellEl?(sellEl.value||''):'';
 var buy=buyRaw===''?null:Number(buyRaw);
 var sell=sellRaw===''?null:Number(sellRaw);
 if(sell===null||!Number.isFinite(sell)||sell<=0){showAiBanner('error','Weka bei ya kuuzia kabla ya kuthibitisha.');return;}
-if(buy!==null&&(!Number.isFinite(buy)||buy<0)){showAiBanner('error','Bei ya kununua haifai â€” tumia nambari isiyo hasi.');return;}
+if(buy!==null&&(!Number.isFinite(buy)||buy<0)){showAiBanner('error','Bei ya kununua haifai — tumia nambari isiyo hasi.');return;}
 var payloadItem={
 verificationToken:row.verificationToken,
 action:row.status,
@@ -421,7 +426,7 @@ var r=await fetch(API_BASE_URL+'/api/inventory/ai-import/verify',{method:'POST',
 var data=await r.json().catch(function(){return{};});
 if(r.ok){
 row.verified=true;row.verifiedResult=data;
-// Update only this row's action cell + summary â€” a full re-render would
+// Update only this row's action cell + summary — a full re-render would
 // reset edits the user has typed in the other rows.
 allBtns.forEach(function(b){b.disabled=false;});
 var td=btn?btn.closest('td'):null;
@@ -434,7 +439,7 @@ allBtns.forEach(function(b){b.disabled=false;});
 if(btn){btn.innerHTML='Thibitisha';}
 var msg=data.error||'Uthibitisho umeshindikana. Jaribu tena.';
 if(data.code==='PRODUCT_EXISTS'){
-// The product is already in the business â€” treat the row as saved
+// The product is already in the business — treat the row as saved
 // instead of showing an error the user cannot act on.
 row.verified=true;row.verifiedResult={alreadyVerified:true};
 allBtns.forEach(function(b){b.disabled=false;});
@@ -442,7 +447,7 @@ var td2=btn?btn.closest('td'):null;
 if(td2)td2.innerHTML='<span class="ai-verified-tag">Imethibitishwa</span>';
 updateAiSummary();
 await fetchExistingProducts();
-showAiBanner('info','Bidhaa "'+name+'" tayari ipo kwenye biashara yako â€” imehifadhiwa.');
+showAiBanner('info','Bidhaa "'+name+'" tayari ipo kwenye biashara yako — imehifadhiwa.');
 return;
 }
 showAiBanner('error',msg);
@@ -459,7 +464,9 @@ aiVerifyBusy=false;
 // one-by-one using the same validation and per-row logic as a single
 // "Thibitisha" click. In-row edits are already synced to aiRows state.
 async function verifyAllAiRows(){
-if(aiVerifyBusy||aiBatchBusy||aiProcessing)return;
+if(aiProcessing){showAiBanner('info','Chambua picha kwanza.');return;}
+if(aiVerifyBusy){showAiBanner('info','Tafutani inaendelea. Subiri kidogo.');return;}
+if(aiBatchBusy){showAiBanner('info','Bidhaa zinahifadhiwa tayari. Subiri kidogo.');return;}
 var pending=aiRows.filter(function(r){return !r.verified;});
 if(!pending.length){showAiBanner('info','Bidhaa zote zilizothibitishwa tayari.');return;}
 
@@ -488,23 +495,34 @@ if(!ok)return;
 
 aiBatchBusy=true;
 var statusEl=$('aiVerifyAllStatus');
+var allBtn=$('aiVerifyAllBtn');
+var allBtnHtml=allBtn?allBtn.innerHTML:'';
 var saved=0,failed=0;
+try{
 for(var j=0;j<aiRows.length;j++){
 if(aiRows[j].verified)continue;
 if(statusEl)statusEl.textContent='Inahifadhi '+(saved+failed+1)+'/'+pending.length+'...';
+// verifyAiRow re-enables every .ai-verify-btn, including this one, so the
+// disabled + spinner state has to be reapplied on each pass.
+if(allBtn){allBtn.disabled=true;allBtn.innerHTML=ic('refresh',14)+' Inahifadhi '+(saved+failed+1)+'/'+pending.length;}
 var before=aiRows.filter(function(r){return r.verified;}).length;
 try{
-await verifyAiRow(j);
+await verifyAiRow(j,true);
 }catch(e){}
 var after=aiRows.filter(function(r){return r.verified;}).length;
 if(after>before)saved++;else failed++;
 }
+}finally{
+// Must always run: if the loop throws, a stuck aiBatchBusy would silently
+// disable both this button and every single-row "Thibitisha" button.
 aiBatchBusy=false;
+if(allBtn){allBtn.disabled=false;allBtn.innerHTML=allBtnHtml;}
+}
 if(statusEl)statusEl.textContent='';
 if(failed===0){
 showAiBanner('info','Zote '+saved+' bidhaa zimehifadhiwa kikamilifu!');
 }else{
-showAiBanner('error',saved+' zimehifadhiwa, '+failed+' zilishindikana â€” rekebisha na ujaribu tena.');
+showAiBanner('error',saved+' zimehifadhiwa, '+failed+' zilishindikana — rekebisha na ujaribu tena.');
 }
 }
 function resetAiSession(){
@@ -516,6 +534,9 @@ refreshAiUploadUi();
 }
 function openAiImportModal(){
 var m=$('aiImportModal');if(m)m.classList.add('show');
+// Clear any lock left behind by an interrupted run, otherwise every verify
+// button in the modal would be silently inert.
+aiBatchBusy=false;aiVerifyBusy=false;
 initAiUploadHandlers();
 populateAiBizTypes();
 loadAiBusinessProfile();
@@ -526,6 +547,7 @@ hideAiBanner();
 function closeAiImportModal(){
 var m=$('aiImportModal');if(m)m.classList.remove('show');
 stopAiProgress();
+aiBatchBusy=false;aiVerifyBusy=false;
 }
 window.openAiImportModal=openAiImportModal;
 window.closeAiImportModal=closeAiImportModal;

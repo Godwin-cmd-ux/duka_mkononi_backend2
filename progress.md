@@ -2377,3 +2377,94 @@ test created its own uniquely-named temporary row and removed it, and every
 mutated existing row was snapshot-restored and then re-verified. Independent
 count after the run: `2079` products total, `7` with a buying price - the same
 `7` that existed before, all intact.
+
+---
+
+## CORRECTION: products.price IS the buying price ("Bei ya Kununua")
+
+**This section supersedes every statement above that says `cost_price` holds the
+buying price.** That earlier conclusion was wrong and has been fully reversed.
+
+### The rule now in force
+
+| Meaning | Column | Notes |
+| --- | --- | --- |
+| Bei ya Kununua (buying) | `products.price` | authoritative, NOT NULL |
+| Bei ya Kuuzia (selling) | `products.expected_selling_price` | nullable |
+| Profit | selling - buying | never a fabricated value |
+| `products.cost_price` | legacy backup | **no longer written, never displayed** |
+
+Data confirmed this reading: before the change, all 7 populated `cost_price`
+values sat strictly **below** `price`, and 2044 rows had
+`expected_selling_price > price`. `price` was already the selling price, which
+is exactly why the AI path wrote the selling price into it and the report then
+divided a price by a cost to get nonsense.
+
+### Migration of existing data
+
+Snapshot of the 7 affected rows was taken first
+(`C:\eas-temp\opencode\buyingprice_backup_7rows.txt`), then:
+
+```sql
+UPDATE products
+SET expected_selling_price = COALESCE(expected_selling_price, price),
+    price = cost_price,
+    updated_at = now()
+WHERE cost_price IS NOT NULL;
+```
+
+No rows were deleted, no schema changed, and `cost_price` was deliberately left
+in place as a legacy copy. 3 of the 7 (Kalamu, Marker pen, Pencil) had no
+selling price recorded; their previous `price` was preserved as
+`expected_selling_price` before being overwritten, since the old AI path had
+been writing the selling price there. Those 3 inferred selling values are worth
+a sanity check with the owner.
+
+### Code changed
+
+- `ProductController` - `price` is the buying price, `expected_selling_price` the
+  selling price. `cost_price` writes removed. Omitting `price` on an update no
+  longer overwrites it with 0, and omitting the selling price no longer erases
+  the stored one.
+- `AiImportController` - `buyingPrice` writes to `price`, `sellingPrice` writes
+  to `expected_selling_price`; no `cost_price` write on either the NEW or the
+  EXISTING branch.
+- `ProfitController` - daily and monthly cost-of-goods now read
+  `products.price`. A missing buying price is counted in a new
+  `items_with_unknown_buying_price` counter instead of being coerced to 0,
+  which previously overstated profit.
+- `server.js` - the same mapping in `POST`/`PUT /api/products`, in both AI
+  branches, and in the daily/monthly profit queries. The destructive
+  unconditional `cost_price` write in `PUT` is gone.
+- `bidhaa-mpya` (Blade + Expo) - the duplicate `cost_price` input was removed and
+  the real `price` field is labelled `Bei ya Kununua`. Add-stock now sends only
+  name, category and stock. The product list, the selected-product banner and the
+  Hakiki preview all read the buying price from `price`.
+- `ripoti` (Blade + Expo) - buying basis reads `product.price`, selling basis
+  reads `expected_selling_price`, and projected profit is their difference.
+- `preview` (Blade + Expo) - profit basis reads `product.price`; these two files
+  still preferred the legacy `cost_price` and were the last stragglers.
+- Locale files (all 8 languages) - buying-price wording corrected, and the
+  dead `cost_price_hint`, `cost_price_placeholder`, `cost_price_label` and
+  `modal_cost_price` keys removed.
+
+### Verification against the real database
+
+`C:\eas-temp\opencode\test_price_rule.php` - **38 passed, 0 failed**, driving
+the real `ProductController` and `AiImportController` over Supabase REST:
+manual create 201 with buying in `price`; add-stock preserved both prices;
+edit wrote the new buying price; AI NEW mapped both prices correctly; AI
+EXISTING did **not** overwrite buying with selling; World Choice Perfume reads
+45000 / 55000 for a 10000 profit; all 7 migrated products compute the right
+margin; no product has a zero or missing buying price; all 7 legacy
+`cost_price` rows intact; no test rows left behind. Independent count after the
+run: `2079` products, `7` legacy `cost_price`, `0` temporary rows.
+
+### IMPORTANT: never use the `DB::` facade to inspect this data
+
+`App\Models\*` extends `SupabaseModel`, which reaches Postgres through the
+Supabase REST API. The default Laravel connection is a **local sqlite file**
+(`database/database.sqlite`, `DB_CONNECTION=sqlite`) holding a single
+placeholder product and one user. Verifying real data through `DB::table(...)`
+silently reads that decoy instead of production. Always verify through the
+models or `C:\eas-temp\opencode\sql.php`.

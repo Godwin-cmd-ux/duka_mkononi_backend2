@@ -33,6 +33,7 @@ class ProfitController extends BaseController
 
             $grossRevenue = 0;
             $costOfGoods = 0;
+            $unknownBuyingPriceItems = 0;
 
             if (count($userIds) > 0) {
                 $sales = Sale::whereIn('seller_id', $userIds)->where('sale_date', $targetDate)->get();
@@ -62,8 +63,15 @@ class ProfitController extends BaseController
                 }
 
                 foreach ($items as $item) {
-                    $costPrice = isset($productsById[$item->product_id]) ? (float)($productsById[$item->product_id]->cost_price ?? 0) : 0;
-                    $costOfGoods += (float)($item->quantity ?? 0) * $costPrice;
+                    // "Bei ya Kununua" is products.price. A missing buying price
+                    // is counted as unknown instead of being treated as 0, which
+                    // would otherwise overstate the profit.
+                    $rawPrice = isset($productsById[$item->product_id]) ? $productsById[$item->product_id]->price : null;
+                    if ($rawPrice === null) {
+                        $unknownBuyingPriceItems++;
+                        continue;
+                    }
+                    $costOfGoods += (float)($item->quantity ?? 0) * (float)$rawPrice;
                 }
             }
 
@@ -109,6 +117,7 @@ class ProfitController extends BaseController
                     'cost_of_goods' => round($costOfGoods, 2),
                 ],
                 'gross_profit' => round($grossProfit, 2),
+                'items_with_unknown_buying_price' => $unknownBuyingPriceItems,
                 'expenses' => [
                     'total' => round($totalExpenses, 2),
                     'by_category' => $expensesByCategory ?: new \stdClass(),
@@ -151,6 +160,7 @@ class ProfitController extends BaseController
 
             $totalRevenue = 0;
             $totalCostOfGoods = 0;
+            $unknownBuyingPriceItems = 0;
 
             if (count($userIds) > 0) {
                 $sales = Sale::whereIn('seller_id', $userIds)->where('sale_date', '>=', $startDate)->where('sale_date', '<=', $endDate)->get();
@@ -180,8 +190,14 @@ class ProfitController extends BaseController
                 }
 
                 foreach ($items as $item) {
-                    $costPrice = isset($productsById[$item->product_id]) ? (float)($productsById[$item->product_id]->cost_price ?? 0) : 0;
-                    $totalCostOfGoods += (float)($item->quantity ?? 0) * $costPrice;
+                    // "Bei ya Kununua" is products.price; unknown buying prices
+                    // are excluded rather than counted as a cost of 0.
+                    $rawPrice = isset($productsById[$item->product_id]) ? $productsById[$item->product_id]->price : null;
+                    if ($rawPrice === null) {
+                        $unknownBuyingPriceItems++;
+                        continue;
+                    }
+                    $totalCostOfGoods += (float)($item->quantity ?? 0) * (float)$rawPrice;
                 }
             }
 
@@ -217,6 +233,7 @@ class ProfitController extends BaseController
                     'gross_profit' => round($grossProfit, 2),
                     'total_expenses' => round($totalExpenses, 2),
                     'net_profit' => round($netProfit, 2),
+                    'items_with_unknown_buying_price' => $unknownBuyingPriceItems,
                     'expense_categories' => $expenseCategories ?: new \stdClass(),
                 ],
                 'daily_breakdown' => $dailyBreakdown,

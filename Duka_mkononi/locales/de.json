@@ -1308,7 +1308,6 @@
     "modal_customer_label": "Mteja:",
     "modal_seller_label": "Muuzaji:",
     "modal_invoice_label": "Invoice: {n}",
-    "modal_cost_price": "Bei ununuzi: {cost}  Bei mauzo: {sell}",
     "modal_profit": "Faida: {amount}",
     "modal_more_sales": "...na mauzo mengine {n}",
     "modal_final_title": "Endgültige Zusammenfassung",
