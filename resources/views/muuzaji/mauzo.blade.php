@@ -1,10 +1,9 @@
+@include('partials.dm-locale')
 @verbatim
-<!DOCTYPE html>
-<html lang="sw">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Mauzo - Dukamkononi Muuzaji</title>
+    <title data-i18n="muuzaji_mauzo.page_title">Mauzo - Dukamkononi Muuzaji</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
     <style>
@@ -695,6 +694,7 @@
 </head>
 <body>
 @endverbatim
+@include('partials.dm-lang-widget')
 @include('partials.toast')
 @include('partials.photo-viewer')
 @verbatim
@@ -708,10 +708,10 @@
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="logo-area">
-                    <div class="logo-icon">D</div>
+                    <div class="logo-icon" data-i18n="muuzaji_mauzo.logo_short">D</div>
                     <div class="logo-text">
-                        <h2>DukaMkononi</h2>
-                        <p>Muuzaji Portal</p>
+                        <h2 data-i18n="muuzaji_mauzo.logo_brand">DukaMkononi</h2>
+                        <p data-i18n="muuzaji_mauzo.logo_tagline">Muuzaji Portal</p>
                     </div>
                 </div>
             </div>
@@ -723,7 +723,7 @@
                             <path d="M4 21C4 16.6 7.6 13 12 13C16.4 13 20 16.6 20 21" stroke-linecap="round"/>
                         </svg>
                     </div>
-                    <span class="nav-label">Profaili</span>
+                    <span class="nav-label" data-i18n="muuzaji_mauzo.nav_profile">Profaili</span>
                 </a>
                 <a href="mauzo" class="nav-item active">
                     <div class="nav-icon">
@@ -733,7 +733,7 @@
                             <path d="M6 9.5V9.51M18 14.5V14.51" stroke-linecap="round"/>
                         </svg>
                     </div>
-                    <span class="nav-label">Mauzo</span>
+                    <span class="nav-label" data-i18n="muuzaji_mauzo.nav_sales">Mauzo</span>
                 </a>
                 <a href="matumizi" class="nav-item">
                     <div class="nav-icon">
@@ -742,7 +742,7 @@
                             <path d="M8 7V17M12 7V17M16 7V17"/>
                         </svg>
                     </div>
-                    <span class="nav-label">Matumizi</span>
+                    <span class="nav-label" data-i18n="muuzaji_mauzo.nav_expenses">Matumizi</span>
                 </a>
                 <a href="uza" class="nav-item">
                     <div class="nav-icon">
@@ -752,7 +752,7 @@
                             <path d="M3 3H5L7.4 15.2C7.55 15.95 8.2 16.5 8.97 16.5H17.6C18.32 16.5 18.94 16 19.08 15.3L21 7H6" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </div>
-                    <span class="nav-label">Uza</span>
+                    <span class="nav-label" data-i18n="muuzaji_mauzo.nav_sell">Uza</span>
                 </a>
             </div>
             <div class="sidebar-footer">
@@ -760,14 +760,14 @@
                     <div class="user-avatar" id="userAvatar">M</div>
                     <div class="user-details">
                         <div class="user-name" id="userName">Muuzaji</div>
-                        <div class="user-role">Muuzaji</div>
+                        <div class="user-role" data-i18n="muuzaji_mauzo.nav_seller">Muuzaji</div>
                     </div>
                 </div>
                 <div class="logout-btn" id="logoutBtn">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                         <path d="M15 3H19C20.1 3 21 3.9 21 5V19C21 20.1 20.1 21 19 21H15M10 17L15 12L10 7M15 12H3"/>
                     </svg>
-                    <span>Ondoka</span>
+                    <span data-i18n="muuzaji_mauzo.btn_logout">Ondoka</span>
                 </div>>
             </div>
         </aside>
@@ -776,7 +776,7 @@
             <div class="page-container" id="mauzoContent">
                 <div class="loading-container">
                     <div class="loading-spinner"></div>
-                    <div class="loading-text">Inapakua data ya mauzo...</div>
+                    <div class="loading-text" data-i18n="muuzaji_mauzo.loading">Inapakua data ya mauzo...</div>
                 </div>
             </div>
         </main>
@@ -786,13 +786,13 @@
     <div id="editModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
-                <div class="modal-title">Hariri Mauzo</div>
+                <div class="modal-title" data-i18n="muuzaji_mauzo.modal_title">Hariri Mauzo</div>
                 <div class="close-modal" onclick="closeEditModal()"><i class="fa-solid fa-xmark" style="font-size:20px;" aria-hidden="true"></i></div>
             </div>
             <div class="modal-body" id="editModalBody"></div>
             <div class="modal-footer">
-                <button class="cancel-btn" id="cancelEditSaleBtn" onclick="closeEditModal()">Ghairi</button>
-                <button class="save-btn" id="saveEditSaleBtn" onclick="updateSale()">Hifadhi Mabadiliko</button>
+                <button class="cancel-btn" id="cancelEditSaleBtn" onclick="closeEditModal()" data-i18n="muuzaji_mauzo.btn_cancel">Ghairi</button>
+                <button class="save-btn" id="saveEditSaleBtn" onclick="updateSale()" data-i18n="muuzaji_mauzo.btn_save_changes">Hifadhi Mabadiliko</button>
             </div>
         </div>
     </div>
@@ -801,17 +801,92 @@
     <div id="confirmModal" class="modal-overlay">
         <div class="confirm-modal">
             <div class="warning-icon"><i class="fa-solid fa-triangle-exclamation" style="font-size:44px;color:#f39c12;" aria-hidden="true"></i></div>
-            <div class="confirm-title">Funga Mauzo Ya Leo?</div>
+            <div class="confirm-title" data-i18n="muuzaji_mauzo.confirm_title">Funga Mauzo Ya Leo?</div>
             <div class="confirm-text" id="confirmText"></div>
             <div class="confirm-buttons">
-                <button class="confirm-cancel" onclick="closeConfirmModal()">Ghairi</button>
-                <button class="confirm-close" id="confirmCloseBtn" onclick="closeTodaySales()"><i class="fa-solid fa-lock" style="font-size:13px;" aria-hidden="true"></i> Funga Mauzo</button>
+                <button class="confirm-cancel" onclick="closeConfirmModal()" data-i18n="muuzaji_mauzo.btn_cancel">Ghairi</button>
+                <button class="confirm-close" id="confirmCloseBtn" onclick="closeTodaySales()"><i class="fa-solid fa-lock" style="font-size:13px;" aria-hidden="true"></i> <span data-i18n="muuzaji_mauzo.btn_close_sales">Funga Mauzo</span></button>
             </div>
         </div>
     </div>
 
     <script>
         const API_BASE_URL = '';
+
+        const SW = {
+            loading: 'Inapakua data ya mauzo...',
+            nav_seller: 'Muuzaji',
+            nav_sales: 'Mauzo',
+            photo_alt: 'Picha',
+            err_no_permission: 'Huna ruhusa ya kuingia kwenye eneo la Muuzaji.',
+            customer_unknown: 'Mteja Bila Jina',
+            product_fallback: 'Bidhaa',
+            btn_saving: 'Inahifadhi...',
+            btn_save_changes: 'Hifadhi Mabadiliko',
+            msg_edit_success: 'Mauzo yamehaririwa kikamilifu!',
+            err_server_not_updated: 'Server haijasasishwa bado, kwa hivyo kuhariri mauzo hakujawasilishwa. Mwambie msimamizi wa mfumo asasishe server.',
+            err_edit_retry: 'Imeshindikana kuhariri mauzo. Jaribu tena.',
+            err_edit_failed: 'Imeshindikana kuhariri mauzo',
+            err_edit_network: 'Imeshindikana kuhariri mauzo. Angalia muunganisho na ujaribu tena.',
+            msg_closed_success: 'Mauzo ya leo yamefungwa kikamilifu!',
+            err_closed_no_edit: 'Mauzo ya leo yamefungwa, hayawezi kuhaririwa tena.',
+            receipt_brand: 'DUKAMKONONI',
+            receipt_title: 'RISITI YA MAUZO',
+            receipt_number: 'Nambari:',
+            receipt_date: 'Tarehe:',
+            receipt_time: 'Muda:',
+            label_customer: 'Mteja:',
+            label_quantity: 'Kiasi',
+            price_header: 'Bei',
+            total_header: 'Jumla',
+            receipt_total: 'Jumla:',
+            receipt_thanks: 'Asante kwa Kununua Nasi!',
+            receipt_doc_title: 'Risiti -',
+            confirm_close_text: 'Mauzo {count} ya leo yatafungwa na hayawezi kuhaririwa tena.',
+            confirm_total_label: 'Jumla ya leo:',
+            confirm_customers_label: 'Wateja walionunua leo:',
+            label_invoice_number: 'Nambari ya Ankra',
+            label_product_name: 'Jina la Bidhaa',
+            label_selling_price: 'Bei ya Uuzaji (TZS)',
+            label_customer_name: 'Jina la Mteja *',
+            placeholder_customer_name: 'Weka jina la mteja',
+            summary_title: 'Muhtasari wa Mabadiliko',
+            label_product_colon: 'Bidhaa:',
+            label_qty_old: 'Kiasi (Zamani):',
+            label_qty_new: 'Kiasi (Mpya):',
+            label_selling_price_colon: 'Bei ya Uuzaji:',
+            nameless: 'Bila Jina',
+            label_grand_total: 'Jumla kamili:',
+            summary_hint: 'Kiongeza kiasi = kuuza zaidi; kupunguza = kurudisha stoo',
+            title_today_sales: 'Mauzo Ya Leo',
+            badge_closed: 'IMEFUNGWA',
+            stat_total_label: 'Jumla Ya Leo',
+            stat_customers_label: 'Wateja',
+            empty_title: 'Hakuna Mauzo Ya Leo',
+            empty_text: 'Bado haujafanya mauzo yoyote leo. Nenda kwenye ukurasa wa kuuza.',
+            btn_go_sell: 'Nenda Kuuza',
+            btn_close_today: 'FUNGA MAUZO YA LEO',
+            btn_edit: 'Hariri',
+            btn_receipt: 'Dai Risiti',
+            payment_cash: 'Fedha Taslimu',
+            payment_card: 'Malipo ya Kadi'
+        };
+        // Accepts either a bare key ('err_edit_failed') or a fully qualified one
+        // ('muuzaji_mauzo.err_edit_failed'); {placeholders} are filled from params
+        // (the SW path; DM.t already applies them when the catalog resolves).
+        function t(key, params) {
+            const full = key.indexOf('muuzaji_mauzo.') === 0 ? key : 'muuzaji_mauzo.' + key;
+            if (window.DM && typeof window.DM.t === 'function') {
+                const hit = window.DM.t(full, params);
+                if (hit !== full) return hit;
+            }
+            const bare = key.indexOf('.') > -1 ? key.split('.').pop() : key;
+            let value = Object.prototype.hasOwnProperty.call(SW, bare) ? SW[bare] : key;
+            if (params) {
+                for (const k in params) value = String(value).split('{' + k + '}').join(String(params[k]));
+            }
+            return value;
+        }
         
         let salesData = [];
         let loading = true;
@@ -841,7 +916,7 @@
             const save = document.getElementById('saveEditSaleBtn');
             const cancel = document.getElementById('cancelEditSaleBtn');
             if (save) {
-                save.innerHTML = busy ? ic('spinner', 14, 'fa-spin') + ' Inahifadhi...' : 'Hifadhi Mabadiliko';
+                save.innerHTML = busy ? ic('spinner', 14, 'fa-spin') + ' ' + t('btn_saving') : t('btn_save_changes');
                 save.style.opacity = busy ? '0.7' : '1';
                 save.style.pointerEvents = busy ? 'none' : 'auto';
             }
@@ -865,14 +940,14 @@
         function updateSidebarUser() {
             const user = getCurrentUser();
             if (user) {
-                const displayName = user.full_name || user.business_name || user.email?.split('@')[0] || 'Muuzaji';
+                const displayName = user.full_name || user.business_name || user.email?.split('@')[0] || t('nav_seller');
                 document.getElementById('userName').innerHTML = escapeHtml(displayName);
                 const avatarEl = document.getElementById('userAvatar');
                 if (user.business_logo_url) {
                     avatarEl.classList.add('js-avatar-view');
 avatarEl.setAttribute('data-full', user.business_logo_url);
 avatarEl.setAttribute('data-name', displayName);
-avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;pointer-events:none;" alt="Picha">`;
+avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;pointer-events:none;" alt="${t('photo_alt')}">`;
                 } else {
                     avatarEl.innerHTML = displayName.charAt(0).toUpperCase();
                 }
@@ -887,7 +962,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             }
             const userRole = user.role || '';
             if (userRole !== 'seller' && userRole !== 'muuzaji') {
-                showToast('Huna ruhusa ya kuingia kwenye eneo la Muuzaji.', 'error');
+                showToast(t('err_no_permission'), 'error');
                 window.location.href = '/home';
                 return false;
             }
@@ -925,7 +1000,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             }
             if (sale.customer?.name) return sale.customer.name;
             if (sale.customer_data?.name) return sale.customer_data.name;
-            return 'Mteja Bila Jina';
+            return t('customer_unknown');
         }
 
         async function loadSalesData() {
@@ -1005,7 +1080,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 });
                 
                 if (response.ok) {
-                    showToast('Mauzo yamehaririwa kikamilifu!', 'success');
+                    showToast(t('msg_edit_success'), 'success');
                     closeEditModal();
                     await loadSalesData();
                 } else if (response.status === 404) {
@@ -1019,19 +1094,19 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                         /could not be found/i.test(notFoundData.message);
                     showToast(
                         routeMissing
-                            ? 'Server haijasasishwa bado, kwa hivyo kuhariri mauzo hakujawasilishwa. Mwambie msimamizi wa mfumo asasishe server.'
+                            ? t('err_server_not_updated')
                             : (notFoundData && (notFoundData.error || notFoundData.message))
-                                || 'Imeshindikana kuhariri mauzo. Jaribu tena.',
+                                || t('err_edit_retry'),
                         'error'
                     );
                     closeEditModal();
                 } else {
                     const errData = await response.json().catch(() => ({}));
-                    showToast(errData.error || 'Imeshindikana kuhariri mauzo', 'error');
+                    showToast(errData.error || t('err_edit_failed'), 'error');
                 }
             } catch (error) {
                 // Non-JSON / network failure.
-                showToast('Imeshindikana kuhariri mauzo. Angalia muunganisho na ujaribu tena.', 'error');
+                showToast(t('err_edit_network'), 'error');
                 closeEditModal();
             } finally {
                 setEditSaleBusy(false);
@@ -1043,14 +1118,14 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             localStorage.setItem(closedKey, 'true');
             todayClosed = true;
             closeConfirmModal();
-            showToast('Mauzo ya leo yamefungwa kikamilifu!', 'success');
+            showToast(t('msg_closed_success'), 'success');
             render();
         }
 
         async function generateReceipt(sale) {
             const customerName = sale.display_customer_name || getCustomerName(sale);
             const saleItem = sale.sale_items?.[0];
-            const productName = saleItem?.products?.name || 'Bidhaa';
+            const productName = saleItem?.products?.name || t('product_fallback');
             const quantity = saleItem?.quantity || 0;
             const unitPrice = saleItem?.unit_price || 0;
             const total = sale.total_amount || 0;
@@ -1058,29 +1133,29 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             
             const receiptHtml = `
                 <div style="text-align:center;padding:20px;font-family:Arial;">
-                    <h2>DUKAMKONONI</h2>
-                    <h3>RISITI YA MAUZO</h3>
+                    <h2>${t('receipt_brand')}</h2>
+                    <h3>${t('receipt_title')}</h3>
                     <hr>
-                    <p><strong>Nambari:</strong> ${sale.invoice_number || sale.id.substring(0,8)}</p>
-                    <p><strong>Tarehe:</strong> ${date.toLocaleDateString('sw-TZ')}</p>
-                    <p><strong>Muda:</strong> ${date.toLocaleTimeString('sw-TZ')}</p>
-                    <p><strong>Mteja:</strong> ${customerName}</p>
+                    <p><strong>${t('receipt_number')}</strong> ${sale.invoice_number || sale.id.substring(0,8)}</p>
+                    <p><strong>${t('receipt_date')}</strong> ${date.toLocaleDateString('sw-TZ')}</p>
+                    <p><strong>${t('receipt_time')}</strong> ${date.toLocaleTimeString('sw-TZ')}</p>
+                    <p><strong>${t('label_customer')}</strong> ${customerName}</p>
                     <hr>
                     <table style="width:100%;border-collapse:collapse;">
-                        <tr><th>Bidhaa</th><th>Kiasi</th><th>Bei</th><th>Jumla</th></tr>
+                        <tr><th>${t('product_fallback')}</th><th>${t('label_quantity')}</th><th>${t('price_header')}</th><th>${t('total_header')}</th></tr>
                         <tr><td>${productName}</td><td>${quantity}</td><td>${formatCurrency(unitPrice)}</td><td>${formatCurrency(quantity * unitPrice)}</td></tr>
                     </table>
                     <hr>
-                    <p><strong>Jumla:</strong> ${formatCurrency(total)}</p>
+                    <p><strong>${t('receipt_total')}</strong> ${formatCurrency(total)}</p>
                     <hr>
-                    <p>Asante kwa Kununua Nasi!</p>
+                    <p>${t('receipt_thanks')}</p>
                     <p style="font-size:12px;">www.dukamkononi.com</p>
                 </div>
             `;
             
             const printWindow = window.open('', '_blank');
             printWindow.document.write(`
-                <html><head><title>Risiti - ${sale.invoice_number || sale.id}</title></head>
+                <html><head><title>${t('receipt_doc_title')} ${sale.invoice_number || sale.id}</title></head>
                 <body onload="window.print();window.close();">${receiptHtml}</body></html>
             `);
             printWindow.document.close();
@@ -1088,7 +1163,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
 
         function openEditModal(sale) {
             if (todayClosed) {
-                showToast('Mauzo ya leo yamefungwa, hayawezi kuhaririwa tena.', 'warning');
+                showToast(t('err_closed_no_edit'), 'warning');
                 return;
             }
             
@@ -1100,7 +1175,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 quantity: saleItem?.quantity?.toString() || '1',
                 unit_price: saleItem?.unit_price?.toString() || '',
                 customer_name: customerName,
-                product_name: saleItem?.products?.name || 'Bidhaa',
+                product_name: saleItem?.products?.name || t('product_fallback'),
                 sale_item_id: saleItem?.id || ''
             };
             
@@ -1129,35 +1204,35 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             const editTotal = editUnitPrice > 0 ? editQuantity * editUnitPrice : (selectedSale?.total_amount || 0);
             body.innerHTML = `
                 <div class="form-group">
-                    <label class="form-label">Nambari ya Ankra</label>
+                    <label class="form-label">${t('label_invoice_number')}</label>
                     <input class="form-input readonly" value="${escapeHtml(selectedSale?.invoice_number || selectedSale?.id)}" readonly>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Jina la Bidhaa</label>
+                    <label class="form-label">${t('label_product_name')}</label>
                     <input class="form-input readonly" value="${escapeHtml(editForm.product_name)}" readonly>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Kiasi</label>
+                    <label class="form-label">${t('label_quantity')}</label>
                     <input type="number" id="editQuantity" class="form-input" value="${editForm.quantity}">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Bei ya Uuzaji (TZS)</label>
+                    <label class="form-label">${t('label_selling_price')}</label>
                     <input class="form-input readonly" value="${editForm.unit_price}" readonly>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Jina la Mteja *</label>
-                    <input type="text" id="editCustomerName" class="form-input" value="${escapeHtml(editForm.customer_name)}" placeholder="Weka jina la mteja">
+                    <label class="form-label">${t('label_customer_name')}</label>
+                    <input type="text" id="editCustomerName" class="form-input" value="${escapeHtml(editForm.customer_name)}" placeholder="${t('placeholder_customer_name')}">
                 </div>
                 <div class="summary-box">
-                    <div class="summary-title">Muhtasari wa Mabadiliko</div>
-                    <div class="summary-row"><span>Bidhaa:</span><span>${escapeHtml(editForm.product_name)}</span></div>
-                    <div class="summary-row"><span>Kiasi (Zamani):</span><span>${selectedSale?.sale_items?.[0]?.quantity || 0}</span></div>
-                    <div class="summary-row"><span>Kiasi (Mpya):</span><span id="newQuantityDisplay">${editForm.quantity}</span></div>
-                    <div class="summary-row"><span>Bei ya Uuzaji:</span><span>${formatCurrency(editUnitPrice)}</span></div>
-                    <div class="summary-row"><span>Mteja:</span><span id="newCustomerDisplay">${escapeHtml(editForm.customer_name) || 'Bila Jina'}</span></div>
+                    <div class="summary-title">${t('summary_title')}</div>
+                    <div class="summary-row"><span>${t('label_product_colon')}</span><span>${escapeHtml(editForm.product_name)}</span></div>
+                    <div class="summary-row"><span>${t('label_qty_old')}</span><span>${selectedSale?.sale_items?.[0]?.quantity || 0}</span></div>
+                    <div class="summary-row"><span>${t('label_qty_new')}</span><span id="newQuantityDisplay">${editForm.quantity}</span></div>
+                    <div class="summary-row"><span>${t('label_selling_price_colon')}</span><span>${formatCurrency(editUnitPrice)}</span></div>
+                    <div class="summary-row"><span>${t('label_customer')}</span><span id="newCustomerDisplay">${escapeHtml(editForm.customer_name) || t('nameless')}</span></div>
                     <div class="summary-divider"></div>
-                    <div class="summary-row total-label"><span>Jumla kamili:</span><span class="total-value" id="newTotalDisplay">${formatCurrency(editTotal)}</span></div>
-                    <div style="font-size:11px;color:#7f8c8d;font-style:italic;margin-top:8px;line-height:1.4;">Kiongeza kiasi = kuuza zaidi; kupunguza = kurudisha stoo</div>
+                    <div class="summary-row total-label"><span>${t('label_grand_total')}</span><span class="total-value" id="newTotalDisplay">${formatCurrency(editTotal)}</span></div>
+                    <div style="font-size:11px;color:#7f8c8d;font-style:italic;margin-top:8px;line-height:1.4;">${t('summary_hint')}</div>
                 </div>
             `;
             
@@ -1174,7 +1249,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             if (customerInput) {
                 customerInput.addEventListener('input', (e) => {
                     editForm.customer_name = e.target.value;
-                    document.getElementById('newCustomerDisplay').innerText = e.target.value || 'Bila Jina';
+                    document.getElementById('newCustomerDisplay').innerText = e.target.value || t('nameless');
                 });
             }
         }
@@ -1189,14 +1264,14 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             // Known customers + one "unknown customer" per sale with no customer data.
             const knownCustomers = new Set(salesData
                 .map(s => getCustomerName(s))
-                .filter(n => n && n !== 'Mteja Bila Jina')).size;
+                .filter(n => n && n !== t('customer_unknown'))).size;
             const unknownCustomers = salesData
-                .filter(s => { const n = getCustomerName(s); return !n || n === 'Mteja Bila Jina'; }).length;
+                .filter(s => { const n = getCustomerName(s); return !n || n === t('customer_unknown'); }).length;
             const customers = knownCustomers + unknownCustomers;
             document.getElementById('confirmText').innerHTML = `
-                Mauzo ${salesData.length} ya leo yatafungwa na hayawezi kuhaririwa tena.<br><br>
-                Jumla ya leo: ${formatCurrency(total)}<br><br>
-                Wateja walionunua leo: ${customers}
+                ${t('confirm_close_text', { count: salesData.length })}<br><br>
+                ${t('confirm_total_label')} ${formatCurrency(total)}<br><br>
+                ${t('confirm_customers_label')} ${customers}
             `;
             document.getElementById('confirmModal').style.display = 'flex';
         }
@@ -1209,7 +1284,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             const container = document.getElementById('mauzoContent');
             
             if (loading) {
-                container.innerHTML = `<div class="loading-container"><div class="loading-spinner"></div><div class="loading-text">Inapakua data ya mauzo...</div></div>`;
+                container.innerHTML = `<div class="loading-container"><div class="loading-spinner"></div><div class="loading-text">${t('loading')}</div></div>`;
                 return;
             }
             
@@ -1225,15 +1300,15 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                             <div><span class="invoice-number">#${escapeHtml(sale.invoice_number || sale.id.substring(0,8))}</span> <span class="sale-time">${formatTime(sale.created_at || sale.sale_date)}</span></div>
                             <div class="sale-total">${formatCurrency(sale.total_amount)}</div>
                         </div>
-                        <div class="product-row">${ic('box', 14)}<span class="product-name">${escapeHtml(saleItem?.products?.name || 'Bidhaa')}</span><span class="quantity">${saleItem?.quantity || 0} × ${formatCurrency(saleItem?.unit_price || 0)}</span></div>
+                        <div class="product-row">${ic('box', 14)}<span class="product-name">${escapeHtml(saleItem?.products?.name || t('product_fallback'))}</span><span class="quantity">${saleItem?.quantity || 0} × ${formatCurrency(saleItem?.unit_price || 0)}</span></div>
                         <div class="customer-row">${ic('user', 14)}<span class="customer-name">${escapeHtml(customerName)}</span></div>
-                        ${sale.payment_method ? `<div class="payment-row">${ic('card', 14)}<span class="payment-text">${sale.payment_method === 'cash' ? 'Fedha Taslimu' : 'Malipo ya Kadi'}</span></div>` : ''}
+                        ${sale.payment_method ? `<div class="payment-row">${ic('card', 14)}<span class="payment-text">${sale.payment_method === 'cash' ? t('payment_cash') : t('payment_card')}</span></div>` : ''}
                         ${sale.notes ? `<div class="notes-text">${ic('doc', 12)} ${escapeHtml(sale.notes)}</div>` : ''}
                         <div class="sale-footer">
                             <div class="date-text">${formatDate(sale.sale_date || sale.created_at)}</div>
                             <div class="sale-actions">
-                                ${!todayClosed ? `<div class="edit-btn" onclick="openEditModal(${JSON.stringify(sale).replace(/"/g, '&quot;')})">${ic('edit', 12)} Hariri</div>` : ''}
-                                <div class="receipt-btn" onclick="generateReceipt(${JSON.stringify(sale).replace(/"/g, '&quot;')})">${ic('receipt', 12)} Dai Risiti</div>
+                                ${!todayClosed ? `<div class="edit-btn" onclick="openEditModal(${JSON.stringify(sale).replace(/"/g, '&quot;')})">${ic('edit', 12)} ${t('btn_edit')}</div>` : ''}
+                                <div class="receipt-btn" onclick="generateReceipt(${JSON.stringify(sale).replace(/"/g, '&quot;')})">${ic('receipt', 12)} ${t('btn_receipt')}</div>
                             </div>
                         </div>
                     </div>
@@ -1244,27 +1319,27 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 <div class="header">
                     <div class="header-top">
                         <a href="profaili" class="back-btn">←</a>
-                        <div class="title">Mauzo Ya Leo</div>
+                        <div class="title">${t('title_today_sales')}</div>
                         <button class="refresh-btn" onclick="loadSalesData()">${ic('refresh', 16)}</button>
                     </div>
-                    <div class="date-title">${formatDate(today)}${todayClosed ? '<span class="closed-badge"> • IMEFUNGWA</span>' : ''}</div>
+                    <div class="date-title">${formatDate(today)}${todayClosed ? `<span class="closed-badge"> • ${t('badge_closed')}</span>` : ''}</div>
                     <div class="stats-container">
-                        <div class="stat-item"><div class="stat-value">${salesData.length}</div><div class="stat-label">Mauzo</div></div>
-                        <div class="stat-item"><div class="stat-value">${formatCurrency(totalAmount)}</div><div class="stat-label">Jumla Ya Leo</div></div>
-                        <div class="stat-item"><div class="stat-value">${uniqueCustomers}</div><div class="stat-label">Wateja</div></div>
+                        <div class="stat-item"><div class="stat-value">${salesData.length}</div><div class="stat-label">${t('nav_sales')}</div></div>
+                        <div class="stat-item"><div class="stat-value">${formatCurrency(totalAmount)}</div><div class="stat-label">${t('stat_total_label')}</div></div>
+                        <div class="stat-item"><div class="stat-value">${uniqueCustomers}</div><div class="stat-label">${t('stat_customers_label')}</div></div>
                     </div>
                 </div>
                 <div class="sales-list">
                     ${salesData.length === 0 ? `
                         <div class="empty-state">
                         <div class="empty-icon" style="color:#bdc3c7;">${ic('doc', 48)}</div>
-                        <div class="empty-title">Hakuna Mauzo Ya Leo</div>
-                        <div class="empty-text">Bado haujafanya mauzo yoyote leo. Nenda kwenye ukurasa wa kuuza.</div>
-                        <a href="uza" class="go-sell-btn">${ic('cart', 15)} Nenda Kuuza</a>
+                        <div class="empty-title">${t('empty_title')}</div>
+                        <div class="empty-text">${t('empty_text')}</div>
+                        <a href="uza" class="go-sell-btn">${ic('cart', 15)} ${t('btn_go_sell')}</a>
                         </div>
                     ` : salesHtml}
                 </div>
-                ${salesData.length > 0 && !todayClosed ? `<div class="close-sales-btn" onclick="openConfirmModal()">${ic('lock', 15)} FUNGA MAUZO YA LEO</div>` : ''}
+                ${salesData.length > 0 && !todayClosed ? `<div class="close-sales-btn" onclick="openConfirmModal()">${ic('lock', 15)} ${t('btn_close_today')}</div>` : ''}
             `;
         }
 
@@ -1307,6 +1382,25 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             updateSidebarUser();
             setupSidebar();
             await loadSalesData();
+        }
+
+        // Follow the language: static markup is handled by data-i18n, but the
+        // sales list, stats and modals are built from script.
+        if (window.DM && typeof window.DM.onChange === 'function') {
+            window.DM.onChange(() => {
+                // display_customer_name was resolved at load time; recompute so
+                // the unknown-customer fallback follows the language too.
+                salesData = salesData.map(sale => ({
+                    ...sale,
+                    display_customer_name: getCustomerName(sale)
+                }));
+                render();
+                updateSidebarUser();
+                const confirmEl = document.getElementById('confirmModal');
+                if (confirmEl && confirmEl.style.display === 'flex') openConfirmModal();
+                const editEl = document.getElementById('editModal');
+                if (editEl && editEl.style.display === 'flex') renderEditModal();
+            });
         }
         
         init();

@@ -1,10 +1,9 @@
+@include('partials.dm-locale')
 @verbatim
-<!DOCTYPE html>
-<html lang="sw">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Profaili - Dukamkononi Muuzaji</title>
+    <title data-i18n="muuzaji_profaili.page_title">Profaili - Dukamkononi Muuzaji</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
     <style>
@@ -406,6 +405,7 @@
 </head>
 <body>
 @endverbatim
+@include('partials.dm-lang-widget')
 @include('partials.toast')
 @include('partials.photo-viewer')
 @include('partials.cloudinary-config')
@@ -420,10 +420,10 @@
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="logo-area">
-                    <div class="logo-icon">D</div>
+                    <div class="logo-icon" data-i18n="muuzaji_profaili.logo_short">D</div>
                     <div class="logo-text">
-                        <h2>DukaMkononi</h2>
-                        <p>Muuzaji Portal</p>
+                        <h2 data-i18n="muuzaji_profaili.logo_brand">DukaMkononi</h2>
+                        <p data-i18n="muuzaji_profaili.logo_tagline">Muuzaji Portal</p>
                     </div>
                 </div>
             </div>
@@ -435,7 +435,7 @@
                             <path d="M4 21C4 16.6 7.6 13 12 13C16.4 13 20 16.6 20 21" stroke-linecap="round"/>
                         </svg>
                     </div>
-                    <span class="nav-label">Profaili</span>
+                    <span class="nav-label" data-i18n="muuzaji_profaili.nav_profile">Profaili</span>
                 </a>
                 <a href="mauzo" class="nav-item">
                     <div class="nav-icon">
@@ -445,7 +445,7 @@
                             <path d="M6 9.5V9.51M18 14.5V14.51" stroke-linecap="round"/>
                         </svg>
                     </div>
-                    <span class="nav-label">Mauzo</span>
+                    <span class="nav-label" data-i18n="muuzaji_profaili.nav_sales">Mauzo</span>
                 </a>
                 <a href="matumizi" class="nav-item">
                     <div class="nav-icon">
@@ -454,7 +454,7 @@
                             <path d="M8 7V17M12 7V17M16 7V17"/>
                         </svg>
                     </div>
-                    <span class="nav-label">Matumizi</span>
+                    <span class="nav-label" data-i18n="muuzaji_profaili.nav_expenses">Matumizi</span>
                 </a>
                 <a href="uza" class="nav-item">
                     <div class="nav-icon">
@@ -464,7 +464,7 @@
                             <path d="M3 3H5L7.4 15.2C7.55 15.95 8.2 16.5 8.97 16.5H17.6C18.32 16.5 18.94 16 19.08 15.3L21 7H6" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </div>
-                    <span class="nav-label">Uza</span>
+                    <span class="nav-label" data-i18n="muuzaji_profaili.nav_sell">Uza</span>
                 </a>
             </div>
             <div class="sidebar-footer">
@@ -472,14 +472,14 @@
                     <div class="user-avatar" id="userAvatar">M</div>
                     <div class="user-details">
                         <div class="user-name" id="userName">Muuzaji</div>
-                        <div class="user-role">Muuzaji</div>
+                        <div class="user-role" data-i18n="muuzaji_profaili.nav_seller">Muuzaji</div>
                     </div>
                 </div>
                 <div class="logout-btn" id="logoutBtn">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                         <path d="M15 3H19C20.1 3 21 3.9 21 5V19C21 20.1 20.1 21 19 21H15M10 17L15 12L10 7M15 12H3"/>
                     </svg>
-                    <span>Ondoka</span>
+                    <span data-i18n="muuzaji_profaili.btn_logout">Ondoka</span>
                 </div>
             </div>
         </aside>
@@ -488,7 +488,7 @@
             <div class="page-container" id="profailiContent">
                 <div class="loading-container">
                     <div class="loading-spinner"></div>
-                    <div class="loading-text">Inapakua taarifa zako...</div>
+                    <div class="loading-text" data-i18n="muuzaji_profaili.loading">Inapakua taarifa zako...</div>
                 </div>
             </div>
         </main>
@@ -497,29 +497,92 @@
     <!-- Edit Profile Modal -->
     <div id="editModal" class="modal-overlay">
         <div class="modal-content">
-            <div class="modal-title">Badili Wasifu Wako</div>
-            <div class="modal-subtitle">Unaweza kubadili picha yako, jina lako na namba ya simu. Taarifa nyingine za biashara zinasimamiwa na msimamizi.</div>
-            <label class="input-label">Picha ya Profaili</label>
+            <div class="modal-title" data-i18n="muuzaji_profaili.modal_title">Badili Wasifu Wako</div>
+            <div class="modal-subtitle" data-i18n="muuzaji_profaili.modal_subtitle">Unaweza kubadili picha yako, jina lako na namba ya simu. Taarifa nyingine za biashara zinasimamiwa na msimamizi.</div>
+            <label class="input-label" data-i18n="muuzaji_profaili.label_photo">Picha ya Profaili</label>
             <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
                 <div id="editAvatarPreview" style="width:60px;height:60px;border-radius:50%;background:#2ecc71;display:flex;align-items:center;justify-content:center;color:white;font-size:24px;font-weight:bold;"></div>
                 <div style="flex:1;">
                     <input type="file" id="profileImageInput" accept="image/*" style="display:none;">
-                    <div id="changePhotoBtn" style="padding:10px 16px;background:#e8f4fd;border-radius:10px;cursor:pointer;text-align:center;font-size:13px;font-weight:600;color:#3498db;"><i class="fa-solid fa-camera" style="font-size:13px;" aria-hidden="true"></i> Badilisha Picha</div>
+                    <div id="changePhotoBtn" style="padding:10px 16px;background:#e8f4fd;border-radius:10px;cursor:pointer;text-align:center;font-size:13px;font-weight:600;color:#3498db;"><i class="fa-solid fa-camera" style="font-size:13px;" aria-hidden="true"></i> <span data-i18n="muuzaji_profaili.btn_change_photo">Badilisha Picha</span></div>
                 </div>
             </div>
-            <label class="input-label">Jina Kamili *</label>
-            <input type="text" id="editFullName" class="input-field" placeholder="Weka jina lako kamili">
-            <label class="input-label">Namba ya Simu</label>
-            <input type="tel" id="editPhone" class="input-field" placeholder="Weka namba yako ya simu">
+            <label class="input-label" data-i18n="muuzaji_profaili.label_full_name">Jina Kamili *</label>
+            <input type="text" id="editFullName" class="input-field" data-i18n="muuzaji_profaili.placeholder_full_name" data-i18n-attr="placeholder" placeholder="Weka jina lako kamili">
+            <label class="input-label" data-i18n="muuzaji_profaili.label_phone">Namba ya Simu</label>
+            <input type="tel" id="editPhone" class="input-field" data-i18n="muuzaji_profaili.placeholder_phone" data-i18n-attr="placeholder" placeholder="Weka namba yako ya simu">
             <div class="modal-buttons">
-                <div class="modal-btn btn-cancel" id="cancelEditBtn" onclick="closeEditModal()">Ghairi</div>
-                <div class="modal-btn btn-save" id="saveProfileBtn" onclick="updateProfile()">Hifadhi</div>
+                <div class="modal-btn btn-cancel" id="cancelEditBtn" onclick="closeEditModal()" data-i18n="muuzaji_profaili.btn_cancel">Ghairi</div>
+                <div class="modal-btn btn-save" id="saveProfileBtn" onclick="updateProfile()" data-i18n="muuzaji_profaili.btn_save">Hifadhi</div>
             </div>
         </div>
     </div>
 
     <script>
         const API_BASE_URL = '';
+
+        const SW = {
+            loading: 'Inapakua taarifa zako...',
+            nav_seller: 'Muuzaji',
+            photo_alt: 'Picha',
+            not_set: 'Haijawekwa',
+            role_customer: 'MTEJA',
+            role_seller: 'MUUZAJI',
+            role_admin: 'MSIMAMIZI',
+            role_user: 'MTUMIAJI',
+            personal: 'Personal',
+            err_no_permission: 'Huna ruhusa ya kuingia kwenye eneo la Muuzaji.',
+            err_name_required: 'Tafadhali weka jina lako kamili',
+            msg_saved: 'Wasifu wako umesasishwa kikamilifu!',
+            err_save_failed: 'Imeshindikana kusasisha wasifu',
+            err_network: 'Hitilafu ya mtandao',
+            err_photo_failed: 'Imeshindikana kupakia picha',
+            confirm_logout: 'Una uhakika unataka kutoka?',
+            title_my_profile: 'Wasifu Wangu',
+            badge_admin: '(Msimamizi)',
+            btn_edit_profile: 'Badili Taarifa za Wasifu',
+            btn_save: 'Hifadhi',
+            btn_saving: 'Inahifadhi...',
+            stats_title: 'Takwimu za Leo',
+            stats_subtitle_admin: '(Zako za Leo)',
+            stats_subtitle_personal: '(Zako Binafsi)',
+            stat_products: 'Bidhaa za Biashara',
+            stat_sales: 'Mauzo ya Leo',
+            stat_customers: 'Wateja wa Leo',
+            stat_revenue: 'Mapato ya Leo',
+            stats_note: 'Mauzo na wateja wa leo tu — kuanzia usiku wa manane',
+            account_info_title: 'Taarifa za Akaunti',
+            info_full_name: 'Jina Kamili:',
+            info_email: 'Barua Pepe:',
+            info_phone: 'Namba ya Simu:',
+            info_account_id: 'Kitambulisho cha Akaunti:',
+            not_available: 'N/A',
+            info_business: 'Biashara:',
+            info_location: 'Eneo la Biashara:',
+            info_registered: 'Imejisajiliwa:',
+            info_status: 'Hali ya Akaunti:',
+            status_approved: 'Imethibitishwa',
+            status_pending: 'Inasubiri',
+            status_rejected: 'Imekataliwa',
+            btn_logout_account: 'Toka Kwenye Akaunti',
+            footer_copyright: 'Duka Mkononi',
+            footer_operating: 'Inafanya kazi kwa muuzaji'
+        };
+        // Accepts either a bare key ('err_network') or a fully qualified one
+        // ('muuzaji_profaili.err_network'), so call sites can read naturally.
+        function t(key, params) {
+            const full = key.indexOf('muuzaji_profaili.') === 0 ? key : 'muuzaji_profaili.' + key;
+            let value = key;
+            if (window.DM && typeof window.DM.t === 'function') {
+                const hit = window.DM.t(full, params);
+                if (hit !== full) value = hit;
+            }
+            if (value === key) {
+                const bare = key.indexOf('.') > -1 ? key.split('.').pop() : key;
+                if (Object.prototype.hasOwnProperty.call(SW, bare)) value = SW[bare];
+            }
+            return value;
+        }
         
         // ============================== ICONS ==============================
         // Font Awesome 6 icon helper (same convention as the msimamizi pages).
@@ -545,7 +608,7 @@
             const save = document.getElementById('saveProfileBtn');
             const cancel = document.getElementById('cancelEditBtn');
             if (save) {
-                save.innerHTML = busy ? ic('spinner', 15, 'fa-spin') + ' Inahifadhi...' : 'Hifadhi';
+                save.innerHTML = busy ? ic('spinner', 15, 'fa-spin') + ' ' + t('btn_saving') : t('btn_save');
                 save.style.opacity = busy ? '0.7' : '1';
                 save.style.pointerEvents = busy ? 'none' : 'auto';
             }
@@ -572,14 +635,14 @@
         function updateSidebarUser() {
             const user = getCurrentUser();
             if (user) {
-                const displayName = user.full_name || user.business_name || user.email?.split('@')[0] || 'Muuzaji';
+                const displayName = user.full_name || user.business_name || user.email?.split('@')[0] || t('nav_seller');
                 document.getElementById('userName').innerHTML = escapeHtml(displayName);
                 const avatarEl = document.getElementById('userAvatar');
                 if (user.business_logo_url) {
                     avatarEl.classList.add('js-avatar-view');
 avatarEl.setAttribute('data-full', user.business_logo_url);
 avatarEl.setAttribute('data-name', displayName);
-avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;pointer-events:none;" alt="Picha">`;
+avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;pointer-events:none;" alt="${t('photo_alt')}">`;
                 } else {
                     avatarEl.innerHTML = displayName.charAt(0).toUpperCase();
                 }
@@ -594,7 +657,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             }
             const userRole = user.role || '';
             if (userRole !== 'seller' && userRole !== 'muuzaji') {
-                showToast('Huna ruhusa ya kuingia kwenye eneo la Muuzaji.', 'error');
+                showToast(t('err_no_permission'), 'error');
                 window.location.href = '/home';
                 return false;
             }
@@ -611,7 +674,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         }
 
         function formatDate(dateStr) {
-            if (!dateStr) return 'Haijawekwa';
+            if (!dateStr) return t('not_set');
             try {
                 return new Date(dateStr).toLocaleDateString('sw-TZ', {
                     day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
@@ -620,8 +683,8 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         }
 
         function getRoleDisplayName(role) {
-            const map = { customer: 'MTEJA', seller: 'MUUZAJI', admin: 'MSIMAMIZI' };
-            return map[role] || role?.toUpperCase() || 'MTUMIAJI';
+            const map = { customer: t('role_customer'), seller: t('role_seller'), admin: t('role_admin') };
+            return map[role] || role?.toUpperCase() || t('role_user');
         }
 
         function getRoleColor(role) {
@@ -667,7 +730,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         async function loadBusinessData() {
             const token = localStorage.getItem('userToken');
             if (!userData?.business_name) {
-                businessData = { business_name: userData?.business_name || 'Personal', is_admin: userData?.role === 'admin' };
+                businessData = { business_name: userData?.business_name || t('personal'), is_admin: userData?.role === 'admin' };
                 await loadUserStats();
                 return;
             }
@@ -750,7 +813,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             const phone = document.getElementById('editPhone').value;
             
             if (!full_name.trim()) {
-                showToast('Tafadhali weka jina lako kamili', 'warning');
+                showToast(t('err_name_required'), 'warning');
                 return;
             }
             
@@ -779,13 +842,13 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     if (userData.business_logo_url) localStorage.setItem('userProfileImage', userData.business_logo_url);
                     updateSidebarUser();
                     closeEditModal();
-                    showToast('Wasifu wako umesasishwa kikamilifu!', 'success');
+                    showToast(t('msg_saved'), 'success');
                     location.reload();
                 } else {
-                    showToast('Imeshindikana kusasisha wasifu', 'error');
+                    showToast(t('err_save_failed'), 'error');
                 }
             } catch (error) {
-                showToast('Hitilafu ya mtandao', 'error');
+                showToast(t('err_network'), 'error');
             } finally {
                 setProfileModalBusy(false);
             }
@@ -828,12 +891,12 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 }
             } catch (error) {
                 console.error('Upload error:', error);
-                showToast('Imeshindikana kupakia picha', 'error');
+                showToast(t('err_photo_failed'), 'error');
             }
         }
 
         function handleLogout() {
-            if (confirm('Una uhakika unataka kutoka?')) {
+            if (confirm(t('confirm_logout'))) {
                 localStorage.clear();
                 window.location.href = '/login?role=muuzaji';
             }
@@ -849,7 +912,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             const container = document.getElementById('profailiContent');
             
             if (loading || !userData) {
-                container.innerHTML = `<div class="loading-container"><div class="loading-spinner"></div><div class="loading-text">Inapakua taarifa zako...</div></div>`;
+                container.innerHTML = `<div class="loading-container"><div class="loading-spinner"></div><div class="loading-text">${t('loading')}</div></div>`;
                 return;
             }
             
@@ -861,7 +924,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             container.innerHTML = `
                 <div class="header">
                     <div class="header-top">
-                        <div class="title">Wasifu Wangu</div>
+                        <div class="title">${t('title_my_profile')}</div>
                         <div class="header-actions">
                             <div class="header-btn" onclick="refreshData()">${ic('refresh', 16)}</div>
                             <div class="header-btn" onclick="openEditModal()">${ic('edit', 16)}</div>
@@ -875,45 +938,45 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                         <div class="user-info">
                             <div class="user-name">${escapeHtml(userData.full_name || userData.business_name || userData.email)}</div>
                             <div class="user-email">${escapeHtml(userData.email)}</div>
-                            ${businessData?.business_name ? `<div class="business-info">${ic('building', 14)} <span>${escapeHtml(businessData.business_name)}${isAdmin ? ' (Msimamizi)' : ''}</span></div>` : ''}
+                            ${businessData?.business_name ? `<div class="business-info">${ic('building', 14)} <span>${escapeHtml(businessData.business_name)}${isAdmin ? ' ' + t('badge_admin') : ''}</span></div>` : ''}
                             ${userData.business_location ? `<div class="business-info">${ic('location', 14)} <span>${escapeHtml(userData.business_location)}</span></div>` : ''}
-                            <div class="edit-profile-btn" onclick="openEditModal()">${ic('edit', 14)} <span>Badili Taarifa za Wasifu</span></div>
+                            <div class="edit-profile-btn" onclick="openEditModal()">${ic('edit', 14)} <span>${t('btn_edit_profile')}</span></div>
                         </div>
                     </div>
                 </div>
                 
                 <div class="stats-section">
-                    <div class="section-title">Takwimu za Leo <span class="stats-subtitle">${isAdmin ? '(Zako za Leo)' : '(Zako Binafsi)'}</span></div>
+                    <div class="section-title">${t('stats_title')} <span class="stats-subtitle">${isAdmin ? t('stats_subtitle_admin') : t('stats_subtitle_personal')}</span></div>
                     <div class="stats-grid">
-                        <div class="stat-card"><div class="stat-icon" style="background:#e8f4fd;color:#3498db;">${ic('box', 20)}</div><div class="stat-value">${stats.totalProducts}</div><div class="stat-label">Bidhaa za Biashara</div></div>
-                        <div class="stat-card"><div class="stat-icon" style="background:#f0f8f0;color:#27ae60;">${ic('cart', 20)}</div><div class="stat-value">${stats.totalSales}</div><div class="stat-label">Mauzo ya Leo</div></div>
-                        <div class="stat-card"><div class="stat-icon" style="background:#fff8e1;color:#f39c12;">${ic('users', 20)}</div><div class="stat-value">${stats.totalCustomers}</div><div class="stat-label">Wateja wa Leo</div></div>
-                        <div class="stat-card"><div class="stat-icon" style="background:#fce4ec;color:#e74c3c;">${ic('money', 20)}</div><div class="stat-value">${formatCurrency(stats.totalRevenue)}</div><div class="stat-label">Mapato ya Leo</div></div>
+                        <div class="stat-card"><div class="stat-icon" style="background:#e8f4fd;color:#3498db;">${ic('box', 20)}</div><div class="stat-value">${stats.totalProducts}</div><div class="stat-label">${t('stat_products')}</div></div>
+                        <div class="stat-card"><div class="stat-icon" style="background:#f0f8f0;color:#27ae60;">${ic('cart', 20)}</div><div class="stat-value">${stats.totalSales}</div><div class="stat-label">${t('stat_sales')}</div></div>
+                        <div class="stat-card"><div class="stat-icon" style="background:#fff8e1;color:#f39c12;">${ic('users', 20)}</div><div class="stat-value">${stats.totalCustomers}</div><div class="stat-label">${t('stat_customers')}</div></div>
+                        <div class="stat-card"><div class="stat-icon" style="background:#fce4ec;color:#e74c3c;">${ic('money', 20)}</div><div class="stat-value">${formatCurrency(stats.totalRevenue)}</div><div class="stat-label">${t('stat_revenue')}</div></div>
                     </div>
-                    <div class="stats-note">Mauzo na wateja wa leo tu — kuanzia usiku wa manane</div>
+                    <div class="stats-note">${t('stats_note')}</div>
                 </div>
                 
                 <div class="stats-section">
-                    <div class="section-title">Taarifa za Akaunti</div>
+                    <div class="section-title">${t('account_info_title')}</div>
                     <div class="info-card">
-                        <div class="info-row"><div class="info-label">${ic('user', 14)} Jina Kamili:</div><div class="info-value">${escapeHtml(userData.full_name || 'Haijawekwa')}</div></div>
-                        <div class="info-row"><div class="info-label">${ic('mail', 14)} Barua Pepe:</div><div class="info-value">${escapeHtml(userData.email)}</div></div>
-                        <div class="info-row"><div class="info-label">${ic('phone', 14)} Namba ya Simu:</div><div class="info-value">${escapeHtml(userData.phone || 'Haijawekwa')}</div></div>
-                        <div class="info-row"><div class="info-label">${ic('id', 14)} Kitambulisho cha Akaunti:</div><div class="info-value">#${userData.id || 'N/A'}</div></div>
-                        ${businessData?.business_name ? `<div class="info-row"><div class="info-label">${ic('building', 14)} Biashara:</div><div class="info-value">${escapeHtml(businessData.business_name)}</div></div>` : ''}
-                        <div class="info-row"><div class="info-label">${ic('location', 14)} Eneo la Biashara:</div><div class="info-value">${escapeHtml(userData.business_location || 'Haijawekwa')}</div></div>
-                        <div class="info-row"><div class="info-label">${ic('clock', 14)} Imejisajiliwa:</div><div class="info-value">${formatDate(userData.created_at)}</div></div>
-                        <div class="info-row"><div class="info-label">${ic('shield', 14)} Hali ya Akaunti:</div><div class="info-value"><span class="status-badge" style="background: ${userData.status === 'approved' ? '#e8f6f3' : userData.status === 'pending' ? '#fef9e7' : '#fdedec'};"><span class="status-text" style="color: ${userData.status === 'approved' ? '#27ae60' : userData.status === 'pending' ? '#f39c12' : '#e74c3c'};">${userData.status === 'approved' ? 'Imethibitishwa' : userData.status === 'pending' ? 'Inasubiri' : 'Imekataliwa'}</span></span></div></div>
+                        <div class="info-row"><div class="info-label">${ic('user', 14)} ${t('info_full_name')}</div><div class="info-value">${escapeHtml(userData.full_name || t('not_set'))}</div></div>
+                        <div class="info-row"><div class="info-label">${ic('mail', 14)} ${t('info_email')}</div><div class="info-value">${escapeHtml(userData.email)}</div></div>
+                        <div class="info-row"><div class="info-label">${ic('phone', 14)} ${t('info_phone')}</div><div class="info-value">${escapeHtml(userData.phone || t('not_set'))}</div></div>
+                        <div class="info-row"><div class="info-label">${ic('id', 14)} ${t('info_account_id')}</div><div class="info-value">#${userData.id || t('not_available')}</div></div>
+                        ${businessData?.business_name ? `<div class="info-row"><div class="info-label">${ic('building', 14)} ${t('info_business')}</div><div class="info-value">${escapeHtml(businessData.business_name)}</div></div>` : ''}
+                        <div class="info-row"><div class="info-label">${ic('location', 14)} ${t('info_location')}</div><div class="info-value">${escapeHtml(userData.business_location || t('not_set'))}</div></div>
+                        <div class="info-row"><div class="info-label">${ic('clock', 14)} ${t('info_registered')}</div><div class="info-value">${formatDate(userData.created_at)}</div></div>
+                        <div class="info-row"><div class="info-label">${ic('shield', 14)} ${t('info_status')}</div><div class="info-value"><span class="status-badge" style="background: ${userData.status === 'approved' ? '#e8f6f3' : userData.status === 'pending' ? '#fef9e7' : '#fdedec'};"><span class="status-text" style="color: ${userData.status === 'approved' ? '#27ae60' : userData.status === 'pending' ? '#f39c12' : '#e74c3c'};">${userData.status === 'approved' ? t('status_approved') : userData.status === 'pending' ? t('status_pending') : t('status_rejected')}</span></span></div></div>
                     </div>
                 </div>
                 
                 <div class="logout-section">
-                    <div class="logout-btn-main" onclick="handleLogout()">${ic('logout', 16)} Toka Kwenye Akaunti</div>
+                    <div class="logout-btn-main" onclick="handleLogout()">${ic('logout', 16)} ${t('btn_logout_account')}</div>
                 </div>
                 
                 <div class="footer">
-                    <div class="footer-text">Duka Mkononi • ${new Date().getFullYear()}</div>
-                    <div class="footer-text" style="font-size: 11px;">Inafanya kazi kwa muuzaji${businessData?.business_name ? ` • ${businessData.business_name}` : ''}</div>
+                    <div class="footer-text">${t('footer_copyright')} • ${new Date().getFullYear()}</div>
+                    <div class="footer-text" style="font-size: 11px;">${t('footer_operating')}${businessData?.business_name ? ` • ${businessData.business_name}` : ''}</div>
                 </div>
             `;
         }
@@ -964,6 +1027,15 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             updateSidebarUser();
             setupSidebar();
             await loadUserData();
+        }
+
+        // Follow the language: static markup is handled by data-i18n, but the
+        // profile card, stats and account rows are rebuilt from script.
+        if (window.DM && typeof window.DM.onChange === 'function') {
+            window.DM.onChange(() => {
+                render();
+                updateSidebarUser();
+            });
         }
         
         init();

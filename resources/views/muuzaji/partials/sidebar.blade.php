@@ -1,10 +1,9 @@
+@include('partials.dm-locale')
 @verbatim
-<!DOCTYPE html>
-<html lang="sw">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dukamkononi - Muuzaji</title>
+    <title data-i18n="muuzaji_sidebar.page_title">Dukamkononi - Muuzaji</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {
@@ -271,6 +270,7 @@
 </head>
 <body>
 @endverbatim
+@include('partials.dm-lang-widget')
 @include('partials.toast')
 @verbatim
     <!-- Mobile menu toggle button -->
@@ -285,10 +285,10 @@
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="logo-area">
-                    <div class="logo-icon">D</div>
+                    <div class="logo-icon" data-i18n="muuzaji_sidebar.logo_short">D</div>
                     <div class="logo-text">
-                        <h2>DukaMkononi</h2>
-                        <p>Muuzaji Portal</p>
+                        <h2 data-i18n="muuzaji_sidebar.logo_brand">DukaMkononi</h2>
+                        <p data-i18n="muuzaji_sidebar.logo_tagline">Muuzaji Portal</p>
                     </div>
                 </div>
             </div>
@@ -297,22 +297,22 @@
                 <!-- Navigation items mirroring Tabs.Screen components -->
                 <a href="profaili" class="nav-item" data-page="profaili">
                     <div class="nav-icon">👤</div>
-                    <span class="nav-label">Profaili</span>
+                    <span class="nav-label" data-i18n="muuzaji_sidebar.nav_profile">Profaili</span>
                 </a>
 
                 <a href="mauzo" class="nav-item" data-page="mauzo">
                     <div class="nav-icon">💰</div>
-                    <span class="nav-label">Mauzo</span>
+                    <span class="nav-label" data-i18n="muuzaji_sidebar.nav_sales">Mauzo</span>
                 </a>
 
                 <a href="matumizi" class="nav-item" data-page="matumizi">
                     <div class="nav-icon">📊</div>
-                    <span class="nav-label">Matumizi</span>
+                    <span class="nav-label" data-i18n="muuzaji_sidebar.nav_expenses">Matumizi</span>
                 </a>
 
                 <a href="uza" class="nav-item" data-page="uza">
                     <div class="nav-icon">🛒</div>
-                    <span class="nav-label">Uza</span>
+                    <span class="nav-label" data-i18n="muuzaji_sidebar.nav_sell">Uza</span>
                 </a>
             </div>
 
@@ -321,14 +321,14 @@
                     <div class="user-avatar" id="userAvatar">M</div>
                     <div class="user-details">
                         <div class="user-name" id="userName">Muuzaji</div>
-                        <div class="user-role">Muuzaji</div>
+                        <div class="user-role" data-i18n="muuzaji_sidebar.nav_seller">Muuzaji</div>
                     </div>
                 </div>
                 <div class="logout-btn" id="logoutBtn">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                         <path d="M15 3H19C20.1 3 21 3.9 21 5V19C21 20.1 20.1 21 19 21H15M10 17L15 12L10 7M15 12H3"/>
                     </svg>
-                    <span>Ondoka</span>
+                    <span data-i18n="muuzaji_sidebar.btn_logout">Ondoka</span>
                 </div>
             </div>
         </aside>
@@ -339,7 +339,7 @@
                 <!-- Dynamic content loads here -->
                 <div style="text-align: center; padding: 60px 20px;">
                     <div class="spinner" style="border-top-color: #2ecc71;"></div>
-                    <p style="margin-top: 20px; color: #7f8c8d;">Loading...</p>
+                    <p style="margin-top: 20px; color: #7f8c8d;" data-i18n="muuzaji_sidebar.loading">Loading...</p>
                 </div>
             </div>
         </main>
@@ -363,6 +363,69 @@
         // ============================================
 
         const API_BASE_URL = '';
+        // Set only while the fetch-failure panel is on screen, so a language switch
+        // can rebuild it; cleared as soon as a page loads successfully.
+        let loadErrorMessage = null;
+
+        const SW = {
+            err_no_permission: 'Huna ruhusa ya kuingia kwenye eneo la Muuzaji.',
+            error_title: 'Hitilafu',
+            err_page_load: 'Huwezi kupakia ukurasa huu. Hakikisha faili zote zipo.',
+            btn_retry: 'Jaribu Tena',
+            nav_seller: 'Muuzaji',
+            page_title: 'Dukamkononi - Muuzaji',
+            title_default: 'DukaMkononi - Muuzaji',
+            title_profile: 'Profaili - DukaMkononi Muuzaji',
+            title_sales: 'Mauzo - DukaMkononi Muuzaji',
+            title_expenses: 'Matumizi - DukaMkononi Muuzaji',
+            title_sell: 'Uza - DukaMkononi Muuzaji'
+        };
+        // Accepts either a bare key ('error_title') or a fully qualified one
+        // ('muuzaji_sidebar.title_profile'), so call sites can read naturally.
+        function t(key, params) {
+            const full = key.indexOf('muuzaji_sidebar.') === 0 ? key : 'muuzaji_sidebar.' + key;
+            let value = key;
+            if (window.DM && typeof window.DM.t === 'function') {
+                const hit = window.DM.t(full, params);
+                if (hit !== full) value = hit;
+            }
+            if (value === key) {
+                const bare = key.indexOf('.') > -1 ? key.split('.').pop() : key;
+                if (Object.prototype.hasOwnProperty.call(SW, bare)) value = SW[bare];
+            }
+            return value;
+        }
+        // The fetch-failure panel is built as markup, so it has to be rebuilt to
+        // follow the language instead of being translated once at load time.
+        function renderLoadError(message) {
+            return `
+                <div style="text-align: center; padding: 60px 20px; background: white; border-radius: 20px;">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 8V12M12 16H12.01"/>
+                    </svg>
+                    <h3 style="margin-top: 20px; color: #2ecc71;">${t('error_title')}</h3>
+                    <p style="margin-top: 10px; color: #7f8c8d;">${t('err_page_load')}</p>
+                    <p style="margin-top: 8px; font-size: 12px; color: #95a5a6;">${message}</p>
+                    <button onclick="location.reload()" style="margin-top: 20px; padding: 10px 24px; background: #2ecc71; color: white; border: none; border-radius: 8px; cursor: pointer;">${t('btn_retry')}</button>
+                </div>
+            `;
+        }
+        function paintDynamicText() {
+            const nameEl = document.getElementById('userName');
+            const roleEl = document.querySelector('.user-role');
+            const user = getCurrentUser();
+            const fallback = t('nav_seller');
+            if (nameEl && (!nameEl.dataset.dmUserName || !user)) {
+                nameEl.textContent = user ? (user.full_name || user.business_name ||
+                    (user.email || '').split('@')[0] || fallback) : fallback;
+            }
+            if (roleEl) roleEl.textContent = fallback;
+            if (loadErrorMessage) {
+                const pageContainer = document.getElementById('pageContainer');
+                if (pageContainer) pageContainer.innerHTML = renderLoadError(loadErrorMessage);
+            }
+        }
 
         // Get current user from localStorage (set during login)
         function getCurrentUser() {
@@ -389,7 +452,7 @@
             // Check if user is seller/muuzaji
             const userRole = user.role || '';
             if (userRole !== 'seller' && userRole !== 'muuzaji') {
-                showToast('Huna ruhusa ya kuingia kwenye eneo la Muuzaji.', 'error');
+                showToast(t('err_no_permission'), 'error');
                 window.location.href = '/home';
                 return false;
             }
@@ -401,8 +464,13 @@
         function updateUserInfo(user) {
             const userNameEl = document.getElementById('userName');
             const userAvatarEl = document.getElementById('userAvatar');
-            const displayName = user.full_name || user.business_name || user.email?.split('@')[0] || 'Muuzaji';
-            if (userNameEl) userNameEl.textContent = displayName;
+            const displayName = user.full_name || user.business_name || user.email?.split('@')[0] || t('nav_seller');
+            if (userNameEl) {
+                userNameEl.textContent = displayName;
+                // Marks the name as visitor data, so a later language switch leaves
+                // it alone instead of replacing it with the generic fallback.
+                userNameEl.dataset.dmUserName = '1';
+            }
             if (userAvatarEl) {
                 if (user.business_logo_url) {
                     userAvatarEl.innerHTML = `<img src="${user.business_logo_url}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
@@ -421,12 +489,17 @@
         };
 
         // Page titles
-        const pageTitles = {
-            profaili: 'Profaili - DukaMkononi Muuzaji',
-            mauzo: 'Mauzo - DukaMkononi Muuzaji',
-            matumizi: 'Matumizi - DukaMkononi Muuzaji',
-            uza: 'Uza - DukaMkononi Muuzaji'
+        // Keys, not strings: the label is looked up so it follows the language.
+        const pageTitleKeys = {
+            profaili: 'muuzaji_sidebar.title_profile',
+            mauzo: 'muuzaji_sidebar.title_sales',
+            matumizi: 'muuzaji_sidebar.title_expenses',
+            uza: 'muuzaji_sidebar.title_sell'
         };
+        const pageTitles = {};
+        Object.keys(pageTitleKeys).forEach(name => {
+            pageTitles[name] = t(pageTitleKeys[name]);
+        });
 
         let currentPage = 'profaili';
 
@@ -492,8 +565,10 @@
                     });
                 }
                 
+                loadErrorMessage = null;
+
                 // Update page title
-                document.title = pageTitles[pageName] || 'DukaMkononi - Muuzaji';
+                document.title = pageTitles[pageName] || t('title_default');
                 
                 // Update active state in sidebar
                 updateActiveNavItem(pageName);
@@ -504,20 +579,10 @@
                 
             } catch (error) {
                 console.error('Failed to load page:', error);
+                loadErrorMessage = error.message;
                 const pageContainer = document.getElementById('pageContainer');
                 if (pageContainer) {
-                    pageContainer.innerHTML = `
-                        <div style="text-align: center; padding: 60px 20px; background: white; border-radius: 20px;">
-                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="1.5">
-                                <circle cx="12" cy="12" r="10"/>
-                                <path d="M12 8V12M12 16H12.01"/>
-                            </svg>
-                            <h3 style="margin-top: 20px; color: #2ecc71;">Hitilafu</h3>
-                            <p style="margin-top: 10px; color: #7f8c8d;">Huwezi kupakia ukurasa huu. Hakikisha faili zote zipo.</p>
-                            <p style="margin-top: 8px; font-size: 12px; color: #95a5a6;">${error.message}</p>
-                            <button onclick="location.reload()" style="margin-top: 20px; padding: 10px 24px; background: #2ecc71; color: white; border: none; border-radius: 8px; cursor: pointer;">Jaribu Tena</button>
-                        </div>
-                    `;
+                    pageContainer.innerHTML = renderLoadError(error.message);
                 }
             } finally {
                 showLoading(false);
@@ -640,6 +705,21 @@
             await loadPage(initialPage);
         }
         
+        // Follow the language: the sidebar markup is handled by data-i18n, but the
+        // document title and the fetch-failure panel are built in script.
+        if (window.DM && typeof window.DM.onChange === 'function') {
+            window.DM.onChange(() => {
+                Object.keys(pageTitleKeys).forEach(name => {
+                    pageTitles[name] = t(pageTitleKeys[name]);
+                });
+                paintDynamicText();
+                if (currentPage && pageTitleKeys[currentPage]) {
+                    document.title = pageTitles[currentPage];
+                }
+            });
+        }
+        paintDynamicText();
+
         // Run init
         init();
         
