@@ -1,6 +1,5 @@
+@include('partials.dm-locale')
 @verbatim
-<!DOCTYPE html>
-<html lang="sw">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -527,7 +526,10 @@
 @include('partials.photo-viewer')
 @include('partials.cloudinary-config')
 @verbatim
-<body>
+    <body>
+    @endverbatim
+    @include('partials.dm-lang-widget')
+    @verbatim
     <div class="mobile-menu-toggle" id="mobileMenuToggle">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2">
             <path d="M3 12H21M3 6H21M3 18H21"/>
@@ -606,6 +608,8 @@
             btn_cancel: "Ghairi",
             btn_confirm: "Thibitisha",
             alert_sign_in_again: "Tafadhali ingia tena",
+            alert_error_title: "Hitilafu",
+            alert_success_title: "Mafanikio",
             title_main_business: "Biashara Kuu",
             title_headquarters: "Makao Makuu",
             no_phone: "Hakuna namba",
@@ -776,7 +780,7 @@
             const token = localStorage.getItem('userToken');
             const userStr = localStorage.getItem('userData');
             if (!token || !userStr) {
-                showAlert('Hitilafu', t('msimamizi_index.alert_sign_in_again'), () => { window.location.href = '../login?role=msimamizi'; });
+                showAlert(t('msimamizi_index.alert_error_title'), t('msimamizi_index.alert_sign_in_again'), () => { window.location.href = '../login?role=msimamizi'; });
                 return false;
             }
             const user = JSON.parse(userStr);
@@ -882,7 +886,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 });
                 
                 if (response.ok) {
-                    showAlert('Mafanikio', t('msimamizi_index.msg_seller_status', {action_name: actionName}));
+                    showAlert(t('msimamizi_index.alert_success_title'), t('msimamizi_index.msg_seller_status', {action_name: actionName}));
                     await loadSellersData();
                     renderDashboard();
                     return true;
@@ -890,7 +894,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     throw new Error('Failed to update status');
                 }
             } catch (error) {
-                showAlert('Hitilafu', t('msimamizi_index.err_change_seller_status'));
+                showAlert(t('msimamizi_index.alert_error_title'), t('msimamizi_index.err_change_seller_status'));
                 return false;
             } finally {
                 updatingSellerStatus = null;
@@ -917,14 +921,14 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     });
                     
                     if (response.ok) {
-                        showAlert('Mafanikio', t('msimamizi_index.msg_seller_deleted', {seller_name: sellerName}));
+                        showAlert(t('msimamizi_index.alert_success_title'), t('msimamizi_index.msg_seller_deleted', {seller_name: sellerName}));
                         await loadSellersData();
                         renderDashboard();
                     } else {
                         throw new Error('Delete failed');
                     }
                 } catch (error) {
-                    showAlert('Hitilafu', t('msimamizi_index.err_delete_seller'));
+                    showAlert(t('msimamizi_index.alert_error_title'), t('msimamizi_index.err_delete_seller'));
                 } finally {
                     deletingSellerId = null;
                     renderDashboard();
@@ -935,7 +939,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         async function updateProfile() {
             if (updatingProfile) return;
             if (!editFormData.businessName.trim() || !editFormData.businessLocation.trim()) {
-                showAlert('Hitilafu', t('msimamizi_index.err_fill_business_location'));
+                showAlert(t('msimamizi_index.alert_error_title'), t('msimamizi_index.err_fill_business_location'));
                 return;
             }
             
@@ -997,7 +1001,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     document.getElementById('userAvatar').innerHTML = editFormData.name.charAt(0).toUpperCase();
                     
                     closeEditModal();
-                    showAlert('Mafanikio', t('msimamizi_index.msg_profile_updated'));
+                    showAlert(t('msimamizi_index.alert_success_title'), t('msimamizi_index.msg_profile_updated'));
                     await loadSellersData();
                     renderDashboard();
                 } else {
@@ -1007,7 +1011,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     throw new Error(err.error || t('msimamizi_index.err_update_profile'));
                 }
             } catch (error) {
-                showAlert('Hitilafu', error.message || t('msimamizi_index.err_update_profile'));
+                showAlert(t('msimamizi_index.alert_error_title'), error.message || t('msimamizi_index.err_update_profile'));
             } finally {
                 updatingProfile = false;
                 setSaveBtnState(false);
@@ -1058,8 +1062,8 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             btn.style.opacity = saving ? '0.75' : '1';
             btn.style.cursor = saving ? 'wait' : 'pointer';
             btn.innerHTML = saving
-                ? '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.45);border-top-color:#fff;border-radius:50%;animation:btnSpin 0.7s linear infinite;vertical-align:-2px;margin-right:7px;"></span>' + t('msimamizi_index.saving') + '
-                : 'Hifadhi';
+                ? '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.45);border-top-color:#fff;border-radius:50%;animation:btnSpin 0.7s linear infinite;vertical-align:-2px;margin-right:7px;"></span>' + t('msimamizi_index.saving')
+                : t('msimamizi_index.btn_save');
         }
         
         function closeEditModal() {
@@ -1085,7 +1089,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             try {
                 const ok = await loadSellersData();
                 if (!ok) {
-                    showAlert('Hitilafu', t('msimamizi_index.err_refresh_data'));
+                    showAlert(t('msimamizi_index.alert_error_title'), t('msimamizi_index.err_refresh_data'));
                 }
             } finally {
                 refreshing = false;
@@ -1104,8 +1108,8 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         async function handleLogoUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
-            if (!file.type.startsWith('image/')) { showAlert('Hitilafu', t('msimamizi_index.photo_only')); return; }
-            if (file.size > 5*1024*1024) { showAlert('Hitilafu', t('msimamizi_index.photo_too_large')); return; }
+            if (!file.type.startsWith('image/')) { showAlert(t('msimamizi_index.alert_error_title'), t('msimamizi_index.photo_only')); return; }
+            if (file.size > 5*1024*1024) { showAlert(t('msimamizi_index.alert_error_title'), t('msimamizi_index.photo_too_large')); return; }
 
             logoUploading = true;
             renderDashboard();
@@ -1138,15 +1142,15 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 const av = document.getElementById('userAvatar');
                 av.innerHTML = '<img src="' + escapeHtml(newLogo) + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';
 
-                showAlert('Mafanikio', t('msimamizi_index.msg_business_photo_updated'));
+                showAlert(t('msimamizi_index.alert_success_title'), t('msimamizi_index.msg_business_photo_updated'));
                 renderDashboard();
-            } catch(e) { showAlert('Hitilafu', t('msimamizi_index.err_upload_photo', {message: e.message})); }
+            } catch(e) { showAlert(t('msimamizi_index.alert_error_title'), t('msimamizi_index.err_upload_photo', {message: e.message})); }
             finally { logoUploading = false; }
         }
 
         // GPS Location Tracking
         async function handleTrackLocation() {
-            if (!navigator.geolocation) { showAlert('Hitilafu', t('msimamizi_index.gps_unavailable')); return; }
+            if (!navigator.geolocation) { showAlert(t('msimamizi_index.alert_error_title'), t('msimamizi_index.gps_unavailable')); return; }
             locationTracking = true;
             renderDashboard();
             try {
@@ -1187,9 +1191,9 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 if (areaName) cached.business_location = areaName;
                 localStorage.setItem('userData', JSON.stringify(cached));
 
-                showAlert('Mafanikio', t('msimamizi_index.msg_location_saved', {area_name: areaName || lat.toFixed(5) + ', ' + lng.toFixed(5)}));
+                showAlert(t('msimamizi_index.alert_success_title'), t('msimamizi_index.msg_location_saved', {area_name: areaName || lat.toFixed(5) + ', ' + lng.toFixed(5)}));
                 renderDashboard();
-            } catch(e) { showAlert('Hitilafu', t('msimamizi_index.err_get_location', {message: e.message || e})); }
+            } catch(e) { showAlert(t('msimamizi_index.alert_error_title'), t('msimamizi_index.err_get_location', {message: e.message || e})); }
             finally { locationTracking = false; renderDashboard(); }
         }
 

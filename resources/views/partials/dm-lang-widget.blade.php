@@ -158,6 +158,16 @@
 (function (global) {
     'use strict';
 
+    // Drop any widget markup left behind by a previous copy, keeping the first.
+    // This must run before the boot guard below: a duplicate include still has to
+    // remove its own markup even though it will not boot a second runtime.
+    (function dropDuplicateWidgets() {
+        var widgets = document.querySelectorAll('#dmLangWidget');
+        for (var i = 1; i < widgets.length; i++) {
+            if (widgets[i] && widgets[i].parentNode) widgets[i].parentNode.removeChild(widgets[i]);
+        }
+    })();
+
     // This partial is also included by the fragment pages under msimamizi/, which
     // the sidebar layout fetches and injects.  That means a second copy of the
     // markup and this script can arrive after the first one has booted.  Bailing
@@ -167,14 +177,6 @@
 
     var root = document.documentElement;
 
-    // Drop any widget markup left behind by a previous copy, keeping the first.
-    (function dropDuplicateWidgets() {
-        var widgets = document.querySelectorAll('#dmLangWidget');
-        for (var i = 1; i < widgets.length; i++) {
-            if (widgets[i] && widgets[i].parentNode) widgets[i].parentNode.removeChild(widgets[i]);
-        }
-    })();
-
     // Mirrors the mobile app's language list (Duka_mkononi/context/
     // LanguageContext.tsx) and the allow-list in routes/web.php — never add or
     // remove one.
@@ -182,11 +184,31 @@
     var ALLOWED = ['sw', 'en', 'fr', 'hi', 'es', 'ur', 'de', 'zh'];
     var INITIAL = root.getAttribute('data-dm-locale') || DEFAULT;
 
+    // The language a logged-in visitor chose is stored on their account in
+    // Supabase; the login response carries it back and the login page keeps it
+    // in localStorage. That account language wins over the browsing session so
+    // authenticated pages stay in the user's own language for as long as they
+    // are logged in — even after the session cookie expires. Switching with
+    // the picker only changes the session and reverts on the next page.
+    // Guests (no token) fall back to the session, then to Swahili.
+    function accountLocale() {
+        try {
+            if (!global.localStorage || !localStorage.getItem('userToken')) return null;
+            var raw = localStorage.getItem('userData');
+            if (!raw) return null;
+            var user = JSON.parse(raw);
+            var code = user && user.language ? String(user.language).toLowerCase() : '';
+            return ALLOWED.indexOf(code) > -1 ? code : null;
+        } catch (e) {
+            return null;
+        }
+    }
+
     var catalog = null;
     var ready = false;
     var booted = false;
     var listeners = [];
-    var current = ALLOWED.indexOf(INITIAL) > -1 ? INITIAL : DEFAULT;
+    var current = accountLocale() || (ALLOWED.indexOf(INITIAL) > -1 ? INITIAL : DEFAULT);
 
     function bucket(locale) {
         if (!catalog) return null;

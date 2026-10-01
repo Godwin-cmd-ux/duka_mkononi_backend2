@@ -1,10 +1,9 @@
+@include('partials.dm-locale')
 @verbatim
-<!DOCTYPE html>
-<html lang="sw">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Tangaza - Dukamkononi Msimamizi</title>
+    <title data-i18n="msimamizi_tangaza.page_title">Tangaza - Dukamkononi Msimamizi</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -176,27 +175,136 @@
 @include('partials.cloudinary-config')
 @verbatim
 <body>
+    @include('partials.dm-lang-widget')
     <div class="mobile-menu-toggle" id="mobileMenuToggle">☰</div>
     <div class="msimamizi-layout">
         <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header"><div class="logo-area"><div class="logo-icon">D</div><div class="logo-text"><h2>DukaMkononi</h2><p>Msimamizi Portal</p></div></div></div>
+            <div class="sidebar-header"><div class="logo-area"><div class="logo-icon">D</div><div class="logo-text"><h2 data-i18n="msimamizi_tangaza.brand_name">DukaMkononi</h2><p data-i18n="msimamizi_tangaza.portal_name">Msimamizi Portal</p></div></div></div>
             <div class="nav-items">
-                <a href="index" class="nav-item"><div class="nav-icon"><i class="fa-solid fa-house"></i></div><span class="nav-label">Nyumbani</span></a>
-                <a href="ripoti" class="nav-item"><div class="nav-icon"><i class="fa-solid fa-chart-simple"></i></div><span class="nav-label">Ripoti</span></a>
-                <a href="preview" class="nav-item"><div class="nav-icon"><i class="fa-solid fa-calendar-days"></i></div><span class="nav-label">Rejea</span></a>
-                <a href="bidhaa-mpya" class="nav-item"><div class="nav-icon"><i class="fa-solid fa-circle-plus"></i></div><span class="nav-label">Bidhaa Mpya</span></a>
-                <a href="tangaza" class="nav-item active"><div class="nav-icon"><i class="fa-solid fa-bullhorn"></i></div><span class="nav-label">Tangaza</span></a>
+                <a href="index" class="nav-item"><div class="nav-icon"><i class="fa-solid fa-house"></i></div><span class="nav-label" data-i18n="msimamizi_tangaza.nav_home">Nyumbani</span></a>
+                <a href="ripoti" class="nav-item"><div class="nav-icon"><i class="fa-solid fa-chart-simple"></i></div><span class="nav-label" data-i18n="msimamizi_tangaza.nav_reports">Ripoti</span></a>
+                <a href="preview" class="nav-item"><div class="nav-icon"><i class="fa-solid fa-calendar-days"></i></div><span class="nav-label" data-i18n="msimamizi_tangaza.nav_review">Rejea</span></a>
+                <a href="bidhaa-mpya" class="nav-item"><div class="nav-icon"><i class="fa-solid fa-circle-plus"></i></div><span class="nav-label" data-i18n="msimamizi_tangaza.nav_new_product">Bidhaa Mpya</span></a>
+                <a href="tangaza" class="nav-item active"><div class="nav-icon"><i class="fa-solid fa-bullhorn"></i></div><span class="nav-label" data-i18n="msimamizi_tangaza.nav_advertise">Tangaza</span></a>
             </div>
             <div class="sidebar-footer">
-                <div class="user-info"><div class="user-avatar" id="userAvatar">M</div><div class="user-details"><div class="user-name" id="userName">Msimamizi</div><div class="user-role">Msimamizi</div></div></div>
-                <div class="logout-btn" id="logoutBtn"><i class="fa-solid fa-arrow-right-from-bracket"></i> Ondoka</div>
+                <div class="user-info"><div class="user-avatar" id="userAvatar">M</div><div class="user-details"><div class="user-name" id="userName" data-i18n="msimamizi_tangaza.user_admin">Msimamizi</div><div class="user-role" data-i18n="msimamizi_tangaza.user_admin">Msimamizi</div></div></div>
+                <div class="logout-btn" id="logoutBtn"><i class="fa-solid fa-arrow-right-from-bracket"></i> <span data-i18n="msimamizi_tangaza.logout">Ondoka</span></div>
             </div>
         </aside>
-        <main class="main-content" id="mainContent"><div style="text-align:center;padding:60px;"><div class="loading-spinner"></div><div>Inapakia...</div></div></main>
+        <main class="main-content" id="mainContent"><div style="text-align:center;padding:60px;"><div class="loading-spinner"></div><div data-i18n="msimamizi_tangaza.loading_initial">Inapakia...</div></div></main>
     </div>
 
     <script>
         const API_BASE_URL = '';
+        const SW = {
+            'msimamizi_tangaza': {
+            page_title: "Tangaza - Dukamkononi Msimamizi",
+            brand_name: "DukaMkononi",
+            portal_name: "Msimamizi Portal",
+            nav_home: "Nyumbani",
+            nav_reports: "Ripoti",
+            nav_review: "Rejea",
+            nav_new_product: "Bidhaa Mpya",
+            nav_advertise: "Tangaza",
+            user_admin: "Msimamizi",
+            logout: "Ondoka",
+            loading_initial: "Inapakia...",
+            alert_ok: "Sawa",
+            alert_error_title: "Hitilafu",
+            success_title: "Imefanikiwa",
+            no_connection_title: "Hakuna Muunganiko",
+            alert_sign_in_again: "Tafadhali ingia tena",
+            alert_login_first: "Tafadhali ingia kwanza",
+            alert_write_description: "Tafadhali andika maelezo",
+            alert_pick_media: "Tafadhali chagua picha au video",
+            check_your_internet: "Angalia intaneti yako",
+            ad_created_title: "Matangazo Yameundwa",
+            open_new_tab_pay: "Fungua kichupo kipya kulipa TZS 3,000. Baada ya kulipa, boresha ukurasa.",
+            ad_created_pay_later: "Matangazo yameundwa. Lipa upya baada ya kuingia.",
+            ad_created_success: "Matangazo yamewekwa kikamilifu!",
+            upload_failed: "Imeshindwa kupakia faili",
+            save_failed: "Imeshindikana kuhifadhi tangazo",
+            check_payment_title: "Angalia Malipo",
+            complete_payment_new_tab: "Fungua kichupo kipya kukamilisha malipo ya TZS 3,000. Baada ya kulipa, boresha ukurasa.",
+            start_payment_failed: "Imeshindwa kuanzisha malipo",
+            failed_prefix: "Imeshindwa: ",
+            delete_ad_title: "Futa Matangazo",
+            delete_ad_confirm: "Una uhakika unataka kufuta tangazo hili?",
+            delete_ad_no_refund: "Usajili wako hautarudishwa fedha baada ya kufuta tangazo hili.",
+            ad_deleted_success: "Tangazo limefutwa kikamilifu!",
+            delete_failed: "Imeshindikana kufuta tangazo",
+            confirm_no: "Ghairi",
+            confirm_yes: "Thibitisha",
+            user_generic: "Mtumiaji",
+            avatar_alt: "Picha",
+            currency_prefix: "TSh ",
+            saving: "Inahifadhi...",
+            starting_payment: "Inaanza malipo...",
+            deleting: "Inafuta...",
+            payment_description: "Malipo ya matangazo",
+            image_or_video_only: "Chagua picha au video tu",
+            file_too_big: "Faili ni kubwa! Kiwango cha juu: {size}",
+            max_size_image: "5MB",
+            max_size_video: "20MB",
+            max_size_video_time: "20MB (sekunde 60)",
+            create_ad: "Tengeneza Matangazo",
+            create_ad_subtitle: "Weka maelezo na media ya matangazo yako",
+            ad_payment_title: "Malipo ya Matangazo",
+            pay_via_pesapal: "• Matangazo yanalipwa kupitia PesaPal",
+            duration_30_days: "• Mudumu: Siku 30 baada ya malipo",
+            open_marketplace: "• Fungua soko lako kwa urahisi",
+            ad_price: "TZS 3,000",
+            for_30_days: "kwa siku 30",
+            no_internet_warning: "Hakuna muunganiko wa intaneti",
+            media_video: "Video",
+            media_image: "Picha",
+            clear_media: "Futa Media",
+            pick_image_or_video: "Chagua Picha au Video",
+            max_size: "Ukubwa wa juu: {size}",
+            no_internet: "Hakuna intaneti",
+            description_label: "Maelezo",
+            description_placeholder: "Elezea bidhaa au huduma yako kwa kina...",
+            uploading: "Inapakia...",
+            submit_ad: "TUMIA MATANGAZO",
+            help_title: "Usaidizi:",
+            tip_image: "• Picha: Chagua picha chini ya 5MB",
+            tip_video: "• Video: Chini ya 20MB na sekunde 60",
+            tip_network: "• Muunganiko: Hakikisha una intaneti nzuri",
+            tip_wait: "• Subiri: Upakiaji unaweza kuchukua sekunde kadhaa",
+            preview_alt: "Hakiki",
+            ad_image_alt: "Tangazo",
+            loading_ads: "Inapakia matangazo...",
+            no_ads_yet: "Hakuna matangazo bado",
+            no_ads_sub: "Tengeneza matangazo yako ya kwanza",
+            create_ad_caps: "TENGENEZA MATANGAZO",
+            status_free: "Bila malipo",
+            status_pending: "Inasubiri malipo",
+            status_expired: "Imeisha muda",
+            status_paid: "Imelipwa",
+            ad_default_title: "Matangazo #{id}",
+            days_left: "Siku {count} zimebaki",
+            ad_video_label: "Video Tangazo",
+            likes: "{count} Likes",
+            reports: "{count} Ripoti",
+            renew_pay: "Lipa Upya (TZS 3,000)",
+            pay_now: "Lipa Sasa (TZS 3,000)",
+            delete: "Futa",
+            tab_create: "TENGENEZA",
+            tab_my_ads: "MATANGAZO YANGU ({count})",
+            my_ads_title: "Matangazo Yangu",
+            refresh: "Pakia Upya",
+            }
+        };
+        // Mirrors DM.t(): prefer the live locale, fall back to Swahili.
+        function t(key, params) {
+            const p = params || {};
+            const full = 'msimamizi_tangaza.' + key;
+            if (window.DM && typeof window.DM.t === 'function') return window.DM.t(full, p);
+            let out = (SW.msimamizi_tangaza[key] !== undefined) ? SW.msimamizi_tangaza[key] : full;
+            for (const k in p) out = String(out).split('{' + k + '}').join(p[k]);
+            return out;
+        }
         const CLOUDINARY_CONFIG = (window.CLOUDINARY_CONFIG || { cloudName: '', uploadPreset: 'react_native_uploads' });
         
         let userToken = null;
@@ -219,7 +327,7 @@
 
         function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
         function formatDate(dateStr) { try { return new Date(dateStr).toLocaleDateString('sw-TZ'); } catch { return dateStr; } }
-        function formatCurrency(amount) { return `TSh ${(amount || 0).toLocaleString()}`; }
+        function formatCurrency(amount) { return t('currency_prefix') + (amount || 0).toLocaleString(); }
 
         // ============================== ICONS ==============================
         // Font Awesome 6 icon helper (https://fontawesome.com).
@@ -246,7 +354,7 @@
             box.style.cssText = 'background:white;border-radius:28px;width:85%;max-width:320px;padding:24px;text-align:center;';
             box.innerHTML = `<div style="font-size:20px;font-weight:800;margin-bottom:12px;">${escapeHtml(title)}</div>
                 <div style="font-size:14px;color:#5d6d7e;margin-bottom:24px;">${escapeHtml(message)}</div>
-                <div style="background:#FF6B35;padding:12px;border-radius:40px;color:white;cursor:pointer;">Sawa</div>`;
+                <div style="background:#FF6B35;padding:12px;border-radius:40px;color:white;cursor:pointer;">${t('alert_ok')}</div>`;
             box.querySelector('div:last-child').onclick = () => { overlay.remove(); if(onOk) onOk(); };
             overlay.appendChild(box);
             document.body.appendChild(overlay);
@@ -264,8 +372,8 @@
                 <div style="font-size:14px;color:#5d6d7e;margin-bottom:12px;">${escapeHtml(message)}</div>
                 ${subMessage ? `<div style="font-size:13px;color:#b3261e;background:#fdecea;border-radius:10px;padding:10px 12px;margin-bottom:20px;">${escapeHtml(subMessage)}</div>` : '<div style="margin-bottom:20px;"></div>'}
                 <div style="display:flex;gap:12px;">
-                    <div id="confirmNo" style="flex:1;background:#95a5a6;padding:12px;border-radius:40px;color:white;cursor:pointer;font-weight:700;">Ghairi</div>
-                    <div id="confirmYes" style="flex:1;background:#e74c3c;padding:12px;border-radius:40px;color:white;cursor:pointer;font-weight:700;">Thibitisha</div>
+                    <div id="confirmNo" style="flex:1;background:#95a5a6;padding:12px;border-radius:40px;color:white;cursor:pointer;font-weight:700;">${t('confirm_no')}</div>
+                    <div id="confirmYes" style="flex:1;background:#e74c3c;padding:12px;border-radius:40px;color:white;cursor:pointer;font-weight:700;">${t('confirm_yes')}</div>
                 </div>`;
             overlay.appendChild(box);
             document.body.appendChild(overlay);
@@ -278,7 +386,7 @@
             userToken = localStorage.getItem('userToken');
             const userStr = localStorage.getItem('userData');
             if (!userToken || !userStr) {
-                showAlert('Hitilafu', 'Tafadhali ingia tena', () => window.location.href = '../login?role=msimamizi');
+                showAlert(t('alert_error_title'), t('alert_sign_in_again'), () => window.location.href = '../login?role=msimamizi');
                 return false;
             }
             const user = JSON.parse(userStr);
@@ -288,19 +396,19 @@
                 // real code path later.
                 id: localStorage.getItem('userId') || user.id || '',
                 email: user.email || '',
-                name: user.full_name || user.business_name || 'Mtumiaji',
+                name: user.full_name || user.business_name || t('user_generic'),
                 role: user.role || '',
                 phone: user.phone || '',
                 business_name: user.business_name || ''
             };
             document.getElementById('userName').innerHTML = escapeHtml(currentUser.name);
             const avatarEl = document.getElementById('userAvatar');
-            const displayName = user.full_name || user.business_name || user.email?.split('@')[0] || 'Msimamizi';
+            const displayName = user.full_name || user.business_name || user.email?.split('@')[0] || t('user_admin');
             if (user.business_logo_url) {
                 avatarEl.classList.add('js-avatar-view');
 avatarEl.setAttribute('data-full', user.business_logo_url);
 avatarEl.setAttribute('data-name', displayName);
-avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;pointer-events:none;" alt="Picha">`;
+avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;pointer-events:none;" alt="${t('avatar_alt')}">`;
             } else {
                 avatarEl.innerHTML = (currentUser.name.charAt(0) || 'M').toUpperCase();
             }
@@ -314,16 +422,16 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             
             const uploadUrl = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/${type}/upload`;
             const response = await fetch(uploadUrl, { method: 'POST', body: formData });
-            if (!response.ok) throw new Error('Imeshindwa kupakia faili');
+            if (!response.ok) throw new Error(t('upload_failed'));
             const data = await response.json();
             return { secure_url: data.secure_url, public_id: data.public_id };
         }
 
         async function handleUpload() {
-            if (!currentUser) { showAlert('Hitilafu', 'Tafadhali ingia kwanza'); return; }
-            if (!description.trim()) { showAlert('Hitilafu', 'Tafadhali andika maelezo'); return; }
-            if (!mediaFile) { showAlert('Hitilafu', 'Tafadhali chagua picha au video'); return; }
-            if (!isOnline) { showAlert('Hakuna Muunganiko', 'Angalia intaneti yako'); return; }
+            if (!currentUser) { showAlert(t('alert_error_title'), t('alert_login_first')); return; }
+            if (!description.trim()) { showAlert(t('alert_error_title'), t('alert_write_description')); return; }
+            if (!mediaFile) { showAlert(t('alert_error_title'), t('alert_pick_media')); return; }
+            if (!isOnline) { showAlert(t('no_connection_title'), t('check_your_internet')); return; }
 
             uploading = true;
             render();
@@ -359,13 +467,13 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                                 // Same popup-block fallback as handleRenewPayment.
                                 const payWin = window.open(payData.redirect_url, '_blank');
                                 if (!payWin) { window.location.href = payData.redirect_url; return; }
-                                showAlert('Matangazo Yameundwa', 'Fungua kichupo kipya kulipa TZS 3,000. Baada ya kulipa, boresha ukurasa.');
+                                showAlert(t('ad_created_title'), t('open_new_tab_pay'));
                             } else {
-                                showAlert('Imefanikiwa', 'Matangazo yameundwa. Lipa upya baada ya kuingia.');
+                                showAlert(t('success_title'), t('ad_created_pay_later'));
                             }
-                        } catch(e) { showAlert('Imefanikiwa', 'Matangazo yameundwa. Lipa upya baada ya kuingia.'); }
+                        } catch(e) { showAlert(t('success_title'), t('ad_created_pay_later')); }
                     } else {
-                        showAlert('Imefanikiwa', 'Matangazo yamewekwa kikamilifu!');
+                        showAlert(t('success_title'), t('ad_created_success'));
                     }
                     description = '';
                     mediaFile = null;
@@ -374,10 +482,10 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     await loadMyAdvertisements();
                     activeTab = 'myPosts';
                 } else {
-                    throw new Error('Failed to save');
+                    throw new Error(t('save_failed'));
                 }
             } catch (err) {
-                showAlert('Hitilafu', err.message);
+                showAlert(t('alert_error_title'), err.message);
             } finally {
                 uploading = false;
                 render();
@@ -393,7 +501,12 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     headers: { 'Authorization': `Bearer ${userToken}` }
                 });
                 if (response.ok) {
-                    myAdvertisements = await response.json();
+                    // The endpoint has returned both a bare array and
+                    // {data:[...]} shapes over time; renderMyPosts maps over it,
+                    // so anything else would throw and blank the page.
+                    const payload = await response.json();
+                    myAdvertisements = Array.isArray(payload) ? payload
+                        : (Array.isArray(payload?.data) ? payload.data : []);
                 }
             } catch (err) { console.error(err); }
             finally { loadingAds = false; render(); }
@@ -405,7 +518,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             if (busy) {
                 btn.dataset.originalHtml = btn.innerHTML;
                 btn.classList.add('btn-busy');
-                btn.innerHTML = '<span class="btn-spinner"></span>' + (label || 'Inahifadhi...');
+                btn.innerHTML = '<span class="btn-spinner"></span>' + (label || t('saving'));
             } else {
                 btn.classList.remove('btn-busy');
                 if (btn.dataset.originalHtml) btn.innerHTML = btn.dataset.originalHtml;
@@ -413,16 +526,16 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         }
 
         async function handleRenewPayment(adId) {
-            if (!userToken) { showAlert('Hitilafu', 'Tafadhali ingia tena'); return; }
+            if (!userToken) { showAlert(t('alert_error_title'), t('alert_sign_in_again')); return; }
             if (payingAdId || deletingAdId) return; // one action at a time
             payingAdId = adId;
-            setButtonBusy('payBtn-' + adId, true, 'Inaanza malipo...');
-            setButtonBusy('renewBtn-' + adId, true, 'Inaanza malipo...');
+            setButtonBusy('payBtn-' + adId, true, t('starting_payment'));
+            setButtonBusy('renewBtn-' + adId, true, t('starting_payment'));
             try {
                 const res = await fetch(API_BASE_URL + '/api/payments/pesapal/initiate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + userToken },
-                    body: JSON.stringify({ amount: 3000, description: 'Malipo ya matangazo', matangazo_id: adId, phone: currentUser?.phone || '', email: currentUser?.email || '', name: currentUser?.name || '' })
+                    body: JSON.stringify({ amount: 3000, description: t('payment_description'), matangazo_id: adId, phone: currentUser?.phone || '', email: currentUser?.email || '', name: currentUser?.name || '' })
                 });
                 const data = await res.json();
                 if (res.ok && data.redirect_url) {
@@ -431,11 +544,11 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     // navigating in the same tab so payment always starts.
                     const win = window.open(data.redirect_url, '_blank');
                     if (!win) { window.location.href = data.redirect_url; return; }
-                    showAlert('Angalia Malipo', 'Fungua kichupo kipya kukamilisha malipo ya TZS 3,000. Baada ya kulipa, boresha ukurasa.');
+                    showAlert(t('check_payment_title'), t('complete_payment_new_tab'));
                 } else {
-                    showAlert('Hitilafu', data.error || 'Imeshindwa kuanzisha malipo');
+                    showAlert(t('alert_error_title'), data.error || t('start_payment_failed'));
                 }
-            } catch(e) { showAlert('Hitilafu', 'Imeshindwa: ' + e.message); }
+            } catch(e) { showAlert(t('alert_error_title'), t('failed_prefix') + e.message); }
             finally {
                 payingAdId = null;
                 setButtonBusy('payBtn-' + adId, false);
@@ -452,13 +565,13 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 (new Date(ad.expires_at).getTime() > Date.now());
 
             showConfirmDelete(
-                'Futa Matangazo',
-                'Una uhakika unataka kufuta tangazo hili?',
-                hasActiveSub ? 'Usajili wako hautarudishwa fedha baada ya kufuta tangazo hili.' : null,
+                t('delete_ad_title'),
+                t('delete_ad_confirm'),
+                hasActiveSub ? t('delete_ad_no_refund') : null,
                 async () => {
                     if (payingAdId || deletingAdId) return;
                     deletingAdId = id;
-                    setButtonBusy('deleteBtn-' + id, true, 'Inafuta...');
+                    setButtonBusy('deleteBtn-' + id, true, t('deleting'));
                     try {
                         const response = await fetch(`${API_BASE_URL}/api/matangazo/${id}`, {
                             method: 'DELETE',
@@ -466,12 +579,12 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                         });
                         const data = await response.json().catch(() => ({}));
                         if (response.ok) {
-                            showAlert('Imefanikiwa', 'Tangazo limefutwa kikamilifu!');
+                            showAlert(t('success_title'), t('ad_deleted_success'));
                             await loadMyAdvertisements();
                         } else {
-                            showAlert('Hitilafu', data.error || 'Imeshindikana kufuta tangazo');
+                            showAlert(t('alert_error_title'), data.error || t('delete_failed'));
                         }
-                    } catch (err) { showAlert('Hitilafu', err.message); }
+                    } catch (err) { showAlert(t('alert_error_title'), err.message); }
                     finally {
                         deletingAdId = null;
                         setButtonBusy('deleteBtn-' + id, false);
@@ -485,11 +598,11 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             if (!file) return;
             
             const fileType = file.type.startsWith('image/') ? 'image' : (file.type.startsWith('video/') ? 'video' : null);
-            if (!fileType) { showAlert('Hitilafu', 'Chagua picha au video tu'); return; }
+            if (!fileType) { showAlert(t('alert_error_title'), t('image_or_video_only')); return; }
             
             const maxSize = fileType === 'image' ? 5 * 1024 * 1024 : 20 * 1024 * 1024;
             if (file.size > maxSize) {
-                showAlert('Hitilafu', `Faili ni kubwa! Kiwango cha juu: ${fileType === 'image' ? '5MB' : '20MB'}`);
+                showAlert(t('alert_error_title'), t('file_too_big', { size: fileType === 'image' ? t('max_size_image') : t('max_size_video') }));
                 return;
             }
             
@@ -510,71 +623,71 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         function renderPostNew() {
             return `
                 <div class="card">
-                    <div class="title">Tengeneza Matangazo</div>
-                    <div class="subtitle">Weka maelezo na media ya matangazo yako</div>
+                    <div class="title">${t('create_ad')}</div>
+                    <div class="subtitle">${t('create_ad_subtitle')}</div>
                     
                     <div class="payment-banner">
-                        <div class="payment-banner-title">Malipo ya Matangazo</div>
-                        <div class="payment-banner-text">• Matangazo yanalipwa kupitia PesaPal<br>• Mudumu: Siku 30 baada ya malipo<br>• Fungua soko lako kwa urahisi</div>
+                        <div class="payment-banner-title">${t('ad_payment_title')}</div>
+                        <div class="payment-banner-text">${t('pay_via_pesapal')}<br>${t('duration_30_days')}<br>${t('open_marketplace')}</div>
                         <div class="payment-price-row">
-                            <span class="payment-price">TZS 3,000</span>
-                            <span class="payment-duration">kwa siku 30</span>
+                            <span class="payment-price">${t('ad_price')}</span>
+                            <span class="payment-duration">${t('for_30_days')}</span>
                         </div>
                     </div>
                     
-                    ${!isOnline ? '<div class="network-warning">Hakuna muunganiko wa intaneti</div>' : ''}
+                    ${!isOnline ? `<div class="network-warning">${t('no_internet_warning')}</div>` : ''}
                 </div>
                 
                 <div class="card">
-                    <div class="section-title" style="display:flex;align-items:center;gap:8px;">${mediaType === 'video' ? ic('video', 17) : ic('image', 17)} ${mediaType === 'video' ? 'Video' : 'Picha'}</div>
+                    <div class="section-title" style="display:flex;align-items:center;gap:8px;">${mediaType === 'video' ? ic('video', 17) : ic('image', 17)} ${mediaType === 'video' ? t('media_video') : t('media_image')}</div>
                     ${mediaPreview ? `
                         <div class="media-preview">
-                            ${mediaType === 'image' ? `<img src="${mediaPreview}" class="media-preview-img" alt="preview">` : `<video src="${mediaPreview}" class="media-preview-video" controls></video>`}
-                            <div class="clear-media" onclick="clearMedia()">Futa Media</div>
+                            ${mediaType === 'image' ? `<img src="${mediaPreview}" class="media-preview-img" alt="${t('preview_alt')}">` : `<video src="${mediaPreview}" class="media-preview-video" controls></video>`}
+                            <div class="clear-media" onclick="clearMedia()">${t('clear_media')}</div>
                         </div>
                     ` : `
                         <div class="media-picker" onclick="document.getElementById('fileInput').click()">
                             <div class="media-picker-icon" style="display:flex;justify-content:center;color:#28a745;">${ic('folder', 44)}</div>
-                            <div class="media-picker-text">Chagua Picha au Video</div>
-                            <div class="file-hint">Ukubwa wa juu: ${mediaType === 'video' ? '20MB (sekunde 60)' : '5MB'}</div>
-                            ${!isOnline ? '<div class="file-hint" style="color:#dc3545;">Hakuna intaneti</div>' : ''}
+                            <div class="media-picker-text">${t('pick_image_or_video')}</div>
+                            <div class="file-hint">${t('max_size', { size: mediaType === 'video' ? t('max_size_video_time') : t('max_size_image') })}</div>
+                            ${!isOnline ? `<div class="file-hint" style="color:#dc3545;">${t('no_internet')}</div>` : ''}
                         </div>
                         <input type="file" id="fileInput" style="display:none" accept="image/*,video/*" onchange="handleFileSelect(event)">
                     `}
                 </div>
                 
                 <div class="card">
-                    <div class="section-title" style="display:flex;align-items:center;gap:8px;">${ic('edit', 17)} Maelezo</div>
-                    <textarea id="descriptionInput" placeholder="Elezea bidhaa au huduma yako kwa kina..." maxlength="500">${escapeHtml(description)}</textarea>
+                    <div class="section-title" style="display:flex;align-items:center;gap:8px;">${ic('edit', 17)} ${t('description_label')}</div>
+                    <textarea id="descriptionInput" placeholder="${t('description_placeholder')}" maxlength="500">${escapeHtml(description)}</textarea>
                     <div class="char-count" id="charCount">${description.length} / 500</div>
                 </div>
                 
                 <button class="upload-btn ${(uploading || !isOnline) ? 'disabled' : ''}" onclick="handleUpload()" ${(uploading || !isOnline) ? 'disabled' : ''}>
-                    ${uploading ? '<div class="loading-spinner" style="width:20px;height:20px;display:inline-block;margin-right:8px;"></div> Inapakia...' : ic('megaphone', 17) + ' TUMIA MATANGAZO'}
+                    ${uploading ? '<div class="loading-spinner" style="width:20px;height:20px;display:inline-block;margin-right:8px;"></div> ' + t('uploading') : ic('megaphone', 17) + ' ' + t('submit_ad')}
                 </button>
                 
                 <div class="instructions">
-                    <div class="instructions-title" style="display:flex;align-items:center;gap:6px;">${ic('info', 14)} Usaidizi:</div>
-                    <div class="instruction">• Picha: Chagua picha chini ya 5MB</div>
-                    <div class="instruction">• Video: Chini ya 20MB na sekunde 60</div>
-                    <div class="instruction">• Muunganiko: Hakikisha una intaneti nzuri</div>
-                    <div class="instruction">• Subiri: Upakiaji unaweza kuchukua sekunde kadhaa</div>
+                    <div class="instructions-title" style="display:flex;align-items:center;gap:6px;">${ic('info', 14)} ${t('help_title')}</div>
+                    <div class="instruction">${t('tip_image')}</div>
+                    <div class="instruction">${t('tip_video')}</div>
+                    <div class="instruction">${t('tip_network')}</div>
+                    <div class="instruction">${t('tip_wait')}</div>
                 </div>
             `;
         }
 
         function renderMyPosts() {
             if (loadingAds) {
-                return `<div style="text-align:center;padding:60px;"><div class="loading-spinner"></div><div>Inapakia matangazo...</div></div>`;
+                return `<div style="text-align:center;padding:60px;"><div class="loading-spinner"></div><div>${t('loading_ads')}</div></div>`;
             }
             
             if (myAdvertisements.length === 0) {
                 return `
                     <div class="empty-state">
                         <div class="empty-icon" style="display:flex;justify-content:center;color:#b8c4cf;">${ic('megaphone', 56)}</div>
-                        <div class="empty-text">Hakuna matangazo bado</div>
-                        <div class="empty-sub">Tengeneza matangazo yako ya kwanza</div>
-                        <div class="create-btn" onclick="setTab('post')">TENGENEZA MATANGAZO</div>
+                        <div class="empty-text">${t('no_ads_yet')}</div>
+                        <div class="empty-sub">${t('no_ads_sub')}</div>
+                        <div class="create-btn" onclick="setTab('post')">${t('create_ad_caps')}</div>
                     </div>
                 `;
             }
@@ -586,30 +699,30 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 const daysLeft = ad.expires_at ? Math.max(0, Math.ceil((new Date(ad.expires_at).getTime() - Date.now()) / (24*60*60*1000))) : 0;
                 
                 let statusLabel, statusClass;
-                if (isFree) { statusLabel = 'Bila malipo'; statusClass = 'status-free'; }
-                else if (isPending) { statusLabel = 'Inasubiri malipo'; statusClass = 'status-pending'; }
-                else if (isExpired) { statusLabel = 'Imeisha muda'; statusClass = 'status-expired'; }
-                else { statusLabel = 'Imelipwa'; statusClass = 'status-paid'; }
+                if (isFree) { statusLabel = t('status_free'); statusClass = 'status-free'; }
+                else if (isPending) { statusLabel = t('status_pending'); statusClass = 'status-pending'; }
+                else if (isExpired) { statusLabel = t('status_expired'); statusClass = 'status-expired'; }
+                else { statusLabel = t('status_paid'); statusClass = 'status-paid'; }
                 
                 return `<div class="ad-card">
                     <div class="ad-header">
-                        <div class="ad-title">${escapeHtml(ad.title || 'Matangazo #' + ad.id)}</div>
-                        <div class="ad-date">${daysLeft > 0 ? 'Siku ' + daysLeft + ' zimebaki' : formatDate(ad.created_at)}</div>
+                        <div class="ad-title">${escapeHtml(ad.title || t('ad_default_title', { id: ad.id }))}</div>
+                        <div class="ad-date">${daysLeft > 0 ? t('days_left', { count: daysLeft }) : formatDate(ad.created_at)}</div>
                     </div>
                     <div class="ad-description">${escapeHtml(ad.description)}</div>
                     <div class="ad-media">
-                        ${ad.media_type === 'video' ? '<div class="video-placeholder" style="display:flex;flex-direction:column;align-items:center;gap:8px;color:#7a8ba0;">' + ic('video', 28) + '<span style="font-size:13px;">Video Tangazo</span></div>' : '<img src="' + ad.media_url + '" alt="tangazo" onerror="this.src=\'https://via.placeholder.com/300?text=No+Image\'">'}
+                        ${ad.media_type === 'video' ? '<div class="video-placeholder" style="display:flex;flex-direction:column;align-items:center;gap:8px;color:#7a8ba0;">' + ic('video', 28) + '<span style="font-size:13px;">' + t('ad_video_label') + '</span></div>' : '<img src="' + ad.media_url + '" alt="' + t('ad_image_alt') + '" onerror="this.src=\'https://via.placeholder.com/300?text=No+Image\'">'}
                     </div>
                     <div class="stats-row">
                         <div class="reactions">
-                            <div class="stat-badge likes">${ic('thumb', 13)} ${ad.like_count || 0} Likes</div>
-                            <div class="stat-badge reports">${ic('flag', 13)} ${ad.report_count || 0} Ripoti</div>
+                            <div class="stat-badge likes">${ic('thumb', 13)} ${t('likes', { count: ad.like_count || 0 })}</div>
+                            <div class="stat-badge reports">${ic('flag', 13)} ${t('reports', { count: ad.report_count || 0 })}</div>
                         </div>
                         <div class="status-badge ${statusClass}">${statusLabel}</div>
                     </div>
-                    ${isExpired ? `<button id="renewBtn-${ad.id}" class="renew-btn" onclick="handleRenewPayment('${ad.id}')">${ic('money', 14)} Lipa Upya (TZS 3,000)</button>` : ''}
-                    ${isPending ? `<button id="payBtn-${ad.id}" class="pay-now-btn" onclick="handleRenewPayment('${ad.id}')">${ic('money', 14)} Lipa Sasa (TZS 3,000)</button>` : ''}
-                    <div id="deleteBtn-${ad.id}" class="delete-btn" onclick="deleteAdvertisement('${ad.id}')">Futa</div>
+                    ${isExpired ? `<button id="renewBtn-${ad.id}" class="renew-btn" onclick="handleRenewPayment('${ad.id}')">${ic('money', 14)} ${t('renew_pay')}</button>` : ''}
+                    ${isPending ? `<button id="payBtn-${ad.id}" class="pay-now-btn" onclick="handleRenewPayment('${ad.id}')">${ic('money', 14)} ${t('pay_now')}</button>` : ''}
+                    <div id="deleteBtn-${ad.id}" class="delete-btn" onclick="deleteAdvertisement('${ad.id}')">${t('delete')}</div>
                 </div>`;
             }).join('');
         }
@@ -619,13 +732,13 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             container.innerHTML = `
                 <div class="container">
                     <div class="tab-container">
-                        <div class="tab ${activeTab === 'post' ? 'active' : ''}" onclick="setTab('post')">${ic('megaphone', 15)} TENGENEZA</div>
-                        <div class="tab ${activeTab === 'myPosts' ? 'active' : ''}" onclick="setTab('myPosts')">${ic('doc', 15)} MATANGAZO YANGU (${myAdvertisements.length})</div>
+                        <div class="tab ${activeTab === 'post' ? 'active' : ''}" onclick="setTab('post')">${ic('megaphone', 15)} ${t('tab_create')}</div>
+                        <div class="tab ${activeTab === 'myPosts' ? 'active' : ''}" onclick="setTab('myPosts')">${ic('doc', 15)} ${t('tab_my_ads', { count: myAdvertisements.length })}</div>
                     </div>
                     ${activeTab === 'post' ? renderPostNew() : `
                         <div class="posts-header">
-                            <div class="section-title">Matangazo Yangu</div>
-                            <div class="refresh-btn" onclick="refreshAds()">${ic('refresh', 13)} Pakia Upya</div>
+                            <div class="section-title">${t('my_ads_title')}</div>
+                            <div class="refresh-btn" onclick="refreshAds()">${ic('refresh', 13)} ${t('refresh')}</div>
                         </div>
                         ${renderMyPosts()}
                     `}
@@ -694,6 +807,11 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             setInterval(checkNetwork, 15000);
         }
         
+        // Re-render dynamic content when the user switches language.
+        if (window.DM && typeof window.DM.onChange === 'function') {
+            window.DM.onChange(() => { if (!loadingUser) render(); });
+        }
+
         init();
     </script>
 </body>

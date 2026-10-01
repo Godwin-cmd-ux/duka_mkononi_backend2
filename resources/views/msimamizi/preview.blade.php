@@ -1,10 +1,9 @@
+@include('partials.dm-locale')
 @verbatim
-<!DOCTYPE html>
-<html lang="sw">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Rejea ya Biashara - Dukamkononi Msimamizi</title>
+    <title data-i18n="msimamizi_preview.page_title">Rejea ya Biashara - Dukamkononi Msimamizi</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {
@@ -435,6 +434,9 @@
 @include('partials.photo-viewer')
 @verbatim
 <body>
+@endverbatim
+@include('partials.dm-lang-widget')
+@verbatim
     <div class="mobile-menu-toggle" id="mobileMenuToggle">☰</div>
 
     <div class="msimamizi-layout">
@@ -443,47 +445,47 @@
                 <div class="logo-area">
                     <div class="logo-icon">D</div>
                     <div class="logo-text">
-                        <h2>DukaMkononi</h2>
-                        <p>Msimamizi Portal</p>
+                        <h2 data-i18n="msimamizi_preview.brand_name">DukaMkononi</h2>
+                        <p data-i18n="msimamizi_preview.portal_name">Msimamizi Portal</p>
                     </div>
                 </div>
             </div>
             <div class="nav-items">
                 <a href="index" class="nav-item">
                     <div class="nav-icon"><i class="fa-solid fa-house"></i></div>
-                    <span class="nav-label">Nyumbani</span>
+                    <span class="nav-label" data-i18n="msimamizi_preview.nav_home">Nyumbani</span>
                 </a>
                 <a href="ripoti" class="nav-item">
                     <div class="nav-icon"><i class="fa-solid fa-chart-simple"></i></div>
-                    <span class="nav-label">Ripoti</span>
+                    <span class="nav-label" data-i18n="msimamizi_preview.nav_reports">Ripoti</span>
                 </a>
                 <a href="preview" class="nav-item active">
                     <div class="nav-icon"><i class="fa-solid fa-calendar-days"></i></div>
-                    <span class="nav-label">Rejea</span>
+                    <span class="nav-label" data-i18n="msimamizi_preview.nav_review">Rejea</span>
                 </a>
                 <a href="bidhaa-mpya" class="nav-item">
                     <div class="nav-icon"><i class="fa-solid fa-circle-plus"></i></div>
-                    <span class="nav-label">Bidhaa Mpya</span>
+                    <span class="nav-label" data-i18n="msimamizi_preview.nav_new_product">Bidhaa Mpya</span>
                 </a>
                 <a href="tangaza" class="nav-item">
                     <div class="nav-icon"><i class="fa-solid fa-bullhorn"></i></div>
-                    <span class="nav-label">Tangaza</span>
+                    <span class="nav-label" data-i18n="msimamizi_preview.nav_advertise">Tangaza</span>
                 </a>
             </div>
             <div class="sidebar-footer">
                 <div class="user-info">
                     <div class="user-avatar" id="userAvatar">M</div>
                     <div class="user-details">
-                        <div class="user-name" id="userName">Msimamizi</div>
-                        <div class="user-role">Msimamizi</div>
+                        <div class="user-name" id="userName" data-i18n="msimamizi_preview.user_admin">Msimamizi</div>
+                        <div class="user-role" data-i18n="msimamizi_preview.user_admin">Msimamizi</div>
                     </div>
                 </div>
-                <div class="logout-btn" id="logoutBtn"><i class="fa-solid fa-arrow-right-from-bracket"></i> Ondoka</div>
+                <div class="logout-btn" id="logoutBtn"><i class="fa-solid fa-arrow-right-from-bracket"></i> <span data-i18n="msimamizi_preview.logout">Ondoka</span></div>
             </div>
         </aside>
 
         <main class="main-content" id="mainContent">
-            <div id="previewContainer">Loading...</div>
+            <div id="previewContainer" data-i18n="msimamizi_preview.loading">Loading...</div>
         </main>
     </div>
 
@@ -493,6 +495,130 @@
 
     <script>
         const API_BASE_URL = '';
+
+        // ---- i18n ----
+        // Swahili source strings, used until the shared runtime has fetched the
+        // catalog. t() prefers window.DM (all 8 locales) and falls back to these.
+        const SW = {
+            page_title: "Rejea ya Biashara - Dukamkononi Msimamizi",
+            brand_name: "DukaMkononi",
+            portal_name: "Msimamizi Portal",
+            nav_home: "Nyumbani",
+            nav_reports: "Ripoti",
+            nav_review: "Rejea",
+            nav_new_product: "Bidhaa Mpya",
+            nav_advertise: "Tangaza",
+            user_admin: "Msimamizi",
+            logout: "Ondoka",
+            loading: "Loading...",
+            business_main: "Biashara Kuu",
+            business_hq: "Makao Makuu",
+            product_generic: "Bidhaa",
+            customer_generic: "Mteja",
+            customer_no_name: "Mteja Bila Jina",
+            user_generic: "Mtumiaji",
+            alert_error_title: "Hitilafu",
+            alert_sign_in_again: "Tafadhali ingia tena",
+            alert_ok: "Sawa",
+            sales: "Mauzo",
+            event_sale_desc: "{quantity} {product_name} imeuza kwa {customer_name}",
+            event_product_added_desc: "Bidhaa {product_name} imeongezwa",
+            event_low_stock_title: "Stock Inakaribia Kuisha",
+            event_low_stock_desc: "Bidhaa {product_name} ina stock {stock} pekee",
+            event_sale_edited_title: "Mauzo Yamehaririwa",
+            event_changes: "{count} mabadiliko",
+            no_sales_period: "Hakuna mauzo katika kipindi hiki",
+            no_sales_business: "Hakuna mauzo ya biashara bado",
+            no_sales_try_change: "Jaribu kubadilisha kipindi cha tarehe kilichochaguliwa.",
+            no_sales_business_named: "Biashara \"{business_name}\" haina mauzo yaliyorekodiwa.",
+            expense_only_day: "Hakuna mauzo — matumizi tu",
+            day_sales_count: "{count} mauzo",
+            profit: "Faida",
+            net_profit_label: "Faida Halisi:",
+            expenses_inline: "(Matumizi: {amount})",
+            day_expenses_label: "Matumizi ya siku hii:",
+            expenses: "Matumizi",
+            customers_label: "Wateja:",
+            customers_not_recorded: "Hawajarekodiwa",
+            tap_full_summary: "Bonyeza kwa muhtasari kamili →",
+            print_report: "Chapisha Taarifa",
+            notifications_all: "Taarifa zote",
+            unread_new: "{count} mpya",
+            all_read: "zote zimesomwa",
+            mark_read: "Zimesomwa",
+            no_events: "Hakuna matukio bado",
+            badge_new: "MPYA",
+            filter_title: "Chuja kwa Kipindi cha Tarehe",
+            filter_from: "Kuanzia",
+            filter_to_lower: "hadi",
+            filter_to: "Hadi",
+            filter_search: "Tafuta",
+            filter_clear: "Futa",
+            filter_showing: "✓ Inaonyesha kipindi:",
+            filter_beginning: "mwanzo",
+            filter_today: "leo",
+            business_review: "Rejea ya Biashara",
+            stat_sellers: "{count} wauzaji",
+            stat_products: "{count} bidhaa",
+            stat_sales: "{amount} mauzo",
+            stat_profit: "{amount} faida",
+            stat_net: "{amount} halisi",
+            business_summary: "Muhtasari wa Biashara",
+            info_summary_desc: "Data ya biashara nzima \"{business_name}\". Faida halisi ni baada ya kutoa matumizi ya ofisi.",
+            my_days: "Siku Zangu",
+            notifications_tab: "Taarifa ({count})",
+            err_date_order: "Tarehe ya kuanzia iko kabla ya tarehe ya mwisho",
+            loading_period: "Inapakua ripoti ya kipindi...",
+            loading_all: "Inapakua ripoti zote...",
+            gross_profit: "Faida Ghafi",
+            net_profit: "Faida Halisi",
+            office_expenses: "Matumizi ya Ofisi",
+            customers_count: "Wateja ({count})",
+            no_customer_names_day: "Hakuna majina ya wateja yaliyorekodiwa siku hii",
+            day_sales_title: "Mauzo ya Siku Hii",
+            no_sales_day_expenses: "Hakuna mauzo siku hii — matumizi tu ya ofisi yaliyorekodiwa.",
+            total_products_label: "Jumla ya Bidhaa:",
+            total_sales_label: "Jumla ya Mauzo:",
+            gross_profit_label: "Faida Ghafi:",
+            total_expenses_label: "Jumla ya Matumizi:",
+            note_label: "Kumbuka:",
+            unknown_profit_note: "{count} mauzo hayana bei ya kununwa; hazihesabiwi kwenye faida",
+            day_report_not_found: "Taarifa ya siku haijapatikana",
+            total_expenses: "Jumla ya Matumizi",
+            day_report_title_dated: "Taarifa ya Siku - {date}",
+            day_report_title: "Taarifa ya Siku",
+            summary_heading: "Muhtasari",
+            total_products_sold: "Jumla ya Bidhaa Zilizouzwa",
+            total_sales: "Jumla ya Mauzo",
+            day_customers_heading: "Wateja wa Siku Hii",
+            no_customer_names: "Hakuna majina ya wateja yaliyorekodiwa",
+            all_day_sales: "Mauzo Yote ya Siku Hii ({count})",
+            th_seller: "Muuzaji",
+            th_quantity: "Idadi",
+            th_price: "Bei",
+            th_total: "Jumla",
+            no_sales_day_print: "Hakuna mauzo yaliyorekodiwa siku hii — ripoti hii inaonyesha matumizi tu.",
+            printed_at: "Imechapishwa {datetime} — DukaMkononi",
+            popup_permission: "Tafadhali ruhusu popups ili kuchapisha taarifa",
+            event_edit_desc: "Ankara {invoice} — {change}. Jumla: {old_total} → {new_total}.{customer_part}",
+            event_edit_customer: " Mteja: {customer_name}.",
+            avatar_alt: "Picha",
+        };
+        function t(key, params) {
+            const full = key.indexOf('msimamizi_preview.') === 0 ? key : 'msimamizi_preview.' + key;
+            if (window.DM && typeof window.DM.t === 'function') {
+                const hit = window.DM.t(full, params);
+                if (hit !== full) return hit;
+            }
+            let value = SW[key.replace('msimamizi_preview.', '')];
+            if (value === undefined) return key;
+            if (params) {
+                Object.keys(params).forEach(p => {
+                    value = value.split('{' + p + '}').join(params[p] == null ? '' : params[p]);
+                });
+            }
+            return value;
+        }
         
         let userData = { businessName: '', businessLocation: '', userId: '', userRole: '' };
         let dailySummaries = [];
@@ -552,7 +678,7 @@
             box.style.cssText = 'background:white;border-radius:28px;width:85%;max-width:320px;padding:24px;text-align:center;';
             box.innerHTML = `<div style="font-size:20px;font-weight:800;margin-bottom:12px;">${escapeHtml(title)}</div>
                 <div style="font-size:14px;color:#5d6d7e;margin-bottom:24px;">${escapeHtml(message)}</div>
-                <div style="background:#e74c3c;padding:12px;border-radius:40px;color:white;cursor:pointer;">Sawa</div>`;
+                <div style="background:#e74c3c;padding:12px;border-radius:40px;color:white;cursor:pointer;">${t('msimamizi_preview.alert_ok')}</div>`;
             box.querySelector('div:last-child').onclick = () => overlay.remove();
             overlay.appendChild(box);
             document.body.appendChild(overlay);
@@ -562,25 +688,25 @@
             const token = localStorage.getItem('userToken');
             const userStr = localStorage.getItem('userData');
             if (!token || !userStr) {
-                showAlert('Hitilafu', 'Tafadhali ingia tena');
+                showAlert(t('msimamizi_preview.alert_error_title'), t('msimamizi_preview.alert_sign_in_again'));
                 setTimeout(() => window.location.href = '../login?role=msimamizi', 1500);
                 return false;
             }
             const user = JSON.parse(userStr);
             userData = {
-                businessName: user.businessName || user.business_name || 'Biashara Kuu',
-                businessLocation: user.businessLocation || user.business_location || 'Makao Makuu',
+                businessName: user.businessName || user.business_name || t('msimamizi_preview.business_main'),
+                businessLocation: user.businessLocation || user.business_location || t('msimamizi_preview.business_hq'),
                 userId: user.id || '',
                 userRole: user.role || ''
             };
-            document.getElementById('userName').innerHTML = escapeHtml(user.full_name || user.email?.split('@')[0] || 'Msimamizi');
+            document.getElementById('userName').innerHTML = escapeHtml(user.full_name || user.email?.split('@')[0] || t('msimamizi_preview.user_admin'));
             const avatarEl = document.getElementById('userAvatar');
-            const displayName = user.full_name || user.business_name || user.email?.split('@')[0] || 'Msimamizi';
+            const displayName = user.full_name || user.business_name || user.email?.split('@')[0] || t('msimamizi_preview.user_admin');
             if (user.business_logo_url) {
                 avatarEl.classList.add('js-avatar-view');
 avatarEl.setAttribute('data-full', user.business_logo_url);
 avatarEl.setAttribute('data-name', displayName);
-avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;pointer-events:none;" alt="Picha">`;
+avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;pointer-events:none;" alt="${t('msimamizi_preview.avatar_alt')}">`;
             } else {
                 avatarEl.innerHTML = (user.full_name || user.email?.charAt(0) || 'M').charAt(0).toUpperCase();
             }
@@ -637,12 +763,12 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                                     const product = productsById.get(item.product_id);
                                     sales.push({
                                         id: sale.id,
-                                        product_name: product?.name || item.products?.name || 'Bidhaa',
+                                        product_name: product?.name || item.products?.name || t('msimamizi_preview.product_generic'),
                                         quantity: item.quantity || 1,
                                         unit_price: item.unit_price || 0,
                                         total_amount: item.total_price || (item.unit_price * item.quantity),
                                         sale_date: sale.sale_date?.split('T')[0] || new Date().toISOString().split('T')[0],
-                                        customer_name: sale.customers?.name || 'Mteja',
+                                        customer_name: sale.customers?.name || '',
                                         seller_name: seller.full_name || seller.email,
                                         // "Bei ya Kununua" is products.price; legacy cost_price is ignored.
                                         // null means the buying price was never recorded, so profit for
@@ -653,12 +779,12 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                             } else {
                                 sales.push({
                                     id: sale.id,
-                                    product_name: 'Bidhaa',
+                                    product_name: t('msimamizi_preview.product_generic'),
                                     quantity: 1,
                                     unit_price: sale.total_amount || 0,
                                     total_amount: sale.total_amount || 0,
                                     sale_date: sale.sale_date?.split('T')[0] || new Date().toISOString().split('T')[0],
-                                    customer_name: sale.customers?.name || 'Mteja',
+                                    customer_name: sale.customers?.name || '',
                                     seller_name: seller.full_name || seller.email,
                                     // No sale_items on this sale, so there is no product to read a
                                     // buying price from: profit for it is unknown, not zero.
@@ -772,16 +898,16 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     const netProfit = totalProfit - totalExpenses;
                     // Only names actually recorded — drop the "Mteja" placeholder
                     // so the daily report lists real customers when they exist.
-                    const knownCustomers = [...new Set(daySales.map(s => s.customer_name).filter(n => n && n !== 'Mteja'))];
+                    const knownCustomers = [...new Set(daySales.map(s => s.customer_name).filter(n => n))];
                     // Every sale without customer data is one "unknown customer",
                     // so the count = known customers + sales with no customer data.
                     // A sale with several items becomes several rows sharing one id,
                     // so count distinct ids (: sales, not rows).
                     const unknownCustomerCount = new Set(daySales
-                        .filter(s => !s.customer_name || s.customer_name === 'Mteja')
+                        .filter(s => !s.customer_name)
                         .map(s => s.id)).size;
                     const customers = unknownCustomerCount > 0
-                        ? [...knownCustomers, ...Array(unknownCustomerCount).fill('Mteja Bila Jina')]
+                        ? [...knownCustomers, ...Array(unknownCustomerCount).fill(t('msimamizi_preview.customer_no_name'))]
                         : knownCustomers;
                     const daySellers = [...new Map(daySales.map(s => [s.seller_name, { name: s.seller_name }])).values()];
                     
@@ -816,13 +942,13 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 // Build events
                 const events = [];
                 sales.slice(0, 20).forEach(sale => {
-                    events.push({ id: sale.id, type: 'sale', title: 'Mauzo', description: `${sale.quantity} ${sale.product_name} imeuza kwa ${sale.customer_name}`, amount: sale.total_amount, seller_name: sale.seller_name, customer_name: sale.customer_name, product_name: sale.product_name, event_date: sale.sale_date });
+                    events.push({ id: sale.id, type: 'sale', title: t('msimamizi_preview.sales'), description: t('msimamizi_preview.event_sale_desc', { quantity: sale.quantity, product_name: sale.product_name, customer_name: sale.customer_name || t('msimamizi_preview.customer_generic') }), amount: sale.total_amount, seller_name: sale.seller_name, customer_name: sale.customer_name, product_name: sale.product_name, event_date: sale.sale_date });
                 });
                 products.slice(0, 10).forEach(product => {
-                    events.push({ id: product.id + 1000, type: 'product_added', title: 'Bidhaa Mpya', description: `Bidhaa ${product.name} imeongezwa`, amount: product.price, product_name: product.name, event_date: product.created_at?.split('T')[0] || new Date().toISOString().split('T')[0] });
+                    events.push({ id: product.id + 1000, type: 'product_added', title: 'Bidhaa Mpya', description: t('msimamizi_preview.event_product_added_desc', { product_name: product.name }), amount: product.price, product_name: product.name, event_date: product.created_at?.split('T')[0] || new Date().toISOString().split('T')[0] });
                 });
                 products.filter(p => p.stock < 5).forEach(product => {
-                    events.push({ id: product.id + 2000, type: 'low_stock', title: 'Stock Inakaribia Kuisha', description: `Bidhaa ${product.name} ina stock ${product.stock} pekee`, product_name: product.name, event_date: new Date().toISOString().split('T')[0] });
+                    events.push({ id: product.id + 2000, type: 'low_stock', title: t('msimamizi_preview.event_low_stock_title'), description: t('msimamizi_preview.event_low_stock_desc', { product_name: product.name, stock: product.stock }), product_name: product.name, event_date: new Date().toISOString().split('T')[0] });
                 });
 
                 // Mabadiliko ya mauzo -> taarifa. /api/admin/logs/search is
@@ -839,16 +965,16 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
 
                         const changedItems = Array.isArray(details.items) ? details.items : [];
                         const changeText = changedItems.length
-                            ? changedItems.map(it => `${it.product_name || 'Bidhaa'}: ${it.old_quantity} → ${it.new_quantity}`).join(', ')
-                            : `${details.items_changed || 0} mabadiliko`;
+                            ? changedItems.map(it => `${it.product_name || t('msimamizi_preview.product_generic')}: ${it.old_quantity} → ${it.new_quantity}`).join(', ')
+                            : t('msimamizi_preview.event_changes', { count: details.items_changed || 0 });
 
                         events.push({
                             id: 'edit_' + log.id,
                             type: 'sale_edited',
-                            title: 'Mauzo Yamehaririwa',
-                            description: `Ankara ${details.invoice_number || '—'} — ${changeText}. Jumla: ${formatCurrency(details.old_total_amount || 0)} → ${formatCurrency(details.total_amount || 0)}.${details.customer_name ? ` Mteja: ${details.customer_name}.` : ''}`,
+                            title: t('msimamizi_preview.event_sale_edited_title'),
+                            description: t('msimamizi_preview.event_edit_desc', { invoice: details.invoice_number || '—', change: changeText, old_total: formatCurrency(details.old_total_amount || 0), new_total: formatCurrency(details.total_amount || 0), customer_part: details.customer_name ? t('msimamizi_preview.event_edit_customer', { customer_name: details.customer_name }) : '' }),
                             amount: details.total_amount || 0,
-                            seller_name: log.users?.full_name || log.users?.email || 'Mtumiaji',
+                            seller_name: log.users?.full_name || log.users?.email || t('msimamizi_preview.user_generic'),
                             // Full ISO timestamp so "mpya" detection stays accurate,
                             // plus a display-only date for the card.
                             event_date: log.created_at || new Date().toISOString(),
@@ -883,8 +1009,8 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 const filtered = filterStart || filterEnd;
                 return `<div style="text-align:center;padding:40px;background:white;border-radius:16px;color:#7a8ba0;">
                     ${ic('report', 44)}
-                    <div style="margin-top:12px;font-weight:600;color:#2c3e50;">${filtered ? 'Hakuna mauzo katika kipindi hiki' : 'Hakuna mauzo ya biashara bado'}</div>
-                    <div style="font-size:13px;color:#95a5a6;margin-top:8px;">${filtered ? 'Jaribu kubadilisha kipindi cha tarehe kilichochaguliwa.' : `Biashara "${escapeHtml(userData.businessName)}" haina mauzo yaliyorekodiwa.`}</div>
+                    <div style="margin-top:12px;font-weight:600;color:#2c3e50;">${filtered ? t('msimamizi_preview.no_sales_period') : t('msimamizi_preview.no_sales_business')}</div>
+                    <div style="font-size:13px;color:#95a5a6;margin-top:8px;">${filtered ? t('msimamizi_preview.no_sales_try_change') : t('msimamizi_preview.no_sales_business_named', { business_name: escapeHtml(userData.businessName) })}</div>
                 </div>`;
             }
             
@@ -894,24 +1020,24 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 <div class="day-card" onclick="window.showDayModal('${day.date}')" ${expenseOnlyDay ? 'style="border-left:4px solid #e67e22;"' : ''}>
                     <div class="date-header">
                         <span class="date-badge" ${expenseOnlyDay ? 'style="background:#e67e22;"' : ''}>${ic('calendar', 13)} ${getShortDate(day.date)}</span>
-                        <span style="font-size:12px;color:#7f8c8d;">${expenseOnlyDay ? 'Hakuna mauzo — matumizi tu' : day.sales.length + ' mauzo'}</span>
+                        <span style="font-size:12px;color:#7f8c8d;">${expenseOnlyDay ? t('msimamizi_preview.expense_only_day') : t('msimamizi_preview.day_sales_count', { count: day.sales.length })}</span>
                     </div>
                     <div class="summary-grid">
-                        <div class="summary-box"><div class="sum-ic">${ic('box', 16)}</div><div class="summary-number">${day.totalProducts}</div><div>Bidhaa</div></div>
-                        <div class="summary-box"><div class="sum-ic">${ic('money', 16)}</div><div class="summary-number">${formatCurrency(day.totalSales)}</div><div>Mauzo</div></div>
-                        <div class="summary-box"><div class="sum-ic">${ic('chart', 16)}</div><div class="summary-number">${formatCurrency(day.totalProfit)}</div><div>Faida</div></div>
+                        <div class="summary-box"><div class="sum-ic">${ic('box', 16)}</div><div class="summary-number">${day.totalProducts}</div><div>${t('msimamizi_preview.product_generic')}</div></div>
+                        <div class="summary-box"><div class="sum-ic">${ic('money', 16)}</div><div class="summary-number">${formatCurrency(day.totalSales)}</div><div>${t('msimamizi_preview.sales')}</div></div>
+                        <div class="summary-box"><div class="sum-ic">${ic('chart', 16)}</div><div class="summary-number">${formatCurrency(day.totalProfit)}</div><div>${t('msimamizi_preview.profit')}</div></div>
                     </div>
                     <div class="net-profit-row">
-                        <span>Faida Halisi:</span>
+                        <span>${t('msimamizi_preview.net_profit_label')}</span>
                         <strong style="color:${day.netProfit >= 0 ? '#27ae60' : '#e74c3c'}">${formatCurrency(day.netProfit)}</strong>
-                        ${day.expenses.length ? `<span style="font-size:11px;color:#e67e22;">(Matumizi: ${formatCurrency(day.totalExpenses)})</span>` : ''}
+                        ${day.expenses.length ? `<span style="font-size:11px;color:#e67e22;">${t('msimamizi_preview.expenses_inline', { amount: formatCurrency(day.totalExpenses) })}</span>` : ''}
                     </div>
                     ${expenseOnlyDay
-                        ? `<div style="font-size:12px;color:#e67e22;">${ic('doc', 12)} Matumizi ya siku hii: ${day.expenses.map(e => escapeHtml(e.category || 'Matumizi')).slice(0,3).join(', ')}${day.expenses.length > 3 ? '...' : ''}</div>`
-                        : `<div style="font-size:12px;color:#3498db;">${ic('users', 12)} Wateja: ${day.customers.length ? day.customers.slice(0,3).join(', ') + (day.customers.length > 3 ? '...' : '') : 'Hawajarekodiwa'}</div>`}
+                        ? `<div style="font-size:12px;color:#e67e22;">${ic('doc', 12)} ${t('msimamizi_preview.day_expenses_label')} ${day.expenses.map(e => escapeHtml(e.category || t('msimamizi_preview.expenses'))).slice(0,3).join(', ')}${day.expenses.length > 3 ? '...' : ''}</div>`
+                        : `<div style="font-size:12px;color:#3498db;">${ic('users', 12)} ${t('msimamizi_preview.customers_label')} ${day.customers.length ? day.customers.slice(0,3).join(', ') + (day.customers.length > 3 ? '...' : '') : t('msimamizi_preview.customers_not_recorded')}</div>`}
                     <div class="day-card-footer">
-                        <span style="font-size:11px;color:#9b59b6;">Bonyeza kwa muhtasari kamili →</span>
-                        <div class="print-day-btn" onclick="event.stopPropagation(); window.printDayReport('${day.date}')">${ic('print', 13)} Chapisha Taarifa</div>
+                        <span style="font-size:11px;color:#9b59b6;">${t('msimamizi_preview.tap_full_summary')}</span>
+                        <div class="print-day-btn" onclick="event.stopPropagation(); window.printDayReport('${day.date}')">${ic('print', 13)} ${t('msimamizi_preview.print_report')}</div>
                     </div>
                 </div>
             `;
@@ -923,17 +1049,17 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             const header = `
                 <div class="taarifa-header">
                     <div style="font-weight:700;font-size:14px;color:#2c3e50;display:flex;align-items:center;gap:6px;">
-                        ${ic('bell', 16)} Taarifa zote
-                        ${unreadCount ? `<span class="new-badge" style="font-size:11px;padding:3px 10px;">${unreadCount} mpya</span>` : `<span style="font-size:11px;color:#27ae60;font-weight:600;margin-left:8px;">zote zimesomwa</span>`}
+                        ${ic('bell', 16)} ${t('msimamizi_preview.notifications_all')}
+                        ${unreadCount ? `<span class="new-badge" style="font-size:11px;padding:3px 10px;">${t('msimamizi_preview.unread_new', { count: unreadCount })}</span>` : `<span style="font-size:11px;color:#27ae60;font-weight:600;margin-left:8px;">${t('msimamizi_preview.all_read')}</span>`}
                     </div>
-                    <div class="zimesomwa-btn" onclick="window.markAllEventsRead()">${ic('check', 14)} Zimesomwa</div>
+                    <div class="zimesomwa-btn" onclick="window.markAllEventsRead()">${ic('check', 14)} ${t('msimamizi_preview.mark_read')}</div>
                 </div>
             `;
 
             if (businessEvents.length === 0) {
                 return header + `<div style="text-align:center;padding:40px;background:white;border-radius:16px;color:#7a8ba0;">
                     ${ic('bell', 44)}
-                    <div style="margin-top:12px;font-weight:600;">Hakuna matukio bado</div>
+                    <div style="margin-top:12px;font-weight:600;">${t('msimamizi_preview.no_events')}</div>
                 </div>`;
             }
             
@@ -942,7 +1068,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
                         <div style="display:flex;gap:8px;align-items:center;">
                             <span class="event-ic ${eventIconClass(event.type)}">${eventIcon(event.type)}</span>
-                            <div><strong>${event.title}</strong>${isEventUnread(event) ? '<span class="new-badge">MPYA</span>' : ''}<div style="font-size:11px;color:#7f8c8d;">${event.display_date || event.event_date}</div></div>
+                            <div><strong>${event.title}</strong>${isEventUnread(event) ? '<span class="new-badge">' + t('msimamizi_preview.badge_new') + '</span>' : ''}<div style="font-size:11px;color:#7f8c8d;">${event.display_date || event.event_date}</div></div>
                         </div>
                         ${event.amount ? `<strong style="color:#27ae60;">${formatCurrency(event.amount)}</strong>` : ''}
                     </div>
@@ -997,23 +1123,23 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             const active = filterStart || filterEnd;
             return `
                 <div class="date-filter-card">
-                    <div class="date-filter-title">${ic('filter', 14)} Chuja kwa Kipindi cha Tarehe</div>
+                    <div class="date-filter-title">${ic('filter', 14)} ${t('msimamizi_preview.filter_title')}</div>
                     <div class="date-filter-row">
                         <div class="date-field">
-                            <label>Kuanzia</label>
+                            <label>${t('msimamizi_preview.filter_from')}</label>
                             <input type="date" id="dateFilterStart" value="${filterStart}">
                         </div>
-                        <span class="date-sep">hadi</span>
+                        <span class="date-sep">${t('msimamizi_preview.filter_to_lower')}</span>
                         <div class="date-field">
-                            <label>Hadi</label>
+                            <label>${t('msimamizi_preview.filter_to')}</label>
                             <input type="date" id="dateFilterEnd" value="${filterEnd}">
                         </div>
                         <div class="date-filter-actions">
-                            <div class="date-btn primary" onclick="window.applyDateFilter()">Tafuta</div>
-                            <div class="date-btn" onclick="window.clearDateFilter()">Futa</div>
+                            <div class="date-btn primary" onclick="window.applyDateFilter()">${t('msimamizi_preview.filter_search')}</div>
+                            <div class="date-btn" onclick="window.clearDateFilter()">${t('msimamizi_preview.filter_clear')}</div>
                         </div>
                     </div>
-                    ${active ? `<div class="date-filter-active">✓ Inaonyesha kipindi: <strong>${filterStart || 'mwanzo'}</strong> hadi <strong>${filterEnd || 'leo'}</strong></div>` : ''}
+                    ${active ? `<div class="date-filter-active">${t('msimamizi_preview.filter_showing')} <strong>${filterStart || t('msimamizi_preview.filter_beginning')}</strong> ${t('msimamizi_preview.filter_to_lower')} <strong>${filterEnd || t('msimamizi_preview.filter_today')}</strong></div>` : ''}
                 </div>
             `;
         }
@@ -1024,25 +1150,25 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             container.innerHTML = `
                 <div class="header">
                     <div>
-                        <h1 class="title">Rejea ya Biashara</h1>
+                        <h1 class="title">${t('msimamizi_preview.business_review')}</h1>
                         <div class="business-name">${escapeHtml(userData.businessName)}</div>
                         <div class="business-stats">
-                            <span class="stat-badge">${ic('users', 12)} ${businessStats.totalSellers} wauzaji</span>
-                            <span class="stat-badge">${ic('box', 12)} ${businessStats.totalProducts} bidhaa</span>
-                            <span class="stat-badge">${ic('money', 12)} ${formatCurrency(businessStats.totalSalesAmount)} mauzo</span>
-                            <span class="stat-badge">${ic('chart', 12)} ${formatCurrency(businessStats.totalProfit)} faida</span>
-                            <span class="stat-badge">${ic('report', 12)} ${formatCurrency(businessStats.totalNetProfit)} halisi</span>
+                            <span class="stat-badge">${ic('users', 12)} ${t('msimamizi_preview.stat_sellers', { count: businessStats.totalSellers })}</span>
+                            <span class="stat-badge">${ic('box', 12)} ${t('msimamizi_preview.stat_products', { count: businessStats.totalProducts })}</span>
+                            <span class="stat-badge">${ic('money', 12)} ${t('msimamizi_preview.stat_sales', { amount: formatCurrency(businessStats.totalSalesAmount) })}</span>
+                            <span class="stat-badge">${ic('chart', 12)} ${t('msimamizi_preview.stat_profit', { amount: formatCurrency(businessStats.totalProfit) })}</span>
+                            <span class="stat-badge">${ic('report', 12)} ${t('msimamizi_preview.stat_net', { amount: formatCurrency(businessStats.totalNetProfit) })}</span>
                         </div>
                     </div>
                     <div class="refresh-btn" id="refreshBtn">${refreshing ? '<div class=\"loading-spinner\"></div>' : ic('check', 16)}</div>
                 </div>
                 <div class="info-card">
-                    <div style="font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:6px;">${ic('doc', 14)} Muhtasari wa Biashara</div>
-                    <div style="font-size:13px;">Data ya biashara nzima "${escapeHtml(userData.businessName)}". Faida halisi ni baada ya kutoa matumizi ya ofisi.</div>
+                    <div style="font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:6px;">${ic('doc', 14)} ${t('msimamizi_preview.business_summary')}</div>
+                    <div style="font-size:13px;">${t('msimamizi_preview.info_summary_desc', { business_name: escapeHtml(userData.businessName) })}</div>
                 </div>
                 <div class="tabs-container">
-                    <div class="tab-btn ${activeTab === 'days' ? 'active' : ''}" onclick="window.setTab('days')">${ic('calendar', 15)} Siku Zangu</div>
-                    <div class="tab-btn ${activeTab === 'events' ? 'active' : ''}" onclick="window.setTab('events')">${ic('bell', 15)} Taarifa (${unreadCount})${unreadCount ? ` <span class="new-badge">MPYA</span>` : ''}</div>
+                    <div class="tab-btn ${activeTab === 'days' ? 'active' : ''}" onclick="window.setTab('days')">${ic('calendar', 15)} ${t('msimamizi_preview.my_days')}</div>
+                    <div class="tab-btn ${activeTab === 'events' ? 'active' : ''}" onclick="window.setTab('events')">${ic('bell', 15)} ${t('msimamizi_preview.notifications_tab', { count: unreadCount })}${unreadCount ? ` <span class="new-badge">${t('msimamizi_preview.badge_new')}</span>` : ''}</div>
                 </div>
                 <div id="tabContent">${activeTab === 'days' ? renderDaysTab() : renderEventsTab()}</div>
             `;
@@ -1061,13 +1187,13 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             const start = document.getElementById('dateFilterStart')?.value || '';
             const end = document.getElementById('dateFilterEnd')?.value || '';
             if (start && end && start > end) {
-                showAlert('Hitilafu', 'Tarehe ya kuanzia iko kabla ya tarehe ya mwisho');
+                showAlert(t('msimamizi_preview.alert_error_title'), t('msimamizi_preview.err_date_order'));
                 return;
             }
             filterStart = start;
             filterEnd = end;
             const container = document.getElementById('previewContainer');
-            container.innerHTML = '<div style="text-align:center;padding:60px;"><div class="loading-spinner"></div><div>Inapakua ripoti ya kipindi...</div></div>';
+            container.innerHTML = '<div style="text-align:center;padding:60px;"><div class="loading-spinner"></div><div>' + t('msimamizi_preview.loading_period') + '</div></div>';
             const token = localStorage.getItem('userToken');
             await fetchData(token);
             render();
@@ -1077,7 +1203,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             filterStart = '';
             filterEnd = '';
             const container = document.getElementById('previewContainer');
-            container.innerHTML = '<div style="text-align:center;padding:60px;"><div class="loading-spinner"></div><div>Inapakua ripoti zote...</div></div>';
+            container.innerHTML = '<div style="text-align:center;padding:60px;"><div class="loading-spinner"></div><div>' + t('msimamizi_preview.loading_all') + '</div></div>';
             const token = localStorage.getItem('userToken');
             await fetchData(token);
             render();
@@ -1097,37 +1223,37 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 </div>
                 <div class="modal-body">
                     <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px;">
-                        <div class="stat-card"><div class="sum-ic">${ic('box', 18)}</div><div style="font-size:20px;font-weight:700;">${day.totalProducts}</div><div>Bidhaa</div></div>
-                        <div class="stat-card"><div class="sum-ic">${ic('money', 18)}</div><div style="font-size:20px;font-weight:700;">${formatCurrency(day.totalSales)}</div><div>Mauzo</div></div>
-                        <div class="stat-card"><div class="sum-ic">${ic('chart', 18)}</div><div style="font-size:20px;font-weight:700;">${formatCurrency(day.totalProfit)}</div><div>Faida Ghafi</div></div>
-                        <div class="stat-card"><div class="sum-ic">${ic('report', 18)}</div><div style="font-size:20px;font-weight:700;color:${day.netProfit >= 0 ? '#27ae60' : '#e74c3c'}">${formatCurrency(day.netProfit)}</div><div>Faida Halisi</div></div>
+                        <div class="stat-card"><div class="sum-ic">${ic('box', 18)}</div><div style="font-size:20px;font-weight:700;">${day.totalProducts}</div><div>${t('msimamizi_preview.product_generic')}</div></div>
+                        <div class="stat-card"><div class="sum-ic">${ic('money', 18)}</div><div style="font-size:20px;font-weight:700;">${formatCurrency(day.totalSales)}</div><div>${t('msimamizi_preview.sales')}</div></div>
+                        <div class="stat-card"><div class="sum-ic">${ic('chart', 18)}</div><div style="font-size:20px;font-weight:700;">${formatCurrency(day.totalProfit)}</div><div>${t('msimamizi_preview.gross_profit')}</div></div>
+                        <div class="stat-card"><div class="sum-ic">${ic('report', 18)}</div><div style="font-size:20px;font-weight:700;color:${day.netProfit >= 0 ? '#27ae60' : '#e74c3c'}">${formatCurrency(day.netProfit)}</div><div>${t('msimamizi_preview.net_profit')}</div></div>
                     </div>
                     
                     ${day.expenses.length ? `
-                        <div style="margin-bottom:16px;"><strong>Matumizi ya Ofisi</strong></div>
+                        <div style="margin-bottom:16px;"><strong>${t('msimamizi_preview.office_expenses')}</strong></div>
                         ${day.expenses.map(e => `<div class="expense-item"><span>${escapeHtml(e.category)}: ${escapeHtml(e.description)}</span><strong>${formatCurrency(e.amount)}</strong></div>`).join('')}
                     ` : ''}
                     
-                    <div style="margin-bottom:16px;"><strong>Wateja (${day.customers.length})</strong></div>
+                    <div style="margin-bottom:16px;"><strong>${t('msimamizi_preview.customers_count', { count: day.customers.length })}</strong></div>
                     <div style="background:#f8f9fa;padding:12px;border-radius:12px;margin-bottom:16px;">
-                        ${day.customers.length ? day.customers.map(c => `<div>• ${escapeHtml(c)}</div>`).join('') : '<div style="color:#95a5a6;font-size:13px;">Hakuna majina ya wateja yaliyorekodiwa siku hii</div>'}
+                        ${day.customers.length ? day.customers.map(c => `<div>• ${escapeHtml(c)}</div>`).join('') : '<div style="color:#95a5a6;font-size:13px;">' + t('msimamizi_preview.no_customer_names_day') + '</div>'}
                     </div>
                     
-                    <div style="margin-bottom:16px;"><strong>Mauzo ya Siku Hii</strong></div>
+                    <div style="margin-bottom:16px;"><strong>${t('msimamizi_preview.day_sales_title')}</strong></div>
                     ${day.sales.length ? day.sales.slice(0,5).map(sale => `
                         <div class="sale-item">
-                            <div><strong>${escapeHtml(sale.product_name)}</strong><br><span style="font-size:11px;color:#7f8c8d;">${escapeHtml(sale.customer_name)}</span></div>
+                            <div><strong>${escapeHtml(sale.product_name)}</strong><br><span style="font-size:11px;color:#7f8c8d;">${escapeHtml(sale.customer_name || t('msimamizi_preview.customer_generic'))}</span></div>
                             <div style="text-align:right;"><strong>${formatCurrency(sale.total_amount)}</strong><br><span style="font-size:11px;">${sale.quantity} × ${formatCurrency(sale.unit_price)}</span></div>
                         </div>
-                    `).join('') : '<div style="color:#95a5a6;font-size:13px;background:#fdf3e7;border-radius:10px;padding:10px 12px;">Hakuna mauzo siku hii — matumizi tu ya ofisi yaliyorekodiwa.</div>'}
+                    `).join('') : '<div style="color:#95a5a6;font-size:13px;background:#fdf3e7;border-radius:10px;padding:10px 12px;">' + t('msimamizi_preview.no_sales_day_expenses') + '</div>'}
                     
                     <div style="margin-top:16px;padding-top:12px;border-top:1px solid #ecf0f1;">
-                        <div style="display:flex;justify-content:space-between;"><span>Jumla ya Bidhaa:</span><strong>${day.totalProducts}</strong></div>
-                        <div style="display:flex;justify-content:space-between;"><span>Jumla ya Mauzo:</span><strong>${formatCurrency(day.totalSales)}</strong></div>
-                        <div style="display:flex;justify-content:space-between;"><span>Faida Ghafi:</span><strong>${formatCurrency(day.totalProfit)}</strong></div>
-                        <div style="display:flex;justify-content:space-between;"><span>Jumla ya Matumizi:</span><strong>${formatCurrency(day.totalExpenses)}</strong></div>
-                        <div style="display:flex;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:2px solid #3498db;"><span>Faida Halisi:</span><strong style="color:${day.netProfit >= 0 ? '#27ae60' : '#e74c3c'}">${formatCurrency(day.netProfit)}</strong></div>
-                        ${day.unknownProfitItems ? `<div style="display:flex;justify-content:space-between;margin-top:8px;color:#f39c12;font-size:12px;"><span>Kumbuka:</span><span style="text-align:right;">${day.unknownProfitItems} mauzo hayana bei ya kununwa; hazihesabiwi kwenye faida</span></div>` : ''}
+                        <div style="display:flex;justify-content:space-between;"><span>${t('msimamizi_preview.total_products_label')}</span><strong>${day.totalProducts}</strong></div>
+                        <div style="display:flex;justify-content:space-between;"><span>${t('msimamizi_preview.total_sales_label')}</span><strong>${formatCurrency(day.totalSales)}</strong></div>
+                        <div style="display:flex;justify-content:space-between;"><span>${t('msimamizi_preview.gross_profit_label')}</span><strong>${formatCurrency(day.totalProfit)}</strong></div>
+                        <div style="display:flex;justify-content:space-between;"><span>${t('msimamizi_preview.total_expenses_label')}</span><strong>${formatCurrency(day.totalExpenses)}</strong></div>
+                        <div style="display:flex;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:2px solid #3498db;"><span>${t('msimamizi_preview.net_profit_label')}</span><strong style="color:${day.netProfit >= 0 ? '#27ae60' : '#e74c3c'}">${formatCurrency(day.netProfit)}</strong></div>
+                        ${day.unknownProfitItems ? `<div style="display:flex;justify-content:space-between;margin-top:8px;color:#f39c12;font-size:12px;"><span>${t('msimamizi_preview.note_label')}</span><span style="text-align:right;">${t('msimamizi_preview.unknown_profit_note', { count: day.unknownProfitItems })}</span></div>` : ''}
                     </div>
                 </div>
             `;
@@ -1140,7 +1266,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         // 5-row preview.
         window.printDayReport = (date) => {
             const day = dailySummaries.find(d => d.date === date);
-            if (!day) { showAlert('Hitilafu', 'Taarifa ya siku haijapatikana'); return; }
+            if (!day) { showAlert(t('msimamizi_preview.alert_error_title'), t('msimamizi_preview.day_report_not_found')); return; }
 
             const esc = (v) => escapeHtml(String(v ?? ''));
             const row = (label, value, color) => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #ecf0f1;"><span>${esc(label)}</span><strong${color ? ` style="color:${color}"` : ''}>${esc(value)}</strong></div>`;
@@ -1148,53 +1274,53 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             const td = (v) => `<td style="border:1px solid #ecf0f1;padding:6px 10px;">${esc(v)}</td>`;
 
             const salesRows = day.sales.map(s =>
-                `<tr><td>${esc(s.product_name)}</td><td>${esc(s.customer_name || 'Mteja')}</td><td>${esc(s.seller_name || '')}</td><td>${esc(s.quantity)}</td><td>${esc(formatCurrency(s.unit_price))}</td><td>${esc(formatCurrency(s.total_amount))}</td></tr>`
+                `<tr><td>${esc(s.product_name)}</td><td>${esc(s.customer_name || t('msimamizi_preview.customer_generic'))}</td><td>${esc(s.seller_name || '')}</td><td>${esc(s.quantity)}</td><td>${esc(formatCurrency(s.unit_price))}</td><td>${esc(formatCurrency(s.total_amount))}</td></tr>`
             ).join('');
 
             const expensesSection = day.expenses.length ? `
-                <h3 style="margin:18px 0 8px;">Matumizi ya Ofisi</h3>
+                <h3 style="margin:18px 0 8px;">${t('msimamizi_preview.office_expenses')}</h3>
                 ${day.expenses.map(e => row(`${esc(e.category)}: ${esc(e.description)}`, formatCurrency(e.amount), '#e67e22')).join('')}
-                ${row('Jumla ya Matumizi', formatCurrency(day.totalExpenses), '#e67e22')}
+                ${row(t('msimamizi_preview.total_expenses'), formatCurrency(day.totalExpenses), '#e67e22')}
             ` : '';
 
-            const html = `<html><head><meta charset="UTF-8"><title>Taarifa ya Siku - ${esc(day.date)}</title></head>
+            const html = `<html><head><meta charset="UTF-8"><title>${esc(t('msimamizi_preview.day_report_title_dated', { date: day.date }))}</title></head>
                 <body style="font-family:sans-serif;color:#2c3e50;max-width:800px;margin:0 auto;padding:20px;">
                     <div style="text-align:center;border-bottom:3px solid #3498db;padding-bottom:12px;margin-bottom:16px;">
-                        <h2 style="margin:0;">Taarifa ya Siku</h2>
+                        <h2 style="margin:0;">${t('msimamizi_preview.day_report_title')}</h2>
                         <div style="font-size:14px;color:#3498db;font-weight:700;">${esc(userData.businessName)}</div>
                         <div style="font-size:13px;color:#7f8c8d;">${esc(formatDate(day.date))}</div>
                         ${userData.businessLocation ? `<div style="font-size:12px;color:#95a5a6;">${ic('location', 12)} ${esc(userData.businessLocation)}</div>` : ''}
                     </div>
 
-                    <h3 style="margin:0 0 8px;">Muhtasari</h3>
-                    ${row('Jumla ya Bidhaa Zilizouzwa', day.totalProducts)}
-                    ${row('Jumla ya Mauzo', formatCurrency(day.totalSales), '#27ae60')}
-                    ${row('Faida Ghafi', formatCurrency(day.totalProfit), '#27ae60')}
-                    ${day.expenses.length ? row('Jumla ya Matumizi', formatCurrency(day.totalExpenses), '#e67e22') : ''}
-                    ${row('Faida Halisi', formatCurrency(day.netProfit), day.netProfit >= 0 ? '#27ae60' : '#e74c3c')}
+                    <h3 style="margin:0 0 8px;">${t('msimamizi_preview.summary_heading')}</h3>
+                    ${row(t('msimamizi_preview.total_products_sold'), day.totalProducts)}
+                    ${row(t('msimamizi_preview.total_sales'), formatCurrency(day.totalSales), '#27ae60')}
+                    ${row(t('msimamizi_preview.gross_profit'), formatCurrency(day.totalProfit), '#27ae60')}
+                    ${day.expenses.length ? row(t('msimamizi_preview.total_expenses'), formatCurrency(day.totalExpenses), '#e67e22') : ''}
+                    ${row(t('msimamizi_preview.net_profit'), formatCurrency(day.netProfit), day.netProfit >= 0 ? '#27ae60' : '#e74c3c')}
 
                     ${expensesSection}
 
-                    <h3 style="margin:18px 0 8px;">Wateja wa Siku Hii</h3>
+                    <h3 style="margin:18px 0 8px;">${t('msimamizi_preview.day_customers_heading')}</h3>
                     ${day.customers.length
                         ? day.customers.map(c => `<div style="padding:4px 0;border-bottom:1px solid #ecf0f1;">• ${esc(c)}</div>`).join('')
-                        : '<div style="color:#95a5a6;">Hakuna majina ya wateja yaliyorekodiwa</div>'}
+                        : '<div style="color:#95a5a6;">' + t('msimamizi_preview.no_customer_names') + '</div>'}
 
-                    <h3 style="margin:18px 0 8px;">Mauzo Yote ya Siku Hii (${day.sales.length})</h3>
+                    <h3 style="margin:18px 0 8px;">${t('msimamizi_preview.all_day_sales', { count: day.sales.length })}</h3>
                     ${day.sales.length
                         ? `<table style="border-collapse:collapse;width:100%;font-size:12px;">
-                        <thead><tr>${th('Bidhaa')}${th('Mteja')}${th('Muuzaji')}${th('Idadi')}${th('Bei')}${th('Jumla')}</tr></thead>
+                        <thead><tr>${th(t('msimamizi_preview.product_generic'))}${th(t('msimamizi_preview.customer_generic'))}${th(t('msimamizi_preview.th_seller'))}${th(t('msimamizi_preview.th_quantity'))}${th(t('msimamizi_preview.th_price'))}${th(t('msimamizi_preview.th_total'))}</tr></thead>
                         <tbody>${salesRows}</tbody>
                     </table>`
-                        : `<div style="color:#95a5a6;font-size:13px;">Hakuna mauzo yaliyorekodiwa siku hii — ripoti hii inaonyesha matumizi tu.</div>`}
+                        : `<div style="color:#95a5a6;font-size:13px;">` + t('msimamizi_preview.no_sales_day_print') + `</div>`}
 
                     <div style="margin-top:20px;padding-top:10px;border-top:1px solid #ecf0f1;font-size:11px;color:#95a5a6;text-align:center;">
-                        Imechapishwa ${esc(new Date().toLocaleString('sw-TZ'))} — DukaMkononi
+                        ${t('msimamizi_preview.printed_at', { datetime: esc(new Date().toLocaleString('sw-TZ')) })}
                     </div>
                 </body></html>`;
 
             const w = window.open('', '_blank');
-            if (!w) { showAlert('Hitilafu', 'Tafadhali ruhusu popups ili kuchapisha taarifa'); return; }
+            if (!w) { showAlert(t('msimamizi_preview.alert_error_title'), t('msimamizi_preview.popup_permission')); return; }
             w.document.open();
             w.document.write(html);
             w.document.close();
@@ -1220,6 +1346,10 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             render();
         }
         
+        if (window.DM && typeof window.DM.onChange === 'function') {
+            window.DM.onChange(() => { if (!loading) render(); });
+        }
+
         init();
     </script>
 </body>
