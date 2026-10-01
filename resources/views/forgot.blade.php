@@ -1,10 +1,9 @@
+@include('partials.dm-locale')
 @verbatim
-<!DOCTYPE html>
-<html lang="sw">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
-    <title>Dukamkononi | Sahau Nenosiri</title>
+    <title data-i18n="forgot.page_title">Dukamkononi | Sahau Nenosiri</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
     <style>
         * {
@@ -412,6 +411,9 @@
     </style>
 </head>
 <body>
+@endverbatim
+@include('partials.dm-lang-widget')
+@verbatim
 <div class="keyboard-avoid">
     <div class="scroll-container">
         <div class="content">
@@ -422,7 +424,7 @@
                         <path d="M15 18L9 12L15 6" stroke="#2c3e50" stroke-width="2" stroke-linecap="round"/>
                     </svg>
                 </div>
-                <h1 id="headerTitle" class="header">SAHIUSHA NENOSIRI</h1>
+                <h1 id="headerTitle" class="header" data-i18n="forgot.header_title">SAHIUSHA NENOSIRI</h1>
                 <div id="roleBadge" class="role-badge">MTEJA</div>
             </div>
 
@@ -437,8 +439,8 @@
 
             <!-- Footer -->
             <div class="footer">
-                <p class="footer-text">DukaMkononi © 2025</p>
-                <p class="footer-text">Huduma ya Kubadilisha Nenosiri</p>
+                <p class="footer-text" data-i18n="forgot.footer_copyright">DukaMkononi © 2025</p>
+                <p class="footer-text" data-i18n="forgot.footer_service">Huduma ya Kubadilisha Nenosiri</p>
             </div>
         </div>
     </div>
@@ -449,6 +451,82 @@
     // DUKAMKONONI: ForgotPasswordScreen web replica
     // Multi-step password reset: email -> code -> new password -> success
     const API_BASE_URL = '';
+
+    // The locale the visitor is browsing in. window.DM is set up synchronously
+    // by the language partial, but fall back to the attribute the server
+    // rendered so this never depends on locales.json.
+    function activeLocale() {
+        if (window.DM) return window.DM.locale();
+        return document.documentElement.getAttribute('data-dm-locale') || 'sw';
+    }
+
+    // Text this page builds in JS (step labels, alerts, validation) comes from
+    // locales.json via the shared DM runtime. Until it has loaded we keep the
+    // Swahili source string, so a failed locales.json can never blank the page.
+    const SW = {
+        role_customer: 'MTEJA', role_seller: 'MUUZAJI', role_admin: 'MSIMAMIZI', role_user: 'MTUMIAJI',
+        label_email: 'Barua Pepe', label_code: 'Msimbo', label_password: 'Nenosiri', label_done: 'Tayari',
+        instruction_email: 'Weka barua pepe yako ili kupokea msimbo wa kubadilisha nenosiri',
+        btn_send_code: '📤 Tuma Msimbo',
+        help_title: 'Maelekezo:',
+        help_expire: 'Msimbo utaisha muda wake ndani ya dakika 15',
+        help_spam: 'Angalia folder ya spam iwapo hupokei barua pepe',
+        help_digits: 'Msimbo ni namba 6 (kama: 123456)',
+        instruction_code_sent: 'Tumeutumia msimbo wa tarakimu 6 kwenye barua pepe:',
+        instruction_code_enter: 'Weka msimbo hapa chini:',
+        placeholder_code: 'Msimbo (6 tarakimu)',
+        btn_verify_code: '✓ Hakiki Msimbo',
+        resend_question: 'Hukupokei msimbo?',
+        resend: 'Tuma tena',
+        resend_countdown: 'Tuma tena ({mm}:{ss})',
+        btn_change_email: '← Badilisha Barua Pepe',
+        instruction_new_password: 'Weka nenosiri jipya lako',
+        placeholder_new_password: 'Nenosiri Jipya (angalau herufi 6)',
+        placeholder_confirm_password: 'Rudia Nenosiri Jipya',
+        btn_change_password: '🔄 Badilisha Nenosiri',
+        success_title: 'Nenosiri Limebadilishwa!',
+        success_message: 'Nenosiri lako limebadilishwa kikamilifu. Unaweza kuingia sasa kwa nenosiri jipya.',
+        btn_sign_in_now: '🔐 Ingia Sasa',
+        btn_reset_again: '⟳ Badilisha Nenosiri Tena',
+        alert_ok: 'Sawa',
+        alert_error: 'Hitilafu',
+        alert_success: 'Mafanikio!',
+        alert_wait: 'Subiri',
+        err_email_required: 'Tafadhali jaza barua pepe yako',
+        err_email_invalid: 'Tafadhali andika barua pepe sahihi',
+        err_no_connection: 'Haikuweza kuunganishwa na server',
+        err_code_sent: 'Msimbo umepelekwa kwenye barua pepe yako',
+        err_generic: 'Hitilafu imetokea',
+        err_request_failed: 'Hitilafu wakati wa kutuma ombi',
+        err_code_required: 'Tafadhali jaza msimbo wa tarakimu 6',
+        err_code_verified: 'Msimbo umehakikiwa kikamilifu!',
+        err_code_incorrect: 'Msimbo si sahihi',
+        err_code_incorrect_expired: 'Msimbo si sahihi au umeisha muda',
+        err_password_required: 'Tafadhali jaza nenosiri jipya na uthibitishaji',
+        err_password_short: 'Nenosiri lazima liwe na herufi 6 au zaidi',
+        err_password_mismatch: 'Nenosiri jipya na uthibitishaji havifanani',
+        err_password_changed: 'Nenosiri limebadilishwa kikamilifu!',
+        err_change_failed: 'Imeshindikana kubadilisha nenosiri',
+        err_session_expired: 'Muda wa kubadilisha nenosiri umeisha. Tafadhali anza upya.',
+        err_resend_wait: 'Unaweza kutuma tena msimbo baada ya sekunde {countdown}'
+    };
+
+    function t(key, params) {
+        if (window.DM) return window.DM.t(key, params);
+        // The catalog key carries the section prefix that DM.t walks, while the
+        // fallback dict above is keyed by bare name. Drop the prefix so the
+        // no-runtime path still shows the Swahili source string.
+        const dot = key.indexOf('.');
+        let value = SW[key];
+        if (value === undefined && dot > -1) value = SW[key.slice(dot + 1)];
+        if (value === undefined) return key;
+        if (params) {
+            Object.keys(params).forEach(name => {
+                value = value.split('{' + name + '}').join(String(params[name]));
+            });
+        }
+        return value;
+    }
 
     // Get role from URL params (default: mteja)
     const urlParams = new URLSearchParams(window.location.search);
@@ -466,8 +544,8 @@
     }
 
     function getRoleTitle() {
-        const titles = { 'mteja': 'MTEJA', 'muuzaji': 'MUUZAJI', 'msimamizi': 'MSIMAMIZI' };
-        return titles[role] || 'MTUMIAJI';
+        const keys = { 'mteja': 'forgot.role_customer', 'muuzaji': 'forgot.role_seller', 'msimamizi': 'forgot.role_admin' };
+        return t(keys[role] || 'forgot.role_user');
     }
 
     // Update header colors
@@ -495,7 +573,7 @@
     let verificationToken = '';
 
     // Helper: Show alert
-    function showAlert(title, message, onOk = null, okText = 'Sawa') {
+    function showAlert(title, message, onOk = null) {
         const existing = document.querySelector('.custom-alert');
         if (existing) existing.remove();
         const overlay = document.createElement('div');
@@ -510,7 +588,7 @@
         msgEl.innerText = message;
         const btn = document.createElement('div');
         btn.className = 'alert-btn';
-        btn.innerText = okText;
+        btn.innerText = t('forgot.alert_ok');
         btn.style.backgroundColor = getRoleColor();
         btn.onclick = () => {
             overlay.remove();
@@ -542,19 +620,19 @@
         if (!emailInput) return;
         const sanitizedEmail = emailInput.value.trim();
         if (!sanitizedEmail) {
-            showAlert('Hitilafu', 'Tafadhali jaza barua pepe yako');
+            showAlert(t('forgot.alert_error'), t('forgot.err_email_required'));
             return;
         }
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(sanitizedEmail)) {
-            showAlert('Hitilafu', 'Tafadhali andika barua pepe sahihi');
+            showAlert(t('forgot.alert_error'), t('forgot.err_email_invalid'));
             return;
         }
         
         setLoading(true);
         try {
             const connected = await testAPIConnection();
-            if (!connected) throw new Error('Haikuweza kuunganishwa na server');
+            if (!connected) throw new Error(t('forgot.err_no_connection'));
             
             const backendRole = getBackendRole(role);
             const response = await fetch(`${API_BASE_URL}/api/password-reset/request`, {
@@ -569,13 +647,13 @@
                 if (countdownInterval) clearInterval(countdownInterval);
                 countdown = 60;
                 startCountdown();
-                showAlert('Mafanikio!', data.message || 'Msimbo umepelekwa kwenye barua pepe yako');
+                showAlert(t('forgot.alert_success'), data.message || t('forgot.err_code_sent'));
                 renderForm();
             } else {
-                throw new Error(data.error || 'Hitilafu imetokea');
+                throw new Error(data.error || t('forgot.err_generic'));
             }
         } catch (err) {
-            showAlert('Hitilafu', err.message || 'Hitilafu wakati wa kutuma ombi');
+            showAlert(t('forgot.alert_error'), err.message || t('forgot.err_request_failed'));
         } finally {
             setLoading(false);
         }
@@ -587,7 +665,7 @@
         if (!codeInput) return;
         const code = codeInput.value.trim();
         if (!code || code.length !== 6) {
-            showAlert('Hitilafu', 'Tafadhali jaza msimbo wa tarakimu 6');
+            showAlert(t('forgot.alert_error'), t('forgot.err_code_required'));
             return;
         }
         setLoading(true);
@@ -603,12 +681,12 @@
                 verificationToken = data.verificationToken;
                 step = 3;
                 renderForm();
-                showAlert('Mafanikio!', 'Msimbo umehakikiwa kikamilifu!');
+                showAlert(t('forgot.alert_success'), t('forgot.err_code_verified'));
             } else {
-                throw new Error(data.error || 'Msimbo si sahihi');
+                throw new Error(data.error || t('forgot.err_code_incorrect'));
             }
         } catch (err) {
-            showAlert('Hitilafu', err.message || 'Msimbo si sahihi au umeisha muda');
+            showAlert(t('forgot.alert_error'), err.message || t('forgot.err_code_incorrect_expired'));
         } finally {
             setLoading(false);
         }
@@ -619,15 +697,15 @@
         const pass1 = document.getElementById('newPasswordInput')?.value || '';
         const pass2 = document.getElementById('confirmPasswordInput')?.value || '';
         if (!pass1 || !pass2) {
-            showAlert('Hitilafu', 'Tafadhali jaza nenosiri jipya na uthibitishaji');
+            showAlert(t('forgot.alert_error'), t('forgot.err_password_required'));
             return;
         }
         if (pass1.length < 6) {
-            showAlert('Hitilafu', 'Nenosiri lazima liwe na herufi 6 au zaidi');
+            showAlert(t('forgot.alert_error'), t('forgot.err_password_short'));
             return;
         }
         if (pass1 !== pass2) {
-            showAlert('Hitilafu', 'Nenosiri jipya na uthibitishaji havifanani');
+            showAlert(t('forgot.alert_error'), t('forgot.err_password_mismatch'));
             return;
         }
         setLoading(true);
@@ -641,17 +719,20 @@
             if (response.ok && data.success && data.passwordChanged) {
                 step = 4;
                 renderForm();
-                showAlert('Mafanikio!', 'Nenosiri limebadilishwa kikamilifu!');
+                showAlert(t('forgot.alert_success'), t('forgot.err_password_changed'));
             } else {
-                throw new Error(data.error || 'Imeshindikana kubadilisha nenosiri');
+                throw new Error(data.error || t('forgot.err_change_failed'));
             }
         } catch (err) {
+            // The server signals an expired reset session with its own Swahili
+            // message, so this check stays on the raw API text rather than the
+            // translated copy.
             if (err.message.includes('imeisha')) {
                 step = 1;
                 renderForm();
-                showAlert('Hitilafu', 'Muda wa kubadilisha nenosiri umeisha. Tafadhali anza upya.');
+                showAlert(t('forgot.alert_error'), t('forgot.err_session_expired'));
             } else {
-                showAlert('Hitilafu', err.message);
+                showAlert(t('forgot.alert_error'), err.message);
             }
         } finally {
             setLoading(false);
@@ -660,7 +741,7 @@
 
     function handleResendCode() {
         if (countdown > 0) {
-            showAlert('Subiri', `Unaweza kutuma tena msimbo baada ya sekunde ${countdown}`);
+            showAlert(t('forgot.alert_wait'), t('forgot.err_resend_wait', { countdown }));
             return;
         }
         handleRequestResetCode();
@@ -703,10 +784,10 @@
         
         // Render step indicator
         const steps = [
-            { num: 1, label: 'Barua Pepe', active: step >= 1 },
-            { num: 2, label: 'Msimbo', active: step >= 2 },
-            { num: 3, label: 'Nenosiri', active: step >= 3 },
-            { num: 4, label: 'Tayari', active: step >= 4 }
+            { num: 1, label: t('forgot.label_email'), active: step >= 1 },
+            { num: 2, label: t('forgot.label_code'), active: step >= 2 },
+            { num: 3, label: t('forgot.label_password'), active: step >= 3 },
+            { num: 4, label: t('forgot.label_done'), active: step >= 4 }
         ];
         stepIndicatorDiv.innerHTML = steps.map((s, idx) => `
             <div class="step-item" style="position: relative;">
@@ -729,12 +810,12 @@
                         <circle cx="12" cy="12" r="9" stroke="${color}"/>
                     </svg>
                 </div>
-                <p class="instruction-text">Weka barua pepe yako ili kupokea msimbo wa kubadilisha nenosiri</p>
+                <p class="instruction-text">${t('forgot.instruction_email')}</p>
                 <div class="input-group">
                     <div class="input-icon">📧</div>
-                    <input type="email" id="emailInput" class="input-field" placeholder="Barua Pepe" autocomplete="email">
+                    <input type="email" id="emailInput" class="input-field" placeholder="${t('forgot.label_email')}" autocomplete="email">
                 </div>
-                <button id="requestBtn" class="action-btn" style="background: ${color}">${loading ? '<div class="loader"></div>' : '📤 Tuma Msimbo'}</button>
+                <button id="requestBtn" class="action-btn" style="background: ${color}">${loading ? '<div class="loader"></div>' : t('forgot.btn_send_code')}</button>
             `;
             document.getElementById('requestBtn')?.addEventListener('click', handleRequestResetCode);
             const emailField = document.getElementById('emailInput');
@@ -745,11 +826,11 @@
             helpBox.innerHTML = `
                 <div class="help-header">
                     <span>ℹ️</span>
-                    <span class="help-title">Maelekezo:</span>
+                    <span class="help-title">${t('forgot.help_title')}</span>
                 </div>
-                <div class="help-point"><span>⏱️</span><span class="help-text">Msimbo utaisha muda wake ndani ya dakika 15</span></div>
-                <div class="help-point"><span>⚠️</span><span class="help-text">Angalia folder ya spam iwapo hupokei barua pepe</span></div>
-                <div class="help-point"><span>🔢</span><span class="help-text">Msimbo ni namba 6 (kama: 123456)</span></div>
+                <div class="help-point"><span>⏱️</span><span class="help-text">${t('forgot.help_expire')}</span></div>
+                <div class="help-point"><span>⚠️</span><span class="help-text">${t('forgot.help_spam')}</span></div>
+                <div class="help-point"><span>🔢</span><span class="help-text">${t('forgot.help_digits')}</span></div>
             `;
             formContainer.innerHTML = `
                 <div class="icon-container">
@@ -758,19 +839,19 @@
                         <path d="M22 6L12 13L2 6" stroke="${color}"/>
                     </svg>
                 </div>
-                <p class="instruction-text">Tumeutumia msimbo wa tarakimu 6 kwenye barua pepe:</p>
+                <p class="instruction-text">${t('forgot.instruction_code_sent')}</p>
                 <p class="email-text">${email}</p>
-                <p class="sub-instruction">Weka msimbo hapa chini:</p>
+                <p class="sub-instruction">${t('forgot.instruction_code_enter')}</p>
                 <div class="input-group">
                     <div class="input-icon">🔒</div>
-                    <input type="text" id="resetCodeInput" class="input-field" placeholder="Msimbo (6 tarakimu)" maxlength="6" pattern="[0-9]*" inputmode="numeric">
+                    <input type="text" id="resetCodeInput" class="input-field" placeholder="${t('forgot.placeholder_code')}" maxlength="6" pattern="[0-9]*" inputmode="numeric">
                 </div>
-                <button id="verifyBtn" class="action-btn" style="background: ${color}">${loading ? '<div class="loader"></div>' : '✓ Hakiki Msimbo'}</button>
+                <button id="verifyBtn" class="action-btn" style="background: ${color}">${loading ? '<div class="loader"></div>' : t('forgot.btn_verify_code')}</button>
                 <div class="resend-container">
-                    <span class="resend-text">Hukupokei msimbo?</span>
-                    <span id="resendLink" class="resend-link" style="color: ${color}">${countdown > 0 ? `Tuma tena (${Math.floor(countdown/60)}:${(countdown%60).toString().padStart(2,'0')})` : 'Tuma tena'}</span>
+                    <span class="resend-text">${t('forgot.resend_question')}</span>
+                    <span id="resendLink" class="resend-link" style="color: ${color}">${countdown > 0 ? t('forgot.resend_countdown', { mm: Math.floor(countdown / 60), ss: (countdown % 60).toString().padStart(2, '0') }) : t('forgot.resend')}</span>
                 </div>
-                <button id="changeEmailBtn" class="secondary-btn">← Badilisha Barua Pepe</button>
+                <button id="changeEmailBtn" class="secondary-btn">${t('forgot.btn_change_email')}</button>
             `;
             document.getElementById('verifyBtn')?.addEventListener('click', handleVerifyResetCode);
             document.getElementById('resendLink')?.addEventListener('click', handleResendCode);
@@ -790,16 +871,16 @@
                         <path d="M12 17V15" stroke="${color}" stroke-linecap="round"/>
                     </svg>
                 </div>
-                <p class="instruction-text">Weka nenosiri jipya lako</p>
+                <p class="instruction-text">${t('forgot.instruction_new_password')}</p>
                 <div class="input-group">
                     <div class="input-icon">🔑</div>
-                    <input type="password" id="newPasswordInput" class="input-field" placeholder="Nenosiri Jipya (angalau herufi 6)">
+                    <input type="password" id="newPasswordInput" class="input-field" placeholder="${t('forgot.placeholder_new_password')}">
                 </div>
                 <div class="input-group">
                     <div class="input-icon">🔑</div>
-                    <input type="password" id="confirmPasswordInput" class="input-field" placeholder="Rudia Nenosiri Jipya">
+                    <input type="password" id="confirmPasswordInput" class="input-field" placeholder="${t('forgot.placeholder_confirm_password')}">
                 </div>
-                <button id="changePasswordBtn" class="action-btn" style="background: ${color}">${loading ? '<div class="loader"></div>' : '🔄 Badilisha Nenosiri'}</button>
+                <button id="changePasswordBtn" class="action-btn" style="background: ${color}">${loading ? '<div class="loader"></div>' : t('forgot.btn_change_password')}</button>
             `;
             document.getElementById('changePasswordBtn')?.addEventListener('click', handleSetNewPassword);
         }
@@ -812,11 +893,11 @@
                     </div>
                 </div>
                 <div class="success-box">
-                    <div class="success-title">Nenosiri Limebadilishwa!</div>
-                    <div class="success-message">Nenosiri lako limebadilishwa kikamilifu. Unaweza kuingia sasa kwa nenosiri jipya.</div>
+                    <div class="success-title">${t('forgot.success_title')}</div>
+                    <div class="success-message">${t('forgot.success_message')}</div>
                 </div>
-                <button id="loginNowBtn" class="action-btn" style="background: ${color}">🔐 Ingia Sasa</button>
-                <button id="resetAgainBtn" class="secondary-btn">⟳ Badilisha Nenosiri Tena</button>
+                <button id="loginNowBtn" class="action-btn" style="background: ${color}">${t('forgot.btn_sign_in_now')}</button>
+                <button id="resetAgainBtn" class="secondary-btn">${t('forgot.btn_reset_again')}</button>
             `;
             document.getElementById('loginNowBtn')?.addEventListener('click', handleBackToLogin);
             document.getElementById('resetAgainBtn')?.addEventListener('click', handleResetProcess);
@@ -834,7 +915,13 @@
     // Init
     updateTheme();
     renderForm();
-    
+
+    // The whole form is built by renderForm(), so a language switch has to
+    // rebuild it for the step labels, instructions, placeholders and buttons to
+    // appear in the new language. The email and code fields are re-populated
+    // from state by renderForm() itself, so nothing the visitor typed is lost.
+    if (window.DM) window.DM.onChange(() => renderForm());
+
     // Back button handler
     document.getElementById('backBtnIcon')?.addEventListener('click', handleBackToLogin);
 </script>

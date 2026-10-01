@@ -1,10 +1,9 @@
+@include('partials.dm-locale')
 @verbatim
-<!DOCTYPE html>
-<html lang="sw">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
-    <title>Dukamkononi | Karibu Dukani</title>
+    <title data-i18n="home.page_title">Dukamkononi | Karibu Dukani</title>
     <!-- Google Fonts & simple reset -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -354,6 +353,9 @@
     </style>
 </head>
 <body>
+@endverbatim
+@include('partials.dm-lang-widget')
+@verbatim
 <div class="safe-area">
     <div class="scroll-view">
         <div class="scroll-content">
@@ -372,8 +374,8 @@
                             </svg>
                         </div>
                     </div>
-                    <h1 class="header">Karibu DUKANI</h1>
-                    <p class="sub-header">Chagua nafasi yako kuanza</p>
+                    <h1 class="header" data-i18n="home.welcome_title">Karibu DUKANI</h1>
+                    <p class="sub-header" data-i18n="home.choose_role">Chagua nafasi yako kuanza</p>
                 </div>
 
                 <!-- Buttons section - MTEJA, MUUZAJI, MSIMAMIZI only (WASHA removed) -->
@@ -390,8 +392,8 @@
                                     </svg>
                                 </div>
                                 <div class="button-text-group">
-                                    <div class="button-main-text">MTEJA</div>
-                                    <div class="button-desc">Ninaomba huduma au bidhaa</div>
+                                    <div class="button-main-text" data-i18n="home.role_customer">MTEJA</div>
+                                    <div class="button-desc" data-i18n="home.desc_customer">Ninaomba huduma au bidhaa</div>
                                 </div>
                                 <div class="chevron-icon">
                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -414,8 +416,8 @@
                                     </svg>
                                 </div>
                                 <div class="button-text-group">
-                                    <div class="button-main-text">MUUZAJI</div>
-                                    <div class="button-desc">Ninauzia bidhaa na huduma</div>
+                                    <div class="button-main-text" data-i18n="home.role_seller">MUUZAJI</div>
+                                    <div class="button-desc" data-i18n="home.desc_seller">Ninauzia bidhaa na huduma</div>
                                 </div>
                                 <div class="chevron-icon">
                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -437,8 +439,8 @@
                                     </svg>
                                 </div>
                                 <div class="button-text-group">
-                                    <div class="button-main-text">MSIMAMIZI</div>
-                                    <div class="button-desc">Ninafanya usimamizi wa duka</div>
+                                    <div class="button-main-text" data-i18n="home.role_admin">MSIMAMIZI</div>
+                                    <div class="button-desc" data-i18n="home.desc_admin">Ninafanya usimamizi wa duka</div>
                                 </div>
                                 <div class="chevron-icon">
                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -460,11 +462,11 @@
                                 <path d="M12 16V12M12 8H12.01" stroke="#3498db" stroke-width="1.8" stroke-linecap="round"/>
                             </svg>
                         </div>
-                        <h3 class="info-title">Jinsi ya Kuanza</h3>
+                        <h3 class="info-title" data-i18n="home.how_to_start">Jinsi ya Kuanza</h3>
                         <p class="info-text">
-                            1. Chagua nafasi yako kutoka hapo juu<br>
-                            2. Jisajili au ingia kwenye akaunti yako<br>
-                            3. Anza kutumia huduma zetu
+                            <span data-i18n="home.step_1">1. Chagua nafasi yako kutoka hapo juu</span><br>
+                            <span data-i18n="home.step_2">2. Jisajili au ingia kwenye akaunti yako</span><br>
+                            <span data-i18n="home.step_3">3. Anza kutumia huduma zetu</span>
                         </p>
                     </div>
                 </div>
@@ -480,9 +482,9 @@
                                 <circle cx="12" cy="12" r="1.5" fill="white"/>
                             </svg>
                         </div>
-                        <span class="warning-title">ANGALIZO LA USALAMA</span>
+                        <span class="warning-title" data-i18n="home.security_notice">ANGALIZO LA USALAMA</span>
                     </div>
-                    <p class="warning-text">
+                    <p class="warning-text" data-i18n="home.security_intro">
                         Tunakusihi kuhakiki biashara kabla hujafanya miamala ili kuepuka matapeli mtandaoni.
                     </p>
                     <div class="warning-points">
@@ -490,32 +492,32 @@
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M20 6L9 17L4 12" stroke="#27ae60" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
-                            <span class="point-text">Hakikisha biashara imesajiliwa kikamilifu</span>
+                            <span class="point-text" data-i18n="home.security_point_1">Hakikisha biashara imesajiliwa kikamilifu</span>
                         </div>
                         <div class="point-row">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M20 6L9 17L4 12" stroke="#27ae60" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
-                            <span class="point-text">Thibitisha anwani na mawasiliano ya biashara</span>
+                            <span class="point-text" data-i18n="home.security_point_2">Thibitisha anwani na mawasiliano ya biashara</span>
                         </div>
                         <div class="point-row">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M20 6L9 17L4 12" stroke="#27ae60" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
-                            <span class="point-text">Zingatia maoni ya wateja waliopita</span>
+                            <span class="point-text" data-i18n="home.security_point_3">Zingatia maoni ya wateja waliopita</span>
                         </div>
                         <div class="point-row">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M20 6L9 17L4 12" stroke="#27ae60" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
-                            <span class="point-text">Epuka kutoa malipo bila kuhakiki</span>
+                            <span class="point-text" data-i18n="home.security_point_4">Epuka kutoa malipo bila kuhakiki</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="footer">
-                    <p class="footer-text">© 2025 Dukani App</p>
-                    <p class="footer-sub">Tunaendesha usalama wa juu kwa miamala yako</p>
+                    <p class="footer-text" data-i18n="home.copyright">© 2025 Dukani App</p>
+                    <p class="footer-sub" data-i18n="home.footer_tagline">Tunaendesha usalama wa juu kwa miamala yako</p>
                 </div>
             </div>
         </div>

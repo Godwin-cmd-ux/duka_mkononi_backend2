@@ -2,6 +2,35 @@
 
 use Illuminate\Support\Facades\Route;
 
+/*
+|--------------------------------------------------------------------------
+| Website language system
+|--------------------------------------------------------------------------
+| The supported locale codes mirror the mobile application exactly
+| (Duka_mkononi/context/LanguageContext.tsx) — never add or remove one.
+| `locales.json` (project root) is the single translation source and is
+| served to the browser so pages can translate themselves client-side,
+| while the chosen locale is kept in the Laravel session so it survives
+| navigation and refreshes across every page.
+*/
+$dukamkononiLocales = ['sw', 'en', 'fr', 'hi', 'es', 'ur', 'de', 'zh'];
+
+Route::get('/locales.json', function () {
+    return response()->file(base_path('locales.json'), [
+        'Content-Type' => 'application/json',
+    ]);
+});
+
+Route::get('/language/{code}', function (string $code) use ($dukamkononiLocales) {
+    if (! in_array($code, $dukamkononiLocales, true)) {
+        return response()->json(['ok' => false, 'error' => 'Unsupported language'], 422);
+    }
+
+    session(['locale' => $code]);
+
+    return response()->json(['ok' => true, 'locale' => $code]);
+});
+
 Route::view('/', 'index');
 Route::view('/home', 'home');
 Route::view('/login', 'login');

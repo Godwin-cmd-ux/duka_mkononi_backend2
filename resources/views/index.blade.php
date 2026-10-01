@@ -1,12 +1,11 @@
+@include('partials.dm-locale')
 @verbatim
-<!DOCTYPE html>
-<html lang="sw">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Duka Mkononi - Soko la Kuaminika la Kuuza na Kununua Bidhaa Mtandaoni Tanzania. Jiunge na duka letu la kisasa na uanze biashara yako ya mtandaoni leo.">
+    <meta name="description" content="Duka Mkononi - Soko la Kuaminika la Kuuza na Kununua Bidhaa Mtandaoni Tanzania. Jiunge na duka letu la kisasa na uanze biashara yako ya mtandaoni leo." data-i18n="index.meta_description" data-i18n-attr="content">
     <meta name="keywords" content="duka mkononi, soko mtandaoni Tanzania, biashara mtandaoni, nunua bidhaa Tanzania, uza bidhaa mtandaoni">
-    <title>Duka Mkononi | Soko Lako la Kuaminika la Mtandaoni</title>
+    <title data-i18n="index.page_title">Duka Mkononi | Soko Lako la Kuaminika la Mtandaoni</title>
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -306,15 +305,18 @@
     </style>
 </head>
 <body>
+@endverbatim
+@include('partials.dm-lang-widget')
+@verbatim
     <!-- Header with Logo -->
     <header class="container">
         <div class="logo-area">
-            <div class="logo-placeholder">
+            <div class="logo-placeholder" data-i18n="index.logo_short">
                 DM
             </div>
             <div class="logo-text">
                 <h1>Duka<span>Mkononi</span></h1>
-                <p>Soko la Kuaminika</p>
+                <p data-i18n="index.logo_tagline">Soko la Kuaminika</p>
             </div>
         </div>
         
@@ -323,7 +325,7 @@
             <a href="https://expo.dev/artifacts/eas/9TKXD6b4FGjwYZDZos8OcAWmuyY4N4tvgO397xOsUu0.apk" 
                class="app-download-btn" 
                target="_blank" rel="noopener">
-                📱 Pakua App Yetu
+                <span data-i18n="index.download_app">📱 Pakua App Yetu</span>
             </a>
         </nav>
     </header>
@@ -332,66 +334,66 @@
     <main>
         <section class="hero container">
             <div class="hero-content">
-                <div class="tagline">Karibu Duka Mkononi</div>
-                <h1 class="main-headline">Soko Lako la <span>Kuaminika</span> Mtandaoni</h1>
-                <p class="description">
+                <div class="tagline" data-i18n="index.hero_tagline">Karibu Duka Mkononi</div>
+                <h1 class="main-headline" data-i18n-html="index.hero_headline">Soko Lako la <span>Kuaminika</span> Mtandaoni</h1>
+                <p class="description" data-i18n="index.hero_intro_1">
                     Duka Mkononi ni jukwaa la kisasa la biashara mtandaoni nchini Tanzania. Tunakuwezesha kufungua duka lako la mtandaoni kwa urahisi, kuuza bidhaa zako, na kufikia wateja wengi zaidi. Jiunge na maelfu ya wafanyabiashara ambao tayari wanafanikiwa kupitia mfumo wetu.
                 </p>
-                <p class="description">
+                <p class="description" data-i18n="index.hero_intro_2">
                     Hakuna uhitaji wa ujuzi wa kiufundi. Kwa kubofya kituo kimoja, unaweza kuanzisha duka lako na kuanza kuuza. Tuna mifumo ya malipo salama, usafirishaji wa bidhaa, na msaada wa wateja kila wakati.
                 </p>
                 
-                <a href="home" class="cta-button">
+                <a href="home" class="cta-button" data-i18n="index.cta_start">
                     🔥 Anza Sasa - Bure Kabisa!
                 </a>
             </div>
             
             <div class="hero-image">
                 <!-- Placeholder for an image - in production, add actual image -->
-                <img src="https://res.cloudinary.com/dooidwbgt/image/upload/v1764828413/y3qxsngkx0ymlmyaqt3u.png" alt="Duka Mkononi - Biashara Mtandaoni Tanzania">
+                <img src="https://res.cloudinary.com/dooidwbgt/image/upload/v1764828413/y3qxsngkx0ymlmyaqt3u.png" alt="Duka Mkononi - Biashara Mtandaoni Tanzania" data-i18n="index.hero_image_alt" data-i18n-attr="alt">
             </div>
         </section>
 
         <!-- Features Section -->
         <section class="features">
             <div class="container">
-                <h2 class="section-title">Kwa Nini Kuchagua Duka Mkononi?</h2>
+                <h2 class="section-title" data-i18n="index.features_title">Kwa Nini Kuchagua Duka Mkononi?</h2>
                 
                 <div class="features-grid">
                     <div class="feature-card">
                         <div class="feature-icon">🚀</div>
-                        <h3>Anza Haraka</h3>
-                        <p>Fungua duka lako la mtandaoni kwa dakika chache. Hakuna msimbo, hakuna ujanja wa kiufundi unahitajika.</p>
+                        <h3 data-i18n="index.feature_fast_title">Anza Haraka</h3>
+                        <p data-i18n="index.feature_fast_desc">Fungua duka lako la mtandaoni kwa dakika chache. Hakuna msimbo, hakuna ujanja wa kiufundi unahitajika.</p>
                     </div>
                     
                     <div class="feature-card">
                         <div class="feature-icon">🛡️</div>
-                        <h3>Salama na Ya Kuaminika</h3>
-                        <p>Mifumo yetu ya malipo ni salama kabisa. Tuna lisansi na ushirikiano na benki kuu Tanzania.</p>
+                        <h3 data-i18n="index.feature_secure_title">Salama na Ya Kuaminika</h3>
+                        <p data-i18n="index.feature_secure_desc">Mifumo yetu ya malipo ni salama kabisa. Tuna lisansi na ushirikiano na benki kuu Tanzania.</p>
                     </div>
                     
                     <div class="feature-card">
                         <div class="feature-icon">📱</div>
-                        <h3>Inafaa kwa Simu</h3>
-                        <p>Duka lako litaonekana vizuri kwenye simu, kompyuta na tablet. Wateja wote wataona vyema.</p>
+                        <h3 data-i18n="index.feature_mobile_title">Inafaa kwa Simu</h3>
+                        <p data-i18n="index.feature_mobile_desc">Duka lako litaonekana vizuri kwenye simu, kompyuta na tablet. Wateja wote wataona vyema.</p>
                     </div>
                     
                     <div class="feature-card">
                         <div class="feature-icon">📈</div>
-                        <h3>Rudisha Taarifa</h3>
-                        <p>Pata taarifa za kina juu ya mauzo, wateja na faida yako kwa wakati halisi.</p>
+                        <h3 data-i18n="index.feature_reports_title">Rudisha Taarifa</h3>
+                        <p data-i18n="index.feature_reports_desc">Pata taarifa za kina juu ya mauzo, wateja na faida yako kwa wakati halisi.</p>
                     </div>
                     
                     <div class="feature-card">
                         <div class="feature-icon">🌍</div>
-                        <h3>Fikia Wateja Wengi</h3>
-                        <p>Duka lako litaonekana kwenye Google na mitandao mingine ya kijamii ufikie wateja wengi zaidi.</p>
+                        <h3 data-i18n="index.feature_reach_title">Fikia Wateja Wengi</h3>
+                        <p data-i18n="index.feature_reach_desc">Duka lako litaonekana kwenye Google na mitandao mingine ya kijamii ufikie wateja wengi zaidi.</p>
                     </div>
                     
                     <div class="feature-card">
                         <div class="feature-icon">🛒</div>
-                        <h3>Mfumo Kamili</h3>
-                        <p>Kutoka kwenye mauzo, malipo, hadi usafirishaji - kila kitu kiko chini ya paa moja.</p>
+                        <h3 data-i18n="index.feature_complete_title">Mfumo Kamili</h3>
+                        <p data-i18n="index.feature_complete_desc">Kutoka kwenye mauzo, malipo, hadi usafirishaji - kila kitu kiko chini ya paa moja.</p>
                     </div>
                 </div>
             </div>
@@ -401,10 +403,10 @@
     <!-- Footer -->
     <footer>
         <div class="container">
-            <div class="footer-logo">DukaMkononi.com</div>
-            <p>Soko Lako la Kuaminika la Mtandaoni Tanzania</p>
-            <p>✉ info@dukamkononi.com | 📞 0757071967</p>
-            <p class="copyright">© 2025 Duka Mkononi. Haki zote zimehifadhiwa.</p>
+            <div class="footer-logo" data-i18n="index.footer_brand">DukaMkononi.com</div>
+            <p data-i18n="index.footer_tagline">Soko Lako la Kuaminika la Mtandaoni Tanzania</p>
+            <p data-i18n="index.footer_contact">✉ info@dukamkononi.com | 📞 0757071967</p>
+            <p class="copyright" data-i18n="index.footer_copyright">© 2025 Duka Mkononi. Haki zote zimehifadhiwa.</p>
         </div>
     </footer>
     

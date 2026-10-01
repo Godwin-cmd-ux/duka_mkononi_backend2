@@ -1,10 +1,9 @@
+@include('partials.dm-locale')
 @verbatim
-<!DOCTYPE html>
-<html lang="sw">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
-    <title>Dukamkononi | Ingia</title>
+    <title data-i18n="login.page_title">Dukamkononi | Ingia</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {
@@ -365,6 +364,9 @@
     </style>
 </head>
 <body>
+@endverbatim
+@include('partials.dm-lang-widget')
+@verbatim
 <div class="keyboard-avoid">
     <div class="scroll-container">
         <div class="container">
@@ -389,7 +391,7 @@
                             <circle cx="12" cy="7" r="4" stroke="white"/>
                         </svg>
                     </div>
-                    <div class="welcome-text">Karibu Tena!</div>
+                    <div class="welcome-text" data-i18n="login.welcome_back">Karibu Tena!</div>
                     <div id="roleDescription" class="role-description">Ninaomba huduma au bidhaa</div>
                 </div>
 
@@ -401,9 +403,9 @@
                                 <path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z" stroke-width="1.5"/>
                                 <path d="M22 6L12 13L2 6" stroke-width="1.5"/>
                             </svg>
-                            <span class="label-text">Barua Pepe</span>
+                            <span class="label-text" data-i18n="login.label_email">Barua Pepe</span>
                         </div>
-                        <input type="email" id="emailInput" class="input-field" placeholder="example@email.com" autocomplete="email">
+                        <input type="email" id="emailInput" class="input-field" placeholder="example@email.com" autocomplete="email" data-i18n-attr="placeholder" data-i18n="login.placeholder_email">
                         <div id="emailError" class="error-text" style="display: none;"></div>
                     </div>
 
@@ -414,7 +416,7 @@
                                 <path d="M12 2C8.13 2 5 5.13 5 9V12C3.9 12 3 12.9 3 14V20C3 21.1 3.9 22 5 22H19C20.1 22 21 21.1 21 20V14C21 12.9 20.1 12 19 12V9C19 5.13 15.87 2 12 2Z" stroke-width="1.5"/>
                                 <path d="M12 17V15" stroke-width="1.5"/>
                             </svg>
-                            <span class="label-text">Nenosiri</span>
+                            <span class="label-text" data-i18n="login.label_password">Nenosiri</span>
                         </div>
                         <div class="password-wrapper">
                             <input type="password" id="passwordInput" class="input-field password-input" placeholder="••••••••" autocomplete="current-password">
@@ -432,9 +434,9 @@
                     <div class="row-buttons">
                         <div id="rememberBtn" class="remember-btn">
                             <div id="checkbox" class="checkbox"></div>
-                            <span class="remember-text">Nikumbuke</span>
+                            <span class="remember-text" data-i18n="login.remember_me">Nikumbuke</span>
                         </div>
-                        <div id="forgotLink" class="forgot-link" style="color: #3498db;">Umesahau nenosiri?</div>
+                        <div id="forgotLink" class="forgot-link" style="color: #3498db;" data-i18n="login.forgot_password">Umesahau nenosiri?</div>
                     </div>
 
                     <!-- Login Button -->
@@ -444,13 +446,13 @@
                             <path d="M10 17L15 12L10 7"/>
                             <path d="M15 12H3"/>
                         </svg>
-                        <span class="login-btn-text">INGIA</span>
+                        <span class="login-btn-text" data-i18n="login.button_sign_in">INGIA</span>
                     </button>
 
                     <!-- Signup -->
                     <div class="signup-row">
-                        <span class="signup-text">Huna akaunti?</span>
-                        <span id="signupLink" class="signup-link" style="color: #3498db;">Jisajili kama Mteja</span>
+                        <span class="signup-text" data-i18n="login.no_account">Huna akaunti?</span>
+                        <span id="signupLink" class="signup-link" style="color: #3498db;" data-i18n="login.signup_as_customer">Jisajili kama Mteja</span>
                     </div>
                 </div>
 
@@ -461,7 +463,7 @@
                         <path d="M5 12L12 17.5L19 12" stroke-width="1.5"/>
                         <path d="M5 16L12 21.5L19 16" stroke-width="1.5"/>
                     </svg>
-                    <span class="security-text">Taarifa zako zinalindwa kwa usalama wa juu</span>
+                    <span class="security-text" data-i18n="login.security_note">Taarifa zako zinalindwa kwa usalama wa juu</span>
                 </div>
             </div>
         </div>
@@ -469,11 +471,62 @@
 </div>
 
 <script>
+    // The locale the visitor is browsing in, and the one we hand to the backend.
+    // window.DM is set up synchronously by the language partial, but fall back to
+    // the attribute the server rendered so this never depends on locales.json.
+    function activeLocale() {
+        if (window.DM) return window.DM.locale();
+        return document.documentElement.getAttribute('data-dm-locale') || 'sw';
+    }
+
     // ------------------------------
     // DUKAMKONONI: LoginScreen web replica
     // Role-based login, remember-me (localStorage), AsyncStorage simulation, navigation
     // API_BASE_URL is empty - uses same origin (backend and frontend on same server)
     const API_BASE_URL = '';
+
+    // Text that JS builds (role labels, validation, alerts) comes from locales.json
+    // via the shared DM runtime. Until it has loaded we keep the Swahili source
+    // string, so a failed locales.json can never leave the page blank.
+    const SW = {
+        role_customer: 'MTEJA', role_seller: 'MUUZAJI', role_admin: 'MSIMAMIZI',
+        role_washa: 'WASHA', role_user: 'USER',
+        desc_customer: 'Ninaomba huduma au bidhaa',
+        desc_seller: 'Ninauzia bidhaa na huduma',
+        desc_admin: 'Ninafanya usimamizi wa duka',
+        desc_washa: 'Ninafanya malipo ya haraka',
+        desc_user: 'Ingia kwenye akaunti yako',
+        alert_ok: 'Sawa',
+        err_email_required: 'Barua pepe inahitajika',
+        err_email_invalid: 'Andika barua pepe sahihi',
+        err_password_required: 'Nenosiri linahitajika',
+        err_password_short: 'Nenosiri lazima liwe na herufi 6 au zaidi',
+        err_generic: 'Hitilafu imetokea',
+        err_with_status: 'Hitilafu: {response.status}',
+        err_server_status: 'Hitilafu ya server: {response.status}',
+        err_bad_response: 'Jibu lisilo sahihi kutoka kwa server',
+        alert_not_approved: 'Akaunti Haijaidhinishwa',
+        alert_pending_msg: 'Akaunti yako bado haijaidhinishwa. Subiri msimamizi akuidhinishe.',
+        alert_rejected_msg: 'Akaunti yako imekataliwa. Tafadhali wasiliana na msimamizi.',
+        alert_success: 'Mafanikio!',
+        alert_success_msg: 'Karibu {userName}! Umefanikiwa kuingia.',
+        err_signin_failed: 'Hitilafu imetokea wakati wa kuingia',
+        err_bad_credentials: 'Barua pepe au nenosiri si sahihi.',
+        err_network: 'Hitilafu ya mtandao. Hakikisha umeunganishwa kwenye internet.',
+        alert_error: 'Hitilafu'
+    };
+
+    function t(key, params) {
+        if (window.DM) return window.DM.t(key, params);
+        let value = SW[key];
+        if (value === undefined) return key;
+        if (params) {
+            Object.keys(params).forEach(name => {
+                value = value.split('{' + name + '}').join(String(params[name]));
+            });
+        }
+        return value;
+    }
 
     // Get role from URL (default mteja)
     const urlParams = new URLSearchParams(window.location.search);
@@ -519,18 +572,13 @@
     }
 
     function getRoleTitle() {
-        const titles = { 'mteja': 'MTEJA', 'muuzaji': 'MUUZAJI', 'msimamizi': 'MSIMAMIZI', 'washa': 'WASHA' };
-        return titles[role] || 'USER';
+        const keys = { 'mteja': 'login.role_customer', 'muuzaji': 'login.role_seller', 'msimamizi': 'login.role_admin', 'washa': 'login.role_washa' };
+        return t(keys[role] || 'login.role_user');
     }
 
     function getRoleDescription() {
-        const desc = { 
-            'mteja': 'Ninaomba huduma au bidhaa', 
-            'muuzaji': 'Ninauzia bidhaa na huduma', 
-            'msimamizi': 'Ninafanya usimamizi wa duka', 
-            'washa': 'Ninafanya malipo ya haraka' 
-        };
-        return desc[role] || 'Ingia kwenye akaunti yako';
+        const keys = { 'mteja': 'login.desc_customer', 'muuzaji': 'login.desc_seller', 'msimamizi': 'login.desc_admin', 'washa': 'login.desc_washa' };
+        return t(keys[role] || 'login.desc_user');
     }
 
     // DOM Elements
@@ -630,7 +678,7 @@
         msgEl.innerText = message;
         const btn = document.createElement('div');
         btn.className = 'alert-btn';
-        btn.innerText = 'Sawa';
+        btn.innerText = t('login.alert_ok');
         btn.style.backgroundColor = getRoleColor();
         btn.onclick = () => {
             overlay.remove();
@@ -663,24 +711,24 @@
         passwordInput.classList.remove('error');
         
         if (!emailVal) {
-            emailErrorDiv.textContent = 'Barua pepe inahitajika';
+            emailErrorDiv.textContent = t('login.err_email_required');
             emailErrorDiv.style.display = 'block';
             emailInput.classList.add('error');
             isValid = false;
         } else if (!validateEmail(emailVal)) {
-            emailErrorDiv.textContent = 'Andika barua pepe sahihi';
+            emailErrorDiv.textContent = t('login.err_email_invalid');
             emailErrorDiv.style.display = 'block';
             emailInput.classList.add('error');
             isValid = false;
         }
         
         if (!passVal) {
-            passwordErrorDiv.textContent = 'Nenosiri linahitajika';
+            passwordErrorDiv.textContent = t('login.err_password_required');
             passwordErrorDiv.style.display = 'block';
             passwordInput.classList.add('error');
             isValid = false;
         } else if (passVal.length < 6) {
-            passwordErrorDiv.textContent = 'Nenosiri lazima liwe na herufi 6 au zaidi';
+            passwordErrorDiv.textContent = t('login.err_password_short');
             passwordErrorDiv.style.display = 'block';
             passwordInput.classList.add('error');
             isValid = false;
@@ -704,31 +752,35 @@
         try {
             const backendRole = getBackendRole(role);
             // Use relative path - same origin
+            // `language` tells the backend which language this user prefers, so it
+            // is saved on their Supabase user record — the same contract the mobile
+            // app uses. Without it a website login would leave the stored
+            // preference untouched.
             const response = await fetch(`/api/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify({ email, password, role: backendRole })
+                body: JSON.stringify({ email, password, role: backendRole, language: activeLocale() })
             });
             
             if (!response.ok) {
-                let errMsg = 'Hitilafu imetokea';
+                let errMsg = t('login.err_generic');
                 try {
                     const errData = await response.json();
-                    errMsg = errData.error || `Hitilafu: ${response.status}`;
-                } catch { errMsg = `Hitilafu ya server: ${response.status}`; }
+                    errMsg = errData.error || t('login.err_with_status', { 'response.status': response.status });
+                } catch { errMsg = t('login.err_server_status', { 'response.status': response.status }); }
                 throw new Error(errMsg);
             }
             
             const data = await response.json();
-            if (!data.token || !data.user) throw new Error('Jibu lisilo sahihi kutoka kwa server');
+            if (!data.token || !data.user) throw new Error(t('login.err_bad_response'));
             
             const user = data.user;
             const token = data.token;
             
             // Check user status
             if (user.status && user.status !== 'approved') {
-                let statusMsg = user.status === 'pending' ? 'Akaunti yako bado haijaidhinishwa. Subiri msimamizi akuidhinishe.' : 'Akaunti yako imekataliwa. Tafadhali wasiliana na msimamizi.';
-                showAlert('Akaunti Haijaidhinishwa', statusMsg);
+                let statusMsg = user.status === 'pending' ? t('login.alert_pending_msg') : t('login.alert_rejected_msg');
+                showAlert(t('login.alert_not_approved'), statusMsg);
                 loading = false;
                 loginBtn.innerHTML = originalBtnHtml;
                 loginBtn.classList.remove('disabled');
@@ -759,16 +811,16 @@
             console.log('✅ Login successful! Redirecting to:', dashboardRoute);
             console.log('User role:', user.role);
             
-            showAlert('Mafanikio!', `Karibu ${userName}! Umefanikiwa kuingia.`, () => {
+            showAlert(t('login.alert_success'), t('login.alert_success_msg', { userName }), () => {
                 window.location.href = dashboardRoute;
             });
             
         } catch (err) {
-            let errMsg = 'Hitilafu imetokea wakati wa kuingia';
-            if (err.message.includes('401') || err.message.includes('sahihi')) errMsg = 'Barua pepe au nenosiri si sahihi.';
-            else if (err.message.includes('network') || err.message.includes('Failed to fetch')) errMsg = 'Hitilafu ya mtandao. Hakikisha umeunganishwa kwenye internet.';
+            let errMsg = t('login.err_signin_failed');
+            if (err.message.includes('401') || err.message.includes('sahihi')) errMsg = t('login.err_bad_credentials');
+            else if (err.message.includes('network') || err.message.includes('Failed to fetch')) errMsg = t('login.err_network');
             else errMsg = err.message;
-            showAlert('Hitilafu', errMsg);
+            showAlert(t('login.alert_error'), errMsg);
         } finally {
             loading = false;
             loginBtn.innerHTML = originalBtnHtml;
@@ -824,6 +876,10 @@
     // Initialize
     applyTheme();
     loadSavedCredentials();
+
+    // The role badge and role description are written by applyTheme(), so they
+    // have to be rewritten whenever the visitor switches language on this page.
+    if (window.DM) window.DM.onChange(() => applyTheme());
     
     console.log('LoginScreen ready for role:', role);
     console.log('API_BASE_URL set to same origin (empty string)');

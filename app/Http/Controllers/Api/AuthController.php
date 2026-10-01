@@ -28,6 +28,28 @@ class AuthController extends BaseController
 
     private const OTP_RESEND_COOLDOWN_MS = 30000;
 
+    /**
+     * The eight languages the Dukamkononi app supports (Duka_mkononi/context/
+     * LanguageContext.tsx). A user preference is only ever stored as one of
+     * these codes; anything else is ignored and the existing value is kept.
+     */
+    private const LANGUAGES_ALLOWED = ['sw', 'en', 'fr', 'hi', 'es', 'ur', 'de', 'zh'];
+
+    /**
+     * Returns the incoming language when it is one of the supported codes,
+     * otherwise null.
+     */
+    private function normalizeLanguage($language): ?string
+    {
+        if (!is_string($language)) {
+            return null;
+        }
+
+        $language = strtolower(trim($language));
+
+        return in_array($language, self::LANGUAGES_ALLOWED, true) ? $language : null;
+    }
+
     public function register(Request $request)
     {
         $ip = $request->header('x-forwarded-for') ?: $request->ip();
@@ -554,7 +576,11 @@ class AuthController extends BaseController
             }
 
             if ($language) {
-                User::where('id', $user->id)->update(['language' => $language]);
+                $language = $this->normalizeLanguage($language);
+                if ($language) {
+                    User::where('id', $user->id)->update(['language' => $language]);
+                    $user->language = $language;
+                }
             }
 
             $now = $this->isoNow();

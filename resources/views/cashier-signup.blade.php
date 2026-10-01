@@ -1,10 +1,9 @@
+@include('partials.dm-locale')
 @verbatim
-<!DOCTYPE html>
-<html lang="sw">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
-    <title>Dukamkononi | Usajili Muuzaji</title>
+    <title data-i18n="cashier_signup.page_title">Dukamkononi | Usajili Muuzaji</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
     <style>
         * {
@@ -325,39 +324,42 @@
     </style>
 </head>
 <body>
+@endverbatim
+@include('partials.dm-lang-widget')
+@verbatim
 <div class="keyboard-avoid">
     <div class="scroll-container">
         <div class="content">
-            <h1 class="header">JISAJILI KAMA MUUZAJI</h1>
-            <p class="subtitle">* Inamaanisha sehemu inayohitajika</p>
+            <h1 class="header" data-i18n="cashier_signup.header_register_seller">JISAJILI KAMA MUUZAJI</h1>
+            <p class="subtitle" data-i18n="cashier_signup.required_hint">* Inamaanisha sehemu inayohitajika</p>
 
             <div class="form-container">
-                <input type="text" class="input-field" id="full_name" placeholder="Jina Kamili *" autocomplete="name">
-                <input type="text" class="input-field" id="business_name" placeholder="Jina la Biashara *" autocomplete="organization">
-                <input type="text" class="input-field" id="business_location" placeholder="Mahali pa Biashara *" autocomplete="address-line1">
-                <input type="email" class="input-field" id="email" placeholder="Barua Pepe *" autocomplete="email">
-                <input type="tel" class="input-field" id="phone" placeholder="Namba ya Simu" autocomplete="tel">
-                <input type="password" class="input-field" id="password" placeholder="Nenosiri *" autocomplete="new-password">
-                <input type="password" class="input-field" id="confirmPassword" placeholder="Rudia Nenosiri *" autocomplete="off">
+                <input type="text" class="input-field" id="full_name" placeholder="Jina Kamili *" autocomplete="name" data-i18n="cashier_signup.label_full_name" data-i18n-attr="placeholder">
+                <input type="text" class="input-field" id="business_name" placeholder="Jina la Biashara *" autocomplete="organization" data-i18n="cashier_signup.label_business_name" data-i18n-attr="placeholder">
+                <input type="text" class="input-field" id="business_location" placeholder="Mahali pa Biashara *" autocomplete="address-line1" data-i18n="cashier_signup.label_business_location" data-i18n-attr="placeholder">
+                <input type="email" class="input-field" id="email" placeholder="Barua Pepe *" autocomplete="email" data-i18n="cashier_signup.label_email" data-i18n-attr="placeholder">
+                <input type="tel" class="input-field" id="phone" placeholder="Namba ya Simu" autocomplete="tel" data-i18n="cashier_signup.label_phone" data-i18n-attr="placeholder">
+                <input type="password" class="input-field" id="password" placeholder="Nenosiri *" autocomplete="new-password" data-i18n="cashier_signup.label_password" data-i18n-attr="placeholder">
+                <input type="password" class="input-field" id="confirmPassword" placeholder="Rudia Nenosiri *" autocomplete="off" data-i18n="cashier_signup.label_confirm_password" data-i18n-attr="placeholder">
             </div>
 
             <div id="signupBtn" class="signup-btn">
-                <span id="signupBtnText" class="signup-btn-text">JISAJILI SASA</span>
+                <span id="signupBtnText" class="signup-btn-text" data-i18n="cashier_signup.btn_register_now">JISAJILI SASA</span>
                 <div id="loaderSpinner" style="display: none;" class="loader"></div>
             </div>
 
             <div id="backBtn" class="back-btn">
-                <span class="back-btn-text">RUDI NYUMA</span>
+                <span class="back-btn-text" data-i18n="cashier_signup.btn_go_back">RUDI NYUMA</span>
             </div>
 
             <div class="info-card">
-                <div class="info-title">🔒 Maelezo muhimu kwa Muuzaji:</div>
-                <div class="info-point">Jina la biashara lazima liwe tayari kwenye mfumo (imesajiliwa na msimamizi)</div>
-                <div class="info-point">Biashara lazima iwe na msimamizi aliyethibitishwa</div>
-                <div class="info-point">Akaunti yako itahitaji uthibitisho wa msimamizi kabla ya kuingia</div>
-                <div class="info-point">Utapokea taarifa ukiapidhinishwa</div>
-                <div class="info-point">Hakikisha umeweka jina sahihi la biashara (herufi kubwa/ndogo)</div>
-                <div class="info-point">Baada ya kuidhinishwa, utaweza kuongeza bidhaa na kufanya mauzo</div>
+                <div class="info-title" data-i18n="cashier_signup.info_title">🔒 Maelezo muhimu kwa Muuzaji:</div>
+                <div class="info-point" data-i18n="cashier_signup.info_point_name_exists">Jina la biashara lazima liwe tayari kwenye mfumo (imesajiliwa na msimamizi)</div>
+                <div class="info-point" data-i18n="cashier_signup.info_point_verified_admin">Biashara lazima iwe na msimamizi aliyethibitishwa</div>
+                <div class="info-point" data-i18n="cashier_signup.info_point_approval">Akaunti yako itahitaji uthibitisho wa msimamizi kabla ya kuingia</div>
+                <div class="info-point" data-i18n="cashier_signup.info_point_notify">Utapokea taarifa ukiapidhinishwa</div>
+                <div class="info-point" data-i18n="cashier_signup.info_point_name_case">Hakikisha umeweka jina sahihi la biashara (herufi kubwa/ndogo)</div>
+                <div class="info-point" data-i18n="cashier_signup.info_point_after_approval">Baada ya kuidhinishwa, utaweza kuongeza bidhaa na kufanya mauzo</div>
             </div>
         </div>
     </div>
@@ -368,6 +370,87 @@
     // DUKAMKONONI: CashierSignup (Muuzaji) web replica
     // OTP-based registration: initiate → verify-otp → register
     const API_BASE_URL = '';
+
+    // The locale the visitor is browsing in. window.DM is set up synchronously
+    // by the language partial, but fall back to the attribute the server
+    // rendered so this never depends on locales.json.
+    function activeLocale() {
+        if (window.DM) return window.DM.locale();
+        return document.documentElement.getAttribute('data-dm-locale') || 'sw';
+    }
+
+    // The OTP modal and every alert on this page are built in JS, so almost none
+    // of its text exists in markup that data-i18n can reach. Those strings come
+    // from locales.json through the shared DM runtime. Until it has loaded we
+    // keep the Swahili source string, so a failed locales.json request can never
+    // blank the modal or fall back to raw key names.
+    const SW = {
+        "page_title": "Dukamkononi | Usajili Muuzaji",
+        "header_register_seller": "JISAJILI KAMA MUUZAJI",
+        "required_hint": "* Inamaanisha sehemu inayohitajika",
+        "label_full_name": "Jina Kamili *",
+        "label_business_name": "Jina la Biashara *",
+        "label_business_location": "Mahali pa Biashara *",
+        "label_email": "Barua Pepe *",
+        "label_phone": "Namba ya Simu",
+        "label_password": "Nenosiri *",
+        "label_confirm_password": "Rudia Nenosiri *",
+        "btn_register_now": "JISAJILI SASA",
+        "btn_go_back": "RUDI NYUMA",
+        "info_title": "🔒 Maelezo muhimu kwa Muuzaji:",
+        "info_point_name_exists": "Jina la biashara lazima liwe tayari kwenye mfumo (imesajiliwa na msimamizi)",
+        "info_point_verified_admin": "Biashara lazima iwe na msimamizi aliyethibitishwa",
+        "info_point_approval": "Akaunti yako itahitaji uthibitisho wa msimamizi kabla ya kuingia",
+        "info_point_notify": "Utapokea taarifa ukiapidhinishwa",
+        "info_point_name_case": "Hakikisha umeweka jina sahihi la biashara (herufi kubwa/ndogo)",
+        "info_point_after_approval": "Baada ya kuidhinishwa, utaweza kuongeza bidhaa na kufanya mauzo",
+        "alert_ok": "Sawa",
+        "alert_network_error": "Hitilafu ya Mtandao",
+        "err_no_internet": "Hakuna muunganisho wa mtandao. Tafadhali hakikisha umeunganishwa kwenye internet.",
+        "err_required_fields": "Tafadhali jaza sehemu zote required",
+        "err_email_invalid": "Tafadhali ingiza barua pepe sahihi",
+        "err_passwords_dont_match": "Nenosiri hazifanani",
+        "err_password_short": "Nenosiri lazima liwe na herufi 6 au zaidi",
+        "alert_error": "Hitilafu",
+        "err_business_verify_failed": "Hitilafu katika ukaguzi wa biashara",
+        "err_business_not_found_title": "Biashara Haipo",
+        "err_business_not_found": "Biashara \"{business_name}\" haipo kwenye mfumo. Tafadhali jisajili kama msimamizi kwanza.",
+        "err_no_admin_title": "Biashara Haina Msimamizi",
+        "err_no_admin": "Biashara \"{business_name}\" inapatikana lakini haina msimamizi aliyethibitishwa.",
+        "err_signup_failed": "Hitilafu imetokea wakati wa kujisajili",
+        "err_try_again": "Hitilafu imetokea. Tafadhali jaribu tena.",
+        "otp_title": "Uthibitisho wa Barua Pepe",
+        "otp_sent_to": "Tumetuma msimbo wa tarakimu 6 kwenye barua pepe: {email}",
+        "otp_verify": "Hakiki Msimbo",
+        "otp_creating_account": "Inaunda akaunti...",
+        "otp_no_code_received": "Hujapokea msimbo? ",
+        "otp_resend_countdown": "Tuma tena ({seconds}s)",
+        "otp_resend_code": "Tuma msimbo tena",
+        "otp_change_email": "← Badilisha barua pepe",
+        "otp_err_code_required": "Tafadhali weka msimbo wa tarakimu 6",
+        "otp_err_code_incorrect": "Msimbo si sahihi",
+        "otp_err_network": "Hitilafu ya mtandao",
+        "otp_sending": "Inatuma...",
+        "otp_failed": "Imeshindikana",
+        "otp_success_title": "Mafanikio",
+        "otp_success_message": "Akaunti ya Muuzaji imeundwa kikamilifu! Umewasilisha ombi lako. Tafadhali subiri uthibitisho wa msimamizi kabla ya kuingia.",
+    };
+    function t(key, params) {
+        if (window.DM) return window.DM.t(key, params);
+        // The catalog key carries the section prefix that DM.t walks, while the
+        // fallback dict above is keyed by bare name. Drop the prefix so the
+        // no-runtime path still shows the Swahili source string.
+        const dot = key.indexOf('.');
+        let value = SW[key];
+        if (value === undefined && dot > -1) value = SW[key.slice(dot + 1)];
+        if (value === undefined) return key;
+        if (params) {
+            Object.keys(params).forEach(name => {
+                value = value.split('{' + name + '}').join(String(params[name]));
+            });
+        }
+        return value;
+    }
 
     const fullNameInput = document.getElementById('full_name');
     const businessNameInput = document.getElementById('business_name');
@@ -393,6 +476,15 @@
     let otpCountdown = OTP_RESEND_COOLDOWN;
     let otpCountdownTimer = null;
 
+    // Language-switch bookkeeping. The resend label, the error line, the
+    // spinners and the modal's own markup are all rewritten by JS as the flow
+    // progresses, so their last state has to be kept to be re-rendered when the
+    // visitor changes language.
+    let otpResendBusy = false;
+    let activeOtpError = null;
+    let otpVerifying = false;
+    let otpCreating = false;
+
     function getOtpModalHtml(email) {
         let boxesHtml = '';
         for (let i = 0; i < OTP_LENGTH; i++) {
@@ -407,42 +499,68 @@
                             <span style="font-size:34px;">✉️</span>
                         </div>
                     </div>
-                    <div class="alert-title" style="font-size:20px;font-weight:bold;color:#2c3e50;margin-bottom:6px;text-align:center;">Uthibitisho wa Barua Pepe</div>
-                    <div style="font-size:13px;color:#7f8c8d;text-align:center;line-height:19px;margin-bottom:22px;padding:0 6px;">Tumetuma msimbo wa tarakimu 6 kwenye barua pepe: <strong>${email}</strong></div>
+                    <div class="alert-title" style="font-size:20px;font-weight:bold;color:#2c3e50;margin-bottom:6px;text-align:center;">${t('cashier_signup.otp_title')}</div>
+                    <div style="font-size:13px;color:#7f8c8d;text-align:center;line-height:19px;margin-bottom:22px;padding:0 6px;" id="otpSentTo" style="font-size:13px;color:#7f8c8d;text-align:center;line-height:19px;margin-bottom:22px;padding:0 6px;"></div>
                     <div class="otp-boxes" id="otpBoxes">${boxesHtml}</div>
                     <div class="otp-error-box" id="otpErrorBox">
                         <span class="otp-error-icon">⚠️</span>
                         <span class="otp-error-text" id="otpErrorText"></span>
                     </div>
                     <button id="otpVerifyBtn" class="alert-btn" style="width:100%;height:54px;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;cursor:pointer;border:none;font-size:16px;font-weight:bold;color:white;background:#2ecc71;">
-                        <span>✓</span> <span id="otpVerifyText">Hakiki Msimbo</span>
+                        <span>✓</span> <span id="otpVerifyText">${t('cashier_signup.otp_verify')}</span>
                         <span id="otpVerifyLoader" style="display:none;"><div class="loader" style="width:20px;height:20px;border-width:2px;"></div></span>
                     </button>
                     <div id="otpCreatingAccount" style="display:none;text-align:center;margin-bottom:14px;">
                         <div class="loader" style="margin:0 auto 8px;border-top-color:#2ecc71;"></div>
-                        <div class="otp-creating-text">Inaunda akaunti...</div>
+                        <div class="otp-creating-text" id="otpCreatingText">${t('cashier_signup.otp_creating_account')}</div>
                     </div>
                     <div style="text-align:center;margin-bottom:14px;">
-                        <span style="font-size:13px;color:#7f8c8d;">Hujapokea msimbo? </span>
+                        <span id="otpNoCodeText" style="font-size:13px;color:#7f8c8d;">${t('cashier_signup.otp_no_code_received')}</span>
                         <span id="otpResendBtn" style="font-size:13px;font-weight:700;color:#2ecc71;cursor:pointer;"></span>
                     </div>
                     <div style="text-align:center;">
-                        <span id="otpCancelBtn" style="font-size:13px;color:#7f8c8d;cursor:pointer;display:inline-flex;align-items:center;gap:5px;text-decoration:underline;">← Badilisha barua pepe</span>
+                        <span id="otpCancelBtn" style="font-size:13px;color:#7f8c8d;cursor:pointer;display:inline-flex;align-items:center;gap:5px;text-decoration:underline;">${t('cashier_signup.otp_change_email')}</span>
                     </div>
                 </div>
             </div>
         `;
     }
 
+    function escapeHtml(value) {
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    // The email address is shown in bold so it stays readable against a long
+    // sentence in languages that put the value in the middle rather than at the
+    // end. Escape first: the address comes from a form field.
+    function renderOtpSentTo(email) {
+        const el = document.getElementById('otpSentTo');
+        if (!el) return;
+        const safeEmail = escapeHtml(email);
+        el.innerHTML = escapeHtml(t('cashier_signup.otp_sent_to', { email: email }))
+            .split(safeEmail)
+            .join('<strong>' + safeEmail + '</strong>');
+    }
+
     function showOtpResendState() {
         const resendBtn = document.getElementById('otpResendBtn');
         if (!resendBtn) return;
+        if (otpResendBusy) {
+            resendBtn.textContent = t('cashier_signup.otp_sending');
+            resendBtn.style.color = '#95a5a6';
+            resendBtn.style.cursor = 'default';
+            return;
+        }
         if (otpCountdown > 0) {
-            resendBtn.textContent = `Tuma tena (${otpCountdown}s)`;
+            resendBtn.textContent = t('cashier_signup.otp_resend_countdown', { seconds: otpCountdown });
             resendBtn.style.color = '#95a5a6';
             resendBtn.style.cursor = 'default';
         } else {
-            resendBtn.textContent = 'Tuma msimbo tena';
+            resendBtn.textContent = t('cashier_signup.otp_resend_code');
             resendBtn.style.color = '#2ecc71';
             resendBtn.style.cursor = 'pointer';
         }
@@ -462,12 +580,25 @@
         }, 1000);
     }
 
+    // msg is either a { key, params } object for this page's own copy or a plain
+    // string that came back from the API, which only ever sends Swahili. The
+    // source is remembered so a language switch can re-render the line in the
+    // new language without ever translating a server message.
+    function resolveOtpError(msg) {
+        if (!msg) return null;
+        if (typeof msg === 'string') return msg;
+        return t(msg.key, msg.params);
+    }
+
     function setOtpError(msg) {
         const box = document.getElementById('otpErrorBox');
         const text = document.getElementById('otpErrorText');
-        if (msg) {
+        if (!box || !text) return;
+        activeOtpError = msg || null;
+        const value = resolveOtpError(msg);
+        if (value) {
             box.classList.add('show');
-            text.textContent = msg;
+            text.textContent = value;
             for (let i = 0; i < OTP_LENGTH; i++) {
                 const b = document.getElementById('otpBox' + i);
                 if (b) b.classList.add('error');
@@ -484,6 +615,7 @@
     function getOtpCode() { return otpDigits.join(''); }
 
     function setOtpVerifying(verifying) {
+        otpVerifying = verifying;
         const btn = document.getElementById('otpVerifyBtn');
         const text = document.getElementById('otpVerifyText');
         const loader = document.getElementById('otpVerifyLoader');
@@ -499,15 +631,32 @@
     }
 
     function setOtpCreating(creating) {
+        otpCreating = creating;
         const el = document.getElementById('otpCreatingAccount');
         const btn = document.getElementById('otpVerifyBtn');
         if (creating) { el.style.display = 'block'; btn.style.display = 'none'; }
         else { el.style.display = 'none'; btn.style.display = 'flex'; }
     }
 
+    // An alert is built from plain strings, so it cannot be reached by
+    // data-i18n. Keep the key/param source next to the rendered text: if the
+    // visitor changes language while an alert is open, only alerts raised from
+    // this page's own keys are re-rendered. Messages that came back from the API
+    // are shown verbatim, because the server only ever sends those in Swahili.
+    let alertState = null;
+
     function showAlert(title, message, onOkCallback = null, isSuccessWithBack = false) {
         const existingAlert = document.querySelector('.custom-alert');
         if (existingAlert) existingAlert.remove();
+
+        alertState = {
+            titleKey: title && title.key,
+            titleParams: title && title.params,
+            messageKey: message && message.key,
+            messageParams: message && message.params
+        };
+        const titleText = typeof title === 'string' ? title : t(title.key, title.params);
+        const messageText = typeof message === 'string' ? message : t(message.key, message.params);
 
         const overlay = document.createElement('div');
         overlay.className = 'custom-alert';
@@ -515,13 +664,13 @@
         alertBox.className = 'alert-box';
         const titleEl = document.createElement('div');
         titleEl.className = 'alert-title';
-        titleEl.innerText = title;
+        titleEl.innerText = titleText;
         const msgEl = document.createElement('div');
         msgEl.className = 'alert-message';
-        msgEl.innerText = message;
+        msgEl.innerText = messageText;
         const okBtn = document.createElement('div');
         okBtn.className = 'alert-btn';
-        okBtn.innerText = 'Sawa';
+        okBtn.innerText = t('cashier_signup.alert_ok');
         alertBox.appendChild(titleEl);
         alertBox.appendChild(msgEl);
         alertBox.appendChild(okBtn);
@@ -529,6 +678,7 @@
         if (isSuccessWithBack) {
             okBtn.addEventListener('click', () => {
                 overlay.remove();
+                alertState = null;
                 if (document.referrer && document.referrer.includes(window.location.host)) {
                     window.history.back();
                 } else {
@@ -539,6 +689,7 @@
         } else {
             okBtn.addEventListener('click', () => {
                 overlay.remove();
+                alertState = null;
                 if (onOkCallback) onOkCallback();
             });
         }
@@ -546,8 +697,22 @@
         document.body.appendChild(overlay);
     }
 
+    // Re-render the visible alert's own text after a language switch. The button
+    // keeps the handler it was bound to when the alert was opened.
+    function renderAlertStrings() {
+        if (!alertState) return;
+        const overlay = document.querySelector('.custom-alert');
+        if (!overlay) return;
+        const titleEl = overlay.querySelector('.alert-title');
+        const msgEl = overlay.querySelector('.alert-message');
+        const okBtn = overlay.querySelector('.alert-btn');
+        if (titleEl && alertState.titleKey) titleEl.innerText = t(alertState.titleKey, alertState.titleParams);
+        if (msgEl && alertState.messageKey) msgEl.innerText = t(alertState.messageKey, alertState.messageParams);
+        if (okBtn) okBtn.innerText = t('cashier_signup.alert_ok');
+    }
+
     function showNetworkError() {
-        showAlert('Hitilafu ya Mtandao', 'Hakuna muunganisho wa mtandao. Tafadhali hakikisha umeunganishwa kwenye internet.');
+        showAlert({ key: 'cashier_signup.alert_network_error' }, { key: 'cashier_signup.err_no_internet' });
     }
 
     function setLoadingState(isLoading) {
@@ -577,20 +742,20 @@
 
     function validateForm(form) {
         if (!form.email || !form.password || !form.full_name || !form.business_name || !form.business_location) {
-            showAlert('Hitilafu', 'Tafadhali jaza sehemu zote required');
+            showAlert({ key: 'cashier_signup.alert_error' }, { key: 'cashier_signup.err_required_fields' });
             return false;
         }
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(form.email)) {
-            showAlert('Hitilafu', 'Tafadhali ingiza barua pepe sahihi');
+            showAlert({ key: 'cashier_signup.alert_error' }, { key: 'cashier_signup.err_email_invalid' });
             return false;
         }
         if (form.password !== form.confirmPassword) {
-            showAlert('Hitilafu', 'Nenosiri hazifanani');
+            showAlert({ key: 'cashier_signup.alert_error' }, { key: 'cashier_signup.err_passwords_dont_match' });
             return false;
         }
         if (form.password.length < 6) {
-            showAlert('Hitilafu', 'Nenosiri lazima liwe na herufi 6 au zaidi');
+            showAlert({ key: 'cashier_signup.alert_error' }, { key: 'cashier_signup.err_password_short' });
             return false;
         }
         return true;
@@ -614,17 +779,19 @@
 
             if (!checkResponse.ok) {
                 setLoadingState(false);
-                showAlert('Hitilafu', checkData.error || 'Hitilafu katika ukaguzi wa biashara');
+                showAlert({ key: 'cashier_signup.alert_error' }, checkData.error || { key: 'cashier_signup.err_business_verify_failed' });
                 return;
             }
             if (!checkData.exists) {
                 setLoadingState(false);
-                showAlert('Biashara Haipo', `Biashara "${form.business_name}" haipo kwenye mfumo. Tafadhali jisajili kama msimamizi kwanza.`);
+                showAlert({ key: 'cashier_signup.err_business_not_found_title' },
+                    { key: 'cashier_signup.err_business_not_found', params: { business_name: form.business_name } });
                 return;
             }
             if (!checkData.hasAdmin) {
                 setLoadingState(false);
-                showAlert('Biashara Haina Msimamizi', `Biashara "${form.business_name}" inapatikana lakini haina msimamizi aliyethibitishwa.`);
+                showAlert({ key: 'cashier_signup.err_no_admin_title' },
+                    { key: 'cashier_signup.err_no_admin', params: { business_name: form.business_name } });
                 return;
             }
 
@@ -651,7 +818,7 @@
                 showOtpModal(form.email);
             } else {
                 setLoadingState(false);
-                showAlert('Hitilafu', initiateData.error || 'Hitilafu imetokea wakati wa kujisajili');
+                showAlert({ key: 'cashier_signup.alert_error' }, initiateData.error || { key: 'cashier_signup.err_signup_failed' });
             }
         } catch (error) {
             console.error('Signup error:', error);
@@ -659,21 +826,58 @@
             if (error.message && (error.message.includes('Network request failed') || error.message.includes('fetch'))) {
                 showNetworkError();
             } else {
-                showAlert('Hitilafu', 'Hitilafu imetokea. Tafadhali jaribu tena.');
+                showAlert({ key: 'cashier_signup.alert_error' }, { key: 'cashier_signup.err_try_again' });
             }
         }
     }
 
+    // The modal's own labels are baked into the markup that getOtpModalHtml()
+    // returns, so data-i18n cannot reach them. A language switch therefore has
+    // to rebuild the whole modal. renderOtpModal() reads the digits, countdown,
+    // error and spinner state back out of the variables above, so nothing the
+    // visitor typed and no progress is lost.
+    function renderOtpModal() {
+        const current = document.getElementById('otpModal');
+        if (!current) return;
+        current.remove();
+        buildOtpModal();
+    }
+
+    // Show OTP verification modal
     function showOtpModal(email) {
         const existing = document.querySelector('.custom-alert');
         if (existing) existing.remove();
         otpDigits = Array(OTP_LENGTH).fill('');
         otpCountdown = OTP_RESEND_COOLDOWN;
+        otpResendBusy = false;
+        activeOtpError = null;
+        alertState = null;
+        otpVerifying = false;
+        otpCreating = false;
+        pendingEmail = email;
+
+        buildOtpModal();
+
+        // Start the resend countdown. It is started here and not inside
+        // buildOtpModal(), because a rebuild happens on every language switch and
+        // must not hand the visitor a fresh 30 seconds.
+        startOtpCountdown();
+    }
+
+    // Build the modal DOM from scratch and re-apply the live state onto it.
+    // Called when the modal first opens and again on every language switch.
+    function buildOtpModal() {
         const wrapper = document.createElement('div');
-        wrapper.innerHTML = getOtpModalHtml(email);
+        wrapper.innerHTML = getOtpModalHtml(pendingEmail);
         document.body.appendChild(wrapper.firstElementChild);
+
+        // The sentence carrying the email address is assembled in JS (the address
+        // is bolded inside it), so data-i18n cannot fill it.
+        renderOtpSentTo(pendingEmail);
         for (let i = 0; i < OTP_LENGTH; i++) {
             const box = document.getElementById('otpBox' + i);
+            if (box.value !== otpDigits[i]) box.value = otpDigits[i] || '';
+            box.classList.toggle('filled', !!otpDigits[i]);
             box.addEventListener('input', (e) => {
                 const val = e.target.value.replace(/[^0-9]/g, '');
                 otpDigits[i] = val ? val.slice(-1) : '';
@@ -699,9 +903,13 @@
         };
         for (let i = 0; i < OTP_LENGTH; i++) document.getElementById('otpBox' + i).addEventListener('input', checkAutoSubmit);
         setTimeout(() => { const f = document.getElementById('otpBox0'); if (f) f.focus(); }, 350);
-        startOtpCountdown();
+        // Re-apply the in-progress states a rebuild would otherwise drop.
+        showOtpResendState();
+        if (activeOtpError) setOtpError(activeOtpError);
+        setOtpVerifying(otpVerifying);
+        setOtpCreating(otpCreating);
         document.getElementById('otpVerifyBtn').addEventListener('click', () => handleVerifyOtp());
-        document.getElementById('otpResendBtn').addEventListener('click', () => handleResendOtp(email));
+        document.getElementById('otpResendBtn').addEventListener('click', () => handleResendOtp(pendingEmail));
         document.getElementById('otpCancelBtn').addEventListener('click', () => { if (otpCountdownTimer) clearInterval(otpCountdownTimer); document.getElementById('otpModal').remove(); });
         document.getElementById('otpCloseBtn').addEventListener('click', () => { if (otpCountdownTimer) clearInterval(otpCountdownTimer); document.getElementById('otpModal').remove(); });
     }
@@ -710,7 +918,7 @@
         const code = getOtpCode();
         const otpErrorBox = document.getElementById('otpErrorBox');
         if (!code || code.length !== OTP_LENGTH) {
-            setOtpError('Tafadhali weka msimbo wa tarakimu 6');
+            setOtpError({ key: 'cashier_signup.otp_err_code_required' });
             return;
         }
         setOtpError(null);
@@ -729,19 +937,19 @@
                 await completeRegistration();
             } else {
                 setOtpVerifying(false);
-                setOtpError(data.error || 'Msimbo si sahihi');
+                setOtpError(data.error || { key: 'cashier_signup.otp_err_code_incorrect' });
             }
         } catch (error) {
             setOtpVerifying(false);
-            setOtpError('Hitilafu ya mtandao');
+            setOtpError({ key: 'cashier_signup.otp_err_network' });
         }
     }
 
     async function handleResendOtp(email) {
         if (otpCountdown > 0) return;
         const otpResendBtn = document.getElementById('otpResendBtn');
-        otpResendBtn.textContent = 'Inatuma...';
-        otpResendBtn.style.color = '#95a5a6';
+        otpResendBusy = true;
+        showOtpResendState();
         try {
             const response = await fetch(`${API_BASE_URL}/api/register/resend-otp`, {
                 method: 'POST',
@@ -756,16 +964,17 @@
                     if (b) { b.value = ''; b.classList.remove('filled'); }
                 }
                 setOtpError(null);
+                otpResendBusy = false;
                 startOtpCountdown();
             } else {
-                setOtpError(data.error || 'Imeshindikana');
-                otpResendBtn.textContent = 'Tuma msimbo tena';
-                otpResendBtn.style.color = '#2ecc71';
+                setOtpError(data.error || { key: 'cashier_signup.otp_failed' });
+                otpResendBusy = false;
+                showOtpResendState();
             }
         } catch (error) {
-            setOtpError('Hitilafu ya mtandao');
-            otpResendBtn.textContent = 'Tuma msimbo tena';
-            otpResendBtn.style.color = '#2ecc71';
+            setOtpError({ key: 'cashier_signup.otp_err_network' });
+            otpResendBusy = false;
+            showOtpResendState();
         }
     }
 
@@ -783,13 +992,13 @@
                 if (otpCountdownTimer) clearInterval(otpCountdownTimer);
                 const modal = document.getElementById('otpModal');
                 if (modal) modal.remove();
-                showAlert('Mafanikio', 'Akaunti ya Muuzaji imeundwa kikamilifu! Umewasilisha ombi lako. Tafadhali subiri uthibitisho wa msimamizi kabla ya kuingia.', null, true);
+                showAlert({ key: 'cashier_signup.otp_success_title' }, { key: 'cashier_signup.otp_success_message' }, null, true);
             } else {
-                showAlert('Hitilafu', data.error || 'Hitilafu imetokea wakati wa kujisajili');
+                showAlert({ key: 'cashier_signup.alert_error' }, data.error || { key: 'cashier_signup.err_signup_failed' });
             }
         } catch (error) {
             setLoadingState(false);
-            showAlert('Hitilafu', 'Hitilafu imetokea. Tafadhali jaribu tena.');
+            showAlert({ key: 'cashier_signup.alert_error' }, { key: 'cashier_signup.err_try_again' });
         }
     }
 
@@ -802,6 +1011,16 @@
     }
 
     signupBtn.addEventListener('click', handleSignup);
+
+    // The static form, header and info card are handled by the shared runtime's
+    // data-i18n pass. The OTP modal and any open alert are built in JS, so they
+    // have to be re-rendered here or they would keep the previous language.
+    if (window.DM) {
+        window.DM.onChange(() => {
+            renderOtpModal();
+            renderAlertStrings();
+        });
+    }
     backBtn.addEventListener('click', goBack);
     const inputs = [fullNameInput, businessNameInput, businessLocationInput, emailInput, phoneInput, passwordInput, confirmPasswordInput];
     inputs.forEach(input => {

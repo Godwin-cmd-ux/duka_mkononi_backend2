@@ -1,0 +1,48 @@
+Duka Mkononi - EAS build commands
+=================================
+Run every command from inside the Duka_mkononi folder (that is where eas.json lives).
+
+    cd Duka_mkononi
+
+
+0) ONE TIME PER MACHINE - login to your Expo/EAS account
+--------------------------------------------------------
+
+    npx eas-cli login
+
+
+1) APK - installable directly on an Android phone (profile: production)
+----------------------------------------------------------------------
+
+    npx eas-cli build -p android --profile production
+
+
+2) AAB - Play Store upload (profile: aab)
+-----------------------------------------
+
+    npx eas-cli build -p android --profile aab
+
+
+3) iOS - App Store / TestFlight (profile: ios)
+----------------------------------------------
+
+    npx eas-cli build -p ios --profile ios
+
+
+NOTES
+-----
+* Commit your work first. EAS archives the project from git and will stop to ask
+  whether uncommitted changes should be included.
+* The aab and ios profiles have autoIncrement enabled and appVersionSource is
+  "remote", so EAS manages versionCode / buildNumber. On the first build it asks
+  for a starting number - accept the value it proposes.
+* iOS needs a paid Apple Developer account (~$99/yr). EAS creates the
+  certificate, provisioning profile and App ID using
+  ios.bundleIdentifier = com.franklin19.dukamkononi . When asked, choose
+  "Let EAS handle it".
+* Android signing: REUSE the existing keystore. Only let EAS generate a new one
+  if no keystore exists yet, otherwise the Play listing can never be updated.
+* Add --local to an Android command to build on this machine instead of the EAS
+  cloud (needs the Android SDK + JDK). --local for iOS works on macOS only.
+* When a build finishes, EAS prints a download URL (and a QR code for the APK).
+* All three profiles use channel "production", so OTA updates reach these builds.

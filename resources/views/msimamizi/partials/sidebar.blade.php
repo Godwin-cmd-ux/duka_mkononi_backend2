@@ -1,10 +1,9 @@
+@include('partials.dm-locale')
 @verbatim
-<!DOCTYPE html>
-<html lang="sw">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
-    <title>Dukamkononi - Msimamizi</title>
+    <title data-i18n="msimamizi_sidebar.page_title">Dukamkononi - Msimamizi</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
     <style>
         * {
@@ -267,6 +266,7 @@
 </head>
 <body>
 @endverbatim
+@include('partials.dm-lang-widget')
 @include('partials.toast')
 @verbatim
     <!-- Mobile menu toggle button -->
@@ -281,17 +281,18 @@
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="logo-area">
-                    <div class="logo-icon">D</div>
+                    <div class="logo-icon" data-i18n="msimamizi_sidebar.logo_short">D</div>
                     <div class="logo-text">
-                        <h2>DukaMkononi</h2>
-                        <p>Msimamizi Portal</p>
+                        <h2 data-i18n="msimamizi_sidebar.logo_brand">DukaMkononi</h2>
+                        <p data-i18n="msimamizi_sidebar.logo_tagline">Msimamizi Portal</p>
                     </div>
                 </div>
             </div>
 
             <div class="nav-items">
                 <!-- Navigation items mirroring Tabs.Screen components -->
-                <div class="nav-item" data-page="index" data-title="Nyumbani">
+                <div class="nav-item" data-page="index" data-title="Nyumbani"
+                     data-i18n-attr="data-title" data-i18n="msimamizi_sidebar.nav_home">
                     <div class="nav-icon">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                             <path d="M3 9L12 3L21 9L12 15L3 9Z" stroke-linecap="round"/>
@@ -299,20 +300,22 @@
                             <path d="M12 15V21" stroke-linecap="round"/>
                         </svg>
                     </div>
-                    <span class="nav-label">Nyumbani</span>
+                    <span class="nav-label" data-i18n="msimamizi_sidebar.nav_home">Nyumbani</span>
                 </div>
 
-                <div class="nav-item" data-page="ripoti" data-title="Ripoti">
+                <div class="nav-item" data-page="ripoti" data-title="Ripoti"
+                     data-i18n-attr="data-title" data-i18n="msimamizi_sidebar.nav_reports">
                     <div class="nav-icon">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                             <path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z"/>
                             <path d="M8 7V17M12 7V17M16 7V17"/>
                         </svg>
                     </div>
-                    <span class="nav-label">Ripoti</span>
+                    <span class="nav-label" data-i18n="msimamizi_sidebar.nav_reports">Ripoti</span>
                 </div>
 
-                <div class="nav-item" data-page="preview" data-title="Rejea">
+                <div class="nav-item" data-page="preview" data-title="Rejea"
+                     data-i18n-attr="data-title" data-i18n="msimamizi_sidebar.nav_reviews">
                     <div class="nav-icon">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                             <path d="M8 2V5M16 2V5M3 9H21M5 3H19C20.1 3 21 3.9 21 5V19C21 20.1 20.1 21 19 21H5C3.9 21 3 20.1 3 19V5C3 3.9 3.9 3 5 3Z"/>
@@ -320,27 +323,29 @@
                             <path d="M12 15V18M9 21H15"/>
                         </svg>
                     </div>
-                    <span class="nav-label">Rejea</span>
+                    <span class="nav-label" data-i18n="msimamizi_sidebar.nav_reviews">Rejea</span>
                 </div>
 
-                <div class="nav-item" data-page="bidhaa-mpya" data-title="Bidhaa Mpya">
+                <div class="nav-item" data-page="bidhaa-mpya" data-title="Bidhaa Mpya"
+                     data-i18n-attr="data-title" data-i18n="msimamizi_sidebar.nav_new_products">
                     <div class="nav-icon">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                             <path d="M12 5V19M5 12H19" stroke-linecap="round"/>
                             <circle cx="12" cy="12" r="9"/>
                         </svg>
                     </div>
-                    <span class="nav-label">Bidhaa Mpya</span>
+                    <span class="nav-label" data-i18n="msimamizi_sidebar.nav_new_products">Bidhaa Mpya</span>
                 </div>
 
-                <div class="nav-item" data-page="tangaza" data-title="Tangaza">
+                <div class="nav-item" data-page="tangaza" data-title="Tangaza"
+                     data-i18n-attr="data-title" data-i18n="msimamizi_sidebar.nav_advertise">
                     <div class="nav-icon">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                             <path d="M3 11L7 9L14 4L19 9L14 14L7 19L3 17V11Z" stroke-linejoin="round"/>
                             <path d="M14 14L19 19M19 9L14 14" stroke-linecap="round"/>
                         </svg>
                     </div>
-                    <span class="nav-label">Tangaza</span>
+                    <span class="nav-label" data-i18n="msimamizi_sidebar.nav_advertise">Tangaza</span>
                 </div>
             </div>
 
@@ -348,15 +353,15 @@
                 <div class="user-info" id="userInfo">
                     <div class="user-avatar" id="userAvatar">M</div>
                     <div class="user-details">
-                        <div class="user-name" id="userName">Msimamizi</div>
-                        <div class="user-role">Msimamizi</div>
+                        <div class="user-name" id="userName" data-i18n="msimamizi_sidebar.nav_admin">Msimamizi</div>
+                        <div class="user-role" data-i18n="msimamizi_sidebar.nav_admin">Msimamizi</div>
                     </div>
                 </div>
                 <div class="logout-btn" id="logoutBtn">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                         <path d="M15 3H19C20.1 3 21 3.9 21 5V19C21 20.1 20.1 21 19 21H15M10 17L15 12L10 7M15 12H3"/>
                     </svg>
-                    <span>Ondoka</span>
+                    <span data-i18n="msimamizi_sidebar.btn_logout">Ondoka</span>
                 </div>
             </div>
         </aside>
@@ -367,7 +372,7 @@
                 <!-- Dynamic content loads here -->
                 <div style="text-align: center; padding: 60px 20px;">
                     <div class="spinner" style="border-top-color: #e74c3c;"></div>
-                    <p style="margin-top: 20px; color: #7f8c8d;">Loading...</p>
+                    <p style="margin-top: 20px; color: #7f8c8d;" data-i18n="msimamizi_sidebar.loading">Loading...</p>
                 </div>
             </div>
         </main>
@@ -391,6 +396,67 @@
         // ============================================
 
         const API_BASE_URL = '';
+        // Set only while the fetch-failure panel is on screen, so a language switch
+        // can rebuild it; cleared as soon as a page loads successfully.
+        let loadErrorMessage = null;
+
+        const SW = {
+            err_no_permission: 'Huna ruhusa ya kuingia kwenye eneo la Msimamizi.',
+            error_title: 'Hitilafu',
+            err_page_load: 'Huwezi kupakia ukurasa huu. Hakikisha faili zote zipo.',
+            nav_admin: 'Msimamizi',
+            page_title: 'Dukamkononi - Msimamizi',
+            title_home: 'Nyumbani - DukaMkononi',
+            title_reports: 'Ripoti - DukaMkononi',
+            title_reviews: 'Rejea - DukaMkononi',
+            title_new_products: 'Bidhaa Mpya - DukaMkononi',
+            title_advertise: 'Tangaza - DukaMkononi'
+        };
+        // Accepts either a bare key ('error_title') or a fully qualified one
+        // ('msimamizi_sidebar.title_home'), so call sites can read naturally.
+        function t(key, params) {
+            const full = key.indexOf('msimamizi_sidebar.') === 0 ? key : 'msimamizi_sidebar.' + key;
+            let value = key;
+            if (window.DM && typeof window.DM.t === 'function') {
+                const hit = window.DM.t(full, params);
+                if (hit !== full) value = hit;
+            }
+            if (value === key) {
+                const bare = key.indexOf('.') > -1 ? key.split('.').pop() : key;
+                if (Object.prototype.hasOwnProperty.call(SW, bare)) value = SW[bare];
+            }
+            return value;
+        }
+        // The fetch-failure panel is built as markup, so it has to be rebuilt to
+        // follow the language instead of being translated once at load time.
+        function renderLoadError(message) {
+            return `
+                <div style="text-align: center; padding: 60px 20px; background: white; border-radius: 20px;">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 8V12M12 16H12.01"/>
+                    </svg>
+                    <h3 style="margin-top: 20px; color: #e74c3c;">${t('error_title')}</h3>
+                    <p style="margin-top: 10px; color: #7f8c8d;">${t('err_page_load')}</p>
+                    <p style="margin-top: 8px; font-size: 12px; color: #95a5a6;">${message}</p>
+                </div>
+            `;
+        }
+        function paintDynamicText() {
+            const nameEl = document.getElementById('userName');
+            const roleEl = document.querySelector('.user-role');
+            const user = getCurrentUser();
+            const fallback = t('nav_admin');
+            if (nameEl && (!nameEl.dataset.dmUserName || !user)) {
+                nameEl.textContent = user ? (user.full_name || user.business_name ||
+                    (user.email || '').split('@')[0] || fallback) : fallback;
+            }
+            if (roleEl) roleEl.textContent = fallback;
+            if (loadErrorMessage) {
+                const pageContainer = document.getElementById('pageContainer');
+                if (pageContainer) pageContainer.innerHTML = renderLoadError(loadErrorMessage);
+            }
+        }
 
         // Get current user from localStorage (set during login)
         function getCurrentUser() {
@@ -416,7 +482,7 @@
             }
             // Check if user is admin/msimamizi
             if (user.role !== 'admin' && user.role !== 'msimamizi') {
-                showToast('Huna ruhusa ya kuingia kwenye eneo la Msimamizi.', 'error');
+                showToast(t('err_no_permission'), 'error');
                 window.location.href = '/home';
                 return false;
             }
@@ -428,8 +494,13 @@
         function updateUserInfo(user) {
             const userNameEl = document.getElementById('userName');
             const userAvatarEl = document.getElementById('userAvatar');
-            const displayName = user.full_name || user.business_name || user.email?.split('@')[0] || 'Msimamizi';
-            if (userNameEl) userNameEl.textContent = displayName;
+            const displayName = user.full_name || user.business_name || user.email?.split('@')[0] || t('nav_admin');
+            if (userNameEl) {
+                userNameEl.textContent = displayName;
+                // Marks the name as visitor data, so a later language switch leaves
+                // it alone instead of replacing it with the generic fallback.
+                userNameEl.dataset.dmUserName = '1';
+            }
             if (userAvatarEl) {
                 if (user.business_logo_url) {
                     userAvatarEl.innerHTML = `<img src="${user.business_logo_url}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
@@ -449,13 +520,18 @@
         };
 
         // Page titles
-        const pageTitles = {
-            index: 'Nyumbani - DukaMkononi',
-            ripoti: 'Ripoti - DukaMkononi',
-            preview: 'Rejea - DukaMkononi',
-            'bidhaa-mpya': 'Bidhaa Mpya - DukaMkononi',
-            tangaza: 'Tangaza - DukaMkononi'
+        // Keys, not strings: the label is looked up so it follows the language.
+        const pageTitleKeys = {
+            index: 'msimamizi_sidebar.title_home',
+            ripoti: 'msimamizi_sidebar.title_reports',
+            preview: 'msimamizi_sidebar.title_reviews',
+            'bidhaa-mpya': 'msimamizi_sidebar.title_new_products',
+            tangaza: 'msimamizi_sidebar.title_advertise'
         };
+        const pageTitles = {};
+        Object.keys(pageTitleKeys).forEach(name => {
+            pageTitles[name] = t(pageTitleKeys[name]);
+        });
 
         let currentPage = 'index';
 
@@ -506,6 +582,8 @@
                     contentHtml = html;
                 }
                 
+                loadErrorMessage = null;
+
                 // Inject into page container
                 const pageContainer = document.getElementById('pageContainer');
                 if (pageContainer) {
@@ -526,26 +604,18 @@
                 }
                 
                 // Update page title
-                document.title = pageTitles[pageName] || 'DukaMkononi - Msimamizi';
+                document.title = pageTitles[pageName] || t('page_title');
                 
                 // Update active state in sidebar
                 updateActiveNavItem(pageName);
                 
             } catch (error) {
                 console.error('Failed to load page:', error);
+                loadErrorMessage = error.message;
                 const pageContainer = document.getElementById('pageContainer');
                 if (pageContainer) {
-                    pageContainer.innerHTML = `
-                        <div style="text-align: center; padding: 60px 20px; background: white; border-radius: 20px;">
-                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="1.5">
-                                <circle cx="12" cy="12" r="10"/>
-                                <path d="M12 8V12M12 16H12.01"/>
-                            </svg>
-                            <h3 style="margin-top: 20px; color: #e74c3c;">Hitilafu</h3>
-                            <p style="margin-top: 10px; color: #7f8c8d;">Huwezi kupakia ukurasa huu. Hakikisha faili zote zipo.</p>
-                            <p style="margin-top: 8px; font-size: 12px; color: #95a5a6;">${error.message}</p>
-                        </div>
-                    `;
+                    pageContainer.innerHTML = renderLoadError(error.message);
+
                 }
             } finally {
                 showLoading(false);
@@ -653,6 +723,21 @@
             await loadPage(initialPage);
         }
         
+        // Follow the language: the sidebar markup is handled by data-i18n, but the
+        // document title and the fetch-failure panel are built in script.
+        if (window.DM && typeof window.DM.onChange === 'function') {
+            window.DM.onChange(() => {
+                Object.keys(pageTitleKeys).forEach(name => {
+                    pageTitles[name] = t(pageTitleKeys[name]);
+                });
+                paintDynamicText();
+                if (currentPage && pageTitleKeys[currentPage]) {
+                    document.title = pageTitles[currentPage];
+                }
+            });
+        }
+        paintDynamicText();
+
         // Run init
         init();
         

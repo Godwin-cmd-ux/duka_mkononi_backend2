@@ -1,0 +1,792 @@
+# DUKAMKONONI WEBSITE — LANGUAGE SYSTEM IMPLEMENTATION & TESTING
+
+## 1. CURRENT STATE
+
+The previous translation-extraction task has been completed.
+
+All required Blade files have been scanned and corresponding translation CSV files have already been created.
+
+DO NOT repeat the Blade scanning/CSV extraction task.
+
+The next task is to implement the actual website multilingual language system using those CSV translation files.
+
+The implementation must be done carefully and incrementally.
+
+---
+
+# 2. FIRST TASK — VERIFY USER LANGUAGE PREFERENCE DURING LOGIN
+
+Before changing any UI, inspect the existing authentication/login implementation.
+
+The Dukamkononi mobile application has the following behavior:
+
+When a user logs in successfully:
+
+1. The normal authentication/session process happens.
+2. The user's preferred language is also updated/stored in Supabase.
+3. Therefore, Supabase knows which language that particular user prefers.
+
+This language preference is important because future communications, including emails, may need to be sent to the user using their preferred language.
+
+## YOUR FIRST ACTION
+
+Inspect the website login route, authentication controller/service, Supabase interaction, and relevant database fields.
+
+Determine whether the website currently updates the user's preferred language in Supabase during login.
+
+DO NOT assume.
+
+DO NOT modify anything yet.
+
+Verify it from the actual code.
+
+Then report ONE of the following:
+
+### If it already works:
+
+"VERIFIED — the website login process already updates the user's preferred language in Supabase."
+
+Also explain briefly:
+
+* where it happens
+* which field is updated
+* what language value is stored
+* whether it matches the mobile application's behavior
+
+### If it does NOT work:
+
+"VERIFIED — the website login process does NOT currently update the user's preferred language in Supabase."
+
+Explain:
+
+* what is currently happening
+* what is missing
+* where the language preference should be stored
+* what would need to be changed
+
+DO NOT implement the fix yet unless specifically instructed.
+
+The first objective is verification.
+
+---
+
+# 3. LOCALE SYSTEM
+
+After the login-language verification is complete, begin implementing the website locale system.
+
+Create/use:
+
+`locales.json`
+
+This file will contain the translations required by the website.
+
+IMPORTANT:
+
+Do NOT generate one enormous implementation blindly.
+
+The locale system must be populated/implemented progressively, one Blade at a time.
+
+Use the CSV files created in the previous task as the translation source.
+
+---
+
+# 4. ONE BLADE AT A TIME
+
+The implementation MUST follow this exact workflow:
+
+ONE BLADE
+↓
+IMPLEMENT LANGUAGE SUPPORT
+↓
+TEST
+↓
+USER VERIFIES
+↓
+WAIT FOR "NEXT"
+
+Never implement multiple Blade files at once.
+
+Never continue automatically.
+
+Never assume that a successful implementation on one page means all other pages are working.
+
+Every Blade must be handled independently.
+
+---
+
+# 5. START WITH THE HOMEPAGE
+
+The FIRST Blade to implement is the homepage.
+
+Do not start with login.
+
+Do not start with dashboard.
+
+Do not start with another Blade.
+
+Start with the homepage.
+
+The homepage must become the foundation for the website language-selection experience.
+
+---
+
+# 6. HOMEPAGE LANGUAGE BUTTON
+
+Add a beautiful floating language button to the homepage.
+
+## POSITION
+
+The main language button must:
+
+* float on the LEFT side of the homepage
+* remain visually noticeable
+* not interfere with important page content
+* remain responsive on desktop and mobile
+* use a professional modern design
+
+It should appear as a floating UI element rather than a normal static navigation item.
+
+---
+
+# 7. FLOATING ANIMATION
+
+The language button should have a subtle floating animation.
+
+The animation should be:
+
+* slow
+* smooth
+* continuous
+* subtle
+* professional
+
+It should appear as if the button is gently floating up and down.
+
+DO NOT make it bounce aggressively.
+
+DO NOT make it move far away from its original position.
+
+The button should maintain approximately the same location while gently moving vertically.
+
+The animation must not distract users from the website.
+
+---
+
+# 8. LANGUAGE MENU
+
+When the main floating language button is clicked:
+
+Display the available languages as floating child buttons.
+
+Each child button represents one supported language.
+
+For example:
+
+Language
+↓
+English
+Español
+Kiswahili
+Français
+中文
+हिन्दी
+اردو
+[8th language discovered from mobile application]
+
+Use the exact eight languages already discovered from the mobile application's locale configuration.
+
+DO NOT invent a ninth language.
+
+DO NOT remove one of the existing eight.
+
+---
+
+# 9. CHILD BUTTON DESIGN
+
+The language buttons should also have a floating/modern appearance.
+
+They may appear around or above/below the main language button in a clean animated arrangement.
+
+The animation should be smooth and professional.
+
+Avoid creating a huge menu that covers the page.
+
+The language selector should feel like a polished modern floating control.
+
+---
+
+# 10. LANGUAGE SELECTION
+
+When the user clicks a language button:
+
+1. Determine the selected language.
+2. Update the current website language.
+3. Translate the homepage immediately.
+4. Store the selected language in the current session/state.
+5. Ensure the language survives navigation to the next page.
+
+For example:
+
+User opens homepage.
+
+Current language:
+
+Swahili
+
+User clicks:
+
+English
+
+The homepage immediately changes to English.
+
+Then the user clicks:
+
+Login
+
+The login page must automatically open in English.
+
+---
+
+# 11. LANGUAGE MUST SURVIVE NAVIGATION
+
+This is extremely important.
+
+The selected language from the homepage must not disappear when the user navigates to another page.
+
+Example:
+
+Homepage
+↓
+User selects French
+↓
+Homepage becomes French
+↓
+User clicks Login
+↓
+Login page MUST automatically be French
+
+The user should NOT have to select French again.
+
+The selected language should be stored in the appropriate website session/state mechanism.
+
+Use the existing Laravel/session architecture where appropriate.
+
+Do not create an unnecessary duplicate state-management system if Laravel's existing session can handle the requirement.
+
+---
+
+# 12. LOGIN PAGE
+
+The login page must automatically inherit the language selected on the homepage.
+
+For example:
+
+Homepage language = Spanish
+
+User clicks Login
+
+Login page = Spanish
+
+Homepage language = Chinese
+
+User clicks Login
+
+Login page = Chinese
+
+Homepage language = Urdu
+
+User clicks Login
+
+Login page = Urdu
+
+The login page must not randomly revert to Swahili.
+
+---
+
+# 13. SIGN-UP PAGES
+
+The same language behavior must apply to:
+
+* Sign-up page
+* All sign-up-related pages
+* Registration forms
+* Registration validation messages
+* Registration alerts
+* Registration modals
+* Registration buttons
+* Registration instructions
+* Any other user-visible registration text
+
+If the user selected a language before entering registration, registration must use that language.
+
+---
+
+# 14. FORGOT PASSWORD
+
+The forgot-password flow must also inherit the selected language.
+
+This includes:
+
+* Forgot password page
+* Email input labels
+* Buttons
+* Instructions
+* Validation messages
+* Success messages
+* Error messages
+* Reset-password-related UI
+
+The selected language must remain consistent throughout the flow.
+
+---
+
+# 15. AUTHENTICATION LANGUAGE BEHAVIOR
+
+Before login:
+
+The language comes from the current website session/state.
+
+After successful login:
+
+The system must know the user's selected language.
+
+The successful login process must:
+
+1. Authenticate the user.
+2. Create/update the normal authenticated session.
+3. Preserve the selected language.
+4. Update the user's preferred language in Supabase if this is missing from the current implementation.
+5. Store the user's language preference so it can be retrieved later.
+
+The language preference belongs to the user, not merely the browser session.
+
+---
+
+# 16. DATABASE LANGUAGE PREFERENCE
+
+The system must distinguish between:
+
+### Guest user
+
+Language comes from the current website session/state.
+
+### Authenticated user
+
+Language should ultimately be associated with the user's account in Supabase.
+
+Therefore:
+
+Guest:
+
+`homepage → selected language → session → login`
+
+Authenticated user:
+
+`login → selected language → Supabase user preference`
+
+---
+
+# 17. LANGUAGE AFTER LOGIN
+
+Once the user successfully logs in, the system should retrieve/use the user's stored preferred language where appropriate.
+
+This is especially important when the user returns later.
+
+Example:
+
+User previously selected:
+
+French
+
+User logs out.
+
+Later the user returns and logs in again.
+
+The system should know that the user prefers French.
+
+The user's account language preference should not depend exclusively on an old browser session.
+
+---
+
+# 18. EMAIL FUTURE COMPATIBILITY
+
+The language preference stored in Supabase will eventually be used by the email system.
+
+For example:
+
+User A:
+
+Preferred language = English
+
+User B:
+
+Preferred language = French
+
+User C:
+
+Preferred language = Spanish
+
+When the system sends future emails, the email-generation system should be able to query the user's preferred language and select the appropriate email translation.
+
+DO NOT implement the entire email translation system during this task unless explicitly instructed.
+
+For now, ensure that the user's language preference is correctly stored and available.
+
+---
+
+# 19. LOCALES.JSON STRUCTURE
+
+Use the previously generated CSV translations as the source.
+
+Create/use:
+
+`locales.json`
+
+The structure must support:
+
+* language
+* locale code
+* translation keys
+* translated values
+
+Use stable translation keys.
+
+Do NOT use translated sentences as fragile keys if a clean semantic key can be created.
+
+For example, prefer:
+
+`welcome_message`
+
+rather than using:
+
+`Karibu kwenye Dukamkononi`
+
+as the key.
+
+The exact structure should integrate naturally with the existing Laravel architecture.
+
+Do not introduce unnecessary complexity.
+
+---
+
+# 20. DO NOT TRANSLATE APPLICATION NAME
+
+The application name:
+
+`Dukamkononi`
+
+must remain:
+
+`Dukamkononi`
+
+in every language.
+
+Never translate it.
+
+Never transliterate it.
+
+Never replace it with an equivalent word.
+
+---
+
+# 21. PRESERVE DYNAMIC CONTENT
+
+When replacing UI text with translations, preserve all dynamic values.
+
+Example:
+
+`Karibu, {{ $user->name }}`
+
+must retain:
+
+`{{ $user->name }}`
+
+The translation should only change the surrounding human-readable text.
+
+Do not break Blade expressions.
+
+Do not break PHP expressions.
+
+Do not break JavaScript.
+
+Do not break Alpine/Livewire syntax.
+
+---
+
+# 22. HOMEPAGE TEST REQUIREMENTS
+
+After implementing the homepage, STOP and test only the homepage behavior.
+
+The following must be verified:
+
+### Test 1
+
+Open homepage.
+
+Confirm the floating Language button is visible on the LEFT side.
+
+### Test 2
+
+Confirm the button gently floats up and down.
+
+### Test 3
+
+Click the Language button.
+
+Confirm the language child buttons appear.
+
+### Test 4
+
+Confirm all eight supported languages are displayed.
+
+### Test 5
+
+Click one language.
+
+Confirm homepage text changes into that language.
+
+### Test 6
+
+Refresh the homepage.
+
+Confirm the selected language is preserved if the selected-language persistence mechanism is designed to survive refresh.
+
+### Test 7
+
+Navigate from homepage to Login.
+
+Confirm Login automatically uses the selected language.
+
+If any test fails, FIX ONLY THE CURRENT HOMEPAGE LANGUAGE IMPLEMENTATION.
+
+Do not move to another Blade.
+
+---
+
+# 23. IMPORTANT — DO NOT MOVE FORWARD AUTOMATICALLY
+
+After homepage implementation and testing:
+
+STOP.
+
+Report the test results.
+
+Wait for the user to explicitly say:
+
+NEXT
+
+Only then continue to the login Blade.
+
+---
+
+# 24. NEXT STEP — LOGIN
+
+When the user says:
+
+NEXT
+
+process the login Blade.
+
+The login Blade must:
+
+* use `locales.json`
+* inherit the selected language
+* translate all login UI
+* preserve dynamic content
+* preserve technical code
+* preserve "Dukamkononi"
+* maintain the selected language when navigating through the authentication flow
+
+Then test:
+
+Homepage
+→ select language
+→ Login
+→ verify Login language
+
+If successful:
+
+STOP.
+
+Wait for:
+
+NEXT
+
+---
+
+# 25. SIGN-UP AND FORGOT PASSWORD
+
+After Login has been successfully tested and the user says NEXT:
+
+Continue one Blade at a time through:
+
+1. Sign-up
+2. Sign-up-related Blade files
+3. Forgot password
+4. Other authentication-related Blade files
+
+Every Blade must be:
+
+IMPLEMENTED
+→ TESTED
+→ VERIFIED
+→ STOPPED
+
+Never process several at once.
+
+---
+
+# 26. AUTHENTICATED APPLICATION PAGES
+
+After authentication-related pages are complete, the user's stored language preference becomes the important source for authenticated pages.
+
+For authenticated users:
+
+1. Read the user's preferred language.
+2. Load that language.
+3. Apply it to the current Blade.
+4. Continue using it through navigation.
+5. Keep the language consistent across the authenticated area.
+
+Do not force the user to manually select the language again on every page.
+
+---
+
+# 27. IMPORTANT DISTINCTION
+
+Do NOT confuse:
+
+### Current session language
+
+with:
+
+### Permanent user language preference
+
+The session language controls the current browsing experience.
+
+The Supabase user preference represents the user's saved language preference.
+
+They should work together.
+
+---
+
+# 28. DO NOT BREAK EXISTING FUNCTIONALITY
+
+During implementation:
+
+DO NOT break:
+
+* authentication
+* registration
+* logout
+* password reset
+* Supabase queries
+* database operations
+* API calls
+* forms
+* validation
+* redirects
+* payment functionality
+* shopping functionality
+* cart functionality
+* product functionality
+* existing English/Swahili functionality
+* responsive design
+
+Language implementation must be additive and safe.
+
+---
+
+# 29. DO NOT REWRITE THE WEBSITE DESIGN
+
+Do not redesign existing pages merely because you are implementing translations.
+
+Preserve:
+
+* existing layout
+* existing colors
+* existing typography
+* existing spacing
+* existing components
+* existing navigation
+* existing business logic
+
+Only add the language functionality required by this task.
+
+The homepage floating language selector is the deliberate new UI element.
+
+---
+
+# 30. FINAL RULE — ONE BLADE, ONE TEST, ONE "NEXT"
+
+The entire implementation must follow:
+
+BLADE
+↓
+IMPLEMENT
+↓
+TEST
+↓
+REPORT
+↓
+STOP
+↓
+USER SAYS NEXT
+↓
+NEXT BLADE
+
+Never:
+
+BLADE 1
+↓
+BLADE 2
+↓
+BLADE 3
+↓
+BLADE 4
+
+without waiting for the user.
+
+The user must be able to manually verify every stage before allowing the next stage.
+
+---
+
+# 31. REQUIRED REPORT FORMAT
+
+After each completed Blade, report concisely:
+
+`READY — [Blade filename]`
+
+Then provide:
+
+* What was implemented.
+* What language behavior was verified.
+* Whether navigation preserved the language.
+* Whether any issue was found.
+* Whether the CSV translation source was successfully integrated.
+
+Then say:
+
+`Waiting for NEXT.`
+
+Do not continue until the user says NEXT.
+
+---
+
+# 32. START NOW
+
+Your first action is NOT to modify the homepage.
+
+Your first action is:
+
+VERIFY THE LOGIN LANGUAGE-PREFERENCE IMPLEMENTATION IN SUPABASE.
+
+Report whether it already works.
+
+After that, proceed to the homepage implementation according to all instructions above.
+
+Do not skip the verification.
+Do not guess.
+Do not modify unrelated functionality.
+Do not process multiple Blades.
+Always wait for NEXT.

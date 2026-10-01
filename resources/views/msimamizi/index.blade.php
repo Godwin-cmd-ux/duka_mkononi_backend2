@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dashbodi ya Msimamizi - Dukamkononi</title>
+    <title data-i18n="msimamizi_index.page_title">Dashbodi ya Msimamizi - Dukamkononi</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {
@@ -539,46 +539,46 @@
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="logo-area">
-                    <div class="logo-icon">D</div>
+                    <div class="logo-icon" data-i18n="msimamizi_index.logo_short">D</div>
                     <div class="logo-text">
-                        <h2>DukaMkononi</h2>
-                        <p>Msimamizi Portal</p>
+                        <h2 data-i18n="msimamizi_index.logo_brand">DukaMkononi</h2>
+                        <p data-i18n="msimamizi_index.logo_tagline">Msimamizi Portal</p>
                     </div>
                 </div>
             </div>
             <div class="nav-items">
                 <a href="index" class="nav-item active">
                     <div class="nav-icon"><i class="fa-solid fa-house"></i></div>
-                    <span class="nav-label">Nyumbani</span>
+                    <span class="nav-label" data-i18n="msimamizi_index.nav_home">Nyumbani</span>
                 </a>
                 <a href="ripoti" class="nav-item">
                     <div class="nav-icon"><i class="fa-solid fa-chart-simple"></i></div>
-                    <span class="nav-label">Ripoti</span>
+                    <span class="nav-label" data-i18n="msimamizi_index.nav_reports">Ripoti</span>
                 </a>
                 <a href="preview" class="nav-item">
                     <div class="nav-icon"><i class="fa-solid fa-calendar-days"></i></div>
-                    <span class="nav-label">Rejea</span>
+                    <span class="nav-label" data-i18n="msimamizi_index.nav_reviews">Rejea</span>
                 </a>
                 <a href="bidhaa-mpya" class="nav-item">
                     <div class="nav-icon"><i class="fa-solid fa-circle-plus"></i></div>
-                    <span class="nav-label">Bidhaa Mpya</span>
+                    <span class="nav-label" data-i18n="msimamizi_index.nav_new_products">Bidhaa Mpya</span>
                 </a>
                 <a href="tangaza" class="nav-item">
                     <div class="nav-icon"><i class="fa-solid fa-bullhorn"></i></div>
-                    <span class="nav-label">Tangaza</span>
+                    <span class="nav-label" data-i18n="msimamizi_index.nav_advertise">Tangaza</span>
                 </a>
             </div>
             <div class="sidebar-footer">
                 <div class="user-info">
                     <div class="user-avatar" id="userAvatar">M</div>
                     <div class="user-details">
-                        <div class="user-name" id="userName">Msimamizi</div>
+                        <div class="user-name" id="userName" data-i18n="msimamizi_index.nav_admin">Msimamizi</div>
                         <div class="user-role">Msimamizi</div>
                     </div>
                 </div>
                 <div class="logout-btn" id="logoutBtn">
                     <span><i class="fa-solid fa-arrow-right-from-bracket"></i></span>
-                    <span>Ondoka</span>
+                    <span data-i18n="msimamizi_index.btn_logout">Ondoka</span>
                 </div>
             </div>
         </aside>
@@ -586,7 +586,7 @@
         <!-- MAIN CONTENT -->
         <main class="main-content" id="mainContent">
             <div id="dashboardContainer">
-                <div style="text-align: center; padding: 60px;">Loading dashboard...</div>
+                <div style="text-align: center; padding: 60px;" data-i18n="msimamizi_index.loading_dashboard">Loading dashboard...</div>
             </div>
         </main>
     </div>
@@ -598,6 +598,107 @@
         // ============================================
         
         const API_BASE_URL = '';
+        // ---- i18n ----
+        // Swahili source strings, used until the shared runtime has fetched the
+        // catalog. t() prefers window.DM (all 8 locales) and falls back to these.
+        const SW = {
+            btn_ok: "Sawa",
+            btn_cancel: "Ghairi",
+            btn_confirm: "Thibitisha",
+            alert_sign_in_again: "Tafadhali ingia tena",
+            title_main_business: "Biashara Kuu",
+            title_headquarters: "Makao Makuu",
+            no_phone: "Hakuna namba",
+            photo: "Picha",
+            msg_seller_status: "Muuzaji {action_name} kikamilifu",
+            err_change_seller_status: "Imeshindikana kubadilisha hali ya muuzaji",
+            btn_delete_permanent: "FUTA KABISA",
+            confirm_delete_seller: "UNATAKA KUMFUTA KABISA MUUZAJI {seller_name}?\n\nKITENDO HIKI HAKIWEZI KUTENDULIWA!",
+            msg_seller_deleted: "Muuzaji {seller_name} amefutwa kabisa",
+            err_delete_seller: "Imeshindikana kumfuta muuzaji kabisa",
+            err_fill_business_location: "Tafadhali jaza jina la biashara na eneo",
+            msg_profile_updated: "Wasifu umesasishwa",
+            err_update_profile: "Imeshindikana kusasisha wasifu",
+            type_auto_parts: "Sehemu za Gari",
+            type_motorcycle_spare: "Spea za Pikipiki",
+            type_supermarket: "Supermarket",
+            type_pharmacy: "Duka la Dawa",
+            type_electronics: "Elektroniki",
+            type_clothing: "Mavazi",
+            type_hardware: "Vifaa Vinene (Hardware)",
+            type_cosmetics: "Vipodozi",
+            type_perfumes: "Manukato",
+            type_restaurant: "Mgahawa",
+            type_furniture: "Samani",
+            type_office_school: "Vifaa vya Ofisi na Shule",
+            type_phone_accessories: "Vifaa vya Simu",
+            type_computer_shop: "Duka la Kompyuta",
+            type_mobile_shop: "Duka la Simu",
+            type_agriculture: "Kilimo",
+            type_building_materials: "Vifaa vya Ujenzi",
+            type_beauty_salon: "Saluni ya Urembo",
+            type_barbershop: "Kinyozi",
+            type_car_workshop: "Karakana ya Magari",
+            type_retail_general: "Rejareja ya Jumla",
+            type_wholesale: "Jumla (Wholesale)",
+            type_other: "Nyingine",
+            opt_select_business_type: "— Chagua Aina ya Biashara —",
+            saving: "Inahifadhi...",
+            err_refresh_data: "Imeshindikana kusasisha data. Hakikisha umeunganishwa kwenye internet kisha ujaribu tena.",
+            logout_title: "Toka",
+            confirm_logout: "Unahakika unataka kutoka kwenye akaunti yako?",
+            photo_only: "Chagua picha tu",
+            photo_too_large: "Picha ni kubwa sana (max 5MB)",
+            msg_business_photo_updated: "Picha ya biashara imesasishwa!",
+            err_upload_photo: "Imeshindwa kupakia picha: {message}",
+            gps_unavailable: "GPS haipatikani kwenye kifaa chako",
+            confirm_location: "Eneo lako: {area_name}\n\nUhakikiwa?",
+            msg_location_saved: "Eneo limehifadhiwa! {area_name}",
+            err_get_location: "Imeshindwa kupata eneo: {message}",
+            verified: "Imethibitishwa",
+            pending: "Inasubiri",
+            rejected: "Haijakubaliwa",
+            unknown: "Unknown",
+            no_business: "Hakuna biashara",
+            no_location: "Hakuna eneo",
+            btn_verify: "✓ Thibitisha",
+            btn_remove: "Ondoa",
+            btn_reject: "✗ Batilisha",
+            btn_restore: "⟳ Rudisha",
+            btn_delete_forever: "Futa Kabisa",
+            dashboard_title: "Dashbodi ya Msimamizi",
+            system_management: "Simamia Mfumo",
+            system_admin: "Msimamizi Mkuu wa Mfumo",
+            super_admin: "Msimamizi Mkuu",
+            sellers_list_caption: "Wauzaji wanaonyeshwa: Jina la biashara = {business_name}",
+            getting_location: "Inapata eneo...",
+            btn_change_location: "Badili Eneo",
+            btn_get_gps_location: "Pata Eneo la GPS",
+            sellers_of_business: "Wauzaji Wa Biashara Hii",
+            no_sellers: "Hakuna Wauzaji",
+            no_sellers_registered: "Hakuna wauzaji waliosajiliwa kwenye biashara {business_name} bado.",
+            status_verified: "amethibitishwa",
+            status_unverified: "amebatilishwa",
+            remove_seller: "Ondoa Muuzaji",
+            confirm_remove_seller: "Unahakika unataka kumfuta muuzaji {name}?",
+            status_deleted: "amefutwa"
+        };
+        function t(key, params) {
+            const full = key.indexOf('msimamizi_index.') === 0 ? key : 'msimamizi_index.' + key;
+            if (window.DM && typeof window.DM.t === 'function') {
+                const hit = window.DM.t(full, params);
+                if (hit !== full) return hit;
+            }
+            let value = SW[key.replace('msimamizi_index.', '')];
+            if (value === undefined) return key;
+            if (params) {
+                Object.keys(params).forEach(p => {
+                    value = value.split('{' + p + '}').join(params[p] == null ? '' : params[p]);
+                });
+            }
+            return value;
+        }
+
 
         // ============================== ICONS ==============================
         // Font Awesome 6 icon helper (https://fontawesome.com).
@@ -644,7 +745,7 @@
             box.innerHTML = `
                 <div style="font-size:20px;font-weight:800;margin-bottom:12px;">${escapeHtml(title)}</div>
                 <div style="font-size:14px;color:#5d6d7e;margin-bottom:24px;">${escapeHtml(message)}</div>
-                <div style="background:#e74c3c;padding:12px;border-radius:40px;color:white;font-weight:700;cursor:pointer;">Sawa</div>
+                <div style="background:#e74c3c;padding:12px;border-radius:40px;color:white;font-weight:700;cursor:pointer;">${t('msimamizi_index.btn_ok')}</div>
             `;
             const btn = box.querySelector('div:last-child');
             btn.onclick = () => { overlay.remove(); if(onOk) onOk(); };
@@ -661,8 +762,8 @@
                 <div style="font-size:18px;font-weight:800;margin-bottom:12px;">${escapeHtml(title)}</div>
                 <div style="font-size:14px;color:#5d6d7e;margin-bottom:24px;">${escapeHtml(message)}</div>
                 <div style="display:flex;gap:12px;">
-                    <div id="confirmNo" style="flex:1;background:#95a5a6;padding:12px;border-radius:40px;color:white;cursor:pointer;">Ghairi</div>
-                    <div id="confirmYes" style="flex:1;background:#e74c3c;padding:12px;border-radius:40px;color:white;cursor:pointer;">Thibitisha</div>
+                    <div id="confirmNo" style="flex:1;background:#95a5a6;padding:12px;border-radius:40px;color:white;cursor:pointer;">${t('msimamizi_index.btn_cancel')}</div>
+                    <div id="confirmYes" style="flex:1;background:#e74c3c;padding:12px;border-radius:40px;color:white;cursor:pointer;">${t('msimamizi_index.btn_confirm')}</div>
                 </div>
             `;
             overlay.appendChild(box);
@@ -675,19 +776,19 @@
             const token = localStorage.getItem('userToken');
             const userStr = localStorage.getItem('userData');
             if (!token || !userStr) {
-                showAlert('Hitilafu', 'Tafadhali ingia tena', () => { window.location.href = '../login?role=msimamizi'; });
+                showAlert('Hitilafu', t('msimamizi_index.alert_sign_in_again'), () => { window.location.href = '../login?role=msimamizi'; });
                 return false;
             }
             const user = JSON.parse(userStr);
-            const businessName = user.businessName || user.business_name || 'Biashara Kuu';
-            const businessLocation = user.businessLocation || user.business_location || 'Makao Makuu';
+            const businessName = user.businessName || user.business_name || t('msimamizi_index.title_main_business');
+            const businessLocation = user.businessLocation || user.business_location || t('msimamizi_index.title_headquarters');
             
             userData = {
                 id: user.id || '',
                 email: user.email || '',
                 businessName: businessName,
                 businessLocation: businessLocation,
-                phone: user.phone || 'Hakuna namba',
+                phone: user.phone || t('msimamizi_index.no_phone'),
                 role: user.role || '',
                 businessLogo: user.business_logo_url || '',
                 businessLatitude: typeof user.business_latitude === 'number' ? user.business_latitude : null,
@@ -712,7 +813,7 @@
                 avatarEl.classList.add('js-avatar-view');
 avatarEl.setAttribute('data-full', user.business_logo_url);
 avatarEl.setAttribute('data-name', displayName);
-avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;pointer-events:none;" alt="Picha">`;
+avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;pointer-events:none;" alt="${t('msimamizi_index.photo')}">`;
             } else {
                 avatarEl.innerHTML = (user.full_name || user.email.charAt(0) || 'M').charAt(0).toUpperCase();
             }
@@ -781,7 +882,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 });
                 
                 if (response.ok) {
-                    showAlert('Mafanikio', `Muuzaji ${actionName} kikamilifu`);
+                    showAlert('Mafanikio', t('msimamizi_index.msg_seller_status', {action_name: actionName}));
                     await loadSellersData();
                     renderDashboard();
                     return true;
@@ -789,7 +890,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     throw new Error('Failed to update status');
                 }
             } catch (error) {
-                showAlert('Hitilafu', 'Imeshindikana kubadilisha hali ya muuzaji');
+                showAlert('Hitilafu', t('msimamizi_index.err_change_seller_status'));
                 return false;
             } finally {
                 updatingSellerStatus = null;
@@ -798,7 +899,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         }
 
         async function deleteSellerPermanently(sellerId, sellerName) {
-            showConfirm('FUTA KABISA', `UNATAKA KUMFUTA KABISA MUUZAJI "${sellerName}"?\n\nKITENDO HIKI HAKIWEZI KUTENDULIWA!`, async () => {
+            showConfirm(t('msimamizi_index.btn_delete_permanent'), t('msimamizi_index.confirm_delete_seller', {seller_name: sellerName}), async () => {
                 const token = localStorage.getItem('userToken');
                 if (!token) return;
                 
@@ -816,14 +917,14 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     });
                     
                     if (response.ok) {
-                        showAlert('Mafanikio', `Muuzaji "${sellerName}" amefutwa kabisa`);
+                        showAlert('Mafanikio', t('msimamizi_index.msg_seller_deleted', {seller_name: sellerName}));
                         await loadSellersData();
                         renderDashboard();
                     } else {
                         throw new Error('Delete failed');
                     }
                 } catch (error) {
-                    showAlert('Hitilafu', 'Imeshindikana kumfuta muuzaji kabisa');
+                    showAlert('Hitilafu', t('msimamizi_index.err_delete_seller'));
                 } finally {
                     deletingSellerId = null;
                     renderDashboard();
@@ -834,7 +935,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         async function updateProfile() {
             if (updatingProfile) return;
             if (!editFormData.businessName.trim() || !editFormData.businessLocation.trim()) {
-                showAlert('Hitilafu', 'Tafadhali jaza jina la biashara na eneo');
+                showAlert('Hitilafu', t('msimamizi_index.err_fill_business_location'));
                 return;
             }
             
@@ -896,17 +997,17 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     document.getElementById('userAvatar').innerHTML = editFormData.name.charAt(0).toUpperCase();
                     
                     closeEditModal();
-                    showAlert('Mafanikio', 'Wasifu umesasishwa');
+                    showAlert('Mafanikio', t('msimamizi_index.msg_profile_updated'));
                     await loadSellersData();
                     renderDashboard();
                 } else {
                     // Was a blanket 'Imeshindikana kusasisha wasifu', which hid
                     // the reason (e.g. a business name already taken).
                     const err = await response.json().catch(() => ({}));
-                    throw new Error(err.error || 'Imeshindikana kusasisha wasifu');
+                    throw new Error(err.error || t('msimamizi_index.err_update_profile'));
                 }
             } catch (error) {
-                showAlert('Hitilafu', error.message || 'Imeshindikana kusasisha wasifu');
+                showAlert('Hitilafu', error.message || t('msimamizi_index.err_update_profile'));
             } finally {
                 updatingProfile = false;
                 setSaveBtnState(false);
@@ -916,19 +1017,19 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         // Same option list as the AI-import modal (bidhaa-mpya) so the two
         // stay consistent; value '' = Nyingine/haijabainishwa.
         const BUSINESS_TYPES = [
-            ['spare_parts','Sehemu za Gari'],['motorcycle_spares','Spea za Pikipiki'],
-            ['supermarket','Supermarket'],['pharmacy','Duka la Dawa'],
-            ['electronics','Elektroniki'],['clothing','Mavazi'],['hardware','Vifaa Vinene (Hardware)'],
-            ['cosmetics','Vipodozi'],['perfume','Manukato'],['restaurant','Mgahawa'],['furniture','Samani'],
-            ['stationery','Vifaa vya Ofisi na Shule'],['mobile_accessories','Vifaa vya Simu'],['computer_shop','Duka la Kompyuta'],
-            ['phone_shop','Duka la Simu'],['agriculture','Kilimo'],['construction_materials','Vifaa vya Ujenzi'],
-            ['beauty_salon','Saluni ya Urembo'],['barbershop','Kinyozi'],['auto_repair','Karakana ya Magari'],
-            ['general_retail','Rejareja ya Jumla'],['wholesale','Jumla (Wholesale)'],['other','Nyingine']
+            ['spare_parts',t('msimamizi_index.type_auto_parts')],['motorcycle_spares',t('msimamizi_index.type_motorcycle_spare')],
+            ['supermarket',t('msimamizi_index.type_supermarket')],['pharmacy',t('msimamizi_index.type_pharmacy')],
+            ['electronics',t('msimamizi_index.type_electronics')],['clothing',t('msimamizi_index.type_clothing')],['hardware',t('msimamizi_index.type_hardware')],
+            ['cosmetics',t('msimamizi_index.type_cosmetics')],['perfume',t('msimamizi_index.type_perfumes')],['restaurant',t('msimamizi_index.type_restaurant')],['furniture',t('msimamizi_index.type_furniture')],
+            ['stationery',t('msimamizi_index.type_office_school')],['mobile_accessories',t('msimamizi_index.type_phone_accessories')],['computer_shop',t('msimamizi_index.type_computer_shop')],
+            ['phone_shop',t('msimamizi_index.type_mobile_shop')],['agriculture',t('msimamizi_index.type_agriculture')],['construction_materials',t('msimamizi_index.type_building_materials')],
+            ['beauty_salon',t('msimamizi_index.type_beauty_salon')],['barbershop',t('msimamizi_index.type_barbershop')],['auto_repair',t('msimamizi_index.type_car_workshop')],
+            ['general_retail',t('msimamizi_index.type_retail_general')],['wholesale',t('msimamizi_index.type_wholesale')],['other',t('msimamizi_index.type_other')]
         ];
 
         function populateBusinessTypeOptions(selectEl) {
             if (!selectEl) return;
-            selectEl.innerHTML = '<option value="">— Chagua Aina ya Biashara —</option>' +
+            selectEl.innerHTML = '<option value="">' + t('msimamizi_index.opt_select_business_type') + '</option>' +
                 BUSINESS_TYPES.map(t => `<option value="${escapeHtml(t[0])}">${escapeHtml(t[1])}</option>`).join('');
         }
 
@@ -957,7 +1058,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             btn.style.opacity = saving ? '0.75' : '1';
             btn.style.cursor = saving ? 'wait' : 'pointer';
             btn.innerHTML = saving
-                ? '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.45);border-top-color:#fff;border-radius:50%;animation:btnSpin 0.7s linear infinite;vertical-align:-2px;margin-right:7px;"></span>Inahifadhi...'
+                ? '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.45);border-top-color:#fff;border-radius:50%;animation:btnSpin 0.7s linear infinite;vertical-align:-2px;margin-right:7px;"></span>' + t('msimamizi_index.saving') + '
                 : 'Hifadhi';
         }
         
@@ -984,7 +1085,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             try {
                 const ok = await loadSellersData();
                 if (!ok) {
-                    showAlert('Hitilafu', 'Imeshindikana kusasisha data. Hakikisha umeunganishwa kwenye internet kisha ujaribu tena.');
+                    showAlert('Hitilafu', t('msimamizi_index.err_refresh_data'));
                 }
             } finally {
                 refreshing = false;
@@ -993,7 +1094,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         }
 
         function handleLogout() {
-            showConfirm('Toka', 'Unahakika unataka kutoka kwenye akaunti yako?', () => {
+            showConfirm(t('msimamizi_index.logout_title'), t('msimamizi_index.confirm_logout'), () => {
                 localStorage.clear();
                 window.location.href = '../login?role=msimamizi';
             });
@@ -1003,8 +1104,8 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         async function handleLogoUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
-            if (!file.type.startsWith('image/')) { showAlert('Hitilafu', 'Chagua picha tu'); return; }
-            if (file.size > 5*1024*1024) { showAlert('Hitilafu', 'Picha ni kubwa sana (max 5MB)'); return; }
+            if (!file.type.startsWith('image/')) { showAlert('Hitilafu', t('msimamizi_index.photo_only')); return; }
+            if (file.size > 5*1024*1024) { showAlert('Hitilafu', t('msimamizi_index.photo_too_large')); return; }
 
             logoUploading = true;
             renderDashboard();
@@ -1037,15 +1138,15 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 const av = document.getElementById('userAvatar');
                 av.innerHTML = '<img src="' + escapeHtml(newLogo) + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';
 
-                showAlert('Mafanikio', 'Picha ya biashara imesasishwa!');
+                showAlert('Mafanikio', t('msimamizi_index.msg_business_photo_updated'));
                 renderDashboard();
-            } catch(e) { showAlert('Hitilafu', 'Imeshindwa kupakia picha: ' + e.message); }
+            } catch(e) { showAlert('Hitilafu', t('msimamizi_index.err_upload_photo', {message: e.message})); }
             finally { logoUploading = false; }
         }
 
         // GPS Location Tracking
         async function handleTrackLocation() {
-            if (!navigator.geolocation) { showAlert('Hitilafu', 'GPS haipatikani kwenye kifaa chako'); return; }
+            if (!navigator.geolocation) { showAlert('Hitilafu', t('msimamizi_index.gps_unavailable')); return; }
             locationTracking = true;
             renderDashboard();
             try {
@@ -1061,7 +1162,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     if (geoRes.ok) { const geo = await geoRes.json(); areaName = geo.display_name || ''; }
                 } catch(e) {}
 
-                if (!confirm('Eneo lako: ' + (areaName || lat.toFixed(5) + ', ' + lng.toFixed(5)) + '\n\nUhakikiwa?')) {
+                if (!confirm(t('msimamizi_index.confirm_location', {area_name: areaName || lat.toFixed(5) + ', ' + lng.toFixed(5)}))) {
                     locationTracking = false;
                     renderDashboard();
                     return;
@@ -1086,9 +1187,9 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 if (areaName) cached.business_location = areaName;
                 localStorage.setItem('userData', JSON.stringify(cached));
 
-                showAlert('Mafanikio', 'Eneo limehifadhiwa! ' + (areaName || lat.toFixed(5) + ', ' + lng.toFixed(5)));
+                showAlert('Mafanikio', t('msimamizi_index.msg_location_saved', {area_name: areaName || lat.toFixed(5) + ', ' + lng.toFixed(5)}));
                 renderDashboard();
-            } catch(e) { showAlert('Hitilafu', 'Imeshindwa kupata eneo: ' + (e.message || e)); }
+            } catch(e) { showAlert('Hitilafu', t('msimamizi_index.err_get_location', {message: e.message || e})); }
             finally { locationTracking = false; renderDashboard(); }
         }
 
@@ -1109,10 +1210,10 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             const allSellersHtml = sellersData.map(seller => {
                 let statusClass = '', statusText = '', statusIcon = '';
                 switch(seller.status) {
-                    case 'approved': statusClass = 'status-approved'; statusText = 'Imethibitishwa'; statusIcon = ic('check', 11); break;
-                    case 'pending': statusClass = 'status-pending'; statusText = 'Inasubiri'; statusIcon = ic('clock', 11); break;
-                    case 'rejected': statusClass = 'status-rejected'; statusText = 'Haijakubaliwa'; statusIcon = ic('x', 11); break;
-                    default: statusClass = 'status-inactive'; statusText = seller.status || 'Unknown'; statusIcon = ic('x', 11);
+                    case 'approved': statusClass = 'status-approved'; statusText = t('msimamizi_index.verified'); statusIcon = ic('check', 11); break;
+                    case 'pending': statusClass = 'status-pending'; statusText = t('msimamizi_index.pending'); statusIcon = ic('clock', 11); break;
+                    case 'rejected': statusClass = 'status-rejected'; statusText = t('msimamizi_index.rejected'); statusIcon = ic('x', 11); break;
+                    default: statusClass = 'status-inactive'; statusText = seller.status || t('msimamizi_index.unknown'); statusIcon = ic('x', 11);
                 }
                 
                 const isUpdating = updatingSellerStatus === seller.id;
@@ -1129,31 +1230,31 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                                 <span class="status-chip ${statusClass}" style="display:inline-flex;align-items:center;gap:4px;">${statusIcon} ${statusText}</span>
                             </div>
                             <div class="seller-email">${ic('mail', 12)} ${escapeHtml(seller.email)}</div>
-                            <div class="seller-phone">${ic('phone', 12)} ${escapeHtml(seller.phone || 'Hakuna namba')}</div>
-                            <div class="seller-business">${ic('building', 12)} ${escapeHtml(seller.business_name || 'Hakuna biashara')} - ${escapeHtml(seller.business_location || 'Hakuna eneo')}</div>
+                            <div class="seller-phone">${ic('phone', 12)} ${escapeHtml(seller.phone || t('msimamizi_index.no_phone'))}</div>
+                            <div class="seller-business">${ic('building', 12)} ${escapeHtml(seller.business_name || t('msimamizi_index.no_business'))} - ${escapeHtml(seller.business_location || t('msimamizi_index.no_location'))}</div>
                         </div>
                         <div class="seller-actions">
                             ${seller.status === 'pending' ? `
                                 <button class="action-btn btn-approve" onclick="window.approveSeller('${seller.id}')" ${isUpdating ? 'disabled' : ''}>
-                                    ${isUpdating ? '<div class="loading-spinner"></div>' : '✓ Thibitisha'}
+                                    ${isUpdating ? '<div class="loading-spinner"></div>' : t('msimamizi_index.btn_verify')}
                                 </button>
                                 <button class="action-btn btn-delete" onclick="window.deleteSeller('${seller.id}', '${escapeHtml(seller.full_name || seller.email)}')" ${isUpdating ? 'disabled' : ''}>
-                                    ${ic('trash', 13)} Ondoa
+                                    ${ic('trash', 13)} ${t('msimamizi_index.btn_remove')}
                                 </button>
                             ` : seller.status === 'approved' ? `
                                 <button class="action-btn btn-reject" onclick="window.rejectSeller('${seller.id}')" ${isUpdating ? 'disabled' : ''}>
-                                    ${isUpdating ? '<div class="loading-spinner"></div>' : '✗ Batilisha'}
+                                    ${isUpdating ? '<div class="loading-spinner"></div>' : t('msimamizi_index.btn_reject')}
                                 </button>
                             ` : seller.status === 'rejected' ? `
                                 <button class="action-btn btn-approve" onclick="window.approveSeller('${seller.id}')" ${isUpdating ? 'disabled' : ''}>
-                                    ${isUpdating ? '<div class="loading-spinner"></div>' : '⟳ Rudisha'}
+                                    ${isUpdating ? '<div class="loading-spinner"></div>' : t('msimamizi_index.btn_restore')}
                                 </button>
                                 <button class="action-btn btn-permanent" onclick="window.deletePermanent('${seller.id}', '${escapeHtml(seller.full_name || seller.email)}')" ${isDeleting ? 'disabled' : ''}>
-                                    ${isDeleting ? '<div class="loading-spinner"></div>' : ic('trash', 13) + ' Futa Kabisa'}
+                                    ${isDeleting ? '<div class="loading-spinner"></div>' : ic('trash', 13) + ' ' + t('msimamizi_index.btn_delete_forever')}
                                 </button>
                             ` : seller.status === 'inactive' ? `
                                 <button class="action-btn btn-permanent" onclick="window.deletePermanent('${seller.id}', '${escapeHtml(seller.full_name || seller.email)}')" ${isDeleting ? 'disabled' : ''}>
-                                    ${isDeleting ? '<div class="loading-spinner"></div>' : ic('trash', 13) + ' Futa Kabisa'}
+                                    ${isDeleting ? '<div class="loading-spinner"></div>' : ic('trash', 13) + ' ' + t('msimamizi_index.btn_delete_forever')}
                                 </button>
                             ` : ''}
                         </div>
@@ -1164,16 +1265,16 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             container.innerHTML = `
                 <div class="header">
                     <div class="header-left">
-                        <h1 class="title">Dashbodi ya Msimamizi</h1>
+                        <h1 class="title">${t('msimamizi_index.dashboard_title')}</h1>
                         <div class="subtitle">${escapeHtml(userData.email)}</div>
-                        ${isSystemAdmin ? `<div class="system-admin-btn" id="systemAdminBtn">${ic('settings', 12)} Simamia Mfumo</div>` : ''}
+                        ${isSystemAdmin ? `<div class="system-admin-btn" id="systemAdminBtn">${ic('settings', 12)} ${t('msimamizi_index.system_management')}</div>` : ''}
                     </div>
                     <div class="header-right">
                         <div class="icon-btn" id="refreshBtn">${refreshing ? '<div class="loading-spinner"></div>' : ic('refresh', 16)}</div>
                         <div class="icon-btn" id="editProfileBtn">${ic('edit', 16)}</div>
                         <div class="logout-area" id="logoutArea">
                             <div>${ic('user', 18)}</div>
-                            <span>Toka</span>
+                            <span>${t('msimamizi_index.logout_title')}</span>
                         </div>
                     </div>
                 </div>                    <div class="business-card">
@@ -1189,24 +1290,24 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                         </div>
                         <input type="file" id="logoFileInput" accept="image/*" style="display:none" onchange="handleLogoUpload(event)">
                         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
-                            <div class="status-badge">${ic('shield', 12)} ${isSystemAdmin ? 'Msimamizi Mkuu wa Mfumo' : 'Msimamizi Mkuu'}</div>
+                            <div class="status-badge">${ic('shield', 12)} ${isSystemAdmin ? t('msimamizi_index.system_admin') : t('msimamizi_index.super_admin')}</div>
                         </div>
-                        <div class="filter-info">${ic('search', 12)} Wauzaji wanaonyeshwa: Jina la biashara = "${escapeHtml(userData.businessName)}"</div>
+                        <div class="filter-info">${ic('search', 12)} ${t('msimamizi_index.sellers_list_caption', {business_name: escapeHtml(userData.businessName)})}</div>
                         <button id="trackLocationBtn" style="width:100%;margin-top:12px;padding:12px;background:#e67e22;color:white;border:none;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;" onclick="handleTrackLocation()">
-                            ${locationTracking ? 'Inapata eneo...' : (userData.businessLatitude ? ic('refresh', 14) + ' Badili Eneo' : ic('location', 14) + ' Pata Eneo la GPS')}
+                            ${locationTracking ? t('msimamizi_index.getting_location') : (userData.businessLatitude ? ic('refresh', 14) + ' ' + t('msimamizi_index.btn_change_location') : ic('location', 14) + ' ' + t('msimamizi_index.btn_get_gps_location'))}
                         </button>
                     </div>
                 
                 <div class="section-header">
-                    <h2 class="section-title">Wauzaji Wa Biashara Hii</h2>
+                    <h2 class="section-title">${t('msimamizi_index.sellers_of_business')}</h2>
                     <div class="seller-count">${sellersData.length}</div>
                 </div>
                 
                 ${sellersData.length > 0 ? allSellersHtml : `
                     <div class="no-sellers">
                         <div style="color:#7a8ba0;margin-bottom:12px;">${ic('users', 44)}</div>
-                        <div style="font-weight:700; margin-bottom:8px;">Hakuna Wauzaji</div>
-                        <div style="font-size:13px; color:#95a5a6;">Hakuna wauzaji waliosajiliwa kwenye biashara "${escapeHtml(userData.businessName)}" bado.</div>
+                        <div style="font-weight:700; margin-bottom:8px;">${t('msimamizi_index.no_sellers')}</div>
+                        <div style="font-size:13px; color:#95a5a6;">${t('msimamizi_index.no_sellers_registered', {business_name: escapeHtml(userData.businessName)})}</div>
                     </div>
                 `}
             `;
@@ -1217,11 +1318,11 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             document.getElementById('logoutArea')?.addEventListener('click', handleLogout);
         }
         
-        window.approveSeller = (id) => updateSellerStatus(id, 'approved', 'amethibitishwa');
-        window.rejectSeller = (id) => updateSellerStatus(id, 'rejected', 'amebatilishwa');
+        window.approveSeller = (id) => updateSellerStatus(id, 'approved', t('msimamizi_index.status_verified'));
+        window.rejectSeller = (id) => updateSellerStatus(id, 'rejected', t('msimamizi_index.status_unverified'));
         window.deleteSeller = (id, name) => {
-            showConfirm('Ondoa Muuzaji', `Unahakika unataka kumfuta muuzaji ${name}?`, () => {
-                updateSellerStatus(id, 'inactive', 'amefutwa');
+            showConfirm(t('msimamizi_index.remove_seller'), t('msimamizi_index.confirm_remove_seller', {name: name}), () => {
+                updateSellerStatus(id, 'inactive', t('msimamizi_index.status_deleted'));
             });
         };
         window.deletePermanent = (id, name) => deleteSellerPermanently(id, name);
@@ -1294,6 +1395,12 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             renderDashboard();
         }
         
+        // renderDashboard() rebuilds every dynamic string on this page (seller
+        // cards, header, badges, GPS button), so one call covers a locale switch.
+        if (window.DM && typeof window.DM.onChange === 'function') {
+            window.DM.onChange(() => { if (!loading) renderDashboard(); });
+        }
+
         init();
     </script>
 
@@ -1301,38 +1408,38 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
     <div id="editModal" class="modal-overlay" style="display:none;">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title">Hariri Wasifu</h3>
+                <h3 class="modal-title" data-i18n="msimamizi_index.edit_profile">Hariri Wasifu</h3>
                 <span style="cursor:pointer; font-size:24px;" onclick="closeEditModal()">✖</span>
             </div>
             <div class="input-group">
-                <label class="input-label">Jina Kamili</label>
-                <input type="text" id="editName" class="input-field" placeholder="Jina lako kamili">
+                <label class="input-label" data-i18n="msimamizi_index.label_full_name">Jina Kamili</label>
+                <input type="text" id="editName" class="input-field" placeholder="Jina lako kamili" data-i18n="msimamizi_index.placeholder_full_name" data-i18n-attr="placeholder">
             </div>
             <div class="input-group">
-                <label class="input-label">Namba ya Simu</label>
-                <input type="tel" id="editPhone" class="input-field" placeholder="Namba ya simu">
+                <label class="input-label" data-i18n="msimamizi_index.label_phone">Namba ya Simu</label>
+                <input type="tel" id="editPhone" class="input-field" placeholder="Namba ya simu" data-i18n="msimamizi_index.placeholder_phone" data-i18n-attr="placeholder">
             </div>
             <div class="input-group">
-                <label class="input-label">Jina la Biashara</label>
-                <input type="text" id="editBusinessName" class="input-field" placeholder="Jina la biashara">
-                <div class="helper-text">Jina hili litatumika ku-filter wauzaji wako</div>
+                <label class="input-label" data-i18n="msimamizi_index.label_business_name">Jina la Biashara</label>
+                <input type="text" id="editBusinessName" class="input-field" placeholder="Jina la biashara" data-i18n="msimamizi_index.placeholder_business_name" data-i18n-attr="placeholder">
+                <div class="helper-text" data-i18n="msimamizi_index.hint_business_name_filter">Jina hili litatumika ku-filter wauzaji wako</div>
             </div>
             <div class="input-group">
-                <label class="input-label">Eneo la Biashara</label>
-                <input type="text" id="editBusinessLocation" class="input-field" placeholder="Eneo la biashara">
+                <label class="input-label" data-i18n="msimamizi_index.label_business_location">Eneo la Biashara</label>
+                <input type="text" id="editBusinessLocation" class="input-field" placeholder="Eneo la biashara" data-i18n="msimamizi_index.placeholder_business_location" data-i18n-attr="placeholder">
             </div>
             <div class="input-group">
-                <label class="input-label">Aina ya Biashara</label>
+                <label class="input-label" data-i18n="msimamizi_index.label_business_type">Aina ya Biashara</label>
                 <select id="editBusinessType" class="input-field"></select>
-                <div class="helper-text">Husaidia kipengele cha AI kufahamu bidhaa zako</div>
+                <div class="helper-text" data-i18n="msimamizi_index.hint_ai_understands">Husaidia kipengele cha AI kufahamu bidhaa zako</div>
             </div>
             <div class="input-group">
-                <label class="input-label">Maelezo mafupi ya Biashara</label>
-                <textarea id="editBusinessDescription" class="input-field" rows="2" placeholder="Mfano: Tunauza sehemu za magari ya Toyota na Nissan..." style="resize:vertical;"></textarea>
+                <label class="input-label" data-i18n="msimamizi_index.label_business_description">Maelezo mafupi ya Biashara</label>
+                <textarea id="editBusinessDescription" class="input-field" rows="2" placeholder="Mfano: Tunauza sehemu za magari ya Toyota na Nissan..." data-i18n="msimamizi_index.placeholder_business_description" data-i18n-attr="placeholder" style="resize:vertical;"></textarea>
             </div>
             <div class="modal-buttons">
-                <div class="modal-btn btn-cancel" onclick="closeEditModal()">Ghairi</div>
-                <div class="modal-btn btn-save" id="editSaveBtn" onclick="saveEditModal()">Hifadhi</div>
+                <div class="modal-btn btn-cancel" onclick="closeEditModal()" data-i18n="msimamizi_index.btn_cancel">Ghairi</div>
+                <div class="modal-btn btn-save" id="editSaveBtn" onclick="saveEditModal()" data-i18n="msimamizi_index.btn_save">Hifadhi</div>
             </div>
         </div>
     </div>
