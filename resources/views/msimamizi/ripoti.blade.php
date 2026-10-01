@@ -1,4 +1,4 @@
-﻿@include('partials.dm-locale')
+@include('partials.dm-locale')
 @verbatim
 <head>
     <meta charset="UTF-8">
@@ -184,7 +184,9 @@
 @include('partials.photo-viewer')
 @verbatim
 <body>
+@endverbatim
 @include('partials.dm-lang-widget')
+@verbatim
     <div class="mobile-menu-toggle" id="mobileMenuToggle">☰</div>
     <div class="msimamizi-layout">
         <aside class="sidebar" id="sidebar">

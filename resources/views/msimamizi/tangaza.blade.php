@@ -175,7 +175,9 @@
 @include('partials.cloudinary-config')
 @verbatim
 <body>
+@endverbatim
     @include('partials.dm-lang-widget')
+@verbatim
     <div class="mobile-menu-toggle" id="mobileMenuToggle">☰</div>
     <div class="msimamizi-layout">
         <aside class="sidebar" id="sidebar">

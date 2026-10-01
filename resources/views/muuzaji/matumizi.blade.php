@@ -1,10 +1,9 @@
+@include('partials.dm-locale')
 @verbatim
-<!DOCTYPE html>
-<html lang="sw">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Matumizi - Dukamkononi Muuzaji</title>
+    <title data-i18n="muuzaji_matumizi.page_title">Matumizi - Dukamkononi Muuzaji</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
     <style>
@@ -685,6 +684,7 @@
 </head>
 <body>
 @endverbatim
+@include('partials.dm-lang-widget')
 @include('partials.toast')
 @include('partials.photo-viewer')
 @verbatim
@@ -700,10 +700,10 @@
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="logo-area">
-                    <div class="logo-icon">D</div>
+                    <div class="logo-icon" data-i18n="muuzaji_matumizi.logo_short">D</div>
                     <div class="logo-text">
-                        <h2>DukaMkononi</h2>
-                        <p>Muuzaji Portal</p>
+                        <h2 data-i18n="muuzaji_matumizi.logo_brand">DukaMkononi</h2>
+                        <p data-i18n="muuzaji_matumizi.logo_tagline">Muuzaji Portal</p>
                     </div>
                 </div>
             </div>
@@ -716,7 +716,7 @@
                             <path d="M4 21C4 16.6 7.6 13 12 13C16.4 13 20 16.6 20 21" stroke-linecap="round"/>
                         </svg>
                     </div>
-                    <span class="nav-label">Profaili</span>
+                    <span class="nav-label" data-i18n="muuzaji_matumizi.nav_profile">Profaili</span>
                 </a>
                 <a href="mauzo" class="nav-item">
                     <div class="nav-icon">
@@ -726,7 +726,7 @@
                             <path d="M6 9.5V9.51M18 14.5V14.51" stroke-linecap="round"/>
                         </svg>
                     </div>
-                    <span class="nav-label">Mauzo</span>
+                    <span class="nav-label" data-i18n="muuzaji_matumizi.nav_sales">Mauzo</span>
                 </a>
                 <a href="matumizi" class="nav-item active">
                     <div class="nav-icon">
@@ -735,7 +735,7 @@
                             <path d="M8 7V17M12 7V17M16 7V17"/>
                         </svg>
                     </div>
-                    <span class="nav-label">Matumizi</span>
+                    <span class="nav-label" data-i18n="muuzaji_matumizi.nav_expenses">Matumizi</span>
                 </a>
                 <a href="uza" class="nav-item">
                     <div class="nav-icon">
@@ -745,7 +745,7 @@
                             <path d="M3 3H5L7.4 15.2C7.55 15.95 8.2 16.5 8.97 16.5H17.6C18.32 16.5 18.94 16 19.08 15.3L21 7H6" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </div>
-                    <span class="nav-label">Uza</span>
+                    <span class="nav-label" data-i18n="muuzaji_matumizi.nav_sell">Uza</span>
                 </a>
             </div>
 
@@ -754,14 +754,14 @@
                     <div class="user-avatar" id="userAvatar">M</div>
                     <div class="user-details">
                         <div class="user-name" id="userName">Muuzaji</div>
-                        <div class="user-role">Muuzaji</div>
+                        <div class="user-role" data-i18n="muuzaji_matumizi.nav_seller">Muuzaji</div>
                     </div>
                 </div>
                 <div class="logout-btn" id="logoutBtn">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                         <path d="M15 3H19C20.1 3 21 3.9 21 5V19C21 20.1 20.1 21 19 21H15M10 17L15 12L10 7M15 12H3"/>
                     </svg>
-                    <span>Ondoka</span>
+                    <span data-i18n="muuzaji_matumizi.btn_logout">Ondoka</span>
                 </div>
             </div>
         </aside>
@@ -771,7 +771,7 @@
             <div class="page-container" id="matumiziContent">
                 <div class="loading-container">
                     <div class="loading-spinner"></div>
-                    <div class="loading-text">Inapakia matumizi...</div>
+                    <div class="loading-text" data-i18n="muuzaji_matumizi.loading">Inapakia matumizi...</div>
                 </div>
             </div>
         </main>
@@ -781,34 +781,34 @@
     <div id="expenseModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
-                <div class="modal-title">Ongeza Matumizi</div>
+                <div class="modal-title" data-i18n="muuzaji_matumizi.modal_title">Ongeza Matumizi</div>
                 <div class="close-modal" onclick="closeModal()"><i class="fa-solid fa-xmark" style="font-size:20px;" aria-hidden="true"></i></div>
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label class="form-label">Kiasi (TZS) <span class="required-star">*</span></label>
+                    <label class="form-label"><span data-i18n="muuzaji_matumizi.label_amount">Kiasi (TZS)</span> <span class="required-star">*</span></label>
                     <input type="number" id="expenseAmount" class="form-input" placeholder="0">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Aina ya Matumizi <span class="required-star">*</span></label>
+                    <label class="form-label"><span data-i18n="muuzaji_matumizi.label_type">Aina ya Matumizi</span> <span class="required-star">*</span></label>
                     <div id="categoriesContainer" class="category-scroll"></div>
                     <div id="selectedCategoryDisplay" class="selected-category">
-                        <span>✓</span> <span id="selectedCategoryText">Bado hujachagua</span>
+                        <span>✓</span> <span id="selectedCategoryText" data-i18n="muuzaji_matumizi.not_selected">Bado hujachagua</span>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Maelezo <span class="required-star">*</span></label>
-                    <input type="text" id="expenseDesc" class="form-input" placeholder="Mfano: Kodisho za umeme">
+                    <label class="form-label"><span data-i18n="muuzaji_matumizi.label_description">Maelezo</span> <span class="required-star">*</span></label>
+                    <input type="text" id="expenseDesc" class="form-input" data-i18n="muuzaji_matumizi.placeholder_desc" data-i18n-attr="placeholder" placeholder="Mfano: Kodisho za umeme">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Maelezo ya Ziada</label>
-                    <textarea id="expenseNotes" class="form-input" placeholder="Maelezo mengine (si lazima)"></textarea>
+                    <label class="form-label" data-i18n="muuzaji_matumizi.label_notes">Maelezo ya Ziada</label>
+                    <textarea id="expenseNotes" class="form-input" data-i18n="muuzaji_matumizi.placeholder_notes" data-i18n-attr="placeholder" placeholder="Maelezo mengine (si lazima)"></textarea>
                 </div>
                 <div id="previewBox" class="preview-box" style="display:none;"></div>
             </div>
             <div class="modal-footer">
-                <button class="cancel-btn" id="cancelExpenseBtn" onclick="closeModal()">Ghairi</button>
-                <button class="save-btn" id="saveExpenseBtn">Hifadhi</button>
+                <button class="cancel-btn" id="cancelExpenseBtn" onclick="closeModal()" data-i18n="muuzaji_matumizi.btn_cancel">Ghairi</button>
+                <button class="save-btn" id="saveExpenseBtn" data-i18n="muuzaji_matumizi.btn_save">Hifadhi</button>
             </div>
         </div>
     </div>
@@ -820,6 +820,65 @@
         // ============================================
         
         const API_BASE_URL = '';
+
+        // Swahili fallback used when the language widget is not present (and
+        // for script-built strings). Values mirror the sw catalog of the
+        // muuzaji_matumizi section in locales.json.
+        const SW = {
+            loading: 'Inapakia matumizi...',
+            nav_seller: 'Muuzaji',
+            nav_sales: 'Mauzo',
+            nav_expenses: 'Matumizi',
+            photo_alt: 'Picha',
+            btn_save: 'Hifadhi',
+            btn_saving: 'Inahifadhi...',
+            modal_title: 'Ongeza Matumizi',
+            err_no_permission: 'Huna ruhusa ya kuingia kwenye eneo la Muuzaji.',
+            err_load_failed: 'Hitilafu ya kupakia data',
+            err_amount_invalid: 'Tafadhali weka kiasi sahihi',
+            err_desc_required: 'Tafadhali weka maelezo ya matumizi',
+            err_type_required: 'Tafadhali chagua aina ya matumizi',
+            msg_added: 'Matumizi yameongezwa!',
+            err_add_failed: 'Imeshindikana kuongeza matumizi',
+            err_network: 'Hitilafu ya mtandao',
+            confirm_delete: 'Unahakika unataka kufuta matumizi ya {amount}?',
+            msg_deleted: 'Matumizi yamefutwa!',
+            err_delete_failed: 'Imeshindikana kufuta',
+            selected_prefix: 'Umechagua: {category}',
+            not_selected_full: 'Bado hujachagua aina ya matumizi',
+            summary_title: 'Muhtasari',
+            btn_delete: 'Futa',
+            title_office_expenses: 'Matumizi ya Ofisi',
+            badge_today: 'Leo',
+            profit_title: 'Muhtasari wa Faida',
+            profit_sales: 'Mauzo (Jumla):',
+            profit_cogs: 'Gharama za Bidhaa:',
+            profit_gross: 'Faida Ghafi:',
+            profit_office: 'Matumizi ya Ofisi:',
+            profit_net: 'Faida Halisi:',
+            loss_suffix: '(Hasara)',
+            btn_add: 'ONGEZA MATUMIZI',
+            heading_today: 'Matumizi ya Leo',
+            heading_day: 'Matumizi ya Siku hii',
+            total_label: 'Jumla: {total}',
+            empty_title: 'Hakuna Matumizi',
+            empty_today: 'Bado haujaweka matumizi yoyote leo.',
+            empty_day: 'Hakuna matumizi ya siku hii.'
+        };
+
+        function t(key, params) {
+            const full = key.indexOf('muuzaji_matumizi.') === 0 ? key : 'muuzaji_matumizi.' + key;
+            if (window.DM && typeof window.DM.t === 'function') {
+                const hit = window.DM.t(full, params);
+                if (hit !== full) return hit;
+            }
+            const bare = key.indexOf('.') > -1 ? key.split('.').pop() : key;
+            let value = Object.prototype.hasOwnProperty.call(SW, bare) ? SW[bare] : key;
+            if (params) {
+                for (const k in params) value = String(value).split('{' + k + '}').join(String(params[k]));
+            }
+            return value;
+        }
 
         // ============================== ICONS ==============================
         // Font Awesome 6 icon helper (same convention as the msimamizi pages).
@@ -840,7 +899,7 @@
             const save = document.getElementById('saveExpenseBtn');
             const cancel = document.getElementById('cancelExpenseBtn');
             if (save) {
-                save.innerHTML = busy ? ic('spinner', 14, 'fa-spin') + ' Inahifadhi...' : 'Hifadhi';
+                save.innerHTML = busy ? ic('spinner', 14, 'fa-spin') + ' ' + t('btn_saving') : t('btn_save');
                 save.style.opacity = busy ? '0.7' : '1';
                 save.style.pointerEvents = busy ? 'none' : 'auto';
             }
@@ -875,14 +934,14 @@
         function updateSidebarUser() {
             const user = getCurrentUser();
             if (user) {
-                const displayName = user.full_name || user.business_name || user.email?.split('@')[0] || 'Muuzaji';
+                const displayName = user.full_name || user.business_name || user.email?.split('@')[0] || t('nav_seller');
                 document.getElementById('userName').innerHTML = escapeHtml(displayName);
                 const avatarEl = document.getElementById('userAvatar');
                 if (user.business_logo_url) {
                     avatarEl.classList.add('js-avatar-view');
 avatarEl.setAttribute('data-full', user.business_logo_url);
 avatarEl.setAttribute('data-name', displayName);
-avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;pointer-events:none;" alt="Picha">`;
+avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;pointer-events:none;" alt="${t('photo_alt')}">`;
                 } else {
                     avatarEl.innerHTML = displayName.charAt(0).toUpperCase();
                 }
@@ -898,7 +957,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             }
             const userRole = user.role || '';
             if (userRole !== 'seller' && userRole !== 'muuzaji') {
-                showToast('Huna ruhusa ya kuingia kwenye eneo la Muuzaji.', 'error');
+                showToast(t('err_no_permission'), 'error');
                 window.location.href = '/home';
                 return false;
             }
@@ -989,7 +1048,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 }
             } catch (error) {
                 console.error('Error loading data:', error);
-                showToast('Hitilafu ya kupakia data', 'error');
+                showToast(t('err_load_failed'), 'error');
             } finally {
                 loading = false;
                 render();
@@ -1003,15 +1062,15 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             const notes = document.getElementById('expenseNotes')?.value;
             
             if (!amount || parseFloat(amount) <= 0) {
-                showToast('Tafadhali weka kiasi sahihi', 'warning');
+                showToast(t('err_amount_invalid'), 'warning');
                 return;
             }
             if (!description.trim()) {
-                showToast('Tafadhali weka maelezo ya matumizi', 'warning');
+                showToast(t('err_desc_required'), 'warning');
                 return;
             }
             if (!selectedCategory) {
-                showToast('Tafadhali chagua aina ya matumizi', 'warning');
+                showToast(t('err_type_required'), 'warning');
                 return;
             }
             
@@ -1037,15 +1096,15 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 const data = await response.json();
                 
                 if (data.success) {
-                    showToast('Matumizi yameongezwa!', 'success');
+                    showToast(t('msg_added'), 'success');
                     closeModal();
                     await loadData();
                 } else {
-                    showToast(data.error || 'Imeshindikana kuongeza matumizi', 'error');
+                    showToast(data.error || t('err_add_failed'), 'error');
                 }
             } catch (error) {
                 console.error('Error adding expense:', error);
-                showToast('Hitilafu ya mtandao', 'error');
+                showToast(t('err_network'), 'error');
             } finally {
                 setExpenseBusy(false);
             }
@@ -1053,7 +1112,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
 
         // Delete expense
         async function deleteExpense(expenseId, amount) {
-            if (confirm(`Unahakika unataka kufuta matumizi ya ${formatCurrency(amount)}?`)) {
+            if (confirm(t('confirm_delete', { amount: formatCurrency(amount) }))) {
                 const token = localStorage.getItem('userToken');
                 try {
                     const response = await fetch(`${API_BASE_URL}/api/office-expenses/${expenseId}`, {
@@ -1062,13 +1121,13 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     });
                     const data = await response.json();
                     if (data.success) {
-                        showToast('Matumizi yamefutwa!', 'success');
+                        showToast(t('msg_deleted'), 'success');
                         await loadData();
                     } else {
-                        showToast(data.error || 'Imeshindikana kufuta', 'error');
+                        showToast(data.error || t('err_delete_failed'), 'error');
                     }
                 } catch (error) {
-                    showToast('Hitilafu ya mtandao', 'error');
+                    showToast(t('err_network'), 'error');
                 }
             }
         }
@@ -1108,10 +1167,14 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                         ${escapeHtml(cat)}
                     </div>
                 `).join('');
-            }
-            
-            if (selectedText) {
-                selectedText.textContent = selectedCategory ? `Umechagua: ${selectedCategory}` : 'Bado hujachagua aina ya matumizi';
+            }            if (selectedText) {
+                if (selectedCategory) {
+                    selectedText.removeAttribute('data-i18n');
+                    selectedText.textContent = t('selected_prefix', { category: selectedCategory });
+                } else {
+                    selectedText.setAttribute('data-i18n', 'muuzaji_matumizi.not_selected_full');
+                    selectedText.textContent = t('not_selected_full');
+                }
             }
             
             // Preview
@@ -1120,7 +1183,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             if (amount && selectedCategory && document.getElementById('expenseDesc')?.value) {
                 previewBox.style.display = 'block';
                 previewBox.innerHTML = `
-                    <strong>Muhtasari</strong><br>
+                    <strong>${t('summary_title')}</strong><br>
                     ${escapeHtml(selectedCategory)}: ${formatCurrency(parseFloat(amount) || 0)}<br>
                     <span style="font-size:13px;color:#666;">${escapeHtml(document.getElementById('expenseDesc').value)}</span>
                 `;
@@ -1139,7 +1202,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 container.innerHTML = `
                     <div class="loading-container">
                         <div class="loading-spinner"></div>
-                        <div class="loading-text">Inapakia matumizi...</div>
+                        <div class="loading-text">${t('loading')}</div>
                     </div>
                 `;
                 return;
@@ -1154,7 +1217,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                             ${ic('tag', 13)}
                             <span class="category-text">${escapeHtml(exp.category)}</span>
                         </div>
-                        <div class="delete-icon" id="delExpense_${exp.id}" onclick="deleteExpense('${exp.id}', ${exp.amount})" title="Futa">${ic('trash', 15)}</div>
+                        <div class="delete-icon" id="delExpense_${exp.id}" onclick="deleteExpense('${exp.id}', ${exp.amount})" title="${t('btn_delete')}">${ic('trash', 15)}</div>
                     </div>
                     <div class="expense-description">${escapeHtml(exp.description)}</div>
                     <div class="expense-footer">
@@ -1169,7 +1232,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 <div class="header">
                     <div class="header-top">
                         <a href="profaili" class="back-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 12H5M11 18L5 12L11 6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
-                        <div class="title">Matumizi ya Ofisi</div>
+                        <div class="title">${t('title_office_expenses')}</div>
                         <button class="refresh-btn" onclick="loadData()">${ic('refresh', 16)}</button>
                     </div>
                 </div>
@@ -1179,45 +1242,45 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     <div class="date-display">
                         ${ic('calendar', 14)}
                         <span>${formatDate(selectedDate)}</span>
-                        ${isToday ? '<span class="today-badge">Leo</span>' : ''}
+                        ${isToday ? `<span class="today-badge">${t('badge_today')}</span>` : ''}
                     </div>
                     <button class="date-nav ${isToday ? 'disabled' : ''}" ${isToday ? 'disabled' : ''} onclick="changeDate(1)">→</button>
                 </div>
                 
                 ${dailyProfit ? `
                     <div class="profit-card">
-                        <div class="profit-title">Muhtasari wa Faida</div>
-                        <div class="profit-row"><span class="profit-label">Mauzo (Jumla):</span><span class="profit-value">${formatCurrency(dailyProfit.revenue?.gross || 0)}</span></div>
-                        <div class="profit-row"><span class="profit-label">Gharama za Bidhaa:</span><span class="profit-value cost-text">-${formatCurrency(dailyProfit.revenue?.cost_of_goods || 0)}</span></div>
+                        <div class="profit-title">${t('profit_title')}</div>
+                        <div class="profit-row"><span class="profit-label">${t('profit_sales')}</span><span class="profit-value">${formatCurrency(dailyProfit.revenue?.gross || 0)}</span></div>
+                        <div class="profit-row"><span class="profit-label">${t('profit_cogs')}</span><span class="profit-value cost-text">-${formatCurrency(dailyProfit.revenue?.cost_of_goods || 0)}</span></div>
                         <div class="profit-divider"></div>
-                        <div class="profit-row"><span class="profit-label">Faida Ghafi:</span><span class="profit-value gross-profit-text">${formatCurrency(dailyProfit.gross_profit || 0)}</span></div>
-                        <div class="profit-row"><span class="profit-label">Matumizi ya Ofisi:</span><span class="profit-value expense-text">-${formatCurrency(dailyProfit.expenses?.total || 0)}</span></div>
+                        <div class="profit-row"><span class="profit-label">${t('profit_gross')}</span><span class="profit-value gross-profit-text">${formatCurrency(dailyProfit.gross_profit || 0)}</span></div>
+                        <div class="profit-row"><span class="profit-label">${t('profit_office')}</span><span class="profit-value expense-text">-${formatCurrency(dailyProfit.expenses?.total || 0)}</span></div>
                         <div class="profit-divider"></div>
-                        <div class="profit-row"><span class="profit-label" style="font-weight:700;">Faida Halisi:</span><span class="profit-value ${dailyProfit.net_profit < 0 ? 'net-loss' : 'net-value'}">${formatCurrency(dailyProfit.net_profit || 0)}${dailyProfit.net_profit < 0 ? ' (Hasara)' : ''}</span></div>
+                        <div class="profit-row"><span class="profit-label" style="font-weight:700;">${t('profit_net')}</span><span class="profit-value ${dailyProfit.net_profit < 0 ? 'net-loss' : 'net-value'}">${formatCurrency(dailyProfit.net_profit || 0)}${dailyProfit.net_profit < 0 ? ' ' + t('loss_suffix') : ''}</span></div>
                         <div class="stats-row">
-                            <div class="stat-box"><div class="stat-number">${dailyProfit.sales_count || 0}</div><div class="stat-label">Mauzo</div></div>
-                            <div class="stat-box"><div class="stat-number">${dailyProfit.expenses_count || 0}</div><div class="stat-label">Matumizi</div></div>
+                            <div class="stat-box"><div class="stat-number">${dailyProfit.sales_count || 0}</div><div class="stat-label">${t('nav_sales')}</div></div>
+                            <div class="stat-box"><div class="stat-number">${dailyProfit.expenses_count || 0}</div><div class="stat-label">${t('nav_expenses')}</div></div>
                         </div>
                     </div>
                 ` : ''}
                 
                 ${isToday ? `
                     <button class="add-btn" onclick="openModal()">
-                        ${ic('plus', 14)} ONGEZA MATUMIZI
+                        ${ic('plus', 14)} ${t('btn_add')}
                     </button>
                 ` : ''}
                 
                 <div class="expenses-header">
-                    <div class="expenses-title">Matumizi ya ${isToday ? 'Leo' : 'Siku hii'}</div>
-                    ${expenses.length > 0 ? `<div class="expenses-total">Jumla: ${formatCurrency(totalExpenses)}</div>` : ''}
+                    <div class="expenses-title">${t(isToday ? 'heading_today' : 'heading_day')}</div>
+                    ${expenses.length > 0 ? `<div class="expenses-total">${t('total_label', { total: formatCurrency(totalExpenses) })}</div>` : ''}
                 </div>
                 
                 ${expenses.length === 0 ? `
                     <div class="empty-state">
                         <div class="empty-icon" style="color:#bdc3c7;">${ic('doc', 44)}</div>
-                        <div class="empty-title">Hakuna Matumizi</div>
-                        <div class="empty-text">${isToday ? 'Bado haujaweka matumizi yoyote leo.' : 'Hakuna matumizi ya siku hii.'}</div>
-                        ${isToday ? `<div class="empty-add" onclick="openModal()">${ic('plus', 13)} Ongeza Matumizi</div>` : ''}
+                        <div class="empty-title">${t('empty_title')}</div>
+                        <div class="empty-text">${isToday ? t('empty_today') : t('empty_day')}</div>
+                        ${isToday ? `<div class="empty-add" onclick="openModal()">${ic('plus', 13)} ${t('modal_title')}</div>` : ''}
                     </div>
                 ` : expensesHtml}
             `;
@@ -1279,6 +1342,17 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 amountInput.addEventListener('input', updatePreview);
                 descInput.addEventListener('input', updatePreview);
             }
+        }
+        
+        // Follow the language: static markup is handled by data-i18n, but the
+        // expense list, profit card and modal contents are built from script.
+        if (window.DM && typeof window.DM.onChange === 'function') {
+            window.DM.onChange(() => {
+                render();
+                updateSidebarUser();
+                const modal = document.getElementById('expenseModal');
+                if (modal && modal.style.display === 'flex') renderCategoryChips();
+            });
         }
         
         init();
