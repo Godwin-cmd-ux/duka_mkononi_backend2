@@ -1,10 +1,9 @@
+@include('partials.dm-locale')
 @verbatim
-<!DOCTYPE html>
-<html lang="sw">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Matangazo - Dukamkononi Mteja</title>
+    <title data-i18n="mteja_matangazo.page_title">Matangazo - Dukamkononi Mteja</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
     <style>
@@ -592,6 +591,7 @@
 </head>
 <body>
 @endverbatim
+@include('partials.dm-lang-widget')
 @include('partials.toast')
 @include('partials.photo-viewer')
 @verbatim
@@ -607,10 +607,10 @@
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="logo-area">
-                    <div class="logo-icon">D</div>
+                    <div class="logo-icon" data-i18n="mteja_matangazo.logo_short">D</div>
                     <div class="logo-text">
-                        <h2>DukaMkononi</h2>
-                        <p>Mteja Portal</p>
+                        <h2 data-i18n="mteja_matangazo.logo_brand">DukaMkononi</h2>
+                        <p data-i18n="mteja_matangazo.logo_tagline">Mteja Portal</p>
                     </div>
                 </div>
             </div>
@@ -625,7 +625,7 @@
                             <path d="M9.5 20.5V14.5H14.5V20.5"/>
                         </svg>
                     </div>
-                    <span class="nav-label">Biashara</span>
+                    <span class="nav-label" data-i18n="mteja_matangazo.nav_business">Biashara</span>
                 </a>
                 <a href="matangazo" class="nav-item active">
                     <div class="nav-icon">
@@ -635,7 +635,7 @@
                             <path d="M16 16.5L17.5 20.5" stroke-linecap="round"/>
                         </svg>
                     </div>
-                    <span class="nav-label">Matangazo</span>
+                    <span class="nav-label" data-i18n="mteja_matangazo.nav_ads">Matangazo</span>
                 </a>
                 <a href="profaili" class="nav-item">
                     <div class="nav-icon">
@@ -644,7 +644,7 @@
                             <path d="M4 21C4 16.6 7.6 13 12 13C16.4 13 20 16.6 20 21" stroke-linecap="round"/>
                         </svg>
                     </div>
-                    <span class="nav-label">Profaili</span>
+                    <span class="nav-label" data-i18n="mteja_matangazo.nav_profile">Profaili</span>
                 </a>
             </div>
 
@@ -653,14 +653,14 @@
                     <div class="user-avatar" id="userAvatar">M</div>
                     <div class="user-details">
                         <div class="user-name" id="userName">Mteja</div>
-                        <div class="user-role">Mteja</div>
+                        <div class="user-role" data-i18n="mteja_matangazo.nav_customer">Mteja</div>
                     </div>
                 </div>
                 <div class="logout-btn" id="logoutBtn">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                         <path d="M15 3H19C20.1 3 21 3.9 21 5V19C21 20.1 20.1 21 19 21H15M10 17L15 12L10 7M15 12H3"/>
                     </svg>
-                    <span>Ondoka</span>
+                    <span data-i18n="mteja_matangazo.btn_logout">Ondoka</span>
                 </div>
             </div>
         </aside>
@@ -670,7 +670,7 @@
             <div class="page-container" id="matangazoContent">
                 <div class="loading-container">
                     <div class="loading-spinner"></div>
-                    <div class="loading-text">Inapakua matangazo...</div>
+                    <div class="loading-text" data-i18n="mteja_matangazo.loading">Inapakua matangazo...</div>
                 </div>
             </div>
         </main>
@@ -679,12 +679,12 @@
     <!-- Contact Modal (PIGA SIMU / TUMA UJUMBE / GHAIRI — same as biashara) -->
     <div id="contactModal" class="contact-modal">
         <div class="contact-modal-content">
-            <div class="contact-modal-title" id="modalBusinessName">Wasiliana na Biashara</div>
-            <div class="contact-modal-sub">Chagua njia ya kuwasiliana</div>
+            <div class="contact-modal-title" id="modalBusinessName" data-i18n="mteja_matangazo.contact_title">Wasiliana na Biashara</div>
+            <div class="contact-modal-sub" data-i18n="mteja_matangazo.contact_sub">Chagua njia ya kuwasiliana</div>
             <div class="contact-modal-buttons">
-                <button class="contact-call-btn" id="callBtn"><i class="fa-solid fa-phone" style="font-size:14px;" aria-hidden="true"></i> PIGA SIMU</button>
-                <button class="contact-sms-btn" id="smsBtn"><i class="fa-solid fa-comment-dots" style="font-size:14px;" aria-hidden="true"></i> TUMA UJUMBE</button>
-                <button class="contact-cancel-btn" id="cancelModalBtn">GHAIRI</button>
+                <button class="contact-call-btn" id="callBtn"><i class="fa-solid fa-phone" style="font-size:14px;" aria-hidden="true"></i> <span data-i18n="mteja_matangazo.btn_call">PIGA SIMU</span></button>
+                <button class="contact-sms-btn" id="smsBtn"><i class="fa-solid fa-comment-dots" style="font-size:14px;" aria-hidden="true"></i> <span data-i18n="mteja_matangazo.btn_sms">TUMA UJUMBE</span></button>
+                <button class="contact-cancel-btn" id="cancelModalBtn" data-i18n="mteja_matangazo.btn_cancel">GHAIRI</button>
             </div>
         </div>
     </div>
@@ -696,6 +696,81 @@
         // ============================================
 
         const API_BASE_URL = '';
+
+        // Swahili fallback used when the language widget is not present (and
+        // for script-built strings). Values mirror the sw catalog of the
+        // mteja_matangazo section in locales.json.
+        const SW = {
+            page_title: 'Matangazo - Dukamkononi Mteja',
+            logo_short: 'D',
+            logo_brand: 'DukaMkononi',
+            logo_tagline: 'Mteja Portal',
+            nav_business: 'Biashara',
+            nav_ads: 'Matangazo',
+            nav_profile: 'Profaili',
+            nav_customer: 'Mteja',
+            btn_logout: 'Ondoka',
+            loading: 'Inapakua matangazo...',
+            contact_title: 'Wasiliana na Biashara',
+            contact_sub: 'Chagua njia ya kuwasiliana',
+            btn_call: 'PIGA SIMU',
+            btn_sms: 'TUMA UJUMBE',
+            btn_cancel: 'GHAIRI',
+            photo_alt: 'Picha',
+            err_no_permission: 'Huna ruhusa ya kuingia kwenye eneo la Mteja.',
+            err_no_phone: 'Hakuna namba ya simu inayopatikana kwa biashara hii.',
+            sms_body: 'Habari {business}, naomba kufahamu zaidi kuhusu matangazo yako.',
+            contact_business: 'Wasiliana na {business}',
+            err_signin_like: 'Tafadhali ingia kwenye akaunti yako kupenda matangazo.',
+            btn_like: 'Penda ({count})',
+            err_like_failed: 'Imeshindwa kupenda tangazo. Tafadhali jaribu tena.',
+            err_like_network: 'Imeshindwa kupenda tangazo. Angalia muunganisho wako.',
+            err_signin_report: 'Tafadhali ingia kwenye akaunti yako kuripoti matangazo.',
+            confirm_report: 'Una hakika unataka kuripoti matangazo ya "{business}"?',
+            btn_report: 'Ripoti ({count})',
+            msg_reported: 'Asante! Tangazo limeripotiwa.',
+            err_report_failed: 'Imeshindwa kuwasilisha ripoti.',
+            err_report_network: 'Imeshindwa kuwasilisha ripoti. Angalia muunganisho wako.',
+            err_no_phone_short: 'Hakuna namba ya simu',
+            err_http_status: 'HTTP error! status: {status}',
+            err_load_ads: 'Imeshindwa kupakua matangazo. Tafadhali jaribu tena.',
+            empty_title: 'Hakuna matangazo yanayopatikana',
+            empty_sub: 'Wa kwanza kutangaza!',
+            btn_refresh: 'Pakia Upya',
+            role_business_owner: 'Mfanyabiashara',
+            label_advertisement: 'Tangazo',
+            btn_order: 'Agiza',
+            btn_report_count: 'Ripoti ({count})',
+            label_contact_us: 'Wasiliana Nasi:',
+            label_business_name: 'Biashara: {name}',
+            label_posted: 'Imechapishwa: {date}',
+            welcome_user: 'Karibu, {name}!',
+            signin_hint: 'Ingia kwenye akaunti yako kupenda au kuripoti matangazo',
+            discover_title: 'Gundua bidhaa na huduma mpya',
+            ads_available: '{count} matangazo yanapatikana',
+            business_generic: 'Biashara',
+        };
+
+        function t(key, params) {
+            const full = key.indexOf('mteja_matangazo.') === 0 ? key : 'mteja_matangazo.' + key;
+            if (window.DM && typeof window.DM.t === 'function') {
+                const hit = window.DM.t(full, params);
+                if (hit !== full) return hit;
+            }
+            const bare = key.indexOf('.') > -1 ? key.split('.').pop() : key;
+            let value = Object.prototype.hasOwnProperty.call(SW, bare) ? SW[bare] : key;
+            if (params) {
+                for (const k in params) value = String(value).split('{' + k + '}').join(String(params[k]));
+            }
+            return value;
+        }
+
+        // Date locale follows the active language (post timestamps).
+        const DATE_LOCALES = { sw: 'sw-TZ', en: 'en-GB', fr: 'fr-FR', hi: 'hi-IN', es: 'es-ES', ur: 'ur-PK', de: 'de-DE', zh: 'zh-CN' };
+        function dateLocale() {
+            const code = (window.DM && typeof window.DM.locale === 'function' && window.DM.locale()) || document.documentElement.getAttribute('data-dm-locale') || 'sw';
+            return DATE_LOCALES[code] || 'sw-TZ';
+        }
 
         // ============================== ICONS ==============================
         // Font Awesome 6 icon helper (same convention as msimamizi/muuzaji).
@@ -742,7 +817,7 @@
         // business name). If the photo URL exists but fails to load, the img
         // swaps itself to the letter (data-fallback) — never a broken icon.
         function avatarHtml(businessName, logoUrl) {
-            const name = businessName || 'Biashara';
+            const name = businessName || t('business_generic');
             const letter = escapeHtml((name.trim().charAt(0) || 'B').toUpperCase());
             if (logoUrl) {
                 return `<div class="js-avatar-view" data-full="${escapeHtml(logoUrl)}" data-name="${escapeHtml(name)}" style="width:100%;height:100%;border-radius:50%;overflow:hidden;"><img src="${escapeHtml(logoUrl)}" alt="${escapeHtml(name)}" style="width:100%;height:100%;object-fit:cover;pointer-events:none;" data-fallback="${letter}" onerror="this.onerror=null;this.style.display='none';this.parentElement.textContent=this.dataset.fallback;"></div>`;
@@ -751,7 +826,7 @@
         }
 
         function formatPhoneNumber(phone) {
-            if (!phone || phone === 'null' || phone === 'undefined' || phone === 'Haijajazwa' || phone === 'Hakuna namba ya simu') {
+            if (!phone || phone === 'null' || phone === 'undefined' || phone === 'Haijajazwa' || phone === t('err_no_phone_short')) {
                 return null;
             }
             let clean = phone.replace(/[\s\-\(\)]/g, '');
@@ -768,7 +843,7 @@
         function makePhoneCall(phoneNumber) {
             const formatted = formatPhoneNumber(phoneNumber);
             if (!formatted) {
-                showToast('Hakuna namba ya simu inayopatikana kwa biashara hii.', 'warning');
+                showToast(t('err_no_phone'), 'warning');
                 return;
             }
             window.location.href = `tel:${formatted}`;
@@ -777,16 +852,16 @@
         function sendSMS(phoneNumber, businessName) {
             const formatted = formatPhoneNumber(phoneNumber);
             if (!formatted) {
-                showToast('Hakuna namba ya simu inayopatikana kwa biashara hii.', 'warning');
+                showToast(t('err_no_phone'), 'warning');
                 return;
             }
-            const message = `Habari ${businessName}, naomba kufahamu zaidi kuhusu matangazo yako.`;
+            const message = t('sms_body', { business: businessName });
             window.location.href = `sms:${formatted}?body=${encodeURIComponent(message)}`;
         }
 
         function showContactModal(business) {
             currentBusiness = business;
-            modalBusinessName.textContent = `Wasiliana na ${business.business_name || 'Biashara'}`;
+            modalBusinessName.textContent = t('contact_business', { business: business.business_name || t('business_generic') });
             contactModal.style.display = 'flex';
         }
 
@@ -804,7 +879,7 @@
 
         function handleSMS() {
             if (currentBusiness) {
-                sendSMS(currentBusiness.phone, currentBusiness.business_name || 'Biashara');
+                sendSMS(currentBusiness.phone, currentBusiness.business_name || t('business_generic'));
             }
             hideContactModal();
         }
@@ -827,14 +902,14 @@
         function updateSidebarUser() {
             const user = getCurrentUser();
             if (user) {
-                const displayName = user.full_name || user.email?.split('@')[0] || 'Mteja';
+                const displayName = user.full_name || user.email?.split('@')[0] || t('nav_customer');
                 document.getElementById('userName').innerHTML = escapeHtml(displayName);
                 const avatarEl = document.getElementById('userAvatar');
                 if (user.business_logo_url) {
                     avatarEl.classList.add('js-avatar-view');
 avatarEl.setAttribute('data-full', user.business_logo_url);
 avatarEl.setAttribute('data-name', displayName);
-avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;pointer-events:none;" alt="Picha">`;
+avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;pointer-events:none;" alt="${t('photo_alt')}">`;
                 } else {
                     avatarEl.innerHTML = displayName.charAt(0).toUpperCase();
                 }
@@ -851,7 +926,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             }
             const userRole = user.role || '';
             if (userRole !== 'customer' && userRole !== 'client' && userRole !== 'mteja') {
-                showToast('Huna ruhusa ya kuingia kwenye eneo la Mteja.', 'error');
+                showToast(t('err_no_permission'), 'error');
                 window.location.href = '/home';
                 return false;
             }
@@ -887,7 +962,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             if (!btn) return;
             const liked = likedPosts.has(String(post.id));
             btn.classList.toggle('liked', liked);
-            btn.innerHTML = `<i class="${liked ? 'fa-solid' : 'fa-regular'} fa-heart" style="font-size:13px;" aria-hidden="true"></i> Penda (${post.like_count || 0})`;
+            btn.innerHTML = `<i class="${liked ? 'fa-solid' : 'fa-regular'} fa-heart" style="font-size:13px;" aria-hidden="true"></i> ${t('btn_like', { count: post.like_count || 0 })}`;
         }
 
         // Like toggle. Optimistic UI first (heart turns red instantly and the
@@ -896,7 +971,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         // even when several people are liking at once.
         async function handleLike(postId) {
             if (!userToken) {
-                showToast('Tafadhali ingia kwenye akaunti yako kupenda matangazo.', 'warning');
+                showToast(t('err_signin_like'), 'warning');
                 return;
             }
             const idStr = String(postId);
@@ -944,7 +1019,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                         likedPosts.delete(idStr);
                         post.like_count = Math.max((post.like_count || 0) - 1, 0);
                     }
-                    showToast('Imeshindwa kupenda tangazo. Tafadhali jaribu tena.', 'error');
+                    showToast(t('err_like_failed'), 'error');
                 }
             } catch (error) {
                 // Revert optimistic change
@@ -955,7 +1030,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     likedPosts.delete(idStr);
                     post.like_count = Math.max((post.like_count || 0) - 1, 0);
                 }
-                showToast('Imeshindwa kupenda tangazo. Angalia muunganisho wako.', 'error');
+                showToast(t('err_like_network'), 'error');
             } finally {
                 likeBusy.delete(idStr);
                 paintLikeState(post);
@@ -965,14 +1040,14 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         // Report a post (server rejects duplicates with a clear message).
         async function handleReport(postId) {
             if (!userToken) {
-                showToast('Tafadhali ingia kwenye akaunti yako kuripoti matangazo.', 'warning');
+                showToast(t('err_signin_report'), 'warning');
                 return;
             }
             const idStr = String(postId);
             const post = matangazo.find(p => String(p.id) === idStr);
             if (!post) return;
 
-            if (confirm(`Una hakika unataka kuripoti matangazo ya "${post.users?.business_name || 'Biashara'}"?`)) {
+            if (confirm(t('confirm_report', { business: post.users?.business_name || t('business_generic') }))) {
                 try {
                     const response = await fetch(`${API_BASE_URL}/api/reactions/report`, {
                         method: 'POST',
@@ -989,13 +1064,13 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     if (response.ok) {
                         post.report_count = (data.report_count !== undefined) ? data.report_count : (post.report_count || 0) + 1;
                         const rBtn = document.getElementById('reportBtn_' + post.id);
-                        if (rBtn) rBtn.innerHTML = `${ic('report', 13)} Ripoti (${post.report_count})`;
-                        showToast('Asante! Tangazo limeripotiwa.', 'success');
+                        if (rBtn) rBtn.innerHTML = `${ic('report', 13)} ${t('btn_report', { count: post.report_count })}`;
+                        showToast(t('msg_reported'), 'success');
                     } else {
-                        showToast(data.error || 'Imeshindwa kuwasilisha ripoti.', 'error');
+                        showToast(data.error || t('err_report_failed'), 'error');
                     }
                 } catch (error) {
-                    showToast('Imeshindwa kuwasilisha ripoti. Angalia muunganisho wako.', 'error');
+                    showToast(t('err_report_network'), 'error');
                 }
             }
         }
@@ -1009,10 +1084,10 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             if (!post) return;
 
             const phoneNumber = post.users?.phone || '';
-            const businessName = post.users?.business_name || post.title || 'Biashara';
+            const businessName = post.users?.business_name || post.title || t('business_generic');
 
-            if (!phoneNumber || phoneNumber.trim() === '' || phoneNumber === 'Hakuna namba ya simu') {
-                showToast('Hakuna namba ya simu inayopatikana kwa biashara hii.', 'warning');
+            if (!phoneNumber || phoneNumber.trim() === '' || phoneNumber === t('err_no_phone_short')) {
+                showToast(t('err_no_phone'), 'warning');
                 return;
             }
 
@@ -1033,7 +1108,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 });
 
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    throw new Error(t('err_http_status', { status: response.status }));
                 }
 
                 const data = await response.json();
@@ -1044,7 +1119,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 }
             } catch (error) {
                 console.error('Error fetching matangazo:', error);
-                showToast('Imeshindwa kupakua matangazo. Tafadhali jaribu tena.', 'error');
+                showToast(t('err_load_ads'), 'error');
                 matangazo = [];
             } finally {
                 loading = false;
@@ -1121,7 +1196,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 container.innerHTML = `
                     <div class="loading-container">
                         <div class="loading-spinner"></div>
-                        <div class="loading-text">Inapakua matangazo...</div>
+                        <div class="loading-text">${t('loading')}</div>
                     </div>
                 `;
                 return;
@@ -1131,9 +1206,9 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 container.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-icon">${ic('megaphone', 56)}</div>
-                        <div class="empty-text">Hakuna matangazo yanayopatikana</div>
-                        <div class="empty-sub">Wa kwanza kutangaza!</div>
-                        <button class="refresh-btn" id="refreshBtn" style="margin-top:20px;background:#667eea;color:white;padding:10px 24px;border-radius:10px;border:none;cursor:pointer;">${ic('refresh', 13)} Pakia Upya</button>
+                        <div class="empty-text">${t('empty_title')}</div>
+                        <div class="empty-sub">${t('empty_sub')}</div>
+                        <button class="refresh-btn" id="refreshBtn" style="margin-top:20px;background:#667eea;color:white;padding:10px 24px;border-radius:10px;border:none;cursor:pointer;">${ic('refresh', 13)} ${t('btn_refresh')}</button>
                     </div>
                 `;
                 const refreshBtn = document.getElementById('refreshBtn');
@@ -1143,11 +1218,11 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
 
             const postsHtml = matangazo.map(post => {
                 const isLiked = likedPosts.has(String(post.id));
-                const businessName = post.users?.business_name || post.title || 'Biashara';
-                const ownerName = post.users?.full_name || 'Mfanyabiashara';
-                const phoneNumber = post.users?.phone || 'Hakuna namba ya simu';
+                const businessName = post.users?.business_name || post.title || t('business_generic');
+                const ownerName = post.users?.full_name || t('role_business_owner');
+                const phoneNumber = post.users?.phone || t('err_no_phone_short');
                 const email = post.users?.email || '';
-                const createdAt = new Date(post.created_at).toLocaleDateString('sw-TZ');
+                const createdAt = new Date(post.created_at).toLocaleDateString(dateLocale());
                 const isVideo = post.media_type === 'video';
                 const poster = post.thumbnail_url || '';
 
@@ -1163,22 +1238,22 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                                     <div class="owner-name">${escapeHtml(ownerName)}</div>
                                 </div>
                             </div>
-                            <button class="order-btn" data-order="${post.id}">Agiza</button>
+                            <button class="order-btn" data-order="${post.id}">${t('btn_order')}</button>
                         </div>
 
                         <div class="media-container">
                             ${isVideo ?
                                 `<video class="media-video" controls playsinline preload="metadata" poster="${escapeHtml(poster)}" data-src="${escapeHtml(post.media_url)}"></video>` :
-                                `<img class="media-image" src="${escapeHtml(post.media_url)}" alt="Tangazo" loading="lazy" onerror="this.style.display='none'">`
+                                `<img class="media-image" src="${escapeHtml(post.media_url)}" alt="${t('label_advertisement')}" loading="lazy" onerror="this.style.display='none'">`
                             }
                         </div>
 
                         <div class="post-actions">
                             <button class="action-btn ${isLiked ? 'liked' : ''}" id="likeBtn_${post.id}" data-like="${post.id}">
-                                <i class="${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart" style="font-size:13px;" aria-hidden="true"></i> Penda (${post.like_count || 0})
+                                <i class="${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart" style="font-size:13px;" aria-hidden="true"></i> ${t('btn_like', { count: post.like_count || 0 })}
                             </button>
                             <button class="action-btn" id="reportBtn_${post.id}" data-report="${post.id}">
-                                ${ic('report', 13)} Ripoti (${post.report_count || 0})
+                                ${ic('report', 13)} ${t('btn_report_count', { count: post.report_count || 0 })}
                             </button>
                         </div>
 
@@ -1189,36 +1264,36 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                         </div>
 
                         <div class="contact-box">
-                            <div class="contact-title">${ic('phone', 12)} Wasiliana Nasi:</div>
+                            <div class="contact-title">${ic('phone', 12)} ${t('label_contact_us')}</div>
                             <div class="contact-phone" data-phone="${escapeHtml(phoneNumber)}" data-name="${escapeHtml(businessName)}">${escapeHtml(phoneNumber)}</div>
                             ${email ? `<div class="contact-email">${ic('mail', 12)} ${escapeHtml(email)}</div>` : ''}
-                            <div class="contact-phone" style="font-style:italic;color:#7f8c8d;cursor:default;">Biashara: ${escapeHtml(businessName)}</div>
+                            <div class="contact-phone" style="font-style:italic;color:#7f8c8d;cursor:default;">${t('label_business_name', { name: escapeHtml(businessName) })}</div>
                         </div>
 
                         <div class="post-footer">
-                            <div class="timestamp">Imechapishwa: ${createdAt}</div>
+                            <div class="timestamp">${t('label_posted', { date: createdAt })}</div>
                         </div>
                     </div>
                 `;
             }).join('');
 
-            const userGreeting = userName ? `Karibu, ${escapeHtml(userName)}! ` : '';
+            const userGreeting = userName ? t('welcome_user', { name: escapeHtml(userName) }) + ' ' : '';
             const loginWarningHtml = !userToken ? `
                 <div class="login-warning">
-                    <div class="login-warning-text">${ic('warning', 12)} Ingia kwenye akaunti yako kupenda au kuripoti matangazo</div>
+                    <div class="login-warning-text">${ic('warning', 12)} ${t('signin_hint')}</div>
                 </div>
             ` : '';
 
             container.innerHTML = `
                 <div class="list-header">
-                    <div class="screen-title">Matangazo</div>
-                    <div class="screen-subtitle">${userGreeting}Gundua bidhaa na huduma mpya</div>
-                    <div class="info-text">${ic('chart', 13)} ${matangazo.length} matangazo yanapatikana</div>
+                    <div class="screen-title">${t('nav_ads')}</div>
+                    <div class="screen-subtitle">${userGreeting}${t('discover_title')}</div>
+                    <div class="info-text">${ic('chart', 13)} ${t('ads_available', { count: matangazo.length })}</div>
                     ${loginWarningHtml}
                 </div>
                 ${postsHtml}
                 <div style="text-align:center;margin-top:16px;">
-                    <button id="refreshBtn" style="background:#667eea;color:white;padding:10px 24px;border-radius:10px;border:none;cursor:pointer;">${ic('refresh', 13)} Pakia Upya</button>
+                    <button id="refreshBtn" style="background:#667eea;color:white;padding:10px 24px;border-radius:10px;border:none;cursor:pointer;">${ic('refresh', 13)} ${t('btn_refresh')}</button>
                 </div>
             `;
 
@@ -1250,7 +1325,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 phoneEl.addEventListener('click', (e) => {
                     const phone = phoneEl.getAttribute('data-phone');
                     const name = phoneEl.getAttribute('data-name');
-                    if (phone && phone !== 'Hakuna namba ya simu') {
+                    if (phone && phone !== t('err_no_phone_short')) {
                         showContactModal({ phone: phone, business_name: name });
                     }
                 });
@@ -1312,6 +1387,18 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             setupSidebar();
             setupModal();
             await fetchMatangazo();
+        }
+
+        // Follow the language: static markup is handled by data-i18n, but the
+        // post cards, empty state and contact modal are script-built.
+        if (window.DM && typeof window.DM.onChange === 'function') {
+            window.DM.onChange(() => {
+                render();
+                updateSidebarUser();
+                if (currentBusiness && contactModal.style.display === 'flex') {
+                    modalBusinessName.textContent = t('contact_business', { business: currentBusiness.business_name || t('business_generic') });
+                }
+            });
         }
 
         init();

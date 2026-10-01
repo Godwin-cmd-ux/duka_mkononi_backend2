@@ -1,10 +1,9 @@
+@include('partials.dm-locale')
 @verbatim
-<!DOCTYPE html>
-<html lang="sw">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dukamkononi - System Admin</title>
+    <title data-i18n="system_admin_sidebar.page_title">Dukamkononi - System Admin</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {
@@ -271,6 +270,7 @@
 </head>
 <body>
 @endverbatim
+@include('partials.dm-lang-widget')
 @include('partials.toast')
 @verbatim
     <!-- Mobile menu toggle button -->
@@ -285,10 +285,10 @@
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="logo-area">
-                    <div class="logo-icon">D</div>
+                    <div class="logo-icon" data-i18n="system_admin_sidebar.logo_short">D</div>
                     <div class="logo-text">
-                        <h2>DukaMkononi</h2>
-                        <p>System Admin</p>
+                        <h2 data-i18n="system_admin_sidebar.logo_brand">DukaMkononi</h2>
+                        <p data-i18n="system_admin_sidebar.logo_tagline">System Admin</p>
                     </div>
                 </div>
             </div>
@@ -297,17 +297,17 @@
                 <!-- Navigation items for System Admin -->
                 <a href="dashboard" class="nav-item" data-page="dashboard">
                     <div class="nav-icon">📊</div>
-                    <span class="nav-label">Dashbodi</span>
+                    <span class="nav-label" data-i18n="system_admin_sidebar.nav_dashboard">Dashbodi</span>
                 </a>
 
                 <a href="index" class="nav-item" data-page="index">
                     <div class="nav-icon">🏠</div>
-                    <span class="nav-label">Nyumbani</span>
+                    <span class="nav-label" data-i18n="system_admin_sidebar.nav_home">Nyumbani</span>
                 </a>
 
                 <a href="notify" class="nav-item" data-page="notify">
                     <div class="nav-icon">🔔</div>
-                    <span class="nav-label">Notisi</span>
+                    <span class="nav-label" data-i18n="system_admin_sidebar.nav_notify">Notisi</span>
                 </a>
             </div>
 
@@ -316,14 +316,14 @@
                     <div class="user-avatar" id="userAvatar">A</div>
                     <div class="user-details">
                         <div class="user-name" id="userName">System Admin</div>
-                        <div class="user-role">Msimamizi Mkuu</div>
+                        <div class="user-role" data-i18n="system_admin_sidebar.user_role">Msimamizi Mkuu</div>
                     </div>
                 </div>
                 <div class="logout-btn" id="logoutBtn">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                         <path d="M15 3H19C20.1 3 21 3.9 21 5V19C21 20.1 20.1 21 19 21H15M10 17L15 12L10 7M15 12H3"/>
                     </svg>
-                    <span>Ondoka</span>
+                    <span data-i18n="system_admin_sidebar.btn_logout">Ondoka</span>
                 </div>
             </div>
         </aside>
@@ -334,7 +334,7 @@
                 <!-- Dynamic content loads here -->
                 <div style="text-align: center; padding: 60px 20px;">
                     <div class="spinner" style="border-top-color: #9b59b6;"></div>
-                    <p style="margin-top: 20px; color: #7f8c8d;">Loading...</p>
+                    <p style="margin-top: 20px; color: #7f8c8d;" data-i18n="system_admin_sidebar.loading">Loading...</p>
                 </div>
             </div>
         </main>
@@ -358,6 +358,45 @@
         // ============================================
 
         const API_BASE_URL = '';
+
+        // Swahili fallback used when the language widget is not present (and
+        // for script-built strings). Values mirror the sw catalog of the
+        // system_admin_sidebar section in locales.json.
+        const SW = {
+            page_title: 'Dukamkononi - System Admin',
+            logo_short: 'D',
+            logo_brand: 'DukaMkononi',
+            logo_tagline: 'System Admin',
+            nav_dashboard: 'Dashbodi',
+            nav_home: 'Nyumbani',
+            nav_notify: 'Notisi',
+            btn_logout: 'Ondoka',
+            loading: 'Loading...',
+            err_no_permission: 'Huna ruhusa ya kuingia kwenye eneo la System Admin.',
+            err_title: 'Hitilafu',
+            err_page_load: 'Huwezi kupakia ukurasa huu. Hakikisha faili zote zipo.',
+            btn_try_again: 'Jaribu Tena',
+            confirm_logout: 'Una uhakika unataka kutoka?',
+            user_role: 'Msimamizi Mkuu',
+            title_default: 'DukaMkononi - System Admin',
+            title_dashboard: 'Dashbodi - DukaMkononi System Admin',
+            title_home: 'Nyumbani - DukaMkononi System Admin',
+            title_notify: 'Notisi - DukaMkononi System Admin',
+        };
+
+        function t(key, params) {
+            const full = key.indexOf('system_admin_sidebar.') === 0 ? key : 'system_admin_sidebar.' + key;
+            if (window.DM && typeof window.DM.t === 'function') {
+                const hit = window.DM.t(full, params);
+                if (hit !== full) return hit;
+            }
+            const bare = key.indexOf('.') > -1 ? key.split('.').pop() : key;
+            let value = Object.prototype.hasOwnProperty.call(SW, bare) ? SW[bare] : key;
+            if (params) {
+                for (const k in params) value = String(value).split('{' + k + '}').join(String(params[k]));
+            }
+            return value;
+        }
 
         // Get current user from localStorage (set during login)
         function getCurrentUser() {
@@ -387,7 +426,7 @@
             const isSystemAdmin = userEmail === "cosmavictorini1994@gmail.com";
             
             if (!isSystemAdmin && user.role !== 'system_admin') {
-                showToast('Huna ruhusa ya kuingia kwenye eneo la System Admin.', 'error');
+                showToast(t('err_no_permission'), 'error');
                 window.location.href = '/home';
                 return false;
             }
@@ -400,7 +439,7 @@
         function updateUserInfo(user) {
             const userNameEl = document.getElementById('userName');
             const userAvatarEl = document.getElementById('userAvatar');
-            const displayName = user.full_name || user.email?.split('@')[0] || 'System Admin';
+            const displayName = user.full_name || user.email?.split('@')[0] || t('logo_tagline');
             if (userNameEl) userNameEl.textContent = displayName;
             if (userAvatarEl) {
                 if (user.business_logo_url) {
@@ -418,11 +457,11 @@
             notify: '/system_admin/notify'
         };
 
-        // Page titles
-        const pageTitles = {
-            dashboard: 'Dashbodi - DukaMkononi System Admin',
-            index: 'Nyumbani - DukaMkononi System Admin',
-            notify: 'Notisi - DukaMkononi System Admin'
+        // Page titles (resolved through t() so they follow the language)
+        const pageTitleKeys = {
+            dashboard: 'title_dashboard',
+            index: 'title_home',
+            notify: 'title_notify'
         };
 
         let currentPage = 'dashboard';
@@ -490,7 +529,7 @@
                 }
                 
                 // Update page title
-                document.title = pageTitles[pageName] || 'DukaMkononi - System Admin';
+                document.title = pageTitleKeys[pageName] ? t(pageTitleKeys[pageName]) : t('title_default');
                 
                 // Update active state in sidebar
                 updateActiveNavItem(pageName);
@@ -509,10 +548,10 @@
                                 <circle cx="12" cy="12" r="10"/>
                                 <path d="M12 8V12M12 16H12.01"/>
                             </svg>
-                            <h3 style="margin-top: 20px; color: #9b59b6;">Hitilafu</h3>
-                            <p style="margin-top: 10px; color: #7f8c8d;">Huwezi kupakia ukurasa huu. Hakikisha faili zote zipo.</p>
+                            <h3 style="margin-top: 20px; color: #9b59b6;">${t('err_title')}</h3>
+                            <p style="margin-top: 10px; color: #7f8c8d;">${t('err_page_load')}</p>
                             <p style="margin-top: 8px; font-size: 12px; color: #95a5a6;">${error.message}</p>
-                            <button onclick="location.reload()" style="margin-top: 20px; padding: 10px 24px; background: #9b59b6; color: white; border: none; border-radius: 8px; cursor: pointer;">Jaribu Tena</button>
+                            <button onclick="location.reload()" style="margin-top: 20px; padding: 10px 24px; background: #9b59b6; color: white; border: none; border-radius: 8px; cursor: pointer;">${t('btn_try_again')}</button>
                         </div>
                     `;
                 }
@@ -542,7 +581,7 @@
 
         // Logout function
         function handleLogout() {
-            if (confirm('Una uhakika unataka kutoka?')) {
+            if (confirm(t('confirm_logout'))) {
                 // Clear all auth data
                 localStorage.removeItem('userToken');
                 localStorage.removeItem('userData');
@@ -639,6 +678,16 @@
             await loadPage(initialPage);
         }
         
+        // Follow the language: static markup is handled by data-i18n, but the
+        // document title and sidebar user info are script-built.
+        if (window.DM && typeof window.DM.onChange === 'function') {
+            window.DM.onChange(() => {
+                document.title = pageTitleKeys[currentPage] ? t(pageTitleKeys[currentPage]) : t('title_default');
+                const u = getCurrentUser();
+                if (u) updateUserInfo(u);
+            });
+        }
+
         // Run init
         init();
         

@@ -1,10 +1,9 @@
+@include('partials.dm-locale')
 @verbatim
-<!DOCTYPE html>
-<html lang="sw">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Profaili - Dukamkononi Mteja</title>
+    <title data-i18n="mteja_profaili.page_title">Profaili - Dukamkononi Mteja</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
     <style>
@@ -548,6 +547,7 @@
 </head>
 <body>
 @endverbatim
+@include('partials.dm-lang-widget')
 @include('partials.toast')
 @include('partials.photo-viewer')
 @include('partials.cloudinary-config')
@@ -564,10 +564,10 @@
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="logo-area">
-                    <div class="logo-icon">D</div>
+                    <div class="logo-icon" data-i18n="mteja_profaili.logo_short">D</div>
                     <div class="logo-text">
-                        <h2>DukaMkononi</h2>
-                        <p>Mteja Portal</p>
+                        <h2 data-i18n="mteja_profaili.logo_brand">DukaMkononi</h2>
+                        <p data-i18n="mteja_profaili.logo_tagline">Mteja Portal</p>
                     </div>
                 </div>
             </div>
@@ -582,7 +582,7 @@
                             <path d="M9.5 20.5V14.5H14.5V20.5"/>
                         </svg>
                     </div>
-                    <span class="nav-label">Biashara</span>
+                    <span class="nav-label" data-i18n="mteja_profaili.nav_business">Biashara</span>
                 </a>
                 <a href="matangazo" class="nav-item">
                     <div class="nav-icon">
@@ -592,7 +592,7 @@
                             <path d="M16 16.5L17.5 20.5" stroke-linecap="round"/>
                         </svg>
                     </div>
-                    <span class="nav-label">Matangazo</span>
+                    <span class="nav-label" data-i18n="mteja_profaili.nav_ads">Matangazo</span>
                 </a>
                 <a href="profaili" class="nav-item active">
                     <div class="nav-icon">
@@ -601,7 +601,7 @@
                             <path d="M4 21C4 16.6 7.6 13 12 13C16.4 13 20 16.6 20 21" stroke-linecap="round"/>
                         </svg>
                     </div>
-                    <span class="nav-label">Profaili</span>
+                    <span class="nav-label" data-i18n="mteja_profaili.nav_profile">Profaili</span>
                 </a>
             </div>
 
@@ -610,14 +610,14 @@
                     <div class="user-avatar" id="userAvatar">M</div>
                     <div class="user-details">
                         <div class="user-name" id="userName">Mteja</div>
-                        <div class="user-role">Mteja</div>
+                        <div class="user-role" data-i18n="mteja_profaili.nav_customer">Mteja</div>
                     </div>
                 </div>
                 <div class="logout-btn" id="logoutBtn">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                         <path d="M15 3H19C20.1 3 21 3.9 21 5V19C21 20.1 20.1 21 19 21H15M10 17L15 12L10 7M15 12H3"/>
                     </svg>
-                    <span>Ondoka</span>
+                    <span data-i18n="mteja_profaili.btn_logout">Ondoka</span>
                 </div>
             </div>
         </aside>
@@ -627,7 +627,7 @@
             <div class="page-container" id="profileContent">
                 <div class="loading-container">
                     <div class="loading-spinner"></div>
-                    <div class="loading-text">Inapakua wasifu...</div>
+                    <div class="loading-text" data-i18n="mteja_profaili.loading">Inapakua wasifu...</div>
                 </div>
             </div>
         </main>
@@ -640,6 +640,92 @@
         // ============================================
         
         const API_BASE_URL = '';
+
+        // Swahili fallback used when the language widget is not present (and
+        // for script-built strings). Values mirror the sw catalog of the
+        // mteja_profaili section in locales.json.
+        const SW = {
+            page_title: 'Profaili - Dukamkononi Mteja',
+            logo_short: 'D',
+            logo_brand: 'DukaMkononi',
+            logo_tagline: 'Mteja Portal',
+            nav_business: 'Biashara',
+            nav_ads: 'Matangazo',
+            nav_profile: 'Profaili',
+            nav_customer: 'Mteja',
+            btn_logout: 'Ondoka',
+            loading: 'Inapakua wasifu...',
+            photo_alt: 'Picha',
+            err_no_permission: 'Huna ruhusa ya kuingia kwenye eneo la Mteja.',
+            err_signin_view: 'Tafadhali ingia kwenye akaunti yako kuona wasifu',
+            err_load_profile: 'Imeshindwa kupakua wasifu',
+            err_load_profile_info: 'Imeshindwa kupakua taarifa za wasifu',
+            err_name_required: 'Jina kamili linahitajika',
+            err_phone_invalid: 'Tafadhali weka nambari ya simu sahihi',
+            err_signin_update: 'Tafadhali ingia kwenye akaunti yako kusasisha wasifu',
+            msg_profile_updated: 'Wasifu umesasishwa kikamilifu!',
+            err_update_failed: 'Imeshindwa kusasisha wasifu',
+            confirm_logout: 'Una uhakika unataka kutoka?',
+            msg_uploading_photo: 'Inapakia picha...',
+            err_upload_photo: 'Imeshindwa kupakia picha',
+            msg_photo_updated: 'Picha ya wasifu imesasishwa!',
+            err_prefix: 'Hitilafu: ',
+            err_upload_prefix: 'Imeshindikana kupakia picha: ',
+            try_again: 'jaribu tena',
+            not_available: 'Haipatikani',
+            status_approved: 'imeidhinishwa',
+            status_pending: 'inasubiri',
+            role_user: 'Mtumiaji',
+            role_admin: 'Msimamizi',
+            not_set: 'Haijawekwa',
+            no_profile_info: 'Hakuna taarifa za wasifu',
+            btn_try_again: 'Jaribu Tena',
+            btn_change_photo: 'Badilisha picha',
+            greeting: 'Habari, {name}!',
+            section_profile_info: 'Taarifa za Wasifu',
+            label_full_name: 'Jina Kamili',
+            placeholder_full_name: 'Weka jina lako kamili',
+            label_email: 'Barua Pepe',
+            label_phone: 'Nambari ya Simu',
+            placeholder_phone: 'Weka nambari yako ya simu',
+            label_role: 'Wadhifa',
+            label_status: 'Hali',
+            label_business_location: 'Eneo la Biashara',
+            label_map_coords: 'Koordineti za Ramani',
+            label_member_since: 'Mwanachama Tangu',
+            section_settings: 'Mipangilio',
+            setting_notifications: 'Arifa za Kujiongeza',
+            setting_notifications_desc: 'Pokewa taarifa kuhusu matangazo mapya na promosheni',
+            btn_cancel: 'Ghairi',
+            btn_edit_profile: 'Hariri Wasifu',
+            btn_saving: 'Inahifadhi...',
+            btn_save: 'Hifadhi',
+            section_account_actions: 'Vitendo vya Akaunti',
+            btn_logout_account: 'Toka kwenye Akaunti',
+            footer_copyright: 'Duka Mkononi © 2026',
+            version: 'Toleo 1.0.0',
+        };
+
+        function t(key, params) {
+            const full = key.indexOf('mteja_profaili.') === 0 ? key : 'mteja_profaili.' + key;
+            if (window.DM && typeof window.DM.t === 'function') {
+                const hit = window.DM.t(full, params);
+                if (hit !== full) return hit;
+            }
+            const bare = key.indexOf('.') > -1 ? key.split('.').pop() : key;
+            let value = Object.prototype.hasOwnProperty.call(SW, bare) ? SW[bare] : key;
+            if (params) {
+                for (const k in params) value = String(value).split('{' + k + '}').join(String(params[k]));
+            }
+            return value;
+        }
+
+        // Date locale follows the active language (member-since date).
+        const DATE_LOCALES = { sw: 'sw-TZ', en: 'en-GB', fr: 'fr-FR', hi: 'hi-IN', es: 'es-ES', ur: 'ur-PK', de: 'de-DE', zh: 'zh-CN' };
+        function dateLocale() {
+            const code = (window.DM && typeof window.DM.locale === 'function' && window.DM.locale()) || document.documentElement.getAttribute('data-dm-locale') || 'sw';
+            return DATE_LOCALES[code] || 'sw-TZ';
+        }
 
         // ============================== ICONS ==============================
         // Font Awesome 6 icon helper (same convention as msimamizi/muuzaji).
@@ -674,9 +760,9 @@
         }
 
         function formatDate(dateStr) {
-            if (!dateStr) return 'Haipatikani';
+            if (!dateStr) return t('not_available');
             try {
-                return new Date(dateStr).toLocaleDateString('sw-TZ', {
+                return new Date(dateStr).toLocaleDateString(dateLocale(), {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric'
@@ -687,15 +773,15 @@
         }
 
         function getRoleName(role) {
-            if (role === 'customer') return 'Mteja';
-            if (role === 'admin') return 'Msimamizi';
-            return role || 'Mtumiaji';
+            if (role === 'customer') return t('nav_customer');
+            if (role === 'admin') return t('role_admin');
+            return role || t('role_user');
         }
 
         function getStatusName(status) {
-            if (status === 'approved') return 'imeidhinishwa';
-            if (status === 'pending') return 'inasubiri';
-            return status || 'inasubiri';
+            if (status === 'approved') return t('status_approved');
+            if (status === 'pending') return t('status_pending');
+            return status || t('status_pending');
         }
 
         function getStatusClass(status) {
@@ -722,14 +808,14 @@
         function updateSidebarUser() {
             const user = getCurrentUser();
             if (user) {
-                const displayName = user.full_name || user.email?.split('@')[0] || 'Mteja';
+                const displayName = user.full_name || user.email?.split('@')[0] || t('nav_customer');
                 document.getElementById('userName').innerHTML = escapeHtml(displayName);
                 const avatarEl = document.getElementById('userAvatar');
                 if (user.business_logo_url) {
                     avatarEl.classList.add('js-avatar-view');
 avatarEl.setAttribute('data-full', user.business_logo_url);
 avatarEl.setAttribute('data-name', displayName);
-avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;pointer-events:none;" alt="Picha">`;
+avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;pointer-events:none;" alt="${t('photo_alt')}">`;
                 } else {
                     avatarEl.innerHTML = displayName.charAt(0).toUpperCase();
                 }
@@ -745,7 +831,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             }
             const userRole = user.role || '';
             if (userRole !== 'customer' && userRole !== 'client' && userRole !== 'mteja') {
-                showToast('Huna ruhusa ya kuingia kwenye eneo la Mteja.', 'error');
+                showToast(t('err_no_permission'), 'error');
                 window.location.href = '/home';
                 return false;
             }
@@ -777,7 +863,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             const token = localStorage.getItem('userToken');
             
             if (!token) {
-                showToast('Tafadhali ingia kwenye akaunti yako kuona wasifu', 'warning');
+                showToast(t('err_signin_view'), 'warning');
                 loading = false;
                 render();
                 return;
@@ -805,11 +891,11 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                         localStorage.setItem('userName', userData.full_name);
                     }
                 } else {
-                    throw new Error('Imeshindwa kupakua wasifu');
+                    throw new Error(t('err_load_profile'));
                 }
             } catch (error) {
                 console.error('Error loading profile:', error);
-                showToast('Imeshindwa kupakua taarifa za wasifu', 'error');
+                showToast(t('err_load_profile_info'), 'error');
             } finally {
                 loading = false;
                 render();
@@ -818,11 +904,11 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
 
         function validateForm() {
             if (!formData.full_name.trim()) {
-                showToast('Jina kamili linahitajika', 'warning');
+                showToast(t('err_name_required'), 'warning');
                 return false;
             }
             if (formData.phone && !/^[0-9+\-\s()]{10,}$/.test(formData.phone)) {
-                showToast('Tafadhali weka nambari ya simu sahihi', 'warning');
+                showToast(t('err_phone_invalid'), 'warning');
                 return false;
             }
             return true;
@@ -837,7 +923,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             const token = localStorage.getItem('userToken');
             
             if (!token) {
-                showToast('Tafadhali ingia kwenye akaunti yako kusasisha wasifu', 'warning');
+                showToast(t('err_signin_update'), 'warning');
                 saving = false;
                 render();
                 return;
@@ -858,7 +944,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     const result = await response.json();
                     profile = result.user;
                     editing = false;
-                    showToast('Wasifu umesasishwa kikamilifu!', 'success');
+                    showToast(t('msg_profile_updated'), 'success');
                     
                     if (result.user.full_name) {
                         localStorage.setItem('userName', result.user.full_name);
@@ -866,11 +952,11 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     }
                 } else {
                     const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.error || 'Imeshindwa kusasisha wasifu');
+                    throw new Error(errorData.error || t('err_update_failed'));
                 }
             } catch (error) {
                 console.error('Error updating profile:', error);
-                showToast(error.message || 'Imeshindwa kusasisha wasifu', 'error');
+                showToast(error.message || t('err_update_failed'), 'error');
             } finally {
                 saving = false;
                 render();
@@ -895,7 +981,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         }
 
         function handleLogout() {
-            if (confirm('Una uhakika unataka kutoka?')) {
+            if (confirm(t('confirm_logout'))) {
                 localStorage.removeItem('userToken');
                 localStorage.removeItem('userData');
                 localStorage.removeItem('userId');
@@ -932,7 +1018,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
 
             const progressEl = document.getElementById('uploadProgress');
             const cameraBadge = document.getElementById('cameraBadge');
-            if (progressEl) progressEl.textContent = 'Inapakia picha...';
+            if (progressEl) progressEl.textContent = t('msg_uploading_photo');
             if (cameraBadge) {
                 cameraBadge.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="font-size:12px;color:white;" aria-hidden="true"></i>';
                 cameraBadge.style.pointerEvents = 'none';
@@ -959,7 +1045,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
 
                 if (!response.ok) {
                     const errBody = await response.json().catch(() => ({}));
-                    throw new Error(errBody?.error?.message || 'Imeshindwa kupakia picha');
+                    throw new Error(errBody?.error?.message || t('err_upload_photo'));
                 }
 
                 const data = await response.json();
@@ -986,16 +1072,16 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     localStorage.setItem('userData', JSON.stringify(userData));
                     updateSidebarUser();
                     if (progressEl) progressEl.textContent = '';
-                    showToast('Picha ya wasifu imesasishwa!', 'success');
+                    showToast(t('msg_photo_updated'), 'success');
                     render();
                 } else {
                     const errBody = await updateResponse.json().catch(() => ({}));
-                    throw new Error(errBody?.error?.message || 'Imeshindwa kusasisha wasifu');
+                    throw new Error(errBody?.error?.message || t('err_update_failed'));
                 }
             } catch (error) {
                 console.error('Photo upload error:', error);
-                if (progressEl) progressEl.textContent = 'Hitilafu: ' + error.message;
-                showToast('Imeshindikana kupakia picha: ' + (error.message || 'jaribu tena'), 'error');
+                if (progressEl) progressEl.textContent = t('err_prefix') + error.message;
+                showToast(t('err_upload_prefix') + (error.message || t('try_again')), 'error');
             } finally {
                 uploadingPhoto = false;
                 restoreBadge();
@@ -1008,7 +1094,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 container.innerHTML = `
                     <div class="loading-container">
                         <div class="loading-spinner"></div>
-                        <div class="loading-text">Inapakua wasifu...</div>
+                        <div class="loading-text">${t('loading')}</div>
                     </div>
                 `;
                 return;
@@ -1017,14 +1103,14 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             if (!profile) {
                 container.innerHTML = `
                     <div class="loading-container">
-                        <div class="loading-text">Hakuna taarifa za wasifu</div>
-                        <button onclick="location.reload()" style="margin-top:20px;padding:10px 20px;background:#667eea;color:white;border:none;border-radius:10px;cursor:pointer;">Jaribu Tena</button>
+                        <div class="loading-text">${t('no_profile_info')}</div>
+                        <button onclick="location.reload()" style="margin-top:20px;padding:10px 20px;background:#667eea;color:white;border:none;border-radius:10px;cursor:pointer;">${t('btn_try_again')}</button>
                     </div>
                 `;
                 return;
             }
 
-            const displayName = profile.full_name || profile.email?.split('@')[0] || 'Mtumiaji';
+            const displayName = profile.full_name || profile.email?.split('@')[0] || t('role_user');
             const initial = (profile.full_name?.charAt(0) || profile.email?.charAt(0) || 'U').toUpperCase();
             const roleName = getRoleName(profile.role);
             const statusName = getStatusName(profile.status);
@@ -1037,67 +1123,67 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                         <div class="avatar">
                             ${profile.business_logo_url ? `<div class="js-avatar-view" data-full="${escapeHtml(profile.business_logo_url)}" data-name="${escapeHtml(profile.full_name || profile.email || '')}" style="width:100%;height:100%;border-radius:50%;overflow:hidden;"><img src="${escapeHtml(profile.business_logo_url)}" alt="Profile" style="width:100%;height:100%;object-fit:cover;pointer-events:none;"></div>` : `<div class="avatar-text">${escapeHtml(initial)}</div>`}
                         </div>
-                        <div class="camera-badge" id="cameraBadge" title="Badilisha picha">
+                        <div class="camera-badge" id="cameraBadge" title="${t('btn_change_photo')}">
                             ${ic('camera', 13)}
                         </div>
                         <input type="file" id="photoUploadInput" accept="image/*">
                     </div>
                     <div class="upload-progress" id="uploadProgress"></div>
-                    <div class="greeting">Habari, ${escapeHtml(displayName)}!</div>
+                    <div class="greeting">${t('greeting', { name: escapeHtml(displayName) })}</div>
                     <div class="role">${escapeHtml(roleName)}</div>
                 </div>
 
                 <div class="section">
-                    <div class="section-title">Taarifa za Wasifu</div>
+                    <div class="section-title">${t('section_profile_info')}</div>
                     <div class="info-card">
                         <div class="field">
-                            <div class="label">Jina Kamili</div>
+                            <div class="label">${t('label_full_name')}</div>
                             ${editing ? 
-                                `<input type="text" id="fullNameInput" class="input-field" value="${escapeHtml(formData.full_name)}" placeholder="Weka jina lako kamili">` :
-                                `<div class="value">${escapeHtml(profile.full_name || 'Haijawekwa')}</div>`
+                                `<input type="text" id="fullNameInput" class="input-field" value="${escapeHtml(formData.full_name)}" placeholder="${t('placeholder_full_name')}">` :
+                                `<div class="value">${escapeHtml(profile.full_name || t('not_set'))}</div>`
                             }
                         </div>
 
                         <div class="field">
-                            <div class="label">Barua Pepe</div>
+                            <div class="label">${t('label_email')}</div>
                             <div class="value">${escapeHtml(profile.email)}</div>
                         </div>
 
                         <div class="field">
-                            <div class="label">Nambari ya Simu</div>
+                            <div class="label">${t('label_phone')}</div>
                             ${editing ? 
-                                `<input type="tel" id="phoneInput" class="input-field" value="${escapeHtml(formData.phone)}" placeholder="Weka nambari yako ya simu">` :
-                                `<div class="value">${escapeHtml(profile.phone || 'Haijawekwa')}</div>`
+                                `<input type="tel" id="phoneInput" class="input-field" value="${escapeHtml(formData.phone)}" placeholder="${t('placeholder_phone')}">` :
+                                `<div class="value">${escapeHtml(profile.phone || t('not_set'))}</div>`
                             }
                         </div>
 
                         <div class="field">
-                            <div class="label">Wadhifa</div>
+                            <div class="label">${t('label_role')}</div>
                             <div><span class="role-badge">${escapeHtml(roleName)}</span></div>
                         </div>
 
                         <div class="field">
-                            <div class="label">Hali</div>
+                            <div class="label">${t('label_status')}</div>
                             <div><span class="status-badge ${statusClass}">${escapeHtml(statusName)}</span></div>
                         </div>
 
-                        ${profile.business_location ? `<div class="field"><div class="label">Eneo la Biashara</div><div class="value">${escapeHtml(profile.business_location)}</div></div>` : ''}
-                        ${profile.business_latitude && profile.business_longitude ? `<div class="field"><div class="label">Koordineti za Ramani</div><div class="value">${escapeHtml(String(profile.business_latitude))}, ${escapeHtml(String(profile.business_longitude))}</div></div>` : ''}
+                        ${profile.business_location ? `<div class="field"><div class="label">${t('label_business_location')}</div><div class="value">${escapeHtml(profile.business_location)}</div></div>` : ''}
+                        ${profile.business_latitude && profile.business_longitude ? `<div class="field"><div class="label">${t('label_map_coords')}</div><div class="value">${escapeHtml(String(profile.business_latitude))}, ${escapeHtml(String(profile.business_longitude))}</div></div>` : ''}
 
                         <div class="field">
-                            <div class="label">Mwanachama Tangu</div>
+                            <div class="label">${t('label_member_since')}</div>
                             <div class="value">${escapeHtml(createdAt)}</div>
                         </div>
                     </div>
                 </div>
 
                 <div class="section">
-                    <div class="section-title">Mipangilio</div>
+                    <div class="section-title">${t('section_settings')}</div>
                     <div class="info-card">
                         <div class="setting-row">
                             <div class="setting-info">
-                                <div class="setting-label">Arifa za Kujiongeza</div>
-                                <div class="setting-description">Pokewa taarifa kuhusu matangazo mapya na promosheni</div>
+                                <div class="setting-label">${t('setting_notifications')}</div>
+                                <div class="setting-description">${t('setting_notifications_desc')}</div>
                             </div>
                             <label class="switch">
                                 <input type="checkbox" id="notificationSwitch" ${notifications ? 'checked' : ''}>
@@ -1107,11 +1193,11 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
 
                         <div class="button-row">
                             <button class="btn ${editing ? 'btn-cancel' : 'btn-edit'}" id="editBtn">
-                                ${editing ? 'Ghairi' : ic('edit', 13) + ' Hariri Wasifu'}
+                                ${editing ? t('btn_cancel') : ic('edit', 13) + ' ' + t('btn_edit_profile')}
                             </button>
                             ${editing ? `
                                 <button class="btn btn-save" id="saveBtn" ${saving ? 'disabled' : ''}>
-                                    ${saving ? ic('spinner', 13, 'fa-spin') + ' Inahifadhi...' : 'Hifadhi'}
+                                    ${saving ? ic('spinner', 13, 'fa-spin') + ' ' + t('btn_saving') : t('btn_save')}
                                 </button>
                             ` : ''}
                         </div>
@@ -1119,15 +1205,15 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 </div>
 
                 <div class="section">
-                    <div class="section-title">Vitendo vya Akaunti</div>
+                    <div class="section-title">${t('section_account_actions')}</div>
                     <div class="info-card">
-                        <button class="btn-logout" id="logoutAccountBtn">${ic('logout', 14)} Toka kwenye Akaunti</button>
+                        <button class="btn-logout" id="logoutAccountBtn">${ic('logout', 14)} ${t('btn_logout_account')}</button>
                     </div>
                 </div>
 
                 <div class="footer">
-                    <div class="footer-text">Duka Mkononi © 2026</div>
-                    <div class="footer-text" style="font-size: 11px;">Toleo 1.0.0</div>
+                    <div class="footer-text">${t('footer_copyright')}</div>
+                    <div class="footer-text" style="font-size: 11px;">${t('version')}</div>
                 </div>
             `;
 
@@ -1196,6 +1282,15 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             await loadUserProfile();
         }
         
+        // Follow the language: static markup is handled by data-i18n, but the
+        // profile card, settings and actions are script-built.
+        if (window.DM && typeof window.DM.onChange === 'function') {
+            window.DM.onChange(() => {
+                render();
+                updateSidebarUser();
+            });
+        }
+
         init();
     </script>
 </body>

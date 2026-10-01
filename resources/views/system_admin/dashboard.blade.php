@@ -1,10 +1,9 @@
+@include('partials.dm-locale')
 @verbatim
-<!DOCTYPE html>
-<html lang="sw">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dashbodi - DukaMkononi System Admin</title>
+    <title data-i18n="system_admin_dashboard.page_title">Dashbodi - DukaMkononi System Admin</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -194,20 +193,21 @@
 </head>
 <body>
 @endverbatim
+@include('partials.dm-lang-widget')
 @include('partials.toast')
 @include('partials.photo-viewer')
 @verbatim
     <div class="page-content" id="dashboardContent">
         <div class="loading-spinner"></div>
-        <div style="text-align: center; color: #7f8c8d;">Inapakua dashbodi...</div>
+        <div style="text-align: center; color: #7f8c8d;" data-i18n="system_admin_dashboard.loading">Inapakua dashbodi...</div>
     </div>
 
     <!-- User Detail Modal -->
     <div id="userModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
-                <div class="modal-title" style="font-weight:700;">Maelezo ya Mtumiaji</div>
-                <span style="cursor:pointer;font-size:24px;" onclick="closeUserModal()">✖</span>
+                <div class="modal-title" style="font-weight:700;" data-i18n="system_admin_dashboard.modal_user_details">Maelezo ya Mtumiaji</div>
+                <span style="cursor:pointer;font-size:24px;" onclick="closeUserModal()" data-i18n="system_admin_dashboard.close_x">✖</span>
             </div>
             <div class="modal-body" id="userModalBody"></div>
         </div>
@@ -217,8 +217,8 @@
     <div id="logsModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
-                <div class="modal-title" style="font-weight:700;">Rekodi za Shughuli</div>
-                <span style="cursor:pointer;font-size:24px;" onclick="closeLogsModal()">✖</span>
+                <div class="modal-title" style="font-weight:700;" data-i18n="system_admin_dashboard.modal_activity_logs">Rekodi za Shughuli</div>
+                <span style="cursor:pointer;font-size:24px;" onclick="closeLogsModal()" data-i18n="system_admin_dashboard.close_x">✖</span>
             </div>
             <div class="modal-body" id="logsModalBody"></div>
         </div>
@@ -226,7 +226,114 @@
 
     <script>
         const API_BASE_URL = '';
-        
+
+        // Swahili fallback used when the language widget is not present (and
+        // for script-built strings). Values mirror the sw catalog of the
+        // system_admin_dashboard section in locales.json.
+        const SW = {
+            page_title: 'Dashbodi - DukaMkononi System Admin',
+            loading: 'Inapakua dashbodi...',
+            modal_user_details: 'Maelezo ya Mtumiaji',
+            close_x: '✖',
+            modal_activity_logs: 'Rekodi za Shughuli',
+            click_photo: 'Bofya kuona picha',
+            without_name: 'Bila Jina',
+            label_phone: 'Simu:',
+            not_set: 'Haijawekwa',
+            label_business: 'Biashara:',
+            label_location: 'Eneo:',
+            label_registered: 'Imejisajiliwa:',
+            label_status: 'Hali:',
+            btn_view_logs: '📋 Angalia Logs',
+            btn_block: '🔒 Zuia',
+            btn_enable: '✅ Wezesha',
+            total_records: 'Jumla ya rekodi: {count}',
+            no_activity_records: 'Hakuna rekodi za shughuli',
+            label_ip: 'IP: ',
+            not_available: 'N/A',
+            welcome_title: '👋 Karibu, System Admin',
+            welcome_subtitle: 'Unayo uwezo wa kusimamia mfumo mzima wa DukaMkononi',
+            stat_total_users: 'Jumla ya Watumiaji',
+            using: 'wanaotumia',
+            stat_online_now: 'Mtandaoni Sasa',
+            connected: 'wameungana',
+            stat_today_revenue: 'Mapato ya Leo',
+            activities: 'shughuli',
+            stat_pending: 'Wanasubiri',
+            need_approval: 'Wanahitaji idhini',
+            section_system_status: '📊 Hali ya Mfumo',
+            all_people: 'Watu wote',
+            sellers: 'Wauzaji',
+            customers: 'Wateja',
+            administrators: 'Wasimamizi',
+            btn_details: '📋 Maelezo',
+            btn_logs: '📜 Logs',
+            no_users_found: 'Hakuna watumiaji waliopatikana',
+            all_users_title: '👥 Watumiaji Wote ({count})',
+            search_placeholder: 'Tafuta mtumiaji...',
+            online_users_title: '🌐 Watumiaji Mtandaoni ({count})',
+            btn_refresh: '🔄 Sasisha',
+            label_websocket: '🔌 WebSocket: ',
+            ws_connected: '✓ Imeungana',
+            ws_disconnected: '✗ Haijaungana',
+            label_realtime: '📡 Wakati Halisi: ',
+            no_online_users: 'Hakuna watumiaji mtandaoni kwa sasa',
+            label_last_seen: 'Ilionekana mwisho: ',
+            system_logs_title: '📋 Rekodi za Mfumo ({count})',
+            no_records_found: 'Hakuna rekodi zilizopatikana',
+            guest: 'Guest',
+            header_title: 'System Admin Dashboard',
+            header_subtitle: 'Data Halisi kutoka Database',
+            icon_refresh: '⟳',
+            icon_home: '🏠',
+            icon_logout: '🚪',
+            tab_dashboard: '📊 Dashbodi',
+            tab_users: '👥 Watumiaji',
+            tab_online: '🌐 Mtandaoni',
+            tab_logs: '📋 Rekodi',
+            filter_all: 'Wote',
+            filter_all_status: 'Zote',
+            filter_success: 'Zilizofaulu',
+            filter_failed: 'Zilizoshindwa',
+            filter_today: 'Leo',
+            filter_week: 'Wiki',
+            filter_month: 'Mwezi',
+            err_no_permission: 'Huna ruhusa ya kuingia kwenye eneo la System Admin.',
+            never: 'Hajawahi',
+            time_mins_ago: 'Dakika {mins} zilizopita',
+            time_hours_ago: 'Saa {hours} zilizopita',
+            time_days_ago: 'Siku {days} zilizopita',
+            user_generic: 'Mtumiaji',
+            confirm_enable: 'Una uhakika unataka kuwezesha {userName}?',
+            confirm_block: 'Una uhakika unataka kuzuia {userName}?',
+            status_enabled: '{userName} imewezeshwa kikamilifu!',
+            status_blocked: '{userName} imezuiwa kikamilifu!',
+            err_status_failed: 'Imeshindwa kubadilisha hali',
+            err_network: 'Hitilafu ya mtandao',
+            confirm_logout: 'Una uhakika unataka kutoka?',
+        };
+
+        function t(key, params) {
+            const full = key.indexOf('system_admin_dashboard.') === 0 ? key : 'system_admin_dashboard.' + key;
+            if (window.DM && typeof window.DM.t === 'function') {
+                const hit = window.DM.t(full, params);
+                if (hit !== full) return hit;
+            }
+            const bare = key.indexOf('.') > -1 ? key.split('.').pop() : key;
+            let value = Object.prototype.hasOwnProperty.call(SW, bare) ? SW[bare] : key;
+            if (params) {
+                for (const k in params) value = String(value).split('{' + k + '}').join(String(params[k]));
+            }
+            return value;
+        }
+
+        // Date locale follows the selected language (was hardcoded 'sw-TZ').
+        const DATE_LOCALES = { sw: 'sw-TZ', en: 'en-GB', fr: 'fr-FR', hi: 'hi-IN', es: 'es-ES', ur: 'ur-PK', de: 'de-DE', zh: 'zh-CN' };
+        function dateLocale() {
+            const code = (window.DM && typeof window.DM.locale === 'function' && window.DM.locale()) || document.documentElement.getAttribute('data-dm-locale') || 'sw';
+            return DATE_LOCALES[code] || 'sw-TZ';
+        }
+
         let activeTab = 'dashboard';
         let users = [];
         let userLogs = [];
@@ -261,7 +368,7 @@
             const user = getCurrentUser();
             if (!user) { window.location.href = '/login?role=msimamizi'; return false; }
             if (user.email !== "cosmavictorini1994@gmail.com") {
-                showToast('Huna ruhusa ya kuingia kwenye eneo la System Admin.', 'error');
+                showToast(t('err_no_permission'), 'error');
                 window.location.href = '/home';
                 return false;
             }
@@ -270,21 +377,21 @@
 
         function formatCurrency(amount) { return `TZS ${(amount || 0).toLocaleString()}`; }
         function formatDate(dateStr) {
-            if (!dateStr) return 'N/A';
-            try { return new Date(dateStr).toLocaleDateString('sw-TZ'); }
-            catch { return 'N/A'; }
+            if (!dateStr) return t('not_available');
+            try { return new Date(dateStr).toLocaleDateString(dateLocale()); }
+            catch { return t('not_available'); }
         }
         function formatTimeAgo(dateStr) {
-            if (!dateStr) return 'Hajawahi';
+            if (!dateStr) return t('never');
             try {
                 const date = new Date(dateStr);
                 const now = new Date();
                 const diffMins = Math.floor((now - date) / 60000);
-                if (diffMins < 60) return `Dakika ${diffMins} zilizopita`;
+                if (diffMins < 60) return t('time_mins_ago', { mins: diffMins });
                 const diffHours = Math.floor(diffMins / 60);
-                if (diffHours < 24) return `Saa ${diffHours} zilizopita`;
-                return `Siku ${Math.floor(diffHours / 24)} zilizopita`;
-            } catch { return 'Hajawahi'; }
+                if (diffHours < 24) return t('time_hours_ago', { hours: diffHours });
+                return t('time_days_ago', { days: Math.floor(diffHours / 24) });
+            } catch { return t('never'); }
         }
 
         function getStatusColor(status) {
@@ -365,8 +472,8 @@
             const token = localStorage.getItem('userToken');
             const action = status === 'approved' ? 'enable' : 'disable';
             const u = users.find(usr => String(usr.id) === String(userId));
-            const userName = (u && (u.full_name || u.email)) || 'Mtumiaji';
-            if (!confirm(`Una uhakika unataka ${action === 'enable' ? 'kuwezesha' : 'kuzuia'} ${userName}?`)) return;
+            const userName = (u && (u.full_name || u.email)) || t('user_generic');
+            if (!confirm(t(action === 'enable' ? 'confirm_enable' : 'confirm_block', { userName }))) return;
             
             try {
                 const res = await fetch(`${API_BASE_URL}/api/admin/users/${userId}/status`, {
@@ -375,14 +482,14 @@
                     body: JSON.stringify({ status })
                 });
                 if (res.ok) {
-                    showToast(`${userName} ime${action === 'enable' ? 'wezeshwa' : 'zuiwa'} kikamilifu!`, 'success');
+                    showToast(t(action === 'enable' ? 'status_enabled' : 'status_blocked', { userName }), 'success');
                     await loadAllData();
-                } else { showToast('Imeshindwa kubadilisha hali', 'error'); }
-            } catch(e) { showToast('Hitilafu ya mtandao', 'error'); }
+                } else { showToast(t('err_status_failed'), 'error'); }
+            } catch(e) { showToast(t('err_network'), 'error'); }
         }
 
         function handleLogout() {
-            if (confirm('Una uhakika unataka kutoka?')) {
+            if (confirm(t('confirm_logout'))) {
                 localStorage.removeItem('userToken');
                 localStorage.removeItem('userData');
                 localStorage.removeItem('userId');
@@ -439,22 +546,22 @@
             const body = document.getElementById('userModalBody');
             const roleColor = getRoleColor(user.role);
             body.innerHTML = `
-                <div class="modal-avatar js-avatar-view" data-full="${user.business_logo_url || ''}" data-name="${escapeHtml(user.full_name || user.email)}" title="Bofya kuona picha">${user.business_logo_url ? `<img src="${escapeHtml(user.business_logo_url)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;pointer-events:none;">` : (user.full_name?.charAt(0) || user.email.charAt(0)).toUpperCase()}</div>
+                <div class="modal-avatar js-avatar-view" data-full="${user.business_logo_url || ''}" data-name="${escapeHtml(user.full_name || user.email)}" title="${t('click_photo')}">${user.business_logo_url ? `<img src="${escapeHtml(user.business_logo_url)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;pointer-events:none;">` : (user.full_name?.charAt(0) || user.email.charAt(0)).toUpperCase()}</div>
                 <div style="text-align:center; margin-bottom:20px;">
-                    <div style="font-size:18px; font-weight:700;">${escapeHtml(user.full_name || 'Bila Jina')}</div>
+                    <div style="font-size:18px; font-weight:700;">${escapeHtml(user.full_name || t('without_name'))}</div>
                     <div style="color:#7f8c8d;">${escapeHtml(user.email)}</div>
                     <div style="margin-top:8px;"><span class="badge" style="background:${roleColor}20; color:${roleColor};">${user.role}</span></div>
                 </div>
-                <div class="detail-row"><div class="detail-label">Simu:</div><div class="detail-value">${user.phone || 'Haijawekwa'}</div></div>
-                ${user.business_name ? `<div class="detail-row"><div class="detail-label">Biashara:</div><div class="detail-value">${escapeHtml(user.business_name)}</div></div>` : ''}
-                ${user.business_location ? `<div class="detail-row"><div class="detail-label">Eneo:</div><div class="detail-value">${escapeHtml(user.business_location)}</div></div>` : ''}
-                <div class="detail-row"><div class="detail-label">Imejisajiliwa:</div><div class="detail-value">${formatDate(user.created_at)}</div></div>
-                <div class="detail-row"><div class="detail-label">Hali:</div><div class="detail-value"><span class="badge" style="background:${getStatusColor(user.status)}20; color:${getStatusColor(user.status)};">${user.status}</span></div></div>
+                <div class="detail-row"><div class="detail-label">${t('label_phone')}</div><div class="detail-value">${user.phone || t('not_set')}</div></div>
+                ${user.business_name ? `<div class="detail-row"><div class="detail-label">${t('label_business')}</div><div class="detail-value">${escapeHtml(user.business_name)}</div></div>` : ''}
+                ${user.business_location ? `<div class="detail-row"><div class="detail-label">${t('label_location')}</div><div class="detail-value">${escapeHtml(user.business_location)}</div></div>` : ''}
+                <div class="detail-row"><div class="detail-label">${t('label_registered')}</div><div class="detail-value">${formatDate(user.created_at)}</div></div>
+                <div class="detail-row"><div class="detail-label">${t('label_status')}</div><div class="detail-value"><span class="badge" style="background:${getStatusColor(user.status)}20; color:${getStatusColor(user.status)};">${user.status}</span></div></div>
                 <div style="display:flex; gap:12px; margin-top:20px;">
-                    <button class="action-btn btn-logs" style="flex:1;" onclick="viewUserLogs(${JSON.stringify(user).replace(/"/g, '&quot;')})">📋 Angalia Logs</button>
+                    <button class="action-btn btn-logs" style="flex:1;" onclick="viewUserLogs(${JSON.stringify(user).replace(/"/g, '&quot;')})">${t('btn_view_logs')}</button>
                     ${user.status === 'approved' ? 
-                        `<button class="action-btn btn-disable" style="flex:1;" onclick="updateUserStatus('${user.id}', 'pending')">🔒 Zuia</button>` :
-                        `<button class="action-btn btn-enable" style="flex:1;" onclick="updateUserStatus('${user.id}', 'approved')">✅ Wezesha</button>`
+                        `<button class="action-btn btn-disable" style="flex:1;" onclick="updateUserStatus('${user.id}', 'pending')">${t('btn_block')}</button>` :
+                        `<button class="action-btn btn-enable" style="flex:1;" onclick="updateUserStatus('${user.id}', 'approved')">${t('btn_enable')}</button>`
                     }
                 </div>
             `;
@@ -471,16 +578,16 @@
             body.innerHTML = `
                 <div style="margin-bottom:16px;">
                     <div style="font-weight:700;">${escapeHtml(user.full_name || user.email)}</div>
-                    <div style="font-size:12px; color:#7f8c8d;">Jumla ya rekodi: ${userSpecificLogs.length}</div>
+                    <div style="font-size:12px; color:#7f8c8d;">${t('total_records', { count: userSpecificLogs.length })}</div>
                 </div>
-                ${userSpecificLogs.length === 0 ? '<div class="empty-state">Hakuna rekodi za shughuli</div>' :
+                ${userSpecificLogs.length === 0 ? '<div class="empty-state">' + t('no_activity_records') + '</div>' :
                     userSpecificLogs.map(log => `
                         <div class="log-card">
                             <div class="log-header"><span class="log-action">${escapeHtml(log.action)}</span><span class="log-time">${formatTimeAgo(log.created_at)}</span></div>
                             <div class="log-endpoint">${escapeHtml(log.endpoint)}</div>
                             <div class="log-footer">
                                 <span class="log-status" style="background:${getStatusColor(log.status)}20; color:${getStatusColor(log.status)};">${log.status}</span>
-                                <span style="font-size:10px; color:#95a5a6;">IP: ${log.ip_address || 'N/A'}</span>
+                                <span style="font-size:10px; color:#95a5a6;">${t('label_ip')}${log.ip_address || t('not_available')}</span>
                             </div>
                         </div>
                     `).join('')
@@ -494,22 +601,22 @@
         function renderDashboardTab() {
             return `
                 <div class="welcome-card">
-                    <div class="welcome-title">👋 Karibu, System Admin</div>
-                    <div>Unayo uwezo wa kusimamia mfumo mzima wa DukaMkononi</div>
+                    <div class="welcome-title">${t('welcome_title')}</div>
+                    <div>${t('welcome_subtitle')}</div>
                 </div>
                 <div class="stats-grid">
-                    <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-value">${systemStats.totalUsers}</div><div class="stat-label">Jumla ya Watumiaji</div><div>${systemStats.activeUsers} wanaotumia</div></div>
-                    <div class="stat-card"><div class="stat-icon">🌐</div><div class="stat-value">${systemStats.onlineUsers}</div><div class="stat-label">Mtandaoni Sasa</div><div>${systemStats.connectedNow} wameungana</div></div>
-                    <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-value">${formatCurrency(systemStats.todayRevenue)}</div><div class="stat-label">Mapato ya Leo</div><div>${systemStats.todayActivities} shughuli</div></div>
-                    <div class="stat-card"><div class="stat-icon">⏳</div><div class="stat-value">${systemStats.pendingUsers}</div><div class="stat-label">Wanasubiri</div><div>Wanahitaji idhini</div></div>
+                    <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-value">${systemStats.totalUsers}</div><div class="stat-label">${t('stat_total_users')}</div><div>${systemStats.activeUsers} ${t('using')}</div></div>
+                    <div class="stat-card"><div class="stat-icon">🌐</div><div class="stat-value">${systemStats.onlineUsers}</div><div class="stat-label">${t('stat_online_now')}</div><div>${systemStats.connectedNow} ${t('connected')}</div></div>
+                    <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-value">${formatCurrency(systemStats.todayRevenue)}</div><div class="stat-label">${t('stat_today_revenue')}</div><div>${systemStats.todayActivities} ${t('activities')}</div></div>
+                    <div class="stat-card"><div class="stat-icon">⏳</div><div class="stat-value">${systemStats.pendingUsers}</div><div class="stat-label">${t('stat_pending')}</div><div>${t('need_approval')}</div></div>
                 </div>
                 <div class="section-card">
-                    <div class="section-header"><div class="section-title">📊 Hali ya Mfumo</div></div>
+                    <div class="section-header"><div class="section-title">${t('section_system_status')}</div></div>
                     <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:16px;">
-                        <div><div style="font-weight:700;">Watu wote</div><div>${systemStats.totalUsers}</div></div>
-                        <div><div style="font-weight:700;">Wauzaji</div><div>${systemStats.totalSellers}</div></div>
-                        <div><div style="font-weight:700;">Wateja</div><div>${systemStats.totalClients}</div></div>
-                        <div><div style="font-weight:700;">Wasimamizi</div><div>${systemStats.totalAdmins}</div></div>
+                        <div><div style="font-weight:700;">${t('all_people')}</div><div>${systemStats.totalUsers}</div></div>
+                        <div><div style="font-weight:700;">${t('sellers')}</div><div>${systemStats.totalSellers}</div></div>
+                        <div><div style="font-weight:700;">${t('customers')}</div><div>${systemStats.totalClients}</div></div>
+                        <div><div style="font-weight:700;">${t('administrators')}</div><div>${systemStats.totalAdmins}</div></div>
                     </div>
                 </div>
             `;
@@ -524,7 +631,7 @@
                     <div class="user-header">
                         <div class="user-avatar js-avatar-view" data-full="${user.business_logo_url || ''}" data-name="${escapeHtml(user.full_name || user.email)}">${user.business_logo_url ? `<img src="${escapeHtml(user.business_logo_url)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;pointer-events:none;">` : (user.full_name?.charAt(0) || user.email.charAt(0)).toUpperCase()}<div class="online-dot" style="background:${user.is_online ? '#2ecc71' : '#95a5a6'}"></div></div>
                         <div class="user-info">
-                            <div class="user-name">${escapeHtml(user.full_name || 'Bila Jina')}</div>
+                            <div class="user-name">${escapeHtml(user.full_name || t('without_name'))}</div>
                             <div class="user-email">${escapeHtml(user.email)}</div>
                             <div class="user-badges">
                                 <span class="badge" style="background:${roleColor}20; color:${roleColor};">${user.role}</span>
@@ -533,11 +640,11 @@
                         </div>
                     </div>
                     <div class="user-actions">
-                        <button class="action-btn btn-details" onclick="viewUserDetails(${JSON.stringify(user).replace(/"/g, '&quot;')})">📋 Maelezo</button>
-                        <button class="action-btn btn-logs" onclick="viewUserLogs(${JSON.stringify(user).replace(/"/g, '&quot;')})">📜 Logs</button>
+                        <button class="action-btn btn-details" onclick="viewUserDetails(${JSON.stringify(user).replace(/"/g, '&quot;')})">${t('btn_details')}</button>
+                        <button class="action-btn btn-logs" onclick="viewUserLogs(${JSON.stringify(user).replace(/"/g, '&quot;')})">${t('btn_logs')}</button>
                         ${user.status === 'approved' ? 
-                            `<button class="action-btn btn-disable" onclick="updateUserStatus('${user.id}', 'pending')">🔒 Zuia</button>` :
-                            `<button class="action-btn btn-enable" onclick="updateUserStatus('${user.id}', 'approved')">✅ Wezesha</button>`
+                            `<button class="action-btn btn-disable" onclick="updateUserStatus('${user.id}', 'pending')">${t('btn_block')}</button>` :
+                            `<button class="action-btn btn-enable" onclick="updateUserStatus('${user.id}', 'approved')">${t('btn_enable')}</button>`
                         }
                     </div>
                 </div>
@@ -552,7 +659,7 @@
             if (!listHost) { render(); return; }
             const filtered = getFilteredUsers();
             listHost.innerHTML = filtered.length === 0
-                ? '<div class="empty-state">Hakuna watumiaji waliopatikana</div>'
+                ? '<div class="empty-state">' + t('no_users_found') + '</div>'
                 : filtered.map(userCardHtml).join('');
         }
 
@@ -560,13 +667,13 @@
             const filtered = getFilteredUsers();
             return `
                 <div class="section-card">
-                    <div class="section-header"><div class="section-title">👥 Watumiaji Wote (${users.length})</div></div>
+                    <div class="section-header"><div class="section-title">${t('all_users_title', { count: users.length })}</div></div>
                     <div class="filter-bar">
-                        <div class="search-box"><span>🔍</span><input type="text" id="userSearch" placeholder="Tafuta mtumiaji..."></div>
+                        <div class="search-box"><span>🔍</span><input type="text" id="userSearch" placeholder="${t('search_placeholder')}"></div>
                         <div class="filter-buttons" id="userTypeFilters"></div>
                     </div>
                     <div id="userListHost">
-                    ${filtered.length === 0 ? '<div class="empty-state">Hakuna watumiaji waliopatikana</div>' :
+                    ${filtered.length === 0 ? '<div class="empty-state">' + t('no_users_found') + '</div>' :
                         filtered.map(user => userCardHtml(user)).join('')
                     }
                     </div>
@@ -578,14 +685,14 @@
             return `
                 <div class="section-card">
                     <div class="section-header">
-                        <div class="section-title">🌐 Watumiaji Mtandaoni (${onlineUsers.length})</div>
-                        <button class="action-btn btn-details" onclick="loadAllData()" style="padding:6px 12px;">🔄 Sasisha</button>
+                        <div class="section-title">${t('online_users_title', { count: onlineUsers.length })}</div>
+                        <button class="action-btn btn-details" onclick="loadAllData()" style="padding:6px 12px;">${t('btn_refresh')}</button>
                     </div>
                     <div class="filter-info" style="margin-bottom:16px; padding:12px; background:#f8f9fa; border-radius:12px;">
-                        <span>🔌 WebSocket: ${webSocketConnected ? '✓ Imeungana' : '✗ Haijaungana'}</span>
-                        <span style="margin-left:20px;">📡 Wakati Halisi: ${onlineUsers.length} wanaotumia</span>
+                        <span>${t('label_websocket')}${webSocketConnected ? t('ws_connected') : t('ws_disconnected')}</span>
+                        <span style="margin-left:20px;">${t('label_realtime')}${onlineUsers.length} ${t('using')}</span>
                     </div>
-                    ${onlineUsers.length === 0 ? '<div class="empty-state">Hakuna watumiaji mtandaoni kwa sasa</div>' :
+                    ${onlineUsers.length === 0 ? '<div class="empty-state">' + t('no_online_users') + '</div>' :
                         onlineUsers.map(user => `
                             <div class="user-card">
                                 <div class="user-header">
@@ -597,7 +704,7 @@
                                     </div>
                                 </div>
                                 <div class="user-footer" style="margin-top:8px; font-size:11px; color:#95a5a6;">
-                                    Ilionekana mwisho: ${formatTimeAgo(user.last_seen)}
+                                    ${t('label_last_seen')}${formatTimeAgo(user.last_seen)}
                                 </div>
                             </div>
                         `).join('')
@@ -610,12 +717,12 @@
             const filtered = getFilteredLogs();
             return `
                 <div class="section-card">
-                    <div class="section-header"><div class="section-title">📋 Rekodi za Mfumo (${userLogs.length})</div></div>
+                    <div class="section-header"><div class="section-title">${t('system_logs_title', { count: userLogs.length })}</div></div>
                     <div class="filter-bar">
                         <div class="filter-buttons" id="logStatusFilters"></div>
                         <div class="filter-buttons" id="timeRangeFilters"></div>
                     </div>
-                    ${filtered.length === 0 ? '<div class="empty-state">Hakuna rekodi zilizopatikana</div>' :
+                    ${filtered.length === 0 ? '<div class="empty-state">' + t('no_records_found') + '</div>' :
                         filtered.map(log => {
                             const statusColor = getStatusColor(log.status);
                             return `
@@ -627,7 +734,7 @@
                                     <div class="log-endpoint">${escapeHtml(log.endpoint)}</div>
                                     <div class="log-footer">
                                         <span class="log-status" style="background:${statusColor}20; color:${statusColor};">${log.status}</span>
-                                        <span style="font-size:10px;">👤 ${escapeHtml(log.user_email || 'Guest')}</span>
+                                        <span style="font-size:10px;">👤 ${escapeHtml(log.user_email || t('guest'))}</span>
                                     </div>
                                 </div>
                             `;
@@ -640,24 +747,24 @@
         function render() {
             const container = document.getElementById('dashboardContent');
             if (loading) {
-                container.innerHTML = `<div class="loading-spinner"></div><div style="text-align:center;">Inapakua dashbodi...</div>`;
+                container.innerHTML = `<div class="loading-spinner"></div><div style="text-align:center;">${t('loading')}</div>`;
                 return;
             }
             
             container.innerHTML = `
                 <div class="dashboard-header">
-                    <div><div class="header-title">System Admin Dashboard</div><div class="header-subtitle">Data Halisi kutoka Database</div></div>
+                    <div><div class="header-title">${t('header_title')}</div><div class="header-subtitle">${t('header_subtitle')}</div></div>
                     <div class="header-actions">
-                        <div class="header-btn" onclick="loadAllData()">⟳</div>
-                        <div class="header-btn" onclick="window.location.href='/home'">🏠</div>
-                        <div class="header-btn" onclick="handleLogout()" style="color:#e74c3c;font-weight:700;">🚪</div>
+                        <div class="header-btn" onclick="loadAllData()">${t('icon_refresh')}</div>
+                        <div class="header-btn" onclick="window.location.href='/home'">${t('icon_home')}</div>
+                        <div class="header-btn" onclick="handleLogout()" style="color:#e74c3c;font-weight:700;">${t('icon_logout')}</div>
                     </div>
                 </div>
                 <div class="tabs-container">
-                    <div class="tab-btn ${activeTab === 'dashboard' ? 'active' : ''}" onclick="setTab('dashboard')">📊 Dashbodi</div>
-                    <div class="tab-btn ${activeTab === 'users' ? 'active' : ''}" onclick="setTab('users')">👥 Watumiaji</div>
-                    <div class="tab-btn ${activeTab === 'online' ? 'active' : ''}" onclick="setTab('online')">🌐 Mtandaoni</div>
-                    <div class="tab-btn ${activeTab === 'logs' ? 'active' : ''}" onclick="setTab('logs')">📋 Rekodi</div>
+                    <div class="tab-btn ${activeTab === 'dashboard' ? 'active' : ''}" onclick="setTab('dashboard')">${t('tab_dashboard')}</div>
+                    <div class="tab-btn ${activeTab === 'users' ? 'active' : ''}" onclick="setTab('users')">${t('tab_users')}</div>
+                    <div class="tab-btn ${activeTab === 'online' ? 'active' : ''}" onclick="setTab('online')">${t('tab_online')}</div>
+                    <div class="tab-btn ${activeTab === 'logs' ? 'active' : ''}" onclick="setTab('logs')">${t('tab_logs')}</div>
                 </div>
                 ${activeTab === 'dashboard' ? renderDashboardTab() : 
                   activeTab === 'users' ? renderUsersTab() : 
@@ -670,19 +777,19 @@
                 if (searchInput) searchInput.addEventListener('input', (e) => { searchQuery = e.target.value; renderUserList(); });
                 const filterContainer = document.getElementById('userTypeFilters');
                 if (filterContainer) {
-                    const types = [{id:'all',label:'Wote'},{id:'admin',label:'Wasimamizi'},{id:'seller',label:'Wauzaji'},{id:'client',label:'Wateja'}];
+                    const types = [{id:'all',label:t('filter_all')},{id:'admin',label:t('administrators')},{id:'seller',label:t('sellers')},{id:'client',label:t('customers')}];
                     filterContainer.innerHTML = types.map(t => `<div class="filter-chip ${selectedUserType === t.id ? 'active' : ''}" onclick="setUserType('${t.id}')">${t.label}</div>`).join('');
                 }
             }
             if (activeTab === 'logs') {
                 const logFilterContainer = document.getElementById('logStatusFilters');
                 if (logFilterContainer) {
-                    const statuses = [{id:'all',label:'Zote'},{id:'success',label:'Zilizofaulu'},{id:'failed',label:'Zilizoshindwa'}];
+                    const statuses = [{id:'all',label:t('filter_all_status')},{id:'success',label:t('filter_success')},{id:'failed',label:t('filter_failed')}];
                     logFilterContainer.innerHTML = statuses.map(s => `<div class="filter-chip ${selectedLogStatus === s.id ? 'active' : ''}" onclick="setLogStatus('${s.id}')">${s.label}</div>`).join('');
                 }
                 const timeFilterContainer = document.getElementById('timeRangeFilters');
                 if (timeFilterContainer) {
-                    const ranges = [{id:'today',label:'Leo'},{id:'week',label:'Wiki'},{id:'month',label:'Mwezi'}];
+                    const ranges = [{id:'today',label:t('filter_today')},{id:'week',label:t('filter_week')},{id:'month',label:t('filter_month')}];
                     timeFilterContainer.innerHTML = ranges.map(r => `<div class="filter-chip ${selectedTimeRange === r.id ? 'active' : ''}" onclick="setTimeRange('${r.id}')">${r.label}</div>`).join('');
                 }
             }
@@ -706,6 +813,15 @@
             await loadAllData();
         }
         
+        // Follow the language: the whole dashboard is script-built.
+        if (window.DM && typeof window.DM.onChange === 'function') {
+            window.DM.onChange(() => {
+                render();
+                if (selectedUser && document.getElementById('userModal').style.display === 'flex') viewUserDetails(selectedUser);
+                if (selectedUser && document.getElementById('logsModal').style.display === 'flex') viewUserLogs(selectedUser);
+            });
+        }
+
         init();
     </script>
 </body>

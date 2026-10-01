@@ -1,10 +1,9 @@
+@include('partials.dm-locale')
 @verbatim
-<!DOCTYPE html>
-<html lang="sw">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>DukaMkononi - System Admin</title>
+    <title data-i18n="system_admin_index.page_title">DukaMkononi - System Admin</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {
@@ -106,23 +105,26 @@
     </style>
 </head>
 <body>
+@endverbatim
+@include('partials.dm-lang-widget')
+@verbatim
     <div class="redirect-container">
         <div class="logo">
-            <span>D</span>
+            <span data-i18n="system_admin_index.logo_letter">D</span>
         </div>
-        <div class="title">DukaMkononi</div>
-        <div class="subtitle">System Admin Portal</div>
+        <div class="title" data-i18n="system_admin_index.brand">DukaMkononi</div>
+        <div class="subtitle" data-i18n="system_admin_index.portal_label">System Admin Portal</div>
         
         <div class="loading-spinner"></div>
         
-        <div class="message" id="message">Inaelekeza kwenye dashbodi...</div>
+        <div class="message" id="message" data-i18n="system_admin_index.redirecting_dashboard">Inaelekeza kwenye dashbodi...</div>
         
-        <div class="redirect-note">
+        <div class="redirect-note" data-i18n="system_admin_index.please_wait">
             Tafadhali subiri, unaelekezwa kwenye ukurasa wa dashbodi
         </div>
         
         <div class="manual-link">
-            <a href="dashboard" id="manualLink">Bonyeza hapa ikiwa huelekezwi</a>
+            <a href="dashboard" id="manualLink" data-i18n="system_admin_index.manual_link">Bonyeza hapa ikiwa huelekezwi</a>
         </div>
     </div>
 
@@ -133,7 +135,47 @@
         // ============================================
         
         const API_BASE_URL = '';
-        
+
+        // Swahili fallback used when the language widget is not present (and
+        // for script-built strings). Values mirror the sw catalog of the
+        // system_admin_index section in locales.json.
+        const SW = {
+            page_title: 'DukaMkononi - System Admin',
+            logo_letter: 'D',
+            brand: 'DukaMkononi',
+            portal_label: 'System Admin Portal',
+            redirecting_dashboard: 'Inaelekeza kwenye dashbodi...',
+            please_wait: 'Tafadhali subiri, unaelekezwa kwenye ukurasa wa dashbodi',
+            manual_link: 'Bonyeza hapa ikiwa huelekezwi',
+            no_user: 'Hakuna mtumiaji aliyeingia. Unaelekezwa kwenye ukurasa wa kuingia...',
+            no_permission: 'Huna ruhusa ya kuingia kwenye eneo hili. Unaelekezwa nyumbani...',
+            session_expired: 'Weka muda umeisha. Unaelekezwa kwenye ukurasa wa kuingia...',
+            signed_in_ok: 'Umeingia kikamilifu! Unaelekezwa kwenye dashbodi...',
+            data_error: 'Hitilafu katika data ya mtumiaji. Unaelekezwa kwenye ukurasa wa kuingia...',
+        };
+
+        function t(key, params) {
+            const full = key.indexOf('system_admin_index.') === 0 ? key : 'system_admin_index.' + key;
+            if (window.DM && typeof window.DM.t === 'function') {
+                const hit = window.DM.t(full, params);
+                if (hit !== full) return hit;
+            }
+            const bare = key.indexOf('.') > -1 ? key.split('.').pop() : key;
+            let value = Object.prototype.hasOwnProperty.call(SW, bare) ? SW[bare] : key;
+            if (params) {
+                for (const k in params) value = String(value).split('{' + k + '}').join(String(params[k]));
+            }
+            return value;
+        }
+
+        // The current status message, so the language picker can repaint it.
+        let currentMsgKey = 'redirecting_dashboard';
+        function setMessage(key) {
+            currentMsgKey = key;
+            const el = document.getElementById('message');
+            if (el) el.innerHTML = t(key);
+        }
+
         // Check if user is logged in and is system admin
         async function checkAuthAndRedirect() {
             const token = localStorage.getItem('userToken');
@@ -145,7 +187,7 @@
                 setTimeout(() => {
                     window.location.href = '/login?role=msimamizi';
                 }, 1500);
-                document.getElementById('message').innerHTML = 'Hakuna mtumiaji aliyeingia. Unaelekezwa kwenye ukurasa wa kuingia...';
+                setMessage('no_user');
                 return;
             }
             
@@ -157,7 +199,7 @@
                 if (!isSystemAdmin && userData.role !== 'system_admin') {
                     // User is not system admin, redirect to home
                     console.log('User is not system admin, redirecting to home...');
-                    document.getElementById('message').innerHTML = 'Huna ruhusa ya kuingia kwenye eneo hili. Unaelekezwa nyumbani...';
+                    setMessage('no_permission');
                     setTimeout(() => {
                         window.location.href = '/home';
                     }, 2000);
@@ -178,7 +220,7 @@
                         console.log('Invalid token, clearing storage...');
                         localStorage.removeItem('userToken');
                         localStorage.removeItem('userData');
-                        document.getElementById('message').innerHTML = 'Weka muda umeisha. Unaelekezwa kwenye ukurasa wa kuingia...';
+                        setMessage('session_expired');
                         setTimeout(() => {
                             window.location.href = '/login?role=msimamizi';
                         }, 2000);
@@ -190,7 +232,7 @@
                 
                 // User is authenticated and is system admin, redirect to dashboard
                 console.log('Authenticated as system admin, redirecting to dashboard...');
-                document.getElementById('message').innerHTML = 'Umeingia kikamilifu! Unaelekezwa kwenye dashbodi...';
+                setMessage('signed_in_ok');
                 
                 setTimeout(() => {
                     window.location.href = 'dashboard';
@@ -198,7 +240,7 @@
                 
             } catch (error) {
                 console.error('Error parsing user data:', error);
-                document.getElementById('message').innerHTML = 'Hitilafu katika data ya mtumiaji. Unaelekezwa kwenye ukurasa wa kuingia...';
+                setMessage('data_error');
                 setTimeout(() => {
                     window.location.href = '/login?role=msimamizi';
                 }, 2000);
@@ -211,6 +253,12 @@
             window.location.href = 'dashboard';
         });
         
+        // Follow the language: static markup is handled by data-i18n, but the
+        // status message is set by script.
+        if (window.DM && typeof window.DM.onChange === 'function') {
+            window.DM.onChange(() => setMessage(currentMsgKey));
+        }
+
         // Start the redirect process
         checkAuthAndRedirect();
     </script>
