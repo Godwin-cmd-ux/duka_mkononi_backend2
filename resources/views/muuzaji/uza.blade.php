@@ -1,10 +1,9 @@
+@include('partials.dm-locale')
 @verbatim
-<!DOCTYPE html>
-<html lang="sw">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Uza - Dukamkononi Muuzaji</title>
+    <title data-i18n="muuzaji_uza.page_title">Uza - Dukamkononi Muuzaji</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <style>
@@ -236,6 +235,7 @@
 </head>
 <body>
 @endverbatim
+@include('partials.dm-lang-widget')
 @include('partials.toast')
 @include('partials.photo-viewer')
 @verbatim
@@ -246,16 +246,16 @@
     </div>
     <div class="muuzaji-layout">
         <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header"><div class="logo-area"><div class="logo-icon">D</div><div class="logo-text"><h2>DukaMkononi</h2><p>Muuzaji Portal</p></div></div></div>
+            <div class="sidebar-header"><div class="logo-area"><div class="logo-icon" data-i18n="muuzaji_uza.logo_short">D</div><div class="logo-text"><h2 data-i18n="muuzaji_uza.logo_brand">DukaMkononi</h2><p data-i18n="muuzaji_uza.logo_tagline">Muuzaji Portal</p></div></div></div>
             <div class="nav-items">
-                <a href="profaili" class="nav-item"><div class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21C4 16.6 7.6 13 12 13C16.4 13 20 16.6 20 21" stroke-linecap="round"/></svg></div><span class="nav-label">Profaili</span></a>
-                <a href="mauzo" class="nav-item"><div class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2.5" y="6" width="19" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.6"/><path d="M6 9.5V9.51M18 14.5V14.51" stroke-linecap="round"/></svg></div><span class="nav-label">Mauzo</span></a>
-                <a href="matumizi" class="nav-item"><div class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z"/><path d="M8 7V17M12 7V17M16 7V17"/></svg></div><span class="nav-label">Matumizi</span></a>
-                <a href="uza" class="nav-item active"><div class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="20" r="1.6"/><circle cx="17" cy="20" r="1.6"/><path d="M3 3H5L7.4 15.2C7.55 15.95 8.2 16.5 8.97 16.5H17.6C18.32 16.5 18.94 16 19.08 15.3L21 7H6" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="nav-label">Uza</span></a>
+                <a href="profaili" class="nav-item"><div class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21C4 16.6 7.6 13 12 13C16.4 13 20 16.6 20 21" stroke-linecap="round"/></svg></div><span class="nav-label" data-i18n="muuzaji_uza.nav_profile">Profaili</span></a>
+                <a href="mauzo" class="nav-item"><div class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2.5" y="6" width="19" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.6"/><path d="M6 9.5V9.51M18 14.5V14.51" stroke-linecap="round"/></svg></div><span class="nav-label" data-i18n="muuzaji_uza.nav_sales">Mauzo</span></a>
+                <a href="matumizi" class="nav-item"><div class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z"/><path d="M8 7V17M12 7V17M16 7V17"/></svg></div><span class="nav-label" data-i18n="muuzaji_uza.nav_expenses">Matumizi</span></a>
+                <a href="uza" class="nav-item active"><div class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="20" r="1.6"/><circle cx="17" cy="20" r="1.6"/><path d="M3 3H5L7.4 15.2C7.55 15.95 8.2 16.5 8.97 16.5H17.6C18.32 16.5 18.94 16 19.08 15.3L21 7H6" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="nav-label" data-i18n="muuzaji_uza.nav_sell">Uza</span></a>
             </div>
             <div class="sidebar-footer">
-                <div class="user-info"><div class="user-avatar" id="userAvatar">M</div><div class="user-details"><div class="user-name" id="userName">Muuzaji</div><div class="user-role">Muuzaji</div></div></div>
-                <div class="logout-btn" id="logoutBtn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 3H19C20.1 3 21 3.9 21 5V19C21 20.1 20.1 21 19 21H15M10 17L15 12L10 7M15 12H3"/></svg> Ondoka</div>
+                <div class="user-info"><div class="user-avatar" id="userAvatar">M</div><div class="user-details"><div class="user-name" id="userName">Muuzaji</div><div class="user-role" data-i18n="muuzaji_uza.nav_seller">Muuzaji</div></div></div>
+                <div class="logout-btn" id="logoutBtn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 3H19C20.1 3 21 3.9 21 5V19C21 20.1 20.1 21 19 21H15M10 17L15 12L10 7M15 12H3"/></svg> <span data-i18n="muuzaji_uza.btn_logout">Ondoka</span></div>
             </div>
         </aside>
         <main class="main-content"><div class="page-container" id="uzaContent"></div></main>
@@ -266,6 +266,148 @@
 
     <script>
         const API_BASE_URL = '';
+
+        // Swahili fallback used when the language widget is not present (and
+        // for script-built strings). Values mirror the sw catalog of the
+        // muuzaji_uza section in locales.json.
+        const SW = {
+            nav_seller: "Muuzaji",
+            photo_alt: "Picha",
+            err_no_permission: "Huna ruhusa",
+            not_set: "Haijawekwa",
+            seller_fallback: "Muuza",
+            empty_products: "Hakuna bidhaa zilizopo",
+            no_category: "Hakuna kategoria",
+            badge_yours: "Yako",
+            err_select_product: "Chagua bidhaa kwanza",
+            err_no_selling_price: "\"{name}\" hana bei ya kuuzia. Weka bei ya kuuzia kwanza (kwenye Bidhaa Mpya) ili usiue bei ya kununua.",
+            err_invalid_qty: "Weka kiasi sahihi",
+            err_not_enough: "Kiasi hakitoshi. Inabakia: {available}",
+            msg_added: "Imeongezwa kikapuni! Kikapu kina bidhaa {count}",
+            err_cart_empty: "Tafadhali ongeza bidhaa kwenye kikapu",
+            server_error: "Server error {status}",
+            msg_sale_done: "Mauzo yamekamilika! Jumla: {total}",
+            err_server: "Server imekutana na hitilafu ({status}). Jaribu tena.",
+            err_sale_failed: "Mauzo yameshindikana ({status}).",
+            err_network: "Hitilafu ya mtandao",
+            cart_title: "Kikapu chako",
+            cart_empty: "Kikapu tupu",
+            btn_remove: "Futa",
+            cart_types_label: "Aina za Bidhaa:",
+            cart_total_qty: "Jumla ya Kiasi:",
+            cart_total_payment: "JUMLA YA MALIPO:",
+            btn_continue_sale: "Endelea na Mauzo",
+            page_heading: "Uza Bidhaa",
+            business_label: "Biashara:",
+            business_fallback: "Biashara Yako",
+            selling_as: "Unauza kama:",
+            select_product_label: "Chagua Bidhaa",
+            btn_refresh: "Sasisha",
+            search_placeholder: "Tafuta bidhaa...",
+            err_load_products: "Imeshindikana kupakia bidhaa",
+            err_load_hint: "Hitilafu ya mtandao au server. Hakikisha umeunganishwa kwenye internet kisha jaribu tena.",
+            btn_retry: "🔄 Jaribu tena",
+            products_shown: "{count} bidhaa zinaonyeshwa",
+            selected_product_label: "Bidhaa Iliyochaguliwa:",
+            stock_label: "Stock: {stock}",
+            selling_price_label: "Bei ya kuuzia:",
+            dock_hint: "Tumia dock ya chini kuweka idadi na kuongeza kikapuni — inafuata scroll yako.",
+            label_customer_name: "Jina la Mteja",
+            optional_tag: "(Si-Lazima)",
+            placeholder_customer_name: "Weka jina la mteja (au acha tupu)",
+            label_customer_phone: "Namba ya Simu ya Mteja",
+            placeholder_customer_phone: "Weka namba ya simu",
+            label_sale_date: "Tarehe ya Mauzo",
+            no_stock: "Hakuna Stock",
+            btn_add: "Ongeza",
+            dock_cart: "Kikapu ›",
+            btn_complete: "KAMILISHA",
+            ai_entry_title: "Ingiza Mauzo kwa Picha (AI)",
+            ai_entry_sub: "Ulioandika kwenye karatasi? Piga picha, AI itayafananisha na bidhaa zako na kuyaweka kikapuni",
+            instructions_title: "Maelekezo ya Kikapu:",
+            instructions_1: "1. Chagua bidhaa kutoka kwenye orodha",
+            instructions_2: "2. Weka kiasi unachouza",
+            instructions_3: "3. Bofya \"Ongeza Kikapuni\"",
+            instructions_4: "4. Rudia kwa bidhaa zingine",
+            instructions_5: "5. Kamilisha mauzo",
+            ai_preview_remove: "✕",
+            ai_btn_process: "Chambua Mauzo",
+            ai_progress_1: "Inatayarisha picha...",
+            ai_progress_2: "Inasoma maandishi kwenye karatasi...",
+            ai_progress_3: "Inatafuta bidhaa zinazofanana...",
+            ai_progress_4: "Inatuma kwa Gemini...",
+            ai_progress_5: "Inafananisha na bidhaa zako...",
+            ai_progress_6: "Inakokotoa bei...",
+            ai_progress_7: "Inatayarisha matokeo...",
+            ai_progress_8: "Karibu kuisha...",
+            ai_progress_9: "Tafadhali subiri...",
+            btn_save: "Hifadhi",
+            btn_cancel: "Ghairi",
+            btn_continue: "Endelea",
+            ai_err_too_large: "Picha \"{name}\" ni kubwa mno baada ya kubanwa.",
+            ai_err_total_too_large: "Picha zote ni kubwa mno kwa jumla. Ondoa baadhi.",
+            ai_err_file_too_large: "Picha \"{name}\" ni kubwa mno.",
+            ai_err_file_rejected: "Picha \"{name}\" imekataliwa.",
+            ai_err_too_many: "Umechagua picha {selected}. Upeo ni {limit}.",
+            ai_err_failed: "Uchambuzi umeshindikana. Jaribu tena.",
+            ai_err_gemini: "Uchambuzi umeshindikana (Gemini ilikuwa na tatizo). Jaribu tena baada ya muda mfupi.",
+            ai_err_select_photo: "Chagua angalau picha moja kwanza.",
+            ai_confirm_again_title: "Chambua tena?",
+            ai_confirm_again_msg: "Matokeo ya sasa yataondolewa. Picha zako zitabaki.",
+            ai_banner_ready: "Matokeo yapo. Hakiki kila mstari kisha ubonyeze \"Hifadhi\".",
+            ai_err_no_sales: "Hakuna mauzo yaliyotambuliwa. Jaribu picha nyepesi zenye mwanga mzuri.",
+            ai_err_network: "Hitilafu ya mtandao. Jaribu tena.",
+            ai_chip_rows: "Mistari: ",
+            ai_chip_matched: "Zilizofananishwa: ",
+            ai_status_review: "Hakiki",
+            ai_chip_review: "Hakiki: ",
+            ai_chip_saved: "Zimehifadhiwa: ",
+            ai_conf_stock: "Hisa: ",
+            ai_conf_default_price: "Bei chaguomsingi: ",
+            ai_option_select: "— Chagua bidhaa —",
+            product_fallback: "Bidhaa",
+            ai_no_match: "Hakuna fananio",
+            ai_saved_tag: "Imehifadhiwa",
+            ai_price_placeholder: "chaguomsingi",
+            ai_row_select_product: "Mstari \"{name}\": chagua bidhaa ya mfumo kwanza.",
+            ai_row_bad_qty: "Mstari \"{name}\": idadi si sahihi.",
+            ai_row_no_price: "Mstari \"{name}\": bei haipo (wala bei chaguomsingi).",
+            ai_row_stock: "\"{name}\": hisa inatosha tu {stock} (ulioomba {qty}).",
+            ai_row_saved: "\"{name}\" × {qty} imehifadhiwa ({total}).",
+            ai_err_save_failed: "Imeshindikana kuhifadhi.",
+            ai_stock_issue: "\"{name}\": hisa inatosha tu {stock}.",
+            ai_err_duplicate: "Mauzo haya yameshahifadhiwa tayari.",
+            ai_info_no_pending: "Hakuna mistari inayosubiri (au hakuna iliyofananishwa).",
+            ai_fix_no_product: "Mstari {row}: hakuna bidhaa ya mfumo iliyochaguliwa",
+            ai_fix_bad_qty: "Mstari {row}: idadi si sahihi",
+            ai_fix_no_price: "Mstari {row}: bei haipo",
+            ai_fix_stock: "Mstari {row}: hisa ya \"{name}\" inatosha tu {stock}",
+            ai_fix_header: "Rekebisha kabla ya kuhifadhi zote:",
+            ai_confirm_save_all_title: "Hifadhi Zote?",
+            ai_confirm_save_all_msg: "{count} mistari ya mauzo itaingia kwenye rekodi na hisa itapungua.",
+            ai_saving_prefix: "Inahifadhi ",
+            ai_all_saved: "Mistari yote {saved} imehifadhiwa kikamilifu!",
+            ai_partial: "{saved} zimehifadhiwa, {failed} zilishindikana — rekebisha na ujaribu tena.",
+            ai_import_note: "AI import: {name}",
+            note_seller: "Muuzaji: {seller}",
+            stock_left: "{count} imebaki",
+            stock_in_cart: "({count} kikapuni)",
+            badge_business: "Biashara"
+        };
+
+        function t(key, params) {
+            const full = key.indexOf('muuzaji_uza.') === 0 ? key : 'muuzaji_uza.' + key;
+            if (window.DM && typeof window.DM.t === 'function') {
+                const hit = window.DM.t(full, params);
+                if (hit !== full) return hit;
+            }
+            const bare = key.indexOf('.') > -1 ? key.split('.').pop() : key;
+            let value = Object.prototype.hasOwnProperty.call(SW, bare) ? SW[bare] : key;
+            if (params) {
+                for (const k in params) value = String(value).split('{' + k + '}').join(String(params[k]));
+            }
+            return value;
+        }
 
         // ============================== ICONS ==============================
         // Font Awesome 6 icon helper (same convention as the msimamizi pages).
@@ -306,14 +448,14 @@
         function updateSidebarUser() {
             const user = getCurrentUser();
             if (user) {
-                const displayName = user.full_name || user.business_name || user.email?.split('@')[0] || 'Muuzaji';
+                const displayName = user.full_name || user.business_name || user.email?.split('@')[0] || t('nav_seller');
                 document.getElementById('userName').innerHTML = escapeHtml(displayName);
                 const avatarEl = document.getElementById('userAvatar');
                 if (user.business_logo_url) {
                     avatarEl.classList.add('js-avatar-view');
 avatarEl.setAttribute('data-full', user.business_logo_url);
 avatarEl.setAttribute('data-name', displayName);
-avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;pointer-events:none;" alt="Picha">`;
+avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;pointer-events:none;" alt="${t('photo_alt')}">`;
                 } else {
                     avatarEl.innerHTML = displayName.charAt(0).toUpperCase();
                 }
@@ -324,7 +466,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             const user = getCurrentUser();
             if (!user) { window.location.href = '/login?role=muuzaji'; return false; }
             const role = user.role || '';
-            if (role !== 'seller' && role !== 'muuzaji') { showToast('Huna ruhusa', 'error'); window.location.href = '/home'; return false; }
+            if (role !== 'seller' && role !== 'muuzaji') { showToast(t('err_no_permission'), 'error'); window.location.href = '/home'; return false; }
             return true;
         }
 
@@ -340,7 +482,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         // Never show the buying price as if it were the selling price. When the
         // selling price was never set, say so instead of inventing a number.
         function sellingPriceLabel(p) {
-            return hasSellingPrice(p) ? formatCurrency(p.expected_selling_price) : '<span style="color:#f39c12">Haijawekwa</span>';
+            return hasSellingPrice(p) ? formatCurrency(p.expected_selling_price) : '<span style="color:#f39c12">' + t('not_set') + '</span>';
         }
 
         function getCartTotal() { return cart.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0); }
@@ -374,7 +516,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                         // p.price would show the BUYING price as the selling price
                         // and would record the sale at cost.
                         ...p, expected_selling_price: p.expected_selling_price ?? null,
-                        seller_name: p.seller_name || 'Muuza'
+                        seller_name: p.seller_name || t('seller_fallback')
                     }));
                     productsError = false;
                 } else { products = []; productsError = true; }
@@ -399,32 +541,32 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         function renderProductGrid() {
             const gridHost = document.getElementById('productGridHost');
             if (!gridHost) { render(); return; }
-            gridHost.innerHTML = filteredProducts.length === 0 ? `<div style="text-align:center;padding:40px;">Hakuna bidhaa zilizopo</div>` :
+            gridHost.innerHTML = filteredProducts.length === 0 ? `<div style="text-align:center;padding:40px;">${t('empty_products')}</div>` :
                 filteredProducts.map(p => {
                     const inCart = getInCartQty(p.id);
                     const avail = p.stock - inCart;
                     const stockClass = avail <= 0 ? 'out' : (avail <= 5 ? 'low' : '');
                     return `
                         <div class="product-item ${selectedProduct?.id === p.id ? 'selected' : ''} ${avail <= 0 ? 'out-of-stock' : ''}" onclick="${avail > 0 ? `selectProduct('${p.id}')` : ''}">
-                            <div class="product-header"><span class="product-name">${escapeHtml(p.name)}</span><span class="stock-badge ${stockClass}">${avail} imebaki${inCart > 0 ? ` (${inCart} kikapuni)` : ''}</span></div>
-                            <div class="product-category">${escapeHtml(p.category || 'Hakuna kategoria')}</div>
-                            <div class="product-footer"><span class="price">${sellingPriceLabel(p)}</span><span class="owner-badge">${p.seller_id === userData?.id ? 'Yako' : 'Biashara'}</span></div>
+                            <div class="product-header"><span class="product-name">${escapeHtml(p.name)}</span><span class="stock-badge ${stockClass}">${t('stock_left', { count: avail })}${inCart > 0 ? ` ${t('stock_in_cart', { count: inCart })}` : ''}</span></div>
+                            <div class="product-category">${escapeHtml(p.category || t('no_category'))}</div>
+                            <div class="product-footer"><span class="price">${sellingPriceLabel(p)}</span><span class="owner-badge">${p.seller_id === userData?.id ? t('badge_yours') : t('badge_business')}</span></div>
                         </div>
                     `;
                 }).join('');
         }
 
         function addToCart() {
-            if (!selectedProduct) { showToast('Chagua bidhaa kwanza', 'warning'); return; }
+            if (!selectedProduct) { showToast(t('err_select_product'), 'warning'); return; }
             if (!hasSellingPrice(selectedProduct)) {
-                showToast(`"${selectedProduct.name}" hana bei ya kuuzia. Weka bei ya kuuzia kwanza (kwenye Bidhaa Mpya) ili usiue bei ya kununua.`, 'warning');
+                showToast(t('err_no_selling_price', { name: selectedProduct.name }), 'warning');
                 return;
             }
             const qty = parseInt(quantity);
-            if (isNaN(qty) || qty <= 0) { showToast('Weka kiasi sahihi', 'warning'); return; }
+            if (isNaN(qty) || qty <= 0) { showToast(t('err_invalid_qty'), 'warning'); return; }
             const inCart = getInCartQty(selectedProduct.id);
             const available = selectedProduct.stock - inCart;
-            if (qty > available) { showToast(`Kiasi hakitoshi. Inabakia: ${available}`, 'warning'); return; }
+            if (qty > available) { showToast(t('err_not_enough', { available }), 'warning'); return; }
             
             const existing = cart.find(i => i.product_id === selectedProduct.id);
             if (existing) {
@@ -441,7 +583,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             selectedProduct = null;
             quantity = '1';
             render();
-            showToast(`Imeongezwa kikapuni! Kikapu kina bidhaa ${cart.length}`, 'success');
+            showToast(t('msg_added', { count: cart.length }), 'success');
         }
 
         function removeFromCart(productId) { cart = cart.filter(i => i.product_id !== productId); render(); }
@@ -454,7 +596,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             const otherInCart = cart.filter(i => i.product_id !== productId).reduce((s, i) => s + i.quantity, 0);
             const available = product.stock - otherInCart;
             if (newQty < 1) { removeFromCart(productId); return; }
-            if (newQty > available) { showToast(`Kiasi hakitoshi. Inabakia: ${available}`, 'warning'); return; }
+            if (newQty > available) { showToast(t('err_not_enough', { available }), 'warning'); return; }
             item.quantity = newQty;
             item.total_price = newQty * item.unit_price;
             render();
@@ -495,7 +637,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         }
 
         async function handleSale() {
-            if (cart.length === 0) { showToast('Tafadhali ongeza bidhaa kwenye kikapu', 'warning'); return; }
+            if (cart.length === 0) { showToast(t('err_cart_empty'), 'warning'); return; }
             if (loading) return; // double-submit guard: one request per tap
             loading = true;
             const clientSaleKey = 'uza-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
@@ -503,7 +645,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             const token = localStorage.getItem('userToken');
             try {
                 const items = cart.map(i => ({ product_id: i.product_id, quantity: i.quantity, unit_price: i.unit_price }));
-                const saleData = { items, sale_date: saleDate, payment_method: 'cash', notes: `Muuzaji: ${userData?.full_name || userData?.email}`, clientSaleKey };
+                const saleData = { items, sale_date: saleDate, payment_method: 'cash', notes: t('note_seller', { seller: userData?.full_name || userData?.email }), clientSaleKey };
                 
                 // Create/get customer and attach customer_id if name provided
                 if (customerName.trim()) {
@@ -533,19 +675,19 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     ({ res, body: result } = await sendSale());
                 }
                 if (!result && res && res.status >= 500) {
-                    throw new Error('Server error ' + res.status);
+                    throw new Error(t('server_error', { status: res.status }));
                 }
                 if (res.ok) {
                     const total = getCartTotal();
-                    showToast(`Mauzo yamekamilika! Jumla: ${formatCurrency(total)}`, 'success');
+                    showToast(t('msg_sale_done', { total: formatCurrency(total) }), 'success');
                     cart = []; customerName = ''; customerPhone = '';
                     await loadProducts();
                 } else if (result && result.error) {
                     showToast(result.error, 'error');
                 } else {
-                    showToast(res.status >= 500 ? 'Server imekutana na hitilafu (' + res.status + '). Jaribu tena.' : 'Mauzo yameshindikana (' + res.status + ').', 'error');
+                    showToast(res.status >= 500 ? t('err_server', { status: res.status }) : t('err_sale_failed', { status: res.status }), 'error');
                 }
-            } catch(e) { showToast(e && e.message ? e.message : 'Hitilafu ya mtandao', 'error'); }
+            } catch(e) { showToast(e && e.message ? e.message : t('err_network'), 'error'); }
             finally { loading = false; render(); }
         }
 
@@ -558,8 +700,8 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             if (!showCart) { modal.style.display = 'none'; return; }
             modal.style.display = 'flex';
             content.innerHTML = `
-                <div class="modal-header"><div class="modal-title">${ic('cart', 17)} Kikapu chako</div><span style="cursor:pointer;" onclick="closeCartModal()"><i class="fa-solid fa-xmark" style="font-size:22px;" aria-hidden="true"></i></span></div>
-                ${cart.length === 0 ? `<div style="text-align:center;padding:40px;">Kikapu tupu</div>` : `
+                <div class="modal-header"><div class="modal-title">${ic('cart', 17)} ${t('cart_title')}</div><span style="cursor:pointer;" onclick="closeCartModal()"><i class="fa-solid fa-xmark" style="font-size:22px;" aria-hidden="true"></i></span></div>
+                ${cart.length === 0 ? `<div style="text-align:center;padding:40px;">${t('cart_empty')}</div>` : `
                     ${cart.map(item => `
                         <div class="cart-item">
                             <div><div style="font-weight:700;">${escapeHtml(item.name)}</div><div>${formatCurrency(item.unit_price)} × ${item.quantity}</div></div>
@@ -567,17 +709,17 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                                 <button class="cart-qty-btn" onclick="updateCartQty('${item.product_id}', -1)">-</button>
                                 <span style="min-width:30px;text-align:center;">${item.quantity}</span>
                                 <button class="cart-qty-btn" onclick="updateCartQty('${item.product_id}', 1)">+</button>
-                                <button class="cart-remove" onclick="removeFromCart('${item.product_id}')">Futa</button>
+                                <button class="cart-remove" onclick="removeFromCart('${item.product_id}')">${t('btn_remove')}</button>
                             </div>
                         </div>
                     `).join('')}
                     <div class="cart-summary">
-                        <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span>Aina za Bidhaa:</span><strong>${cart.length}</strong></div>
-                        <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span>Jumla ya Kiasi:</span><strong>${getTotalItems()}</strong></div>
+                        <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span>${t('cart_types_label')}</span><strong>${cart.length}</strong></div>
+                        <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span>${t('cart_total_qty')}</span><strong>${getTotalItems()}</strong></div>
                         <div style="height:1px;background:#ecf0f1;margin:10px 0;"></div>
-                        <div style="display:flex;justify-content:space-between;"><span style="font-weight:700;">JUMLA YA MALIPO:</span><strong style="color:#27ae60;">${formatCurrency(getCartTotal())}</strong></div>
+                        <div style="display:flex;justify-content:space-between;"><span style="font-weight:700;">${t('cart_total_payment')}</span><strong style="color:#27ae60;">${formatCurrency(getCartTotal())}</strong></div>
                     </div>
-                    <div class="checkout-modal-btn" onclick="closeCartModal();document.getElementById('saleBtn').scrollIntoView({behavior:'smooth'});">Endelea na Mauzo</div>
+                    <div class="checkout-modal-btn" onclick="closeCartModal();document.getElementById('saleBtn').scrollIntoView({behavior:'smooth'});">${t('btn_continue_sale')}</div>
                 `}
             `;
         }
@@ -590,59 +732,59 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             
             container.innerHTML = `
                 <div class="header-card">
-                    <div class="header-top"><div class="title">${ic('cart', 18)} Uza Bidhaa</div><button class="refresh-btn" onclick="loadProducts()">${ic('refresh', 16)}</button></div>
-                    <div>Biashara: <strong>${escapeHtml(userData?.business_name || 'Biashara Yako')}</strong></div>
-                    <div style="font-size:12px;color:#7f8c8d;">Unauza kama: ${escapeHtml(userData?.full_name || userData?.email)}</div>
+                    <div class="header-top"><div class="title">${ic('cart', 18)} ${t('page_heading')}</div><button class="refresh-btn" onclick="loadProducts()">${ic('refresh', 16)}</button></div>
+                    <div>${t('business_label')} <strong>${escapeHtml(userData?.business_name || t('business_fallback'))}</strong></div>
+                    <div style="font-size:12px;color:#7f8c8d;">${t('selling_as')} ${escapeHtml(userData?.full_name || userData?.email)}</div>
                 </div>
                 
                 <div class="form-card">
-                    <div class="section-header"><span class="label">Chagua Bidhaa</span><button class="refresh-btn" style="font-size:14px;" onclick="loadProducts()">${ic('refresh', 13)} Sasisha</button></div>
-                    <div class="search-box">${ic('search', 15)}<input type="text" id="searchInput" class="search-input" placeholder="Tafuta bidhaa..." value="${escapeHtml(searchQuery)}"></div>
+                    <div class="section-header"><span class="label">${t('select_product_label')}</span><button class="refresh-btn" style="font-size:14px;" onclick="loadProducts()">${ic('refresh', 13)} ${t('btn_refresh')}</button></div>
+                    <div class="search-box">${ic('search', 15)}<input type="text" id="searchInput" class="search-input" placeholder="${t('search_placeholder')}" value="${escapeHtml(searchQuery)}"></div>
                     
                     ${loadingProducts ? `<div class="loading-spinner"></div>` : productsError ? `
                         <div style="text-align:center;padding:30px;">
                             <div style="color:#f39c12;">${ic('warning', 32)}</div>
-                            <div style="margin:8px 0;font-weight:600;">Imeshindikana kupakia bidhaa</div>
-                            <div style="font-size:12px;color:#7f8c8d;margin-bottom:12px;">Hitilafu ya mtandao au server. Hakikisha umeunganishwa kwenye internet kisha jaribu tena.</div>
-                            <button class="refresh-btn" style="padding:8px 20px;" onclick="loadProducts()">🔄 Jaribu tena</button>
+                            <div style="margin:8px 0;font-weight:600;">${t('err_load_products')}</div>
+                            <div style="font-size:12px;color:#7f8c8d;margin-bottom:12px;">${t('err_load_hint')}</div>
+                            <button class="refresh-btn" style="padding:8px 20px;" onclick="loadProducts()">${t('btn_retry')}</button>
                         </div>` : `
                         <div class="products-grid" id="productGridHost">
-                            ${filteredProducts.length === 0 ? `<div style="text-align:center;padding:40px;">Hakuna bidhaa zilizopo</div>` : 
+                            ${filteredProducts.length === 0 ? `<div style="text-align:center;padding:40px;">${t('empty_products')}</div>` : 
                                 filteredProducts.map(p => {
                                     const inCart = getInCartQty(p.id);
                                     const avail = p.stock - inCart;
                                     const stockClass = avail <= 0 ? 'out' : (avail <= 5 ? 'low' : '');
                                     return `
                                         <div class="product-item ${selectedProduct?.id === p.id ? 'selected' : ''} ${avail <= 0 ? 'out-of-stock' : ''}" onclick="${avail > 0 ? `selectProduct('${p.id}')` : ''}">
-                                            <div class="product-header"><span class="product-name">${escapeHtml(p.name)}</span><span class="stock-badge ${stockClass}">${avail} imebaki${inCart > 0 ? ` (${inCart} kikapuni)` : ''}</span></div>
-                                            <div class="product-category">${escapeHtml(p.category || 'Hakuna kategoria')}</div>
-                                            <div class="product-footer"><span class="price">${sellingPriceLabel(p)}</span><span class="owner-badge">${p.seller_id === userData?.id ? 'Yako' : 'Biashara'}</span></div>
+                                            <div class="product-header"><span class="product-name">${escapeHtml(p.name)}</span><span class="stock-badge ${stockClass}">${t('stock_left', { count: avail })}${inCart > 0 ? ` ${t('stock_in_cart', { count: inCart })}` : ''}</span></div>
+                                            <div class="product-category">${escapeHtml(p.category || t('no_category'))}</div>
+                                            <div class="product-footer"><span class="price">${sellingPriceLabel(p)}</span><span class="owner-badge">${p.seller_id === userData?.id ? t('badge_yours') : t('badge_business')}</span></div>
                                         </div>
                                     `;
                                 }).join('')
                             }
                         </div>
-                        <div style="font-size:12px;color:#7f8c8d;margin-top:12px;text-align:center;">${filteredProducts.length} bidhaa zinaonyeshwa</div>
+                        <div style="font-size:12px;color:#7f8c8d;margin-top:12px;text-align:center;">${t('products_shown', { count: filteredProducts.length })}</div>
                     `}
                 </div>
                 
                 ${selectedProduct ? `
                     <div class="selected-product-card">
-                        <div style="font-weight:700;">${ic('box', 15)} Bidhaa Iliyochaguliwa:</div>
-                        <div><strong>${escapeHtml(selectedProduct.name)}</strong> <span style="font-size:12px;color:#7f8c8d;">Stock: ${availableStock}</span></div>
-                        <div>Bei ya kuuzia: ${sellingPriceLabel(selectedProduct)}</div>
-                        <div style="font-size:12px;color:#7f8c8d;margin-top:6px;">Tumia dock ya chini kuweka idadi na kuongeza kikapuni — inafuata scroll yako.</div>
+                        <div style="font-weight:700;">${ic('box', 15)} ${t('selected_product_label')}</div>
+                        <div><strong>${escapeHtml(selectedProduct.name)}</strong> <span style="font-size:12px;color:#7f8c8d;">${t('stock_label', { stock: availableStock })}</span></div>
+                        <div>${t('selling_price_label')} ${sellingPriceLabel(selectedProduct)}</div>
+                        <div style="font-size:12px;color:#7f8c8d;margin-top:6px;">${t('dock_hint')}</div>
                     </div>
                 ` : ''}
                 
                 <div class="form-card">
-                    <div class="label">Jina la Mteja <span style="font-size:11px;color:#95a5a6;">(Si-Lazima)</span></div>
-                    <input type="text" id="customerNameInput" class="input-field" placeholder="Weka jina la mteja (au acha tupu)" value="${escapeHtml(customerName)}">
+                    <div class="label">${t('label_customer_name')} <span style="font-size:11px;color:#95a5a6;">${t('optional_tag')}</span></div>
+                    <input type="text" id="customerNameInput" class="input-field" placeholder="${t('placeholder_customer_name')}" value="${escapeHtml(customerName)}">
                     
-                    <div class="label" style="margin-top:16px;">Namba ya Simu ya Mteja</div>
-                    <input type="tel" id="customerPhoneInput" class="input-field" placeholder="Weka namba ya simu" value="${escapeHtml(customerPhone)}">
+                    <div class="label" style="margin-top:16px;">${t('label_customer_phone')}</div>
+                    <input type="tel" id="customerPhoneInput" class="input-field" placeholder="${t('placeholder_customer_phone')}" value="${escapeHtml(customerPhone)}">
                     
-                    <div class="label" style="margin-top:16px;">Tarehe ya Mauzo</div>
+                    <div class="label" style="margin-top:16px;">${t('label_sale_date')}</div>
                     <input type="date" id="saleDateInput" class="input-field" value="${saleDate}">
                 </div>
                 
@@ -651,24 +793,24 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                         <div class="dock-row">
                             <div class="dock-prod">
                                 <div class="dock-name">${escapeHtml(selectedProduct.name)}</div>
-                                <div class="dock-price">${sellingPriceLabel(selectedProduct)} • Stock: ${availableStock}</div>
+                                <div class="dock-price">${sellingPriceLabel(selectedProduct)} • ${t('stock_label', { stock: availableStock })}</div>
                             </div>
                             <div class="quantity-control dock-qty">
                                 <button class="qty-btn" onclick="changeQty(-1)">−</button>
                                 <input type="number" id="qtyInput" class="qty-input" value="${quantity}" min="1" max="${availableStock}">
                                 <button class="qty-btn" onclick="changeQty(1)">+</button>
                             </div>
-                            <button class="add-cart-btn dock-add ${isOut ? 'disabled' : ''}" onclick="addToCart()" ${isOut ? 'disabled' : ''}>${isOut ? 'Hakuna Stock' : '<i class="fa-solid fa-plus" style="font-size:13px"></i> Ongeza'}</button>
+                            <button class="add-cart-btn dock-add ${isOut ? 'disabled' : ''}" onclick="addToCart()" ${isOut ? 'disabled' : ''}>${isOut ? t('no_stock') : '<i class="fa-solid fa-plus" style="font-size:13px"></i> ' + t('btn_add')}</button>
                         </div>
                     ` : ''}
                     <div class="dock-row">
                         <div class="dock-cart-info" onclick="openCartModal()">
                             <span class="dock-cart-badge">${getTotalItems()}</span>
                             <span>${formatCurrency(getCartTotal())}</span>
-                            <span style="margin-left:auto;font-size:12px;opacity:.8;">Kikapu ›</span>
+                            <span style="margin-left:auto;font-size:12px;opacity:.8;">${t('dock_cart')}</span>
                         </div>
                         <button class="dock-checkout ${cart.length === 0 || loading ? 'disabled' : ''}" ${cart.length === 0 || loading ? 'disabled' : ''} onclick="handleSale()">
-                            ${loading ? '<div class="loading-spinner" style="width:18px;height:18px;margin:0 auto;"></div>' : 'KAMILISHA'}
+                            ${loading ? '<div class="loading-spinner" style="width:18px;height:18px;margin:0 auto;"></div>' : t('btn_complete')}
                         </button>
                     </div>
                 </div>
@@ -676,20 +818,20 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 <div class="ai-entry-btn" onclick="openAiSaleModal()">
                     <span class="ai-entry-ic"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
                     <div style="flex:1">
-                        <div style="font-weight:700;color:#2c3e50">Ingiza Mauzo kwa Picha (AI)</div>
-                        <div style="font-size:12px;color:#7f8c8d">Ulioandika kwenye karatasi? Piga picha, AI itayafananisha na bidhaa zako na kuyaweka kikapuni</div>
+                        <div style="font-weight:700;color:#2c3e50">${t('ai_entry_title')}</div>
+                        <div style="font-size:12px;color:#7f8c8d">${t('ai_entry_sub')}</div>
                     </div>
                     <span style="color:#95a5a6;font-size:20px">›</span>
                 </div>
                 
                 <div class="instructions-box">
-                    <div class="instructions-title">${ic('doc', 14)} Maelekezo ya Kikapu:</div>
+                    <div class="instructions-title">${ic('doc', 14)} ${t('instructions_title')}</div>
                     <div class="instructions-text">
-                        1. Chagua bidhaa kutoka kwenye orodha<br>
-                        2. Weka kiasi unachouza<br>
-                        3. Bofya "Ongeza Kikapuni"<br>
-                        4. Rudia kwa bidhaa zingine<br>
-                        5. Kamilisha mauzo
+                        ${t('instructions_1')}<br>
+                        ${t('instructions_2')}<br>
+                        ${t('instructions_3')}<br>
+                        ${t('instructions_4')}<br>
+                        ${t('instructions_5')}
                     </div>
                 </div>
             `;
@@ -736,43 +878,54 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             await loadUserData();
             await loadCustomers();
         }
+
+        // Repaint everything the widget cannot reach (JS-built markup) when
+        // the visitor switches language.
+        if (window.DM && typeof window.DM.onChange === 'function') {
+            window.DM.onChange(() => {
+                render();
+                renderCartModal();
+                updateSidebarUser();
+                if (typeof window.uzaAiRepaint === 'function') window.uzaAiRepaint();
+            });
+        }
         init();
     </script>
 <!-- ===== AI Sales Import Modal ===== -->
 <div id="aiSaleModal" class="ai-modal-overlay">
 <div class="ai-modal-content">
-<div class="ai-modal-header"><div class="ai-modal-title">Ingiza Mauzo kwa Picha (AI)</div><div class="ai-modal-close" onclick="closeAiSaleModal()">✖</div></div>
+<div class="ai-modal-header"><div class="ai-modal-title" data-i18n="muuzaji_uza.ai_entry_title">Ingiza Mauzo kwa Picha (AI)</div><div class="ai-modal-close" onclick="closeAiSaleModal()" data-i18n="muuzaji_uza.ai_btn_close">✖</div></div>
 <div class="ai-modal-body">
 <div id="aiSaleBanner" class="ai-banner"></div>
 <div id="aiSaleUploadSection">
 <div id="aiSaleUploadZone" class="ai-upload-zone">
 <div style="display:flex;justify-content:center;color:#7c5cbf;"><i class="fa-solid fa-camera" style="font-size:38px;"></i></div>
-<div class="ai-uz-main">Piga picha ya mauzo yaliyoandikwa kwenye karatasi</div>
-<div class="ai-uz-sub">AI itasoma maandishi, kuyafananisha na bidhaa zako zilizopo, na kutumia bei uliyoandika — au bei ya kuuzia ya mfumo ukawa hauna.<br>Unaweza kutuma picha hadi 6.</div>
+<div class="ai-uz-main" data-i18n="muuzaji_uza.ai_upload_main">Piga picha ya mauzo yaliyoandikwa kwenye karatasi</div>
+<div class="ai-uz-sub"><span data-i18n="muuzaji_uza.ai_upload_sub">AI itasoma maandishi, kuyafananisha na bidhaa zako zilizopo, na kutumia bei uliyoandika — au bei ya kuuzia ya mfumo ukawa hauna.</span><br><span data-i18n="muuzaji_uza.ai_upload_limit">Unaweza kutuma picha hadi 6.</span></div>
 </div>
-<button type="button" class="ai-btn ai-btn-camera" onclick="captureAiSaleImage()"><i class="fa-solid fa-camera" style="font-size:17px;"></i> Piga Picha Sasa (Kamera)</button>
+<button type="button" class="ai-btn ai-btn-camera" onclick="captureAiSaleImage()"><i class="fa-solid fa-camera" style="font-size:17px;"></i> <span data-i18n="muuzaji_uza.ai_btn_camera">Piga Picha Sasa (Kamera)</span></button>
 <input type="file" id="aiSaleFilesInput" accept="image/*" multiple style="display:none">
 <div id="aiSalePreviewGrid" class="ai-preview-grid"></div>
-<div class="ai-controls"><button type="button" class="ai-btn ai-btn-process" id="aiSaleProcessBtn" onclick="startAiSaleProcess()"><i class="fa-solid fa-barcode" style="font-size:17px;"></i> Chambua Mauzo</button></div>
+<div class="ai-controls"><button type="button" class="ai-btn ai-btn-process" id="aiSaleProcessBtn" onclick="startAiSaleProcess()"><i class="fa-solid fa-barcode" style="font-size:17px;"></i> <span data-i18n="muuzaji_uza.ai_btn_process">Chambua Mauzo</span></button></div>
 </div>
 <div id="aiSaleProgress" class="ai-progress" style="display:none">
 <div class="ai-dots"><span></span><span></span><span></span><span></span></div>
-<div id="aiSaleProgressText" class="ai-progress-text">Inatayarisha picha...</div>
+<div id="aiSaleProgressText" class="ai-progress-text" data-i18n="muuzaji_uza.ai_progress_1">Inatayarisha picha...</div>
 </div>
 <div id="aiSaleResultsWrap" style="display:none">
 <div class="ai-results-summary" id="aiSaleResultsSummary"></div>
 <div class="ai-table-scroll">
 <table class="ai-table">
-<thead><tr><th>Ulioandika</th><th>Bidhaa (mfumo)</th><th>Idadi</th><th>Bei (kipimo)</th><th>Jumla</th><th>Haki</th><th>Hifadhi</th></tr></thead>
+<thead><tr><th data-i18n="muuzaji_uza.ai_th_written">Ulioandika</th><th data-i18n="muuzaji_uza.ai_th_product">Bidhaa (mfumo)</th><th data-i18n="muuzaji_uza.ai_th_qty">Idadi</th><th data-i18n="muuzaji_uza.ai_th_price">Bei (kipimo)</th><th data-i18n="muuzaji_uza.ai_th_total">Jumla</th><th data-i18n="muuzaji_uza.ai_th_verify">Haki</th><th data-i18n="muuzaji_uza.btn_save">Hifadhi</th></tr></thead>
 <tbody id="aiSaleTableBody"></tbody>
 </table>
 </div>
 <div style="margin-top:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-<span style="font-size:12px;color:#7f8c8d">Rekebisha idadi au bei kama inahitajika, kisha bonyeza "Hifadhi" kwa kila mstari au "Hifadhi Zote". Mauzo yataingia kwenye rekodi na hisa itapungua.</span>
-<button type="button" class="ai-reset" onclick="resetAiSaleSession()">Anza Upya</button>
+<span style="font-size:12px;color:#7f8c8d" data-i18n="muuzaji_uza.ai_results_hint">Rekebisha idadi au bei kama inahitajika, kisha bonyeza "Hifadhi" kwa kila mstari au "Hifadhi Zote". Mauzo yataingia kwenye rekodi na hisa itapungua.</span>
+<button type="button" class="ai-reset" onclick="resetAiSaleSession()" data-i18n="muuzaji_uza.ai_btn_reset">Anza Upya</button>
 </div>
 <div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-<button type="button" class="ai-verify-btn" id="aiSaleCommitAllBtn" style="background:#27ae60;padding:12px 22px;font-size:14px" onclick="commitAllAiSaleRows()">Hifadhi Zote</button>
+<button type="button" class="ai-verify-btn" id="aiSaleCommitAllBtn" style="background:#27ae60;padding:12px 22px;font-size:14px" onclick="commitAllAiSaleRows()" data-i18n="muuzaji_uza.ai_btn_save_all">Hifadhi Zote</button>
 <span id="aiSaleCommitAllStatus" style="font-size:12px;color:#7f8c8d"></span>
 </div>
 </div>
@@ -784,7 +937,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
 var AI_MAX_IMAGES=6;
 var AI_MAX_PER_IMAGE_B64=6*1024*1024;
 var AI_MAX_TOTAL_B64=9*1024*1024;
-var AI_PROGRESS_MSGS=['Inatayarisha picha...','Inasoma maandishi kwenye karatasi...','Inatafuta bidhaa zinazofanana...','Inatuma kwa Gemini...','Inafananisha na bidhaa zako...','Inakokotoa bei...','Inatayarisha matokeo...','Karibu kuisha...','Tafadhali subiri...'];
+var AI_PROGRESS_MSGS=[t('ai_progress_1'),t('ai_progress_2'),t('ai_progress_3'),t('ai_progress_4'),t('ai_progress_5'),t('ai_progress_6'),t('ai_progress_7'),t('ai_progress_8'),t('ai_progress_9')];
 var aiImages=[];var aiRows=[];var aiProcessing=false;var aiCommitBusy=false;var aiBatchBusy=false;
 var aiProgressTimer=null;var aiUploadReady=false;var aiTableSyncReady=false;
 function aiToken(){return localStorage.getItem('userToken');}
@@ -795,25 +948,25 @@ function showBanner(type,msg){var b=$('aiSaleBanner');if(!b)return;b.className='
 function hideBanner(){var b=$('aiSaleBanner');if(b)b.className='ai-banner';}
 function stopProgress(){if(aiProgressTimer){clearInterval(aiProgressTimer);aiProgressTimer=null;}}
 function startProgress(){stopProgress();var i=0;var el=$('aiSaleProgressText');if(el)el.textContent=AI_PROGRESS_MSGS[0];aiProgressTimer=setInterval(function(){i=(i+1)%AI_PROGRESS_MSGS.length;var e=$('aiSaleProgressText');if(e)e.textContent=AI_PROGRESS_MSGS[i];},2400);}
-function confirmBox(title,msg){return new Promise(function(res){var ov=document.createElement('div');ov.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:3000;';var box=document.createElement('div');box.style.cssText='background:#fff;border-radius:28px;width:85%;max-width:340px;padding:24px 20px;text-align:center;';box.innerHTML='<div style="font-size:18px;font-weight:800;margin-bottom:12px;color:#2c3e50;">'+esc(title)+'</div><div style="font-size:14px;color:#5d6d7e;margin-bottom:24px;white-space:pre-line;text-align:left;"></div><div style="display:flex;gap:12px;"><div style="flex:1;background:#95a5a6;padding:12px;border-radius:40px;color:#fff;cursor:pointer;font-weight:700;" class="aCNo">Ghairi</div><div style="flex:1;background:#27ae60;padding:12px;border-radius:40px;color:#fff;cursor:pointer;font-weight:700;" class="aCYes">Endelea</div></div>';ov.appendChild(box);document.body.appendChild(ov);box.querySelector('div:nth-child(2)').textContent=msg;box.querySelector('.aCYes').onclick=function(){ov.remove();res(true);};box.querySelector('.aCNo').onclick=function(){ov.remove();res(false);};ov.addEventListener('click',function(e){if(e.target===ov){ov.remove();res(false);}});});}
-function checkB64(name,b64,cb){var total=aiImages.reduce(function(s,i){return s+(i.base64?i.base64.length:0);},0)+b64.length;if(b64.length>AI_MAX_PER_IMAGE_B64){showBanner('error','Picha "'+name+'" ni kubwa mno baada ya kubanwa.');cb(null);return;}if(total>AI_MAX_TOTAL_B64){showBanner('error','Picha zote ni kubwa mno kwa jumla. Ondoa baadhi.');cb(null);return;}cb(b64);}
-function compressImage(file,cb){if(file.size>14*1024*1024){showBanner('error','Picha "'+file.name+'" ni kubwa mno.');cb(null);return;}var reader=new FileReader();reader.onerror=function(){cb(null);};reader.onload=function(){var original=reader.result;var img=new Image();img.onerror=function(){var b64=original.indexOf(',')>=0?original.slice(original.indexOf(',')+1):original;checkB64(file.name,b64,cb);};img.onload=function(){try{var maxDim=1600;var w=img.naturalWidth,h=img.naturalHeight;var scale=Math.max(w,h)>maxDim?maxDim/Math.max(w,h):1;var canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(w*scale));canvas.height=Math.max(1,Math.round(h*scale));var ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);var out=canvas.toDataURL('image/jpeg',0.85);var b64=out.indexOf(',')>=0?out.slice(out.indexOf(',')+1):out;checkB64(file.name,b64,cb);}catch(e){cb(null);}};img.src=original;};reader.readAsDataURL(file);}
-function addFiles(files){if(aiProcessing)return;var list=Array.prototype.slice.call(files||[]);for(var i=0;i<list.length;i++){var f=list[i];var okType=f.type.indexOf('image/')===0||/\.(png|jpe?g|webp|heic|heif|bmp|tiff?)$/i.test(f.name);if(!okType){showBanner('error','Picha "'+(f.name||'')+'" imekataliwa.');continue;}if(aiImages.length>=AI_MAX_IMAGES){showBanner('error','Umechagua picha '+aiImages.length+'. Upeo ni '+AI_MAX_IMAGES+'.');break;}var item={id:'ais'+Date.now()+'_'+i+Math.random().toString(36).slice(2,6),name:f.name||('image'+(i+1)),base64:null,preview:null};aiImages.push(item);compressImage(f,function(b64){var ix=aiImages.findIndex(function(x){return x.id===item.id;});if(ix<0)return;if(!b64){aiImages.splice(ix,1);refreshUploadUi();return;}aiImages[ix].base64=b64;aiImages[ix].preview='data:image/jpeg;base64,'+b64;refreshUploadUi();});}refreshUploadUi();}
+function confirmBox(title,msg){return new Promise(function(res){var ov=document.createElement('div');ov.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:3000;';var box=document.createElement('div');box.style.cssText='background:#fff;border-radius:28px;width:85%;max-width:340px;padding:24px 20px;text-align:center;';box.innerHTML='<div style="font-size:18px;font-weight:800;margin-bottom:12px;color:#2c3e50;">'+esc(title)+'</div><div style="font-size:14px;color:#5d6d7e;margin-bottom:24px;white-space:pre-line;text-align:left;"></div><div style="display:flex;gap:12px;"><div style="flex:1;background:#95a5a6;padding:12px;border-radius:40px;color:#fff;cursor:pointer;font-weight:700;" class="aCNo">'+t('btn_cancel')+'</div><div style="flex:1;background:#27ae60;padding:12px;border-radius:40px;color:#fff;cursor:pointer;font-weight:700;" class="aCYes">'+t('btn_continue')+'</div></div>';ov.appendChild(box);document.body.appendChild(ov);box.querySelector('div:nth-child(2)').textContent=msg;box.querySelector('.aCYes').onclick=function(){ov.remove();res(true);};box.querySelector('.aCNo').onclick=function(){ov.remove();res(false);};ov.addEventListener('click',function(e){if(e.target===ov){ov.remove();res(false);}});});}
+function checkB64(name,b64,cb){var total=aiImages.reduce(function(s,i){return s+(i.base64?i.base64.length:0);},0)+b64.length;if(b64.length>AI_MAX_PER_IMAGE_B64){showBanner('error',t('ai_err_too_large',{name:name}));cb(null);return;}if(total>AI_MAX_TOTAL_B64){showBanner('error',t('ai_err_total_too_large'));cb(null);return;}cb(b64);}
+function compressImage(file,cb){if(file.size>14*1024*1024){showBanner('error',t('ai_err_file_too_large',{name:file.name}));cb(null);return;}var reader=new FileReader();reader.onerror=function(){cb(null);};reader.onload=function(){var original=reader.result;var img=new Image();img.onerror=function(){var b64=original.indexOf(',')>=0?original.slice(original.indexOf(',')+1):original;checkB64(file.name,b64,cb);};img.onload=function(){try{var maxDim=1600;var w=img.naturalWidth,h=img.naturalHeight;var scale=Math.max(w,h)>maxDim?maxDim/Math.max(w,h):1;var canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(w*scale));canvas.height=Math.max(1,Math.round(h*scale));var ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);var out=canvas.toDataURL('image/jpeg',0.85);var b64=out.indexOf(',')>=0?out.slice(out.indexOf(',')+1):out;checkB64(file.name,b64,cb);}catch(e){cb(null);}};img.src=original;};reader.readAsDataURL(file);}
+function addFiles(files){if(aiProcessing)return;var list=Array.prototype.slice.call(files||[]);for(var i=0;i<list.length;i++){var f=list[i];var okType=f.type.indexOf('image/')===0||/\.(png|jpe?g|webp|heic|heif|bmp|tiff?)$/i.test(f.name);if(!okType){showBanner('error',t('ai_err_file_rejected',{name:(f.name||'')}));continue;}if(aiImages.length>=AI_MAX_IMAGES){showBanner('error',t('ai_err_too_many',{selected:aiImages.length,limit:AI_MAX_IMAGES}));break;}var item={id:'ais'+Date.now()+'_'+i+Math.random().toString(36).slice(2,6),name:f.name||('image'+(i+1)),base64:null,preview:null};aiImages.push(item);compressImage(f,function(b64){var ix=aiImages.findIndex(function(x){return x.id===item.id;});if(ix<0)return;if(!b64){aiImages.splice(ix,1);refreshUploadUi();return;}aiImages[ix].base64=b64;aiImages[ix].preview='data:image/jpeg;base64,'+b64;refreshUploadUi();});}refreshUploadUi();}
 function removeImage(id){aiImages=aiImages.filter(function(im){return im.id!==id;});refreshUploadUi();}
-function refreshUploadUi(){var grid=$('aiSalePreviewGrid');if(grid){grid.innerHTML=aiImages.length===0?'':aiImages.map(function(im){return '<div class="ai-preview-item"><img src="'+esc(im.preview||'')+'" alt=""><span class="ai-preview-remove" onclick="removeAiSaleImage(\''+im.id+'\')">✕</span><div class="ai-preview-name">'+esc(im.name)+'</div></div>';}).join('');}var pb=$('aiSaleProcessBtn');if(pb){pb.disabled=aiImages.length===0||aiProcessing;pb.innerHTML='<i class="fa-solid fa-barcode" style="font-size:17px;"></i> Chambua Mauzo'+(aiImages.length?' ('+aiImages.length+')':'');}}
+function refreshUploadUi(){var grid=$('aiSalePreviewGrid');if(grid){grid.innerHTML=aiImages.length===0?'':aiImages.map(function(im){return '<div class="ai-preview-item"><img src="'+esc(im.preview||'')+'" alt=""><span class="ai-preview-remove" onclick="removeAiSaleImage(\''+im.id+'\')">'+t('ai_preview_remove')+'</span><div class="ai-preview-name">'+esc(im.name)+'</div></div>';}).join('');}var pb=$('aiSaleProcessBtn');if(pb){pb.disabled=aiImages.length===0||aiProcessing;pb.innerHTML='<i class="fa-solid fa-barcode" style="font-size:17px;"></i> '+t('ai_btn_process')+(aiImages.length?' ('+aiImages.length+')':'');}}
 function initUploadHandlers(){if(aiUploadReady)return;aiUploadReady=true;var zone=$('aiSaleUploadZone'),input=$('aiSaleFilesInput');if(zone)zone.addEventListener('click',function(){if(!aiProcessing)input.click();});['dragover','dragenter'].forEach(function(ev){zone.addEventListener(ev,function(e){e.preventDefault();zone.classList.add('drag');});});['dragleave','drop'].forEach(function(ev){zone.addEventListener(ev,function(e){e.preventDefault();zone.classList.remove('drag');});});zone.addEventListener('drop',function(e){if(e.dataTransfer&&e.dataTransfer.files)addFiles(e.dataTransfer.files);});input.addEventListener('change',function(){addFiles(input.files);input.value='';});}
 function captureImage(){if(aiProcessing)return;var ci=document.createElement('input');ci.type='file';ci.accept='image/*';ci.setAttribute('capture','environment');ci.onchange=function(){if(ci.files&&ci.files.length)addFiles(ci.files);};ci.click();}
-function aiErrMsg(data){if(!data||!data.code)return'Uchambuzi umeshindikana. Jaribu tena.';var c=String(data.code).toUpperCase();if(['GEMINI_RATE_LIMIT','GEMINI_TIMEOUT','GEMINI_API_ERROR','GEMINI_NETWORK','GEMINI_KEY_MISSING','AI_SALES_IMPORT_ERROR','AI_IMPORT_ERROR'].indexOf(c)>=0)return'Uchambuzi umeshindikana (Gemini ilikuwa na tatizo). Jaribu tena baada ya muda mfupi.';return data.error||'Uchambuzi umeshindikana. Jaribu tena.';}
-async function startProcess(){if(aiProcessing)return;var ready=aiImages.filter(function(im){return im.base64;});if(!ready.length){showBanner('error','Chagua angalau picha moja kwanza.');return;}if(aiRows.length){var ok=await confirmBox('Chambua tena?','Matokeo ya sasa yataondolewa. Picha zako zitabaki.');if(!ok)return;}aiProcessing=true;aiRows=[];$('aiSaleResultsWrap').style.display='none';$('aiSaleUploadSection').style.display='none';$('aiSaleProgress').style.display='block';hideBanner();startProgress();try{var payload={images:ready.map(function(im){return{name:im.name,base64:im.base64};})};var r=await fetch(API_BASE_URL+'/api/sales/ai-import',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+aiToken()},body:JSON.stringify(payload)});var data=await r.json().catch(function(){return{};});$('aiSaleProgress').style.display='none';$('aiSaleUploadSection').style.display='block';if(r.ok&&data&&Array.isArray(data.items)&&data.items.length>0){aiRows=data.items.map(function(it){return Object.assign({committed:false},it);});$('aiSaleResultsWrap').style.display='block';renderResults();showBanner('info','Matokeo yapo. Hakiki kila mstari kisha ubonyeze "Hifadhi".');}else if(r.ok){showBanner('error','Hakuna mauzo yaliyotambuliwa. Jaribu picha nyepesi zenye mwanga mzuri.');}else{showBanner('error',aiErrMsg(data));}}catch(e){$('aiSaleProgress').style.display='none';$('aiSaleUploadSection').style.display='block';showBanner('error','Hitilafu ya mtandao. Jaribu tena.');}finally{stopProgress();aiProcessing=false;refreshUploadUi();}}
-function updateSummary(){var total=aiRows.length;var matched=aiRows.filter(function(r){return r.status==='MATCHED';}).length;var review=aiRows.filter(function(r){return r.needsReview;}).length;var done=aiRows.filter(function(r){return r.committed;}).length;var s=$('aiSaleResultsSummary');if(!s)return;s.innerHTML='<span class="ai-summary-chip">Mistari: '+total+'</span><span class="ai-summary-chip existing">Zilizofananishwa: '+matched+'</span><span class="ai-summary-chip review">Hakiki: '+review+'</span><span class="ai-summary-chip ok">Zimehifadhiwa: '+done+'</span>';}
+function aiErrMsg(data){if(!data||!data.code)return t('ai_err_failed');var c=String(data.code).toUpperCase();if(['GEMINI_RATE_LIMIT','GEMINI_TIMEOUT','GEMINI_API_ERROR','GEMINI_NETWORK','GEMINI_KEY_MISSING','AI_SALES_IMPORT_ERROR','AI_IMPORT_ERROR'].indexOf(c)>=0)return t('ai_err_gemini');return data.error||t('ai_err_failed');}
+async function startProcess(){if(aiProcessing)return;var ready=aiImages.filter(function(im){return im.base64;});if(!ready.length){showBanner('error',t('ai_err_select_photo'));return;}if(aiRows.length){var ok=await confirmBox(t('ai_confirm_again_title'),t('ai_confirm_again_msg'));if(!ok)return;}aiProcessing=true;aiRows=[];$('aiSaleResultsWrap').style.display='none';$('aiSaleUploadSection').style.display='none';$('aiSaleProgress').style.display='block';hideBanner();startProgress();try{var payload={images:ready.map(function(im){return{name:im.name,base64:im.base64};})};var r=await fetch(API_BASE_URL+'/api/sales/ai-import',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+aiToken()},body:JSON.stringify(payload)});var data=await r.json().catch(function(){return{};});$('aiSaleProgress').style.display='none';$('aiSaleUploadSection').style.display='block';if(r.ok&&data&&Array.isArray(data.items)&&data.items.length>0){aiRows=data.items.map(function(it){return Object.assign({committed:false},it);});$('aiSaleResultsWrap').style.display='block';renderResults();showBanner('info',t('ai_banner_ready'));}else if(r.ok){showBanner('error',t('ai_err_no_sales'));}else{showBanner('error',aiErrMsg(data));}}catch(e){$('aiSaleProgress').style.display='none';$('aiSaleUploadSection').style.display='block';showBanner('error',t('ai_err_network'));}finally{stopProgress();aiProcessing=false;refreshUploadUi();}}
+function updateSummary(){var total=aiRows.length;var matched=aiRows.filter(function(r){return r.status==='MATCHED';}).length;var review=aiRows.filter(function(r){return r.needsReview;}).length;var done=aiRows.filter(function(r){return r.committed;}).length;var s=$('aiSaleResultsSummary');if(!s)return;s.innerHTML='<span class="ai-summary-chip">'+t('ai_chip_rows')+total+'</span><span class="ai-summary-chip existing">'+t('ai_chip_matched')+matched+'</span><span class="ai-summary-chip review">'+t('ai_chip_review')+review+'</span><span class="ai-summary-chip ok">'+t('ai_chip_saved')+done+'</span>';}
 function attachSync(){if(aiTableSyncReady)return;aiTableSyncReady=true;var body=$('aiSaleTableBody');if(!body)return;body.addEventListener('input',function(e){var t=e.target;if(!t||!t.id)return;var m=t.id.match(/^aiS(Qty|Price|Prod)(\d+)$/);if(!m)return;var row=aiRows[parseInt(m[2],10)];if(!row)return;var v=t.value;if(m[1]==='Qty')row.quantity=v===''?null:parseInt(v,10);else if(m[1]==='Price')row.unitPrice=v===''?null:Number(v);else if(m[1]==='Prod')row.matchedProductId=v||null;});}
-function renderResults(){var body=$('aiSaleTableBody');if(!body)return;updateSummary();attachSync();body.innerHTML=aiRows.map(function(row,i){var revBadge=row.needsReview?'<span class="ai-status review">Hakiki</span>':'';var conf=Math.round((row.confidence||0)*100);var stock=(row.currentStock!==null&&row.currentStock!==undefined)?('<div class="ai-conf-row">Hisa: '+esc(row.currentStock)+'</div>'):'';var defP=(row.unitPrice===null||row.unitPrice===undefined)?' <div class="ai-conf-row">Bei chaguomsingi: '+fmt(row.defaultUnitPrice)+'</div>':'';var warn=(row.warnings||[]).map(function(w){return '<div class="ai-warn">'+esc(w)+'</div>';}).join('');var prodOpts;if(row.status==='MATCHED'&&row.matchedProductId){prodOpts='<span class="ai-status existing">'+esc(row.matchedProductName||'Bidhaa')+'</span>'+stock;}else{var options=products.filter(function(p){return true;}).slice(0,400).map(function(p){return '<option value="'+p.id+'">'+esc(p.name)+'</option>';}).join('');prodOpts='<select id="aiSProd'+i+'" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:10px;font-size:13px"><option value="">— Chagua bidhaa —</option>'+options+'</select>';}var qty=(row.quantity===null||row.quantity===undefined)?'':esc(row.quantity);var price=(row.unitPrice===null||row.unitPrice===undefined)?'':esc(row.unitPrice);var lineTotal=row.quantity&&row.unitPrice?(row.quantity*row.unitPrice):(row.quantity&&row.defaultUnitPrice?(row.quantity*row.defaultUnitPrice):null);var action=row.committed?'<span class="ai-verified-tag">Imehifadhiwa</span>':(row.status==='MATCHED'?'<button type="button" class="ai-verify-btn" id="aiSCommit'+i+'" onclick="commitAiSaleRow('+i+')">Hifadhi</button>':'<span class="ai-status review">Hakuna fananio</span>');return '<tr>'+'<td style="max-width:140px"><strong style="font-size:13px">'+esc(row.handwrittenName)+'</strong>'+defP+'</td>'+'<td style="min-width:150px">'+prodOpts+'</td>'+'<td style="min-width:80px"><input type="number" min="1" step="1" value="'+qty+'" id="aiSQty'+i+'"></td>'+'<td style="min-width:110px"><input type="number" min="0" value="'+price+'" id="aiSPrice'+i+'" placeholder="chaguomsingi"></td>'+'<td>'+(lineTotal?fmt(lineTotal):'—')+'</td>'+'<td>'+revBadge+'<div class="ai-conf-row">'+conf+'%</div>'+warn+'</td>'+'<td style="width:120px">'+action+'</td>'+'</tr>';}).join('');}
-async function commitRow(i,fromBatch){if(aiProcessing)return;if((aiCommitBusy||aiBatchBusy)&&!fromBatch)return;var row=aiRows[i];if(!row||row.committed)return;var productId=row.matchedProductId;if(!productId){showBanner('error','Mstari "'+row.handwrittenName+'": chagua bidhaa ya mfumo kwanza.');return;}var qty=parseInt(row.quantity,10);if(!Number.isInteger(qty)||qty<=0){showBanner('error','Mstari "'+row.handwrittenName+'": idadi si sahihi.');return;}var price=(row.unitPrice!==null&&row.unitPrice!==undefined)?Number(row.unitPrice):Number(row.defaultUnitPrice);if(!Number.isFinite(price)||price<=0){showBanner('error','Mstari "'+row.handwrittenName+'": bei haipo (wala bei chaguomsingi).');return;}var prod=products.find(function(p){return p.id===productId;});if(prod&&qty>prod.stock){showBanner('error','"'+prod.name+'": hisa inatosha tu '+prod.stock+' (ulioomba '+qty+').');return;}aiCommitBusy=true;var btn=$('aiSCommit'+i);if(btn){btn.disabled=true;btn.innerHTML='...';}try{var r=await fetch(API_BASE_URL+'/api/sales/ai-commit',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+aiToken()},body:JSON.stringify({items:[{product_id:productId,quantity:qty,unit_price:price}],clientSaleKey:row.id,customer_name:(customerName||'').trim(),customer_phone:(customerPhone||'').trim(),sale_date:saleDate,notes:'AI import: '+row.handwrittenName})});var data=await r.json().catch(function(){return{};});if(r.ok){row.committed=true;var td=btn?btn.closest('td'):null;if(td)td.innerHTML='<span class="ai-verified-tag">Imehifadhiwa</span>';updateSummary();await loadProducts();showBanner('info','"'+(row.matchedProductName||row.handwrittenName)+'" × '+qty+' imehifadhiwa ('+fmt(qty*price)+').');}else{if(btn){btn.disabled=false;btn.innerHTML='Hifadhi';}var msg=data.error||'Imeshindikana kuhifadhi.';if(data.code==='STOCK_ISSUES'&&data.stockIssues&&data.stockIssues[0]){msg='"'+(data.stockIssues[0].product_name||'Bidhaa')+'": hisa inatosha tu '+data.stockIssues[0].available+'.';}if(data.code==='DUPLICATE'){msg='Mauzo haya yameshahifadhiwa tayari.';row.committed=true;var td2=btn?btn.closest('td'):null;if(td2)td2.innerHTML='<span class="ai-verified-tag">Imehifadhiwa</span>';updateSummary();}showBanner('error',msg);}}catch(e){if(btn){btn.disabled=false;btn.innerHTML='Hifadhi';}showBanner('error','Hitilafu ya mtandao. Jaribu tena.');}finally{aiCommitBusy=false;}}
-async function commitAll(){if(aiCommitBusy||aiBatchBusy||aiProcessing)return;var pending=aiRows.filter(function(r){return !r.committed&&r.status==='MATCHED';});if(!pending.length){showBanner('info','Hakuna mistari inayosubiri (au hakuna iliyofananishwa).');return;}var problems=[];for(var i=0;i<aiRows.length;i++){var row=aiRows[i];if(row.committed||row.status!=='MATCHED')continue;var productId=row.matchedProductId;var qty=parseInt(row.quantity,10);var price=(row.unitPrice!==null&&row.unitPrice!==undefined)?Number(row.unitPrice):Number(row.defaultUnitPrice);if(!productId){problems.push('Mstari '+(i+1)+': hakuna bidhaa ya mfumo iliyochaguliwa');continue;}if(!Number.isInteger(qty)||qty<=0){problems.push('Mstari '+(i+1)+': idadi si sahihi');continue;}if(!Number.isFinite(price)||price<=0){problems.push('Mstari '+(i+1)+': bei haipo');continue;}var prod=products.find(function(p){return p.id===productId;});if(prod&&qty>prod.stock){problems.push('Mstari '+(i+1)+': hisa ya "'+prod.name+'" inatosha tu '+prod.stock);}}if(problems.length){showBanner('error','Rekebisha kabla ya kuhifadhi zote:\n'+problems.join('\n'));return;}var ok=await confirmBox('Hifadhi Zote?',pending.length+' mistari ya mauzo itaingia kwenye rekodi na hisa itapungua.');if(!ok)return;aiBatchBusy=true;var st=$('aiSaleCommitAllStatus');var allBtn=$('aiSaleCommitAllBtn');var allBtnHtml=allBtn?allBtn.innerHTML:'';var saved=0,failed=0;try{for(var j=0;j<aiRows.length;j++){if(aiRows[j].committed||aiRows[j].status!=='MATCHED')continue;if(st)st.textContent='Inahifadhi '+(saved+failed+1)+'/'+pending.length+'...';if(allBtn){allBtn.disabled=true;allBtn.innerHTML=ic('refresh',14)+' Inahifadhi '+(saved+failed+1)+'/'+pending.length;}var before=aiRows.filter(function(r){return r.committed;}).length;try{await commitRow(j,true);}catch(e){}var after=aiRows.filter(function(r){return r.committed;}).length;if(after>before)saved++;else failed++;}}finally{aiBatchBusy=false;if(allBtn){allBtn.disabled=false;allBtn.innerHTML=allBtnHtml;}}if(st)st.textContent='';if(failed===0){showBanner('info','Mistari yote '+saved+' imehifadhiwa kikamilifu!');resetAiSaleSession();}else{showBanner('error',saved+' zimehifadhiwa, '+failed+' zilishindikana — rekebisha na ujaribu tena.');}}
+function renderResults(){var body=$('aiSaleTableBody');if(!body)return;updateSummary();attachSync();body.innerHTML=aiRows.map(function(row,i){var revBadge=row.needsReview?'<span class="ai-status review">'+t('ai_status_review')+'</span>':'';var conf=Math.round((row.confidence||0)*100);var stock=(row.currentStock!==null&&row.currentStock!==undefined)?('<div class="ai-conf-row">'+t('ai_conf_stock')+esc(row.currentStock)+'</div>'):'';var defP=(row.unitPrice===null||row.unitPrice===undefined)?' <div class="ai-conf-row">'+t('ai_conf_default_price')+fmt(row.defaultUnitPrice)+'</div>':'';var warn=(row.warnings||[]).map(function(w){return '<div class="ai-warn">'+esc(w)+'</div>';}).join('');var prodOpts;if(row.status==='MATCHED'&&row.matchedProductId){prodOpts='<span class="ai-status existing">'+esc(row.matchedProductName||t('product_fallback'))+'</span>'+stock;}else{var options=products.filter(function(p){return true;}).slice(0,400).map(function(p){return '<option value="'+p.id+'">'+esc(p.name)+'</option>';}).join('');prodOpts='<select id="aiSProd'+i+'" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:10px;font-size:13px"><option value="">'+t('ai_option_select')+'</option>'+options+'</select>';}var qty=(row.quantity===null||row.quantity===undefined)?'':esc(row.quantity);var price=(row.unitPrice===null||row.unitPrice===undefined)?'':esc(row.unitPrice);var lineTotal=row.quantity&&row.unitPrice?(row.quantity*row.unitPrice):(row.quantity&&row.defaultUnitPrice?(row.quantity*row.defaultUnitPrice):null);var action=row.committed?'<span class="ai-verified-tag">'+t('ai_saved_tag')+'</span>':(row.status==='MATCHED'?'<button type="button" class="ai-verify-btn" id="aiSCommit'+i+'" onclick="commitAiSaleRow('+i+')">'+t('btn_save')+'</button>':'<span class="ai-status review">'+t('ai_no_match')+'</span>');return '<tr>'+'<td style="max-width:140px"><strong style="font-size:13px">'+esc(row.handwrittenName)+'</strong>'+defP+'</td>'+'<td style="min-width:150px">'+prodOpts+'</td>'+'<td style="min-width:80px"><input type="number" min="1" step="1" value="'+qty+'" id="aiSQty'+i+'"></td>'+'<td style="min-width:110px"><input type="number" min="0" value="'+price+'" id="aiSPrice'+i+'" placeholder="'+t('ai_price_placeholder')+'"></td>'+'<td>'+(lineTotal?fmt(lineTotal):'—')+'</td>'+'<td>'+revBadge+'<div class="ai-conf-row">'+conf+'%</div>'+warn+'</td>'+'<td style="width:120px">'+action+'</td>'+'</tr>';}).join('');}
+async function commitRow(i,fromBatch){if(aiProcessing)return;if((aiCommitBusy||aiBatchBusy)&&!fromBatch)return;var row=aiRows[i];if(!row||row.committed)return;var productId=row.matchedProductId;if(!productId){showBanner('error',t('ai_row_select_product',{name:row.handwrittenName}));return;}var qty=parseInt(row.quantity,10);if(!Number.isInteger(qty)||qty<=0){showBanner('error',t('ai_row_bad_qty',{name:row.handwrittenName}));return;}var price=(row.unitPrice!==null&&row.unitPrice!==undefined)?Number(row.unitPrice):Number(row.defaultUnitPrice);if(!Number.isFinite(price)||price<=0){showBanner('error',t('ai_row_no_price',{name:row.handwrittenName}));return;}var prod=products.find(function(p){return p.id===productId;});if(prod&&qty>prod.stock){showBanner('error',t('ai_row_stock',{name:prod.name,stock:prod.stock,qty:qty}));return;}aiCommitBusy=true;var btn=$('aiSCommit'+i);if(btn){btn.disabled=true;btn.innerHTML='...';}try{var r=await fetch(API_BASE_URL+'/api/sales/ai-commit',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+aiToken()},body:JSON.stringify({items:[{product_id:productId,quantity:qty,unit_price:price}],clientSaleKey:row.id,customer_name:(customerName||'').trim(),customer_phone:(customerPhone||'').trim(),sale_date:saleDate,notes:t('ai_import_note',{name:row.handwrittenName})})});var data=await r.json().catch(function(){return{};});if(r.ok){row.committed=true;var td=btn?btn.closest('td'):null;if(td)td.innerHTML='<span class="ai-verified-tag">'+t('ai_saved_tag')+'</span>';updateSummary();await loadProducts();showBanner('info',t('ai_row_saved',{name:(row.matchedProductName||row.handwrittenName),qty:qty,total:fmt(qty*price)}));}else{if(btn){btn.disabled=false;btn.innerHTML=t('btn_save');}var msg=data.error||t('ai_err_save_failed');if(data.code==='STOCK_ISSUES'&&data.stockIssues&&data.stockIssues[0]){msg=t('ai_stock_issue',{name:(data.stockIssues[0].product_name||t('product_fallback')),stock:data.stockIssues[0].available});}if(data.code==='DUPLICATE'){msg=t('ai_err_duplicate');row.committed=true;var td2=btn?btn.closest('td'):null;if(td2)td2.innerHTML='<span class="ai-verified-tag">'+t('ai_saved_tag')+'</span>';updateSummary();}showBanner('error',msg);}}catch(e){if(btn){btn.disabled=false;btn.innerHTML=t('btn_save');}showBanner('error',t('ai_err_network'));}finally{aiCommitBusy=false;}}
+async function commitAll(){if(aiCommitBusy||aiBatchBusy||aiProcessing)return;var pending=aiRows.filter(function(r){return !r.committed&&r.status==='MATCHED';});if(!pending.length){showBanner('info',t('ai_info_no_pending'));return;}var problems=[];for(var i=0;i<aiRows.length;i++){var row=aiRows[i];if(row.committed||row.status!=='MATCHED')continue;var productId=row.matchedProductId;var qty=parseInt(row.quantity,10);var price=(row.unitPrice!==null&&row.unitPrice!==undefined)?Number(row.unitPrice):Number(row.defaultUnitPrice);if(!productId){problems.push(t('ai_fix_no_product',{row:i+1}));continue;}if(!Number.isInteger(qty)||qty<=0){problems.push(t('ai_fix_bad_qty',{row:i+1}));continue;}if(!Number.isFinite(price)||price<=0){problems.push(t('ai_fix_no_price',{row:i+1}));continue;}var prod=products.find(function(p){return p.id===productId;});if(prod&&qty>prod.stock){problems.push(t('ai_fix_stock',{row:i+1,name:prod.name,stock:prod.stock}));}}if(problems.length){showBanner('error',t('ai_fix_header')+'\n'+problems.join('\n'));return;}var ok=await confirmBox(t('ai_confirm_save_all_title'),t('ai_confirm_save_all_msg',{count:pending.length}));if(!ok)return;aiBatchBusy=true;var st=$('aiSaleCommitAllStatus');var allBtn=$('aiSaleCommitAllBtn');var allBtnHtml=allBtn?allBtn.innerHTML:'';var saved=0,failed=0;try{for(var j=0;j<aiRows.length;j++){if(aiRows[j].committed||aiRows[j].status!=='MATCHED')continue;if(st)st.textContent=t('ai_saving_prefix')+(saved+failed+1)+'/'+pending.length+'...';if(allBtn){allBtn.disabled=true;allBtn.innerHTML=ic('refresh',14)+' '+t('ai_saving_prefix')+(saved+failed+1)+'/'+pending.length;}var before=aiRows.filter(function(r){return r.committed;}).length;try{await commitRow(j,true);}catch(e){}var after=aiRows.filter(function(r){return r.committed;}).length;if(after>before)saved++;else failed++;}}finally{aiBatchBusy=false;if(allBtn){allBtn.disabled=false;allBtn.innerHTML=allBtnHtml;}}if(st)st.textContent='';if(failed===0){showBanner('info',t('ai_all_saved',{saved:saved}));resetAiSaleSession();}else{showBanner('error',t('ai_partial',{saved:saved,failed:failed}));}}
 function resetSession(){if(aiProcessing)return;aiRows=[];aiImages=[];$('aiSaleResultsWrap').style.display='none';hideBanner();refreshUploadUi();}
 function openModal(){var m=$('aiSaleModal');if(m)m.classList.add('show');initUploadHandlers();refreshUploadUi();var uw=$('aiSaleResultsWrap');if(uw)uw.style.display=aiRows.length?'block':'none';hideBanner();}
 function closeModal(){var m=$('aiSaleModal');if(m)m.classList.remove('show');stopProgress();}
-window.openAiSaleModal=openModal;window.closeAiSaleModal=closeModal;window.startAiSaleProcess=startProcess;window.captureAiSaleImage=captureImage;window.removeAiSaleImage=removeImage;window.commitAiSaleRow=commitRow;window.commitAllAiSaleRows=commitAll;window.resetAiSaleSession=resetSession;
+window.openAiSaleModal=openModal;window.closeAiSaleModal=closeModal;window.startAiSaleProcess=startProcess;window.captureAiSaleImage=captureImage;window.removeAiSaleImage=removeImage;window.commitAiSaleRow=commitRow;window.commitAllAiSaleRows=commitAll;window.resetAiSaleSession=resetSession;window.uzaAiRepaint=function(){refreshUploadUi();if(aiRows.length){renderResults();}};
 })();
 </script>
 </body>

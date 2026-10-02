@@ -1,10 +1,9 @@
+@include('partials.dm-locale')
 @verbatim
-<!DOCTYPE html>
-<html lang="sw">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>DukaMkononi - System Admin</title>
+    <title data-i18n="system_admin_index.page_title">DukaMkononi - System Admin</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {
@@ -106,23 +105,26 @@
     </style>
 </head>
 <body>
+@endverbatim
+@include('partials.dm-lang-widget')
+@verbatim
     <div class="redirect-container">
         <div class="logo">
-            <span>D</span>
+            <span data-i18n="system_admin_index.logo_short">D</span>
         </div>
-        <div class="title">DukaMkononi</div>
-        <div class="subtitle">System Admin Portal</div>
+        <div class="title" data-i18n="system_admin_index.logo_brand">DukaMkononi</div>
+        <div class="subtitle" data-i18n="system_admin_index.portal_name">System Admin Portal</div>
         
         <div class="loading-spinner"></div>
         
-        <div class="message" id="message">Inaelekeza kwenye dashbodi...</div>
+        <div class="message" id="message" data-i18n="system_admin_index.loading">Inaelekeza kwenye dashbodi...</div>
         
-        <div class="redirect-note">
+        <div class="redirect-note" data-i18n="system_admin_index.redirect_note">
             Tafadhali subiri, unaelekezwa kwenye ukurasa wa dashbodi
         </div>
         
         <div class="manual-link">
-            <a href="dashboard" id="manualLink">Bonyeza hapa ikiwa huelekezwi</a>
+            <a href="dashboard" id="manualLink" data-i18n="system_admin_index.manual_link">Bonyeza hapa ikiwa huelekezwi</a>
         </div>
     </div>
 
@@ -133,6 +135,40 @@
         // ============================================
         
         const API_BASE_URL = '';
+
+        // Swahili fallback used when the language widget is not present.
+        // Values mirror the sw catalog of the system_admin_index section in locales.json.
+        const SW = {
+            loading: "Inaelekeza kwenye dashbodi...",
+            err_not_logged_in: "Hakuna mtumiaji aliyeingia. Unaelekezwa kwenye ukurasa wa kuingia...",
+            err_no_permission: "Huna ruhusa ya kuingia kwenye eneo hili. Unaelekezwa nyumbani...",
+            err_session_expired: "Weka muda umeisha. Unaelekezwa kwenye ukurasa wa kuingia...",
+            msg_success: "Umeingia kikamilifu! Unaelekezwa kwenye dashbodi...",
+            err_user_data: "Hitilafu katika data ya mtumiaji. Unaelekezwa kwenye ukurasa wa kuingia..."
+        };
+
+        function t(key, params) {
+            const full = key.indexOf('system_admin_index.') === 0 ? key : 'system_admin_index.' + key;
+            if (window.DM && typeof window.DM.t === 'function') {
+                const hit = window.DM.t(full, params);
+                if (hit !== full) return hit;
+            }
+            const bare = key.indexOf('.') > -1 ? key.split('.').pop() : key;
+            let value = Object.prototype.hasOwnProperty.call(SW, bare) ? SW[bare] : key;
+            if (params) {
+                for (const k in params) value = String(value).split('{' + k + '}').join(String(params[k]));
+            }
+            return value;
+        }
+
+        // Redirect-page status line: keep the current message key so a language
+        // switch can repaint it after the script has replaced the static text.
+        let currentMsgKey = 'loading';
+        function setMsg(key) {
+            currentMsgKey = key;
+            const el = document.getElementById('message');
+            if (el) el.innerHTML = t(key);
+        }
         
         // Check if user is logged in and is system admin
         async function checkAuthAndRedirect() {
@@ -145,7 +181,7 @@
                 setTimeout(() => {
                     window.location.href = '/login?role=msimamizi';
                 }, 1500);
-                document.getElementById('message').innerHTML = 'Hakuna mtumiaji aliyeingia. Unaelekezwa kwenye ukurasa wa kuingia...';
+                setMsg('err_not_logged_in');
                 return;
             }
             
@@ -157,7 +193,7 @@
                 if (!isSystemAdmin && userData.role !== 'system_admin') {
                     // User is not system admin, redirect to home
                     console.log('User is not system admin, redirecting to home...');
-                    document.getElementById('message').innerHTML = 'Huna ruhusa ya kuingia kwenye eneo hili. Unaelekezwa nyumbani...';
+                    setMsg('err_no_permission');
                     setTimeout(() => {
                         window.location.href = '/home';
                     }, 2000);
@@ -178,7 +214,7 @@
                         console.log('Invalid token, clearing storage...');
                         localStorage.removeItem('userToken');
                         localStorage.removeItem('userData');
-                        document.getElementById('message').innerHTML = 'Weka muda umeisha. Unaelekezwa kwenye ukurasa wa kuingia...';
+                        setMsg('err_session_expired');
                         setTimeout(() => {
                             window.location.href = '/login?role=msimamizi';
                         }, 2000);
@@ -190,7 +226,7 @@
                 
                 // User is authenticated and is system admin, redirect to dashboard
                 console.log('Authenticated as system admin, redirecting to dashboard...');
-                document.getElementById('message').innerHTML = 'Umeingia kikamilifu! Unaelekezwa kwenye dashbodi...';
+                setMsg('msg_success');
                 
                 setTimeout(() => {
                     window.location.href = 'dashboard';
@@ -198,7 +234,7 @@
                 
             } catch (error) {
                 console.error('Error parsing user data:', error);
-                document.getElementById('message').innerHTML = 'Hitilafu katika data ya mtumiaji. Unaelekezwa kwenye ukurasa wa kuingia...';
+                setMsg('err_user_data');
                 setTimeout(() => {
                     window.location.href = '/login?role=msimamizi';
                 }, 2000);
@@ -211,6 +247,12 @@
             window.location.href = 'dashboard';
         });
         
+        if (window.DM && typeof window.DM.onChange === 'function') {
+            window.DM.onChange(() => {
+                setMsg(currentMsgKey);
+            });
+        }
+
         // Start the redirect process
         checkAuthAndRedirect();
     </script>

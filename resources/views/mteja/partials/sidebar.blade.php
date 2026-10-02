@@ -1,10 +1,9 @@
+@include('partials.dm-locale')
 @verbatim
-<!DOCTYPE html>
-<html lang="sw">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dukamkononi - Mteja</title>
+    <title data-i18n="mteja_sidebar.page_title">Dukamkononi - Mteja</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {
@@ -271,6 +270,7 @@
 </head>
 <body>
 @endverbatim
+@include('partials.dm-lang-widget')
 @include('partials.toast')
 @verbatim
     <!-- Mobile menu toggle button -->
@@ -285,10 +285,10 @@
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="logo-area">
-                    <div class="logo-icon">D</div>
+                    <div class="logo-icon" data-i18n="mteja_sidebar.logo_short">D</div>
                     <div class="logo-text">
-                        <h2>DukaMkononi</h2>
-                        <p>Mteja Portal</p>
+                        <h2 data-i18n="mteja_sidebar.logo_brand">DukaMkononi</h2>
+                        <p data-i18n="mteja_sidebar.logo_tagline">Mteja Portal</p>
                     </div>
                 </div>
             </div>
@@ -296,18 +296,18 @@
             <div class="nav-items">
                 <!-- Navigation items mirroring Tabs.Screen components -->
                 <a href="biashara" class="nav-item" data-page="biashara">
-                    <div class="nav-icon">🏪</div>
-                    <span class="nav-label">Biashara</span>
+                    <div class="nav-icon" data-i18n="mteja_sidebar.icon_business">🏪</div>
+                    <span class="nav-label" data-i18n="mteja_sidebar.nav_business">Biashara</span>
                 </a>
 
                 <a href="matangazo" class="nav-item" data-page="matangazo">
-                    <div class="nav-icon">📢</div>
-                    <span class="nav-label">Matangazo</span>
+                    <div class="nav-icon" data-i18n="mteja_sidebar.icon_ads">📢</div>
+                    <span class="nav-label" data-i18n="mteja_sidebar.nav_ads">Matangazo</span>
                 </a>
 
                 <a href="profaili" class="nav-item" data-page="profaili">
-                    <div class="nav-icon">👤</div>
-                    <span class="nav-label">Profaili</span>
+                    <div class="nav-icon" data-i18n="mteja_sidebar.icon_profile">👤</div>
+                    <span class="nav-label" data-i18n="mteja_sidebar.nav_profile">Profaili</span>
                 </a>
             </div>
 
@@ -316,14 +316,14 @@
                     <div class="user-avatar" id="userAvatar">M</div>
                     <div class="user-details">
                         <div class="user-name" id="userName">Mteja</div>
-                        <div class="user-role">Mteja</div>
+                        <div class="user-role" data-i18n="mteja_sidebar.nav_customer">Mteja</div>
                     </div>
                 </div>
                 <div class="logout-btn" id="logoutBtn">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                         <path d="M15 3H19C20.1 3 21 3.9 21 5V19C21 20.1 20.1 21 19 21H15M10 17L15 12L10 7M15 12H3"/>
                     </svg>
-                    <span>Ondoka</span>
+                    <span data-i18n="mteja_sidebar.btn_logout">Ondoka</span>
                 </div>
             </div>
         </aside>
@@ -334,7 +334,7 @@
                 <!-- Dynamic content loads here -->
                 <div style="text-align: center; padding: 60px 20px;">
                     <div class="spinner" style="border-top-color: #667eea;"></div>
-                    <p style="margin-top: 20px; color: #7f8c8d;">Loading...</p>
+                    <p style="margin-top: 20px; color: #7f8c8d;" data-i18n="mteja_sidebar.loading">Loading...</p>
                 </div>
             </div>
         </main>
@@ -358,6 +358,35 @@
         // ============================================
 
         const API_BASE_URL = '';
+
+        // Swahili fallback used when the language widget is not present (and
+        // for script-built strings). Values mirror the sw catalog of the
+        // mteja_sidebar section in locales.json.
+        const SW = {
+            nav_customer: "Mteja",
+            err_no_permission: "Huna ruhusa ya kuingia kwenye eneo la Mteja.",
+            error_title: "Hitilafu",
+            err_page_load: "Huwezi kupakia ukurasa huu. Hakikisha faili zote zipo.",
+            btn_retry: "Jaribu Tena",
+            title_default: "DukaMkononi - Mteja",
+            title_biashara: "Biashara - DukaMkononi Mteja",
+            title_matangazo: "Matangazo - DukaMkononi Mteja",
+            title_profaili: "Profaili - DukaMkononi Mteja"
+        };
+
+        function t(key, params) {
+            const full = key.indexOf('mteja_sidebar.') === 0 ? key : 'mteja_sidebar.' + key;
+            if (window.DM && typeof window.DM.t === 'function') {
+                const hit = window.DM.t(full, params);
+                if (hit !== full) return hit;
+            }
+            const bare = key.indexOf('.') > -1 ? key.split('.').pop() : key;
+            let value = Object.prototype.hasOwnProperty.call(SW, bare) ? SW[bare] : key;
+            if (params) {
+                for (const k in params) value = String(value).split('{' + k + '}').join(String(params[k]));
+            }
+            return value;
+        }
 
         // Get current user from localStorage (set during login)
         function getCurrentUser() {
@@ -384,7 +413,7 @@
             // Check if user is customer/mteja
             const userRole = user.role || '';
             if (userRole !== 'customer' && userRole !== 'client' && userRole !== 'mteja') {
-                showToast('Huna ruhusa ya kuingia kwenye eneo la Mteja.', 'error');
+                showToast(t('err_no_permission'), 'error');
                 window.location.href = '/home';
                 return false;
             }
@@ -396,7 +425,7 @@
         function updateUserInfo(user) {
             const userNameEl = document.getElementById('userName');
             const userAvatarEl = document.getElementById('userAvatar');
-            const displayName = user.full_name || user.email?.split('@')[0] || 'Mteja';
+            const displayName = user.full_name || user.email?.split('@')[0] || t('nav_customer');
             if (userNameEl) userNameEl.textContent = displayName;
             if (userAvatarEl) {
                 if (user.business_logo_url) {
@@ -414,11 +443,12 @@
             profaili: '/mteja/profaili'
         };
 
-        // Page titles
+        // Page titles (keys resolved through t() at use time so a language
+        // switch repaints document.title).
         const pageTitles = {
-            biashara: 'Biashara - DukaMkononi Mteja',
-            matangazo: 'Matangazo - DukaMkononi Mteja',
-            profaili: 'Profaili - DukaMkononi Mteja'
+            biashara: 'title_biashara',
+            matangazo: 'title_matangazo',
+            profaili: 'title_profaili'
         };
 
         let currentPage = 'biashara';
@@ -428,6 +458,29 @@
             const overlay = document.getElementById('loadingOverlay');
             if (overlay) {
                 overlay.style.display = show ? 'flex' : 'none';
+            }
+        }
+
+        // Last load failure (kept so the error panel can be repainted on a
+        // language switch).
+        let loadError = null;
+
+        function renderLoadError() {
+            if (!loadError) return;
+            const pageContainer = document.getElementById('pageContainer');
+            if (pageContainer) {
+                pageContainer.innerHTML = `
+                    <div style="text-align: center; padding: 60px 20px; background: white; border-radius: 20px;">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#667eea" stroke-width="1.5">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 8V12M12 16H12.01"/>
+                        </svg>
+                        <h3 style="margin-top: 20px; color: #667eea;">${t('error_title')}</h3>
+                        <p style="margin-top: 10px; color: #7f8c8d;">${t('err_page_load')}</p>
+                        <p style="margin-top: 8px; font-size: 12px; color: #95a5a6;">${loadError.message}</p>
+                        <button onclick="location.reload()" style="margin-top: 20px; padding: 10px 24px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer;">${t('btn_retry')}</button>
+                    </div>
+                `;
             }
         }
 
@@ -443,6 +496,7 @@
             currentPage = pageName;
 
             try {
+                loadError = null;
                 // Fetch the HTML content of the page
                 const response = await fetch(pageUrl);
                 if (!response.ok) {
@@ -486,7 +540,7 @@
                 }
                 
                 // Update page title
-                document.title = pageTitles[pageName] || 'DukaMkononi - Mteja';
+                document.title = t(pageTitles[pageName] || 'title_default');
                 
                 // Update active state in sidebar
                 updateActiveNavItem(pageName);
@@ -497,21 +551,8 @@
                 
             } catch (error) {
                 console.error('Failed to load page:', error);
-                const pageContainer = document.getElementById('pageContainer');
-                if (pageContainer) {
-                    pageContainer.innerHTML = `
-                        <div style="text-align: center; padding: 60px 20px; background: white; border-radius: 20px;">
-                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#667eea" stroke-width="1.5">
-                                <circle cx="12" cy="12" r="10"/>
-                                <path d="M12 8V12M12 16H12.01"/>
-                            </svg>
-                            <h3 style="margin-top: 20px; color: #667eea;">Hitilafu</h3>
-                            <p style="margin-top: 10px; color: #7f8c8d;">Huwezi kupakia ukurasa huu. Hakikisha faili zote zipo.</p>
-                            <p style="margin-top: 8px; font-size: 12px; color: #95a5a6;">${error.message}</p>
-                            <button onclick="location.reload()" style="margin-top: 20px; padding: 10px 24px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer;">Jaribu Tena</button>
-                        </div>
-                    `;
-                }
+                loadError = error;
+                renderLoadError();
             } finally {
                 showLoading(false);
             }
@@ -633,6 +674,15 @@
             await loadPage(initialPage);
         }
         
+        // Repaint JS-built bits when the visitor switches language (static
+        // text is repainted by the widget itself).
+        if (window.DM && typeof window.DM.onChange === 'function') {
+            window.DM.onChange(() => {
+                document.title = t(pageTitles[currentPage] || 'title_default');
+                renderLoadError();
+            });
+        }
+
         // Run init
         init();
         
