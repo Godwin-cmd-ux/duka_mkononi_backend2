@@ -13,8 +13,8 @@
     .hero-stats { display: flex; gap: 28px; margin-top: 34px; flex-wrap: wrap; }
     .hero-stat b { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 26px; color: var(--dm-primary); display: block; }
     .hero-stat span { font-size: 13px; color: var(--dm-muted); }
-    .hero-visual { border-radius: 20px; overflow: hidden; box-shadow: 0 24px 60px rgba(15, 23, 42, .16); border: 1px solid var(--dm-line); background: radial-gradient(circle at 50% 42%, #dbeafe 0%, #ffffff 72%); padding: 40px; display: grid; place-items: center; }
-    .hero-visual img { width: 100%; max-width: 320px; height: auto; }
+    .hero-visual { border-radius: 20px; overflow: hidden; box-shadow: 0 24px 60px rgba(15, 23, 42, .16); border: 1px solid var(--dm-line); background: radial-gradient(circle at 50% 42%, #dbeafe 0%, #ffffff 72%); display: grid; place-items: center; }
+    .hero-visual img { width: 100%; height: 100%; object-fit: contain; }
     .biz-card { display: flex; flex-direction: column; gap: 12px; padding: 18px; transition: transform .16s ease, box-shadow .16s ease; }
     .biz-card:hover { transform: translateY(-3px); box-shadow: var(--dm-shadow); }
     .biz-logo { width: 54px; height: 54px; border-radius: 14px; background: #dbeafe; color: var(--dm-primary); display: grid; place-items: center; font-weight: 800; overflow: hidden; }
