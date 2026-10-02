@@ -15,7 +15,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#0f766e">
+    <meta name="theme-color" content="#1e3a8a">
     <meta name="description" content="" data-i18n="{{ $metaKey }}" data-i18n-attr="content">
     <title data-i18n="{{ $titleKey }}">{{ $titleFallback }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -30,8 +30,8 @@
             --dm-line: #e2e8f0;
             --dm-bg: #f8fafc;
             --dm-card: #ffffff;
-            --dm-primary: #0f766e;
-            --dm-primary-dark: #115e59;
+            --dm-primary: #1e3a8a;
+            --dm-primary-dark: #172554;
             --dm-accent: #f59e0b;
             --dm-danger: #dc2626;
             --dm-success: #059669;
@@ -53,8 +53,8 @@
         img { max-width: 100%; display: block; }
         a { color: inherit; text-decoration: none; }
         button { font-family: inherit; }
-        ::selection { background: rgba(15, 118, 110, .18); }
-        :focus-visible { outline: 3px solid rgba(15, 118, 110, .45); outline-offset: 2px; border-radius: 6px; }
+        ::selection { background: rgba(30, 58, 138, .18); }
+        :focus-visible { outline: 3px solid rgba(30, 58, 138, .45); outline-offset: 2px; border-radius: 6px; }
 
         .dm-container { width: 100%; max-width: var(--dm-max); margin: 0 auto; padding: 0 20px; }
         .dm-section { padding: 64px 0; }
@@ -80,7 +80,7 @@
             min-height: 46px; white-space: nowrap;
         }
         .dm-btn svg { width: 18px; height: 18px; flex: 0 0 auto; }
-        .dm-btn--primary { background: var(--dm-primary); color: #fff; box-shadow: 0 6px 16px rgba(15, 118, 110, .22); }
+        .dm-btn--primary { background: var(--dm-primary); color: #fff; box-shadow: 0 6px 16px rgba(30, 58, 138, .22); }
         .dm-btn--primary:hover { background: var(--dm-primary-dark); transform: translateY(-1px); }
         .dm-btn--ghost { background: #fff; color: var(--dm-navy); border-color: var(--dm-line); }
         .dm-btn--ghost:hover { border-color: var(--dm-primary); color: var(--dm-primary); }
@@ -114,7 +114,7 @@
             font-size: 15px; background: #fff; color: var(--dm-ink); min-height: 46px;
             transition: border-color .15s ease, box-shadow .15s ease;
         }
-        .dm-input:focus, .dm-select:focus, .dm-textarea:focus { outline: none; border-color: var(--dm-primary); box-shadow: 0 0 0 3px rgba(15, 118, 110, .14); }
+        .dm-input:focus, .dm-select:focus, .dm-textarea:focus { outline: none; border-color: var(--dm-primary); box-shadow: 0 0 0 3px rgba(30, 58, 138, .14); }
         .dm-textarea { min-height: 130px; resize: vertical; }
         .dm-error { color: var(--dm-danger); font-size: 13px; }
         .dm-hint { color: var(--dm-muted); font-size: 12.5px; }

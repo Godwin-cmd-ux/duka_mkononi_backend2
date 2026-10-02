@@ -8,7 +8,7 @@
     .dm-brand { display: flex; align-items: center; gap: 10px; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; color: var(--dm-navy); font-size: 18px; letter-spacing: -.01em; }
     .dm-brand-mark {
         width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center; color: #fff;
-        background: linear-gradient(135deg, var(--dm-primary), #0b4f4a); font-weight: 800; font-size: 15px; box-shadow: 0 6px 14px rgba(15, 118, 110, .28);
+        background: linear-gradient(135deg, #1e3a8a, #172554); font-weight: 800; font-size: 15px; box-shadow: 0 6px 14px rgba(30, 58, 138, .28);
     }
     .dm-nav-links { display: flex; align-items: center; gap: 4px; margin-left: auto; }
     .dm-nav-link { padding: 9px 12px; border-radius: 9px; font-size: 14.5px; font-weight: 500; color: var(--dm-ink); }

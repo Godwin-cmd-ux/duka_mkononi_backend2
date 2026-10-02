@@ -13,7 +13,7 @@
     .biz-list { display: flex; flex-direction: column; gap: 4px; max-height: 62vh; overflow-y: auto; }
     .biz-btn { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; text-align: left; padding: 10px 12px; border-radius: 10px; border: 1px solid transparent; background: transparent; cursor: pointer; font-size: 14px; color: var(--dm-ink); }
     .biz-btn:hover { background: #f1f5f9; }
-    .biz-btn.active { background: #ecfdf5; border-color: #a7f3d0; color: #047857; font-weight: 600; }
+    .biz-btn.active { background: #dbeafe; border-color: #bfdbfe; color: #1e40af; font-weight: 600; }
     .biz-btn .cnt { font-size: 12px; color: var(--dm-muted); }
     .shop-toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 18px; }
     .shop-toolbar .dm-input { flex: 1 1 220px; }

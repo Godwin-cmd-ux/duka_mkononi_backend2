@@ -7,19 +7,20 @@
 @include('partials.site-navbar')
 @verbatim
 <style>
-    .hero { background: radial-gradient(1100px 420px at 80% -10%, #ccfbf1 0%, transparent 60%), linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); border-bottom: 1px solid var(--dm-line); }
+    .hero { background: radial-gradient(1100px 420px at 80% -10%, #dbeafe 0%, transparent 60%), linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); border-bottom: 1px solid var(--dm-line); }
     .hero-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 40px; align-items: center; padding: 64px 0; }
     .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
     .hero-stats { display: flex; gap: 28px; margin-top: 34px; flex-wrap: wrap; }
     .hero-stat b { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 26px; color: var(--dm-primary); display: block; }
     .hero-stat span { font-size: 13px; color: var(--dm-muted); }
-    .hero-visual { border-radius: 20px; overflow: hidden; box-shadow: 0 24px 60px rgba(15, 23, 42, .16); border: 1px solid var(--dm-line); background: #fff; }
+    .hero-visual { border-radius: 20px; overflow: hidden; box-shadow: 0 24px 60px rgba(15, 23, 42, .16); border: 1px solid var(--dm-line); background: radial-gradient(circle at 50% 42%, #dbeafe 0%, #ffffff 72%); padding: 40px; display: grid; place-items: center; }
+    .hero-visual img { width: 100%; max-width: 320px; height: auto; }
     .biz-card { display: flex; flex-direction: column; gap: 12px; padding: 18px; transition: transform .16s ease, box-shadow .16s ease; }
     .biz-card:hover { transform: translateY(-3px); box-shadow: var(--dm-shadow); }
-    .biz-logo { width: 54px; height: 54px; border-radius: 14px; background: #ecfdf5; color: var(--dm-primary); display: grid; place-items: center; font-weight: 800; overflow: hidden; }
+    .biz-logo { width: 54px; height: 54px; border-radius: 14px; background: #dbeafe; color: var(--dm-primary); display: grid; place-items: center; font-weight: 800; overflow: hidden; }
     .biz-logo img { width: 100%; height: 100%; object-fit: cover; }
     .account-card { padding: 26px 22px; display: flex; flex-direction: column; gap: 10px; }
-    .account-icon { width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; background: #ecfdf5; color: var(--dm-primary); }
+    .account-icon { width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; background: #dbeafe; color: var(--dm-primary); }
     .story { background: #fff; border: 1px solid var(--dm-line); border-radius: var(--dm-radius); padding: 36px; box-shadow: var(--dm-shadow-sm); }
     .review-card { padding: 22px; display: flex; flex-direction: column; gap: 12px; }
     .stars { color: var(--dm-accent); letter-spacing: 2px; font-size: 15px; }
@@ -61,19 +62,7 @@
                 </div>
             </div>
             <div class="hero-visual">
-                <svg viewBox="0 0 640 420" width="100%" role="img" aria-label="Duka Mkononi shopping">
-                    <rect width="640" height="420" fill="#0f766e"/>
-                    <circle cx="510" cy="90" r="120" fill="#14b8a6" opacity="0.5"/>
-                    <rect x="60" y="120" width="300" height="200" rx="16" fill="#ffffff" opacity="0.96"/>
-                    <rect x="84" y="150" width="120" height="12" rx="6" fill="#0f766e" opacity="0.5"/>
-                    <rect x="84" y="176" width="200" height="10" rx="5" fill="#94a3b8"/>
-                    <rect x="84" y="198" width="160" height="10" rx="5" fill="#cbd5e1"/>
-                    <rect x="84" y="250" width="90" height="34" rx="17" fill="#0f766e"/>
-                    <rect x="400" y="150" width="170" height="150" rx="16" fill="#ffffff" opacity="0.94"/>
-                    <circle cx="450" cy="195" r="22" fill="#f59e0b"/>
-                    <rect x="420" y="230" width="130" height="10" rx="5" fill="#94a3b8"/>
-                    <rect x="420" y="252" width="90" height="10" rx="5" fill="#cbd5e1"/>
-                </svg>
+                <img src="/logo.png" alt="Duka Mkononi" width="854" height="858" decoding="async">
             </div>
         </div>
     </section>

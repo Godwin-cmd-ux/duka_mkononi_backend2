@@ -8,7 +8,7 @@
 @verbatim
 <style>
     .bl-card { display: flex; flex-direction: column; gap: 12px; padding: 18px; }
-    .bl-logo { width: 56px; height: 56px; border-radius: 14px; background: #ecfdf5; color: var(--dm-primary); display: grid; place-items: center; font-weight: 800; font-size: 20px; overflow: hidden; }
+    .bl-logo { width: 56px; height: 56px; border-radius: 14px; background: #dbeafe; color: var(--dm-primary); display: grid; place-items: center; font-weight: 800; font-size: 20px; overflow: hidden; }
     .bl-logo img { width: 100%; height: 100%; object-fit: cover; }
 </style>
 <main class="dm-section">
