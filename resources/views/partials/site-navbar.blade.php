@@ -56,8 +56,13 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
         </button>
     </div>
+</header>
 
-    <div class="dm-nav-drawer" id="dmNavDrawer">
+{{-- The drawer lives OUTSIDE <header>. .dm-nav uses backdrop-filter, which
+     makes it a containing block for position:fixed descendants; keeping the
+     drawer inside would anchor (and clip) it to the 66px header instead of
+     the viewport, so only the first item was visible on phones. --}}
+<div class="dm-nav-drawer" id="dmNavDrawer">
         <a href="/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span data-i18n="site_nav.home">Home</span></a>
         <a href="/shop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><span data-i18n="site_nav.shop">Shop</span></a>
         <a href="/track-orders"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span data-i18n="site_nav.track_orders">Track Orders</span></a>
@@ -67,7 +72,6 @@
         <a href="/home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg><span data-i18n="site_nav.login">Login</span></a>
         <a href="https://expo.dev/artifacts/eas/9TKXD6b4FGjwYZDZos8OcAWmuyY4N4tvgO397xOsUu0.apk" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg><span data-i18n="site_nav.download_app">Download App</span></a>
     </div>
-</header>
 <script>
 (function () {
     var toggle = document.getElementById('dmNavToggle');
