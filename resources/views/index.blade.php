@@ -17,6 +17,8 @@
     .hero-visual img { width: 100%; height: 100%; object-fit: contain; }
     .biz-card { display: flex; flex-direction: column; gap: 12px; padding: 18px; transition: transform .16s ease, box-shadow .16s ease; }
     .biz-card:hover { transform: translateY(-3px); box-shadow: var(--dm-shadow); }
+    .biz-toolbar { max-width: 480px; margin: 0 auto 24px; }
+    .biz-more { display: flex; justify-content: center; margin-top: 26px; }
     .biz-logo { width: 54px; height: 54px; border-radius: 14px; background: #dbeafe; color: var(--dm-primary); display: grid; place-items: center; font-weight: 800; overflow: hidden; }
     .biz-logo img { width: 100%; height: 100%; object-fit: cover; }
     .account-card { padding: 26px 22px; display: flex; flex-direction: column; gap: 10px; }
@@ -75,10 +77,19 @@
                 <h2 class="dm-h2" data-i18n="site_home.shop_by_business">Shop by Business</h2>
                 <p class="dm-lead" style="margin-top:10px" data-i18n="site_home.shop_by_business_sub">Pick a business to see only its products.</p>
             </div>
+            <div class="biz-toolbar">
+                <input class="dm-input" type="search" id="dmBizSearch" placeholder="Search businesses... (name or location)" data-i18n="site_home.biz_search_placeholder" data-i18n-attr="placeholder">
+            </div>
             <div class="dm-grid dm-grid--business" id="dmHomeBiz">
                 <div class="dm-card dm-skeleton" style="height:150px"></div>
                 <div class="dm-card dm-skeleton" style="height:150px"></div>
                 <div class="dm-card dm-skeleton" style="height:150px"></div>
+            </div>
+            <div class="biz-more" id="dmBizMore" hidden>
+                <a class="dm-btn dm-btn--ghost" href="/businesses">
+                    <span data-i18n="site_home.biz_view_all">View all businesses</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                </a>
             </div>
         </div>
     </section>
@@ -186,18 +197,25 @@
     function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]; }); }
     function api(path) { return fetch('/api' + path, { headers: { 'Accept': 'application/json' } }).then(function (r) { return r.json(); }); }
 
-    function loadBusinesses() {
-        api('/shop/businesses').then(function (list) {
-            var box = document.getElementById('dmHomeBiz');
-            list = Array.isArray(list) ? list : [];
-            var totalProducts = list.reduce(function (a, b) { return a + (b.product_count || 0); }, 0);
-            document.getElementById('dmStatBiz').textContent = list.length;
-            document.getElementById('dmStatProd').textContent = totalProducts;
-            if (!list.length) {
-                box.innerHTML = '<div class="dm-empty" style="grid-column:1/-1"><h3>' + esc(t('site_home.empty_businesses')) + '</h3></div>';
-                return;
-            }
-            list.slice(0, 8).forEach(function (b) {
+    var BIZ_LIMIT = 8;
+    var allBusinesses = [];
+
+    function renderBusinesses() {
+        var box = document.getElementById('dmHomeBiz');
+        var more = document.getElementById('dmBizMore');
+        var input = document.getElementById('dmBizSearch');
+        var q = (input && input.value ? input.value : '').trim().toLowerCase();
+        var list = allBusinesses;
+        if (q) {
+            list = allBusinesses.filter(function (b) {
+                return (((b.business_name || '') + ' ' + (b.business_location || '')).toLowerCase().indexOf(q) !== -1);
+            });
+        }
+        box.innerHTML = '';
+        if (!list.length) {
+            box.innerHTML = '<div class="dm-empty" style="grid-column:1/-1"><h3>' + esc(q ? t('site_home.biz_no_match') : t('site_home.empty_businesses')) + '</h3></div>';
+        } else {
+            list.slice(0, BIZ_LIMIT).forEach(function (b) {
                 var card = document.createElement('a');
                 card.className = 'dm-card biz-card';
                 card.href = '/shop?business_id=' + encodeURIComponent(b.id);
@@ -208,6 +226,17 @@
                     '<span class="dm-btn dm-btn--ghost dm-btn--sm dm-btn--block">' + esc(t('site_home.cta_shop')) + '</span>';
                 box.appendChild(card);
             });
+        }
+        if (more) more.hidden = !(allBusinesses.length > BIZ_LIMIT || (q && list.length));
+    }
+
+    function loadBusinesses() {
+        api('/shop/businesses').then(function (list) {
+            allBusinesses = Array.isArray(list) ? list : [];
+            var totalProducts = allBusinesses.reduce(function (a, b) { return a + (b.product_count || 0); }, 0);
+            document.getElementById('dmStatBiz').textContent = allBusinesses.length;
+            document.getElementById('dmStatProd').textContent = totalProducts;
+            renderBusinesses();
         }).catch(function () {
             document.getElementById('dmHomeBiz').innerHTML = '<div class="dm-empty" style="grid-column:1/-1"><h3>' + esc(t('site_common.error_generic')) + '</h3></div>';
         });
@@ -269,8 +298,12 @@
         });
     }
 
-    document.addEventListener('DOMContentLoaded', function () { loadBusinesses(); loadReviews(); contactForm(); });
-    if (window.DM) DM.onChange(function () {});
+    document.addEventListener('DOMContentLoaded', function () {
+        loadBusinesses(); loadReviews(); contactForm();
+        var search = document.getElementById('dmBizSearch');
+        if (search) search.addEventListener('input', renderBusinesses);
+    });
+    if (window.DM) DM.onChange(function () { renderBusinesses(); });
 })();
 </script>
 </body>
