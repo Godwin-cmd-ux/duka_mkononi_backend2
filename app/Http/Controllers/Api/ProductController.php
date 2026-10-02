@@ -207,6 +207,9 @@ class ProductController extends BaseController
             $stock = $request->input('stock');
             $description = $request->input('description');
             $expected_selling_price = $request->input('expected_selling_price');
+            // Optional product photo. Stored as a URL (Cloudinary). Not part
+            // of the required-field check: a product may be saved without one.
+            $image_url = $request->input('image_url');
 
             $this->touchLastSeen($userId);
 
@@ -282,6 +285,10 @@ class ProductController extends BaseController
                 'updated_at' => $now,
             ];
 
+            if ($image_url !== null && trim((string) $image_url) !== '') {
+                $productData['image_url'] = trim((string) $image_url);
+            }
+
             $newProductId = Str::uuid()->toString();
 
             try {
@@ -302,7 +309,7 @@ class ProductController extends BaseController
             }
 
             $newProduct = Product::where('id', $newProductId)
-                ->select(['id', 'name', 'category', 'description', 'price', 'expected_selling_price', 'cost_price', 'stock', 'is_active', 'seller_id', 'created_at', 'updated_at'])
+                ->select(['id', 'name', 'category', 'description', 'price', 'expected_selling_price', 'cost_price', 'stock', 'is_active', 'seller_id', 'image_url', 'created_at', 'updated_at'])
                 ->first()
                 ->toArray();
 
@@ -336,6 +343,7 @@ class ProductController extends BaseController
             $stock = $request->input('stock');
             $description = $request->input('description');
             $expected_selling_price = $request->input('expected_selling_price');
+            $image_url = $request->input('image_url');
 
             $this->touchLastSeen($userId);
 
@@ -422,6 +430,15 @@ class ProductController extends BaseController
                 $updateData['price'] = $priceValue;
             }
 
+            // Optional product photo. Written only when the caller sends the
+            // key, so a partial update (add stock) cannot wipe an existing
+            // photo. An explicit empty value clears it.
+            if ($request->has('image_url')) {
+                $updateData['image_url'] = ($image_url === null || trim((string) $image_url) === '')
+                    ? null
+                    : trim((string) $image_url);
+            }
+
             // cost_price is intentionally NOT written any more. "Bei ya
             // Kununua" is stored in `products.price`; writing a second buying
             // price into cost_price is what let the two disagree and produce
@@ -431,7 +448,7 @@ class ProductController extends BaseController
             Product::where('id', $productId)->update($updateData);
 
             $updatedProduct = Product::where('id', $productId)
-                ->select(['id', 'name', 'category', 'description', 'price', 'expected_selling_price', 'cost_price', 'stock', 'is_active', 'seller_id', 'created_at', 'updated_at'])
+                ->select(['id', 'name', 'category', 'description', 'price', 'expected_selling_price', 'cost_price', 'stock', 'is_active', 'seller_id', 'image_url', 'created_at', 'updated_at'])
                 ->first()
                 ->toArray();
 
