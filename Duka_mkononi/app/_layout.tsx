@@ -4,6 +4,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
 import { pruneCache } from '../db/cache';
 import { setupBackgroundSync } from '../lib/background';
+import { pingServer } from '../lib/network';
 import { LanguageProvider } from '../context/LanguageContext';
 import { SessionProvider, useSession } from '../context/SessionContext';
 
@@ -33,6 +34,11 @@ function RootNavigator() {
   // even when the app is closed) and prune stale cache rows on launch.
   useEffect(() => {
     setupBackgroundSync().catch(() => {});
+    // Probe the API hosts once at launch so the reachable one is remembered
+    // before the first data screen mounts. On carriers where the primary host
+    // is unreachable, this spares every screen from waiting out its own
+    // timeout against the dead host before falling back.
+    pingServer().catch(() => {});
     const timer = setTimeout(() => pruneCache().catch(() => {}), 60_000);
     return () => clearTimeout(timer);
   }, []);

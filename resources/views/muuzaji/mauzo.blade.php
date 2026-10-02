@@ -754,6 +754,15 @@
                     </div>
                     <span class="nav-label" data-i18n="muuzaji_mauzo.nav_sell">Uza</span>
                 </a>
+                <a href="orders" class="nav-item">
+                    <div class="nav-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <path d="M6 2.5h12a1.5 1.5 0 0 1 1.5 1.5V21l-3-2-3 2-3-2-3 2V4a1.5 1.5 0 0 1 1.5-1.5Z" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M8.5 7.5h7M8.5 11h7M8.5 14.5h4" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <span class="nav-label" data-i18n="muuzaji_orders.nav_orders">Oda</span>
+                </a>
             </div>
             <div class="sidebar-footer">
                 <div class="user-info">

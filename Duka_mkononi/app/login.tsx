@@ -20,7 +20,11 @@ import { useSession } from '../context/SessionContext';
 
 // ✅ BASE URL YA BACKEND YAKO
 import { API_BASE_URL } from '../constants/api';
-import { fetchWithTimeout } from '../lib/network';
+import {
+    fetchApiWithFallback,
+    isAbortError,
+    API_FETCH_TIMEOUT_MS,
+} from '../lib/network';
 import { getDashboardRouteForRole } from '../constants/session';
 
 const { width } = Dimensions.get('window');
@@ -232,7 +236,9 @@ export default function LoginScreen() {
             });
 
             // ✅ KU-TUMIA BACKEND YAKO DIRECTLY - include language
-            const response = await fetchWithTimeout(`${API_BASE_URL}/api/login`, {
+            // Tries the primary host first, then the IPv4-only fallback host, so a
+            // carrier that mishandles IPv6 (e.g. Halotel) can still reach the API.
+            const response = await fetchApiWithFallback('/api/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -244,7 +250,7 @@ export default function LoginScreen() {
                     role: backendRole,
                     language: lang
                 }),
-            }, 30000);
+            }, API_FETCH_TIMEOUT_MS);
 
             // Check if response is OK
             if (!response.ok) {
@@ -345,25 +351,35 @@ export default function LoginScreen() {
             console.error('❌ Login Error:', error);
             
             let errorMessage = t('login.error_general');
-            
+            const rawMessage =
+                typeof error?.message === 'string' ? error.message : String(error ?? '');
+
             // Specific error handling
-            if (error.message.includes('Akaunti haipo')) {
+            if (isAbortError(error)) {
+                // The request never completed: the connection stalled until it timed
+                // out. React Native surfaces this as a bare "Aborted" message.
+                errorMessage = t('login.error_timeout');
+            } else if (rawMessage.includes('Akaunti haipo')) {
                 errorMessage = t('login.error_account_not_found');
-            } else if (error.message.includes('Password si sahihi')) {
+            } else if (rawMessage.includes('Password si sahihi')) {
                 errorMessage = t('login.error_password_wrong');
-            } else if (error.message.includes('401')) {
+            } else if (rawMessage.includes('401')) {
                 errorMessage = t('login.error_account_not_found');
-            } else if (error.message.includes('403')) {
+            } else if (rawMessage.includes('403')) {
                 errorMessage = t('login.error_unauthorized');
-            } else if (error.message.includes('404')) {
+            } else if (rawMessage.includes('404')) {
                 errorMessage = t('login.error_service_unavailable');
-            } else if (error.message.includes('500')) {
+            } else if (rawMessage.includes('500')) {
                 errorMessage = t('login.error_server');
-            } else if (error.message.includes('network')) {
+            } else if (rawMessage.includes('network')) {
                 errorMessage = t('login.error_network');
             } else {
-                errorMessage = error.message || t('login.error_general');
+                errorMessage = rawMessage || t('login.error_general');
             }
+
+            // Debug aid: record the host that was attempted so a carrier-specific
+            // failure can be diagnosed from device logs.
+            console.warn('Login failed against', API_BASE_URL, errorMessage);
 
             Alert.alert(t('app.error'), errorMessage);
         } finally {

@@ -26,7 +26,9 @@ import { API_BASE_URL } from '../../constants/api';
 import { uploadToCloudinary } from '../../utils/cloudinary';
 import { getCache, setCache } from '../../db/cache';
 import { registerLive } from '../../lib/syncer';
-import { requireNetwork } from '../../lib/network';
+// Shared helper (not a local copy): it retries reads on the alternate API host,
+// so this page survives carriers where the primary host is unreachable.
+import { fetchWithTimeout, isAbortError, requireNetwork } from '../../lib/network';
 
 // 🔥 MAX FILE SIZES (in bytes)
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -47,25 +49,6 @@ const localeMap: Record<string, string> = {
   es: 'es-ES',
   de: 'de-DE',
   zh: 'zh-CN',
-};
-
-// 🔥 FETCH WITH TIMEOUT FUNCTION
-const fetchWithTimeout = async (url: string, options: any, timeout = 30000) => {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-  try {
-    const response = await fetch(url, {
-      ...options,
-      signal: controller.signal,
-    });
-    
-    clearTimeout(timeoutId);
-    return response;
-  } catch (error) {
-    clearTimeout(timeoutId);
-    throw error;
-  }
 };
 
 // 🔥 CHECK FILE SIZE
@@ -231,7 +214,7 @@ export default function TangazaScreen() {
       console.error('❌ Hitilafu katika kupakia matangazo:', error);
       const cachedAd = await getCache<any[]>('matangazo:my');
       if (cachedAd) { setMyAdvertisements(cachedAd); setLoadingAds(false); return; }
-      if (error?.name === 'AbortError') {
+      if (isAbortError(error)) {
         Alert.alert(t('app.error'), t('adverts.error_server_slow'));
       } else {
         Alert.alert(t('app.error'), t('adverts.error_load'));

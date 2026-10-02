@@ -72,13 +72,6 @@ export default function HomeScreen() {
       type: 'msimamizi',
       icon: 'shield-checkmark-outline' as const,
       description: t('buttons.msimamizi_description')
-    },
-    { 
-      text: t('buttons.washa'), 
-      color: '#9b59b6', 
-      type: 'washa',
-      icon: 'flash-outline' as const,
-      description: t('buttons.washa_description')
     }
   ];
 
@@ -97,17 +90,10 @@ export default function HomeScreen() {
       }),
     ]).start();
 
-    if (buttonType === 'washa') {
-      router.push({
-        pathname: '/malipo',
-        params: { lang }
-      });
-    } else {
-      router.push({
-        pathname: '/login',
-        params: { role: buttonType, lang }
-      });
-    }
+    router.push({
+      pathname: '/login',
+      params: { role: buttonType, lang }
+    });
   };
 
   const openLanguageModal = () => {

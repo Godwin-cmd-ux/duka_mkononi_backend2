@@ -5,7 +5,7 @@ import TabSwipe from '../../components/tab-swipe';
 import { useLang } from '../../context/LanguageContext';
 
 // Tab order — used by the swipe gesture to pick the neighbouring page.
-const MUUZAJI_TABS = ['/muuzaji/profaili', '/muuzaji/mauzo', '/muuzaji/matumizi', '/muuzaji/uza'];
+const MUUZAJI_TABS = ['/muuzaji/profaili', '/muuzaji/mauzo', '/muuzaji/matumizi', '/muuzaji/uza', '/muuzaji/orders'];
 
 export default function MuuzajiLayout() {
   const { t } = useLang();
@@ -43,6 +43,13 @@ export default function MuuzajiLayout() {
         options={() => ({
           title: t('tabs_seller.sell'),
           tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>🛒</Text>,
+        })}
+      />
+      <Tabs.Screen
+        name="orders"
+        options={() => ({
+          title: t('tabs_seller.orders'),
+          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>📦</Text>,
         })}
       />
     </Tabs>

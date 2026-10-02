@@ -26,6 +26,7 @@ import LogoutButton from '../../components/logout-button';
 import { getCache, setCache } from '../../db/cache';
 import { registerLive } from '../../lib/syncer';
 import { fetchWithTimeout, requireNetwork } from '../../lib/network';
+import { uploadToCloudinary } from '../../utils/cloudinary';
 
 import { API_BASE_URL } from '../../constants/api';
 
@@ -55,6 +56,9 @@ export default function BidhaaMpyaScreen() {
     stock: '',
   });
   const [showCustomCategory, setShowCustomCategory] = useState(false);
+  // Optional product photo (Cloudinary URL). Mirrors the Blade photo field.
+  const [productImageUrl, setProductImageUrl] = useState('');
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [customCategory, setCustomCategory] = useState('');
   const [existingProducts, setExistingProducts] = useState<any[]>([]);
   const [showProductModal, setShowProductModal] = useState(false);
@@ -845,6 +849,7 @@ export default function BidhaaMpyaScreen() {
     setSelectedProduct(product);
     setIsOwnerOfSelectedProduct(product.seller_id === userData?.id);
     setModalMode('add');
+    setProductImageUrl(product.image_url || '');
     setFormData({
       name: product.name,
       category: product.category || '',
@@ -873,6 +878,7 @@ export default function BidhaaMpyaScreen() {
     }
     
     setModalMode('edit');
+    setProductImageUrl(product.image_url || '');
     setFormData({
       name: product.name,
       category: product.category || '',
@@ -969,6 +975,7 @@ export default function BidhaaMpyaScreen() {
           price: parseFloat(formData.price),
           stock: parseInt(formData.stock),
           expected_selling_price: parseFloat(formData.expected_selling_price),
+          image_url: productImageUrl || null,
         };
         
         const success = await editProduct(selectedProduct, updateData);
@@ -1012,6 +1019,7 @@ export default function BidhaaMpyaScreen() {
           price: parseFloat(formData.price),
           stock: parseInt(formData.stock),
           expected_selling_price: parseFloat(formData.expected_selling_price),
+          image_url: productImageUrl || null,
         };
       }
 
@@ -1153,12 +1161,44 @@ export default function BidhaaMpyaScreen() {
       expected_selling_price: '',
       stock: '',
     });
+    setProductImageUrl('');
+    setUploadingPhoto(false);
     setCustomCategory('');
     setShowCustomCategory(false);
     setSelectedProduct(null);
     setIsOwnerOfSelectedProduct(false);
     setModalMode('add');
   }, []);
+
+  // Optional product photo: pick from the gallery, upload to Cloudinary and
+  // keep the secure URL to send with the product payload.
+  const pickProductPhoto = useCallback(async () => {
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert(t('app.error'), t('products.photo_permission_denied'));
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        quality: 0.8,
+        allowsEditing: true,
+        aspect: [1, 1],
+      });
+
+      if (result.canceled || !result.assets?.[0]) return;
+
+      setUploadingPhoto(true);
+      const uploaded = await uploadToCloudinary(result.assets[0].uri, 'image');
+      setProductImageUrl(uploaded.secure_url);
+    } catch (error: any) {
+      console.error('❌ Product photo upload error:', error);
+      Alert.alert(t('app.error'), error?.message || t('products.photo_upload_error'));
+    } finally {
+      setUploadingPhoto(false);
+    }
+  }, [t]);
 
   const handleQuickFill = useCallback((category: string) => {
     const sampleProducts: { [key: string]: any } = {
@@ -1221,6 +1261,7 @@ export default function BidhaaMpyaScreen() {
     setSelectedProduct(product);
     setIsOwnerOfSelectedProduct(isOwner);
     setModalMode('add');
+    setProductImageUrl(product.image_url || '');
     
     setFormData({
       name: product.name,
@@ -1875,6 +1916,45 @@ export default function BidhaaMpyaScreen() {
               />
             </View>
 
+            {/* Optional product photo (Cloudinary) — mirrors the Blade form */}
+            {(!selectedProduct || modalMode === 'edit') && (
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>{t('products.photo_label')}</Text>
+                <View style={styles.photoRow}>
+                  {productImageUrl ? (
+                    <View style={styles.photoPreviewWrap}>
+                      <Image source={{ uri: productImageUrl }} style={styles.photoPreview} />
+                      <TouchableOpacity
+                        style={styles.photoRemove}
+                        onPress={() => setProductImageUrl('')}
+                        activeOpacity={0.8}
+                      >
+                        <Ionicons name="close" size={16} color="#ffffff" />
+                      </TouchableOpacity>
+                    </View>
+                  ) : null}
+                  <TouchableOpacity
+                    style={styles.photoButton}
+                    onPress={pickProductPhoto}
+                    disabled={uploadingPhoto}
+                    activeOpacity={0.8}
+                  >
+                    {uploadingPhoto ? (
+                      <ActivityIndicator size="small" color="#2ecc71" />
+                    ) : (
+                      <Ionicons name="camera-outline" size={18} color="#2ecc71" />
+                    )}
+                    <Text style={styles.photoButtonText}>
+                      {uploadingPhoto ? t('products.photo_uploading') : (productImageUrl ? t('products.photo_change') : t('products.photo_choose'))}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.photoHint}>
+                  {uploadingPhoto ? t('products.photo_uploading') : t('products.photo_hint')}
+                </Text>
+              </View>
+            )}
+
             {/* Category */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>{t('products.category_label')}</Text>
@@ -2225,6 +2305,54 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     padding: 25,
+  },
+  photoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  photoPreviewWrap: {
+    position: 'relative',
+  },
+  photoPreview: {
+    width: 104,
+    height: 104,
+    borderRadius: 14,
+    backgroundColor: '#eef2f7',
+  },
+  photoRemove: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#e74c3c',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  photoButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: '#cbd5e1',
+    backgroundColor: '#f8fafc',
+    alignSelf: 'flex-start',
+  },
+  photoButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#334155',
+  },
+  photoHint: {
+    marginTop: 8,
+    fontSize: 12,
+    color: '#7f8c8d',
   },
   inputGroup: {
     marginBottom: 25,
