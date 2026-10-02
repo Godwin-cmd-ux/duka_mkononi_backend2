@@ -199,15 +199,15 @@
 @verbatim
     <div class="page-content" id="dashboardContent">
         <div class="loading-spinner"></div>
-        <div data-i18n="system_admin_dashboard.loading" style="text-align: center; color: #7f8c8d;">Inapakua dashbodi...</div>
+        <div style="text-align: center; color: #7f8c8d;" data-i18n="system_admin_dashboard.loading">Inapakua dashbodi...</div>
     </div>
 
     <!-- User Detail Modal -->
     <div id="userModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
-                <div class="modal-title" data-i18n="system_admin_dashboard.modal_user_title" style="font-weight:700;">Maelezo ya Mtumiaji</div>
-                <span data-i18n="system_admin_dashboard.modal_close" style="cursor:pointer;font-size:24px;" onclick="closeUserModal()">✖</span>
+                <div class="modal-title" style="font-weight:700;" data-i18n="system_admin_dashboard.modal_user_details">Maelezo ya Mtumiaji</div>
+                <span style="cursor:pointer;font-size:24px;" onclick="closeUserModal()" data-i18n="system_admin_dashboard.close_x">✖</span>
             </div>
             <div class="modal-body" id="userModalBody"></div>
         </div>
@@ -217,8 +217,8 @@
     <div id="logsModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
-                <div class="modal-title" data-i18n="system_admin_dashboard.modal_logs_title" style="font-weight:700;">Rekodi za Shughuli</div>
-                <span data-i18n="system_admin_dashboard.modal_close" style="cursor:pointer;font-size:24px;" onclick="closeLogsModal()">✖</span>
+                <div class="modal-title" style="font-weight:700;" data-i18n="system_admin_dashboard.modal_activity_logs">Rekodi za Shughuli</div>
+                <span style="cursor:pointer;font-size:24px;" onclick="closeLogsModal()" data-i18n="system_admin_dashboard.close_x">✖</span>
             </div>
             <div class="modal-body" id="logsModalBody"></div>
         </div>
@@ -227,87 +227,90 @@
     <script>
         const API_BASE_URL = '';
 
-        // Swahili fallback used when the language widget is not present.
-        // Values mirror the sw catalog of the system_admin_dashboard section in locales.json.
+        // Swahili fallback used when the language widget is not present (and
+        // for script-built strings). Values mirror the sw catalog of the
+        // system_admin_dashboard section in locales.json.
         const SW = {
-            loading: "Inapakua dashbodi...",
-            photo_hint: "Bofya kuona picha",
-            nameless: "Bila Jina",
-            label_phone: "Simu:",
-            not_set: "Haijawekwa",
-            label_business: "Biashara:",
-            label_location: "Eneo:",
-            label_registered: "Imejisajiliwa:",
-            label_status: "Hali:",
-            btn_view_logs: "📋 Angalia Logs",
-            btn_block: "🔒 Zuia",
-            btn_enable: "✅ Wezesha",
-            logs_count: "Jumla ya rekodi: {count}",
-            empty_logs: "Hakuna rekodi za shughuli",
-            log_ip: "IP: ",
-            not_available: "N/A",
-            welcome_title: "👋 Karibu, System Admin",
-            welcome_text: "Unayo uwezo wa kusimamia mfumo mzima wa DukaMkononi",
-            stat_users_label: "Jumla ya Watumiaji",
-            stat_users_sub: "wanaotumia",
-            stat_online_label: "Mtandaoni Sasa",
-            stat_online_sub: "wameungana",
-            stat_revenue_label: "Mapato ya Leo",
-            stat_revenue_sub: "shughuli",
-            stat_pending_label: "Wanasubiri",
-            stat_pending_sub: "Wanahitaji idhini",
-            system_status_title: "📊 Hali ya Mfumo",
-            role_all_users: "Watu wote",
-            role_sellers: "Wauzaji",
-            role_clients: "Wateja",
-            role_admins: "Wasimamizi",
-            btn_details: "📋 Maelezo",
-            btn_logs: "📜 Logs",
-            empty_users: "Hakuna watumiaji waliopatikana",
-            users_count: "👥 Watumiaji Wote ({count})",
-            search_placeholder: "Tafuta mtumiaji...",
-            online_count: "🌐 Watumiaji Mtandaoni ({count})",
-            btn_refresh: "🔄 Sasisha",
-            ws_label: "🔌 WebSocket: ",
-            ws_connected: "✓ Imeungana",
-            ws_disconnected: "✗ Haijaungana",
-            realtime_label: "📡 Wakati Halisi: ",
-            empty_online: "Hakuna watumiaji mtandaoni kwa sasa",
-            last_seen: "Ilionekana mwisho: ",
-            logs_count_full: "📋 Rekodi za Mfumo ({count})",
-            empty_logs_full: "Hakuna rekodi zilizopatikana",
-            guest: "Guest",
-            header_title: "System Admin Dashboard",
-            header_subtitle: "Data Halisi kutoka Database",
-            refresh_icon: "⟳",
-            nav_home_icon: "🏠",
-            nav_logout_icon: "🚪",
-            tab_dashboard: "📊 Dashbodi",
-            tab_users: "👥 Watumiaji",
-            tab_online: "🌐 Mtandaoni",
-            tab_logs: "📋 Rekodi",
-            filter_users_all: "Wote",
-            filter_logs_all: "Zote",
-            status_success: "Zilizofaulu",
-            status_failed: "Zilizoshindwa",
-            range_today: "Leo",
-            range_week: "Wiki",
-            range_month: "Mwezi",
-            err_no_permission: "Huna ruhusa ya kuingia kwenye eneo la System Admin.",
-            time_never: "Hajawahi",
-            time_minutes: "Dakika {mins} zilizopita",
-            time_hours: "Saa {hours} zilizopita",
-            time_days: "Siku {days} zilizopita",
-            user_fallback: "Mtumiaji",
-            confirm_toggle: "Una uhakika unataka {action} {name}?",
-            msg_toggled: "{name} ime{word} kikamilifu!",
-            err_status_failed: "Imeshindwa kubadilisha hali",
-            err_network: "Hitilafu ya mtandao",
-            confirm_logout: "Una uhakika unataka kutoka?",
-            word_enable: "kuwezesha",
-            word_block: "kuzuia",
-            word_enabled: "wezeshwa",
-            word_blocked: "zuiwa"
+            page_title: 'Dashbodi - DukaMkononi System Admin',
+            loading: 'Inapakua dashbodi...',
+            modal_user_details: 'Maelezo ya Mtumiaji',
+            close_x: '✖',
+            modal_activity_logs: 'Rekodi za Shughuli',
+            click_photo: 'Bofya kuona picha',
+            without_name: 'Bila Jina',
+            label_phone: 'Simu:',
+            not_set: 'Haijawekwa',
+            label_business: 'Biashara:',
+            label_location: 'Eneo:',
+            label_registered: 'Imejisajiliwa:',
+            label_status: 'Hali:',
+            btn_view_logs: '📋 Angalia Logs',
+            btn_block: '🔒 Zuia',
+            btn_enable: '✅ Wezesha',
+            total_records: 'Jumla ya rekodi: {count}',
+            no_activity_records: 'Hakuna rekodi za shughuli',
+            label_ip: 'IP: ',
+            not_available: 'N/A',
+            welcome_title: '👋 Karibu, System Admin',
+            welcome_subtitle: 'Unayo uwezo wa kusimamia mfumo mzima wa DukaMkononi',
+            stat_total_users: 'Jumla ya Watumiaji',
+            using: 'wanaotumia',
+            stat_online_now: 'Mtandaoni Sasa',
+            connected: 'wameungana',
+            stat_today_revenue: 'Mapato ya Leo',
+            activities: 'shughuli',
+            stat_pending: 'Wanasubiri',
+            need_approval: 'Wanahitaji idhini',
+            section_system_status: '📊 Hali ya Mfumo',
+            all_people: 'Watu wote',
+            sellers: 'Wauzaji',
+            customers: 'Wateja',
+            administrators: 'Wasimamizi',
+            btn_details: '📋 Maelezo',
+            btn_logs: '📜 Logs',
+            no_users_found: 'Hakuna watumiaji waliopatikana',
+            all_users_title: '👥 Watumiaji Wote ({count})',
+            search_placeholder: 'Tafuta mtumiaji...',
+            online_users_title: '🌐 Watumiaji Mtandaoni ({count})',
+            btn_refresh: '🔄 Sasisha',
+            label_websocket: '🔌 WebSocket: ',
+            ws_connected: '✓ Imeungana',
+            ws_disconnected: '✗ Haijaungana',
+            label_realtime: '📡 Wakati Halisi: ',
+            no_online_users: 'Hakuna watumiaji mtandaoni kwa sasa',
+            label_last_seen: 'Ilionekana mwisho: ',
+            system_logs_title: '📋 Rekodi za Mfumo ({count})',
+            no_records_found: 'Hakuna rekodi zilizopatikana',
+            guest: 'Guest',
+            header_title: 'System Admin Dashboard',
+            header_subtitle: 'Data Halisi kutoka Database',
+            icon_refresh: '⟳',
+            icon_home: '🏠',
+            icon_logout: '🚪',
+            tab_dashboard: '📊 Dashbodi',
+            tab_users: '👥 Watumiaji',
+            tab_online: '🌐 Mtandaoni',
+            tab_logs: '📋 Rekodi',
+            filter_all: 'Wote',
+            filter_all_status: 'Zote',
+            filter_success: 'Zilizofaulu',
+            filter_failed: 'Zilizoshindwa',
+            filter_today: 'Leo',
+            filter_week: 'Wiki',
+            filter_month: 'Mwezi',
+            err_no_permission: 'Huna ruhusa ya kuingia kwenye eneo la System Admin.',
+            never: 'Hajawahi',
+            time_mins_ago: 'Dakika {mins} zilizopita',
+            time_hours_ago: 'Saa {hours} zilizopita',
+            time_days_ago: 'Siku {days} zilizopita',
+            user_generic: 'Mtumiaji',
+            confirm_enable: 'Una uhakika unataka kuwezesha {userName}?',
+            confirm_block: 'Una uhakika unataka kuzuia {userName}?',
+            status_enabled: '{userName} imewezeshwa kikamilifu!',
+            status_blocked: '{userName} imezuiwa kikamilifu!',
+            err_status_failed: 'Imeshindwa kubadilisha hali',
+            err_network: 'Hitilafu ya mtandao',
+            confirm_logout: 'Una uhakika unataka kutoka?',
         };
 
         function t(key, params) {
@@ -322,6 +325,13 @@
                 for (const k in params) value = String(value).split('{' + k + '}').join(String(params[k]));
             }
             return value;
+        }
+
+        // Date locale follows the selected language (was hardcoded 'sw-TZ').
+        const DATE_LOCALES = { sw: 'sw-TZ', en: 'en-GB', fr: 'fr-FR', hi: 'hi-IN', es: 'es-ES', ur: 'ur-PK', de: 'de-DE', zh: 'zh-CN' };
+        function dateLocale() {
+            const code = (window.DM && typeof window.DM.locale === 'function' && window.DM.locale()) || document.documentElement.getAttribute('data-dm-locale') || 'sw';
+            return DATE_LOCALES[code] || 'sw-TZ';
         }
 
         let activeTab = 'dashboard';
@@ -368,20 +378,20 @@
         function formatCurrency(amount) { return `TZS ${(amount || 0).toLocaleString()}`; }
         function formatDate(dateStr) {
             if (!dateStr) return t('not_available');
-            try { return new Date(dateStr).toLocaleDateString('sw-TZ'); }
+            try { return new Date(dateStr).toLocaleDateString(dateLocale()); }
             catch { return t('not_available'); }
         }
         function formatTimeAgo(dateStr) {
-            if (!dateStr) return t('time_never');
+            if (!dateStr) return t('never');
             try {
                 const date = new Date(dateStr);
                 const now = new Date();
                 const diffMins = Math.floor((now - date) / 60000);
-                if (diffMins < 60) return t('time_minutes', { mins: diffMins });
+                if (diffMins < 60) return t('time_mins_ago', { mins: diffMins });
                 const diffHours = Math.floor(diffMins / 60);
-                if (diffHours < 24) return t('time_hours', { hours: diffHours });
-                return t('time_days', { days: Math.floor(diffHours / 24) });
-            } catch { return t('time_never'); }
+                if (diffHours < 24) return t('time_hours_ago', { hours: diffHours });
+                return t('time_days_ago', { days: Math.floor(diffHours / 24) });
+            } catch { return t('never'); }
         }
 
         function getStatusColor(status) {
@@ -462,8 +472,8 @@
             const token = localStorage.getItem('userToken');
             const action = status === 'approved' ? 'enable' : 'disable';
             const u = users.find(usr => String(usr.id) === String(userId));
-            const userName = (u && (u.full_name || u.email)) || t('user_fallback');
-            if (!confirm(t('confirm_toggle', { action: action === 'enable' ? t('word_enable') : t('word_block'), name: userName }))) return;
+            const userName = (u && (u.full_name || u.email)) || t('user_generic');
+            if (!confirm(t(action === 'enable' ? 'confirm_enable' : 'confirm_block', { userName }))) return;
             
             try {
                 const res = await fetch(`${API_BASE_URL}/api/admin/users/${userId}/status`, {
@@ -472,7 +482,7 @@
                     body: JSON.stringify({ status })
                 });
                 if (res.ok) {
-                    showToast(t('msg_toggled', { name: userName, word: action === 'enable' ? t('word_enabled') : t('word_blocked') }), 'success');
+                    showToast(t(action === 'enable' ? 'status_enabled' : 'status_blocked', { userName }), 'success');
                     await loadAllData();
                 } else { showToast(t('err_status_failed'), 'error'); }
             } catch(e) { showToast(t('err_network'), 'error'); }
@@ -536,9 +546,9 @@
             const body = document.getElementById('userModalBody');
             const roleColor = getRoleColor(user.role);
             body.innerHTML = `
-                <div class="modal-avatar js-avatar-view" data-full="${user.business_logo_url || ''}" data-name="${escapeHtml(user.full_name || user.email)}" title="${t('photo_hint')}">${user.business_logo_url ? `<img src="${escapeHtml(user.business_logo_url)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;pointer-events:none;">` : (user.full_name?.charAt(0) || user.email.charAt(0)).toUpperCase()}</div>
+                <div class="modal-avatar js-avatar-view" data-full="${user.business_logo_url || ''}" data-name="${escapeHtml(user.full_name || user.email)}" title="${t('click_photo')}">${user.business_logo_url ? `<img src="${escapeHtml(user.business_logo_url)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;pointer-events:none;">` : (user.full_name?.charAt(0) || user.email.charAt(0)).toUpperCase()}</div>
                 <div style="text-align:center; margin-bottom:20px;">
-                    <div style="font-size:18px; font-weight:700;">${escapeHtml(user.full_name || t('nameless'))}</div>
+                    <div style="font-size:18px; font-weight:700;">${escapeHtml(user.full_name || t('without_name'))}</div>
                     <div style="color:#7f8c8d;">${escapeHtml(user.email)}</div>
                     <div style="margin-top:8px;"><span class="badge" style="background:${roleColor}20; color:${roleColor};">${user.role}</span></div>
                 </div>
@@ -568,16 +578,16 @@
             body.innerHTML = `
                 <div style="margin-bottom:16px;">
                     <div style="font-weight:700;">${escapeHtml(user.full_name || user.email)}</div>
-                    <div style="font-size:12px; color:#7f8c8d;">${t('logs_count', { count: userSpecificLogs.length })}</div>
+                    <div style="font-size:12px; color:#7f8c8d;">${t('total_records', { count: userSpecificLogs.length })}</div>
                 </div>
-                ${userSpecificLogs.length === 0 ? '<div class="empty-state">' + t('empty_logs') + '</div>' :
+                ${userSpecificLogs.length === 0 ? '<div class="empty-state">' + t('no_activity_records') + '</div>' :
                     userSpecificLogs.map(log => `
                         <div class="log-card">
                             <div class="log-header"><span class="log-action">${escapeHtml(log.action)}</span><span class="log-time">${formatTimeAgo(log.created_at)}</span></div>
                             <div class="log-endpoint">${escapeHtml(log.endpoint)}</div>
                             <div class="log-footer">
                                 <span class="log-status" style="background:${getStatusColor(log.status)}20; color:${getStatusColor(log.status)};">${log.status}</span>
-                                <span style="font-size:10px; color:#95a5a6;">${t('log_ip')}${log.ip_address || t('not_available')}</span>
+                                <span style="font-size:10px; color:#95a5a6;">${t('label_ip')}${log.ip_address || t('not_available')}</span>
                             </div>
                         </div>
                     `).join('')
@@ -592,21 +602,21 @@
             return `
                 <div class="welcome-card">
                     <div class="welcome-title">${t('welcome_title')}</div>
-                    <div>${t('welcome_text')}</div>
+                    <div>${t('welcome_subtitle')}</div>
                 </div>
                 <div class="stats-grid">
-                    <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-value">${systemStats.totalUsers}</div><div class="stat-label">${t('stat_users_label')}</div><div>${systemStats.activeUsers} ${t('stat_users_sub')}</div></div>
-                    <div class="stat-card"><div class="stat-icon">🌐</div><div class="stat-value">${systemStats.onlineUsers}</div><div class="stat-label">${t('stat_online_label')}</div><div>${systemStats.connectedNow} ${t('stat_online_sub')}</div></div>
-                    <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-value">${formatCurrency(systemStats.todayRevenue)}</div><div class="stat-label">${t('stat_revenue_label')}</div><div>${systemStats.todayActivities} ${t('stat_revenue_sub')}</div></div>
-                    <div class="stat-card"><div class="stat-icon">⏳</div><div class="stat-value">${systemStats.pendingUsers}</div><div class="stat-label">${t('stat_pending_label')}</div><div>${t('stat_pending_sub')}</div></div>
+                    <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-value">${systemStats.totalUsers}</div><div class="stat-label">${t('stat_total_users')}</div><div>${systemStats.activeUsers} ${t('using')}</div></div>
+                    <div class="stat-card"><div class="stat-icon">🌐</div><div class="stat-value">${systemStats.onlineUsers}</div><div class="stat-label">${t('stat_online_now')}</div><div>${systemStats.connectedNow} ${t('connected')}</div></div>
+                    <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-value">${formatCurrency(systemStats.todayRevenue)}</div><div class="stat-label">${t('stat_today_revenue')}</div><div>${systemStats.todayActivities} ${t('activities')}</div></div>
+                    <div class="stat-card"><div class="stat-icon">⏳</div><div class="stat-value">${systemStats.pendingUsers}</div><div class="stat-label">${t('stat_pending')}</div><div>${t('need_approval')}</div></div>
                 </div>
                 <div class="section-card">
-                    <div class="section-header"><div class="section-title">${t('system_status_title')}</div></div>
+                    <div class="section-header"><div class="section-title">${t('section_system_status')}</div></div>
                     <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:16px;">
-                        <div><div style="font-weight:700;">${t('role_all_users')}</div><div>${systemStats.totalUsers}</div></div>
-                        <div><div style="font-weight:700;">${t('role_sellers')}</div><div>${systemStats.totalSellers}</div></div>
-                        <div><div style="font-weight:700;">${t('role_clients')}</div><div>${systemStats.totalClients}</div></div>
-                        <div><div style="font-weight:700;">${t('role_admins')}</div><div>${systemStats.totalAdmins}</div></div>
+                        <div><div style="font-weight:700;">${t('all_people')}</div><div>${systemStats.totalUsers}</div></div>
+                        <div><div style="font-weight:700;">${t('sellers')}</div><div>${systemStats.totalSellers}</div></div>
+                        <div><div style="font-weight:700;">${t('customers')}</div><div>${systemStats.totalClients}</div></div>
+                        <div><div style="font-weight:700;">${t('administrators')}</div><div>${systemStats.totalAdmins}</div></div>
                     </div>
                 </div>
             `;
@@ -621,7 +631,7 @@
                     <div class="user-header">
                         <div class="user-avatar js-avatar-view" data-full="${user.business_logo_url || ''}" data-name="${escapeHtml(user.full_name || user.email)}">${user.business_logo_url ? `<img src="${escapeHtml(user.business_logo_url)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;pointer-events:none;">` : (user.full_name?.charAt(0) || user.email.charAt(0)).toUpperCase()}<div class="online-dot" style="background:${user.is_online ? '#2ecc71' : '#95a5a6'}"></div></div>
                         <div class="user-info">
-                            <div class="user-name">${escapeHtml(user.full_name || t('nameless'))}</div>
+                            <div class="user-name">${escapeHtml(user.full_name || t('without_name'))}</div>
                             <div class="user-email">${escapeHtml(user.email)}</div>
                             <div class="user-badges">
                                 <span class="badge" style="background:${roleColor}20; color:${roleColor};">${user.role}</span>
@@ -649,7 +659,7 @@
             if (!listHost) { render(); return; }
             const filtered = getFilteredUsers();
             listHost.innerHTML = filtered.length === 0
-                ? '<div class="empty-state">' + t('empty_users') + '</div>'
+                ? '<div class="empty-state">' + t('no_users_found') + '</div>'
                 : filtered.map(userCardHtml).join('');
         }
 
@@ -657,13 +667,13 @@
             const filtered = getFilteredUsers();
             return `
                 <div class="section-card">
-                    <div class="section-header"><div class="section-title">${t('users_count', { count: users.length })}</div></div>
+                    <div class="section-header"><div class="section-title">${t('all_users_title', { count: users.length })}</div></div>
                     <div class="filter-bar">
                         <div class="search-box"><span>🔍</span><input type="text" id="userSearch" placeholder="${t('search_placeholder')}"></div>
                         <div class="filter-buttons" id="userTypeFilters"></div>
                     </div>
                     <div id="userListHost">
-                    ${filtered.length === 0 ? '<div class="empty-state">' + t('empty_users') + '</div>' :
+                    ${filtered.length === 0 ? '<div class="empty-state">' + t('no_users_found') + '</div>' :
                         filtered.map(user => userCardHtml(user)).join('')
                     }
                     </div>
@@ -675,14 +685,14 @@
             return `
                 <div class="section-card">
                     <div class="section-header">
-                        <div class="section-title">${t('online_count', { count: onlineUsers.length })}</div>
+                        <div class="section-title">${t('online_users_title', { count: onlineUsers.length })}</div>
                         <button class="action-btn btn-details" onclick="loadAllData()" style="padding:6px 12px;">${t('btn_refresh')}</button>
                     </div>
                     <div class="filter-info" style="margin-bottom:16px; padding:12px; background:#f8f9fa; border-radius:12px;">
-                        <span>${t('ws_label')}${webSocketConnected ? t('ws_connected') : t('ws_disconnected')}</span>
-                        <span style="margin-left:20px;">${t('realtime_label')}${onlineUsers.length} ${t('stat_users_sub')}</span>
+                        <span>${t('label_websocket')}${webSocketConnected ? t('ws_connected') : t('ws_disconnected')}</span>
+                        <span style="margin-left:20px;">${t('label_realtime')}${onlineUsers.length} ${t('using')}</span>
                     </div>
-                    ${onlineUsers.length === 0 ? '<div class="empty-state">' + t('empty_online') + '</div>' :
+                    ${onlineUsers.length === 0 ? '<div class="empty-state">' + t('no_online_users') + '</div>' :
                         onlineUsers.map(user => `
                             <div class="user-card">
                                 <div class="user-header">
@@ -694,7 +704,7 @@
                                     </div>
                                 </div>
                                 <div class="user-footer" style="margin-top:8px; font-size:11px; color:#95a5a6;">
-                                    ${t('last_seen')}${formatTimeAgo(user.last_seen)}
+                                    ${t('label_last_seen')}${formatTimeAgo(user.last_seen)}
                                 </div>
                             </div>
                         `).join('')
@@ -707,12 +717,12 @@
             const filtered = getFilteredLogs();
             return `
                 <div class="section-card">
-                    <div class="section-header"><div class="section-title">${t('logs_count_full', { count: userLogs.length })}</div></div>
+                    <div class="section-header"><div class="section-title">${t('system_logs_title', { count: userLogs.length })}</div></div>
                     <div class="filter-bar">
                         <div class="filter-buttons" id="logStatusFilters"></div>
                         <div class="filter-buttons" id="timeRangeFilters"></div>
                     </div>
-                    ${filtered.length === 0 ? '<div class="empty-state">' + t('empty_logs_full') + '</div>' :
+                    ${filtered.length === 0 ? '<div class="empty-state">' + t('no_records_found') + '</div>' :
                         filtered.map(log => {
                             const statusColor = getStatusColor(log.status);
                             return `
@@ -745,9 +755,9 @@
                 <div class="dashboard-header">
                     <div><div class="header-title">${t('header_title')}</div><div class="header-subtitle">${t('header_subtitle')}</div></div>
                     <div class="header-actions">
-                        <div class="header-btn" onclick="loadAllData()">${t('refresh_icon')}</div>
-                        <div class="header-btn" onclick="window.location.href='/home'">${t('nav_home_icon')}</div>
-                        <div class="header-btn" onclick="handleLogout()" style="color:#e74c3c;font-weight:700;">${t('nav_logout_icon')}</div>
+                        <div class="header-btn" onclick="loadAllData()">${t('icon_refresh')}</div>
+                        <div class="header-btn" onclick="window.location.href='/home'">${t('icon_home')}</div>
+                        <div class="header-btn" onclick="handleLogout()" style="color:#e74c3c;font-weight:700;">${t('icon_logout')}</div>
                     </div>
                 </div>
                 <div class="tabs-container">
@@ -767,19 +777,19 @@
                 if (searchInput) searchInput.addEventListener('input', (e) => { searchQuery = e.target.value; renderUserList(); });
                 const filterContainer = document.getElementById('userTypeFilters');
                 if (filterContainer) {
-                    const types = [{id:'all',label:t('filter_users_all')},{id:'admin',label:t('role_admins')},{id:'seller',label:t('role_sellers')},{id:'client',label:t('role_clients')}];
-                    filterContainer.innerHTML = types.map(ty => `<div class="filter-chip ${selectedUserType === ty.id ? 'active' : ''}" onclick="setUserType('${ty.id}')">${ty.label}</div>`).join('');
+                    const types = [{id:'all',label:t('filter_all')},{id:'admin',label:t('administrators')},{id:'seller',label:t('sellers')},{id:'client',label:t('customers')}];
+                    filterContainer.innerHTML = types.map(t => `<div class="filter-chip ${selectedUserType === t.id ? 'active' : ''}" onclick="setUserType('${t.id}')">${t.label}</div>`).join('');
                 }
             }
             if (activeTab === 'logs') {
                 const logFilterContainer = document.getElementById('logStatusFilters');
                 if (logFilterContainer) {
-                    const statuses = [{id:'all',label:t('filter_logs_all')},{id:'success',label:t('status_success')},{id:'failed',label:t('status_failed')}];
+                    const statuses = [{id:'all',label:t('filter_all_status')},{id:'success',label:t('filter_success')},{id:'failed',label:t('filter_failed')}];
                     logFilterContainer.innerHTML = statuses.map(s => `<div class="filter-chip ${selectedLogStatus === s.id ? 'active' : ''}" onclick="setLogStatus('${s.id}')">${s.label}</div>`).join('');
                 }
                 const timeFilterContainer = document.getElementById('timeRangeFilters');
                 if (timeFilterContainer) {
-                    const ranges = [{id:'today',label:t('range_today')},{id:'week',label:t('range_week')},{id:'month',label:t('range_month')}];
+                    const ranges = [{id:'today',label:t('filter_today')},{id:'week',label:t('filter_week')},{id:'month',label:t('filter_month')}];
                     timeFilterContainer.innerHTML = ranges.map(r => `<div class="filter-chip ${selectedTimeRange === r.id ? 'active' : ''}" onclick="setTimeRange('${r.id}')">${r.label}</div>`).join('');
                 }
             }
@@ -798,23 +808,20 @@
 
         function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
 
-        if (window.DM && typeof window.DM.onChange === 'function') {
-            window.DM.onChange(() => {
-                render();
-                if (selectedUser) {
-                    const um = document.getElementById('userModal');
-                    if (um && um.style.display === 'flex') viewUserDetails(selectedUser);
-                    const lm = document.getElementById('logsModal');
-                    if (lm && lm.style.display === 'flex') viewUserLogs(selectedUser);
-                }
-            });
-        }
-
         async function init() {
             if (!checkSystemAdmin()) return;
             await loadAllData();
         }
         
+        // Follow the language: the whole dashboard is script-built.
+        if (window.DM && typeof window.DM.onChange === 'function') {
+            window.DM.onChange(() => {
+                render();
+                if (selectedUser && document.getElementById('userModal').style.display === 'flex') viewUserDetails(selectedUser);
+                if (selectedUser && document.getElementById('logsModal').style.display === 'flex') viewUserLogs(selectedUser);
+            });
+        }
+
         init();
     </script>
 </body>

@@ -1,439 +1,289 @@
 @include('partials.dm-locale')
+@include('partials.site-head', ['titleFallback' => 'DukaMkononi | Your online marketplace'])
 @verbatim
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Duka Mkononi - Soko la Kuaminika la Kuuza na Kununua Bidhaa Mtandaoni Tanzania. Jiunge na duka letu la kisasa na uanze biashara yako ya mtandaoni leo." data-i18n="index.meta_description" data-i18n-attr="content">
-    <meta name="keywords" content="duka mkononi, soko mtandaoni Tanzania, biashara mtandaoni, nunua bidhaa Tanzania, uza bidhaa mtandaoni">
-    <title data-i18n="index.page_title">Duka Mkononi | Soko Lako la Kuaminika la Mtandaoni</title>
-    
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Montserrat:wght@800;900&display=swap" rel="stylesheet">
-    
-    <!-- Favicon -->
-    <link rel="icon" href="/favicon.ico" type="image/x-icon">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-
-    
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Poppins', sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-        
-        /* Header & Logo */
-        header {
-            padding: 20px 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .logo-area {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .logo-placeholder {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(45deg, #2c3e50, #1a2530);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 800;
-            font-size: 24px;
-            box-shadow: 0 4px 12px rgba(44, 62, 80, 0.3);
-        }
-        
-        .logo-text h1 {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 28px;
-            font-weight: 900;
-            color: #2c3e50;
-            letter-spacing: -0.5px;
-        }
-        
-        .logo-text span {
-            color: #FF9800;
-        }
-        
-        .logo-text p {
-            font-size: 12px;
-            color: #666;
-            margin-top: -3px;
-        }
-        
-        /* App Download Button */
-        .app-download-btn {
-            display: inline-block;
-            background: linear-gradient(45deg, #FF9800, #FF5722);
-            color: white;
-            font-size: 16px;
-            font-weight: 600;
-            padding: 12px 25px;
-            border-radius: 50px;
-            text-decoration: none;
-            box-shadow: 0 5px 15px rgba(255, 152, 0, 0.3);
-            transition: all 0.3s ease;
-            border: none;
-            cursor: pointer;
-        }
-        
-        .app-download-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(255, 152, 0, 0.4);
-            background: linear-gradient(45deg, #FF5722, #FF9800);
-        }
-        
-        .app-download-btn:active {
-            transform: translateY(-1px);
-        }
-        
-        /* Main Hero Section */
-        .hero {
-            display: flex;
-            align-items: center;
-            min-height: 80vh;
-            padding: 40px 0;
-        }
-        
-        .hero-content {
-            flex: 1;
-            max-width: 600px;
-        }
-        
-        .hero-image {
-            flex: 1;
-            text-align: center;
-        }
-        
-        .hero-image img {
-            max-width: 100%;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-        }
-        
-        .tagline {
-            font-size: 16px;
-            color: #FF9800;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            margin-bottom: 15px;
-        }
-        
-        h1.main-headline {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 48px;
-            font-weight: 900;
-            line-height: 1.1;
-            margin-bottom: 20px;
-            color: #2C3E50;
-        }
-        
-        h1.main-headline span {
-            color: #2c3e50;
-            text-decoration: underline;
-            text-decoration-color: #FF9800;
-            text-decoration-thickness: 3px;
-        }
-        
-        .description {
-            font-size: 18px;
-            color: #555;
-            margin-bottom: 30px;
-            line-height: 1.8;
-        }
-        
-        /* CTA Button */
-        .cta-button {
-            display: inline-block;
-            background: linear-gradient(45deg, #2c3e50, #1a2530);
-            color: white;
-            font-size: 20px;
-            font-weight: 600;
-            padding: 18px 40px;
-            border-radius: 50px;
-            text-decoration: none;
-            box-shadow: 0 8px 20px rgba(44, 62, 80, 0.4);
-            transition: all 0.3s ease;
-            border: none;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-        
-        .cta-button:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 25px rgba(44, 62, 80, 0.5);
-            background: linear-gradient(45deg, #1a2530, #2c3e50);
-        }
-        
-        .cta-button:active {
-            transform: translateY(-2px);
-        }
-        
-        /* Features Section */
-        .features {
-            padding: 80px 0;
-            background-color: white;
-            border-radius: 30px 30px 0 0;
-            margin-top: 40px;
-            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.05);
-        }
-        
-        .section-title {
-            text-align: center;
-            font-size: 36px;
-            font-weight: 800;
-            color: #2C3E50;
-            margin-bottom: 50px;
-        }
-        
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 30px;
-        }
-        
-        .feature-card {
-            background: #f8f9fa;
-            padding: 30px;
-            border-radius: 20px;
-            transition: transform 0.3s ease;
-            border-left: 5px solid #2c3e50;
-        }
-        
-        .feature-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
-        }
-        
-        .feature-icon {
-            font-size: 40px;
-            color: #2c3e50;
-            margin-bottom: 20px;
-        }
-        
-        .feature-card h3 {
-            font-size: 22px;
-            margin-bottom: 15px;
-            color: #2C3E50;
-        }
-        
-        .feature-card p {
-            color: #666;
-        }
-        
-        /* Footer */
-        footer {
-            background-color: #2C3E50;
-            color: white;
-            padding: 40px 0;
-            text-align: center;
-            margin-top: 60px;
-        }
-        
-        .footer-logo {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 24px;
-            font-weight: 800;
-            margin-bottom: 20px;
-        }
-        
-        .copyright {
-            color: #bbb;
-            font-size: 14px;
-            margin-top: 20px;
-        }
-        
-        /* Responsive */
-        @media (max-width: 768px) {
-            header {
-                flex-direction: column;
-                gap: 20px;
-                text-align: center;
-            }
-            
-            .app-download-btn {
-                margin-top: 10px;
-            }
-            
-            .hero {
-                flex-direction: column;
-                text-align: center;
-                padding: 20px 0;
-            }
-            
-            .hero-content {
-                margin-bottom: 40px;
-            }
-            
-            h1.main-headline {
-                font-size: 36px;
-            }
-            
-            .description {
-                font-size: 16px;
-            }
-            
-            .features-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
-</head>
 <body>
 @endverbatim
 @include('partials.dm-lang-widget')
+@include('partials.site-navbar')
 @verbatim
-    <!-- Header with Logo -->
-    <header class="container">
-        <div class="logo-area">
-            <div class="logo-placeholder" data-i18n="index.logo_short">
-                DM
-            </div>
-            <div class="logo-text">
-                <h1>Duka<span>Mkononi</span></h1>
-                <p data-i18n="index.logo_tagline">Soko la Kuaminika</p>
-            </div>
-        </div>
-        
-        <!-- App Download Button -->
-        <nav>
-            <a href="https://expo.dev/artifacts/eas/9TKXD6b4FGjwYZDZos8OcAWmuyY4N4tvgO397xOsUu0.apk" 
-               class="app-download-btn" 
-               target="_blank" rel="noopener">
-                <span data-i18n="index.download_app">📱 Pakua App Yetu</span>
-            </a>
-        </nav>
-    </header>
+<style>
+    .hero { background: radial-gradient(1100px 420px at 80% -10%, #ccfbf1 0%, transparent 60%), linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); border-bottom: 1px solid var(--dm-line); }
+    .hero-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 40px; align-items: center; padding: 64px 0; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+    .hero-stats { display: flex; gap: 28px; margin-top: 34px; flex-wrap: wrap; }
+    .hero-stat b { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 26px; color: var(--dm-primary); display: block; }
+    .hero-stat span { font-size: 13px; color: var(--dm-muted); }
+    .hero-visual { border-radius: 20px; overflow: hidden; box-shadow: 0 24px 60px rgba(15, 23, 42, .16); border: 1px solid var(--dm-line); background: #fff; }
+    .biz-card { display: flex; flex-direction: column; gap: 12px; padding: 18px; transition: transform .16s ease, box-shadow .16s ease; }
+    .biz-card:hover { transform: translateY(-3px); box-shadow: var(--dm-shadow); }
+    .biz-logo { width: 54px; height: 54px; border-radius: 14px; background: #ecfdf5; color: var(--dm-primary); display: grid; place-items: center; font-weight: 800; overflow: hidden; }
+    .biz-logo img { width: 100%; height: 100%; object-fit: cover; }
+    .account-card { padding: 26px 22px; display: flex; flex-direction: column; gap: 10px; }
+    .account-icon { width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; background: #ecfdf5; color: var(--dm-primary); }
+    .story { background: #fff; border: 1px solid var(--dm-line); border-radius: var(--dm-radius); padding: 36px; box-shadow: var(--dm-shadow-sm); }
+    .review-card { padding: 22px; display: flex; flex-direction: column; gap: 12px; }
+    .stars { color: var(--dm-accent); letter-spacing: 2px; font-size: 15px; }
+    .contact-grid { display: grid; grid-template-columns: 1fr 1.1fr; gap: 32px; align-items: start; }
+    .contact-info li { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--dm-line); }
+    .contact-info svg { width: 20px; height: 20px; color: var(--dm-primary); flex: 0 0 auto; }
+    @media (max-width: 860px) {
+        .hero-grid { grid-template-columns: 1fr; padding: 40px 0; }
+        .hero-visual { order: -1; }
+        .contact-grid { grid-template-columns: 1fr; }
+    }
+</style>
 
-    <!-- Main Hero Section -->
-    <main>
-        <section class="hero container">
-            <div class="hero-content">
-                <div class="tagline" data-i18n="index.hero_tagline">Karibu Duka Mkononi</div>
-                <h1 class="main-headline" data-i18n-html="index.hero_headline">Soko Lako la <span>Kuaminika</span> Mtandaoni</h1>
-                <p class="description" data-i18n="index.hero_intro_1">
-                    Duka Mkononi ni jukwaa la kisasa la biashara mtandaoni nchini Tanzania. Tunakuwezesha kufungua duka lako la mtandaoni kwa urahisi, kuuza bidhaa zako, na kufikia wateja wengi zaidi. Jiunge na maelfu ya wafanyabiashara ambao tayari wanafanikiwa kupitia mfumo wetu.
-                </p>
-                <p class="description" data-i18n="index.hero_intro_2">
-                    Hakuna uhitaji wa ujuzi wa kiufundi. Kwa kubofya kituo kimoja, unaweza kuanzisha duka lako na kuanza kuuza. Tuna mifumo ya malipo salama, usafirishaji wa bidhaa, na msaada wa wateja kila wakati.
-                </p>
-                
-                <a href="home" class="cta-button" data-i18n="index.cta_start">
-                    🔥 Anza Sasa - Bure Kabisa!
-                </a>
-            </div>
-            
-            <div class="hero-image">
-                <!-- Placeholder for an image - in production, add actual image -->
-                <img src="https://res.cloudinary.com/dooidwbgt/image/upload/v1764828413/y3qxsngkx0ymlmyaqt3u.png" alt="Duka Mkononi - Biashara Mtandaoni Tanzania" data-i18n="index.hero_image_alt" data-i18n-attr="alt">
-            </div>
-        </section>
-
-        <!-- Features Section -->
-        <section class="features">
-            <div class="container">
-                <h2 class="section-title" data-i18n="index.features_title">Kwa Nini Kuchagua Duka Mkononi?</h2>
-                
-                <div class="features-grid">
-                    <div class="feature-card">
-                        <div class="feature-icon">🚀</div>
-                        <h3 data-i18n="index.feature_fast_title">Anza Haraka</h3>
-                        <p data-i18n="index.feature_fast_desc">Fungua duka lako la mtandaoni kwa dakika chache. Hakuna msimbo, hakuna ujanja wa kiufundi unahitajika.</p>
-                    </div>
-                    
-                    <div class="feature-card">
-                        <div class="feature-icon">🛡️</div>
-                        <h3 data-i18n="index.feature_secure_title">Salama na Ya Kuaminika</h3>
-                        <p data-i18n="index.feature_secure_desc">Mifumo yetu ya malipo ni salama kabisa. Tuna lisansi na ushirikiano na benki kuu Tanzania.</p>
-                    </div>
-                    
-                    <div class="feature-card">
-                        <div class="feature-icon">📱</div>
-                        <h3 data-i18n="index.feature_mobile_title">Inafaa kwa Simu</h3>
-                        <p data-i18n="index.feature_mobile_desc">Duka lako litaonekana vizuri kwenye simu, kompyuta na tablet. Wateja wote wataona vyema.</p>
-                    </div>
-                    
-                    <div class="feature-card">
-                        <div class="feature-icon">📈</div>
-                        <h3 data-i18n="index.feature_reports_title">Rudisha Taarifa</h3>
-                        <p data-i18n="index.feature_reports_desc">Pata taarifa za kina juu ya mauzo, wateja na faida yako kwa wakati halisi.</p>
-                    </div>
-                    
-                    <div class="feature-card">
-                        <div class="feature-icon">🌍</div>
-                        <h3 data-i18n="index.feature_reach_title">Fikia Wateja Wengi</h3>
-                        <p data-i18n="index.feature_reach_desc">Duka lako litaonekana kwenye Google na mitandao mingine ya kijamii ufikie wateja wengi zaidi.</p>
-                    </div>
-                    
-                    <div class="feature-card">
-                        <div class="feature-icon">🛒</div>
-                        <h3 data-i18n="index.feature_complete_title">Mfumo Kamili</h3>
-                        <p data-i18n="index.feature_complete_desc">Kutoka kwenye mauzo, malipo, hadi usafirishaji - kila kitu kiko chini ya paa moja.</p>
-                    </div>
+<main>
+    <!-- Hero -->
+    <section class="hero">
+        <div class="dm-container hero-grid">
+            <div>
+                <div class="dm-eyebrow" data-i18n="site_home.hero_eyebrow">Duka Mkononi</div>
+                <h1 class="dm-h1" data-i18n="site_home.hero_title">Shop from trusted businesses across Tanzania</h1>
+                <p class="dm-lead" style="margin-top:16px" data-i18n="site_home.hero_lead">Duka Mkononi connects customers with businesses and the products they sell, so finding and ordering what you need is simple.</p>
+                <div class="hero-actions">
+                    <a class="dm-btn dm-btn--primary" href="/shop">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                        <span data-i18n="site_home.cta_shop">Start Shopping</span>
+                    </a>
+                    <a class="dm-btn dm-btn--ghost" href="/businesses">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>
+                        <span data-i18n="site_home.cta_businesses">Explore Businesses</span>
+                    </a>
+                    <a class="dm-btn dm-btn--accent" href="https://expo.dev/artifacts/eas/9TKXD6b4FGjwYZDZos8OcAWmuyY4N4tvgO397xOsUu0.apk" target="_blank" rel="noopener">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+                        <span data-i18n="site_home.cta_download">Download the App</span>
+                    </a>
+                </div>
+                <div class="hero-stats">
+                    <div class="hero-stat"><b id="dmStatBiz">0</b><span data-i18n="site_home.stat_businesses">Businesses</span></div>
+                    <div class="hero-stat"><b id="dmStatProd">0</b><span data-i18n="site_home.stat_products">Products</span></div>
                 </div>
             </div>
-        </section>
-    </main>
-
-    <!-- Footer -->
-    <footer>
-        <div class="container">
-            <div class="footer-logo" data-i18n="index.footer_brand">DukaMkononi.com</div>
-            <p data-i18n="index.footer_tagline">Soko Lako la Kuaminika la Mtandaoni Tanzania</p>
-            <p data-i18n="index.footer_contact">✉ info@dukamkononi.com | 📞 0757071967</p>
-            <p class="copyright" data-i18n="index.footer_copyright">© 2025 Duka Mkononi. Haki zote zimehifadhiwa.</p>
+            <div class="hero-visual">
+                <svg viewBox="0 0 640 420" width="100%" role="img" aria-label="Duka Mkononi shopping">
+                    <rect width="640" height="420" fill="#0f766e"/>
+                    <circle cx="510" cy="90" r="120" fill="#14b8a6" opacity="0.5"/>
+                    <rect x="60" y="120" width="300" height="200" rx="16" fill="#ffffff" opacity="0.96"/>
+                    <rect x="84" y="150" width="120" height="12" rx="6" fill="#0f766e" opacity="0.5"/>
+                    <rect x="84" y="176" width="200" height="10" rx="5" fill="#94a3b8"/>
+                    <rect x="84" y="198" width="160" height="10" rx="5" fill="#cbd5e1"/>
+                    <rect x="84" y="250" width="90" height="34" rx="17" fill="#0f766e"/>
+                    <rect x="400" y="150" width="170" height="150" rx="16" fill="#ffffff" opacity="0.94"/>
+                    <circle cx="450" cy="195" r="22" fill="#f59e0b"/>
+                    <rect x="420" y="230" width="130" height="10" rx="5" fill="#94a3b8"/>
+                    <rect x="420" y="252" width="90" height="10" rx="5" fill="#cbd5e1"/>
+                </svg>
+            </div>
         </div>
-    </footer>
-    
-    <!-- Structured Data for SEO -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebSite",
-      "name": "Duka Mkononi",
-      "alternateName": "Soko la Kuaminika la Mtandaoni Tanzania",
-      "url": "https://www.dukamkononi.com",
-      "potentialAction": {
-        "@type": "SearchAction",
-        "target": "https://www.dukamkononi.com/search?q={search_term_string}",
-        "query-input": "required name=search_term_string"
-      },
-      "description": "Duka Mkononi ni jukwaa la kisasa la biashara mtandaoni nchini Tanzania. Fungua duka lako la mtandaoni leo na uanze kuuza bidhaa zako kwa urahisi.",
-      "publisher": {
-        "@type": "Organization",
-        "name": "Duka Mkononi",
-        "logo": {
-          "@type": "ImageObject",
-          "url": "https://www.dukamkononi.com/logo.png"
-        }
-      }
+    </section>
+
+    <!-- Shop by business -->
+    <section class="dm-section" id="businesses">
+        <div class="dm-container">
+            <div class="dm-section-head">
+                <div class="dm-eyebrow" data-i18n="site_home.shop_by_business_eyebrow">Browse</div>
+                <h2 class="dm-h2" data-i18n="site_home.shop_by_business">Shop by Business</h2>
+                <p class="dm-lead" style="margin-top:10px" data-i18n="site_home.shop_by_business_sub">Pick a business to see only its products.</p>
+            </div>
+            <div class="dm-grid dm-grid--business" id="dmHomeBiz">
+                <div class="dm-card dm-skeleton" style="height:150px"></div>
+                <div class="dm-card dm-skeleton" style="height:150px"></div>
+                <div class="dm-card dm-skeleton" style="height:150px"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Our story -->
+    <section class="dm-section dm-section--tight">
+        <div class="dm-container">
+            <div class="story">
+                <h2 class="dm-h2" data-i18n="site_home.our_story_title">Our Story</h2>
+                <p class="dm-lead" style="margin-top:14px" data-i18n="site_home.our_story_1">Duka Mkononi was built to connect customers with businesses and make product discovery easier. Instead of searching through scattered messages, customers can see what local businesses offer and order directly.</p>
+                <p class="dm-lead" style="margin-top:12px" data-i18n="site_home.our_story_2">For businesses, it is a straightforward way to reach more customers and manage their products and orders in one place.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Accounts -->
+    <section class="dm-section dm-section--tight" id="accounts">
+        <div class="dm-container">
+            <div class="dm-section-head">
+                <div class="dm-eyebrow" data-i18n="site_home.accounts_eyebrow">Accounts</div>
+                <h2 class="dm-h2" data-i18n="site_home.accounts_title">Available Accounts</h2>
+                <p class="dm-lead" style="margin-top:10px" data-i18n="site_home.accounts_sub">Duka Mkononi works with the roles the platform already supports.</p>
+            </div>
+            <div class="dm-grid dm-grid--accounts">
+                <div class="dm-card account-card">
+                    <div class="account-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V6z"/></svg></div>
+                    <h3 class="dm-h3" data-i18n="site_home.account_msimamizi_title">Msimamizi</h3>
+                    <p class="dm-muted" data-i18n="site_home.account_msimamizi_desc">Administrative account for authorized business management.</p>
+                </div>
+                <div class="dm-card account-card">
+                    <div class="account-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v4H3z"/><path d="M5 7v13h14V7"/><path d="M9 11h6"/></svg></div>
+                    <h3 class="dm-h3" data-i18n="site_home.account_muuzaji_title">Muuzaji</h3>
+                    <p class="dm-muted" data-i18n="site_home.account_muuzaji_desc">Seller account for managing the seller's authorized products and orders.</p>
+                </div>
+                <div class="dm-card account-card">
+                    <div class="account-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
+                    <h3 class="dm-h3" data-i18n="site_home.account_mteja_title">Mteja</h3>
+                    <p class="dm-muted" data-i18n="site_home.account_mteja_desc">Customer experience for discovering products and shopping.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Reviews (rendered only when published reviews exist) -->
+    <section class="dm-section dm-section--tight" id="reviews" style="display:none">
+        <div class="dm-container">
+            <div class="dm-section-head">
+                <div class="dm-eyebrow" data-i18n="site_home.reviews_eyebrow">Reviews</div>
+                <h2 class="dm-h2" data-i18n="site_home.reviews_title">Customer Reviews</h2>
+            </div>
+            <div class="dm-grid dm-grid--business" id="dmHomeReviews"></div>
+        </div>
+    </section>
+
+    <!-- Contact -->
+    <section class="dm-section" id="contact">
+        <div class="dm-container">
+            <div class="dm-section-head">
+                <div class="dm-eyebrow" data-i18n="site_nav.contact">Contact</div>
+                <h2 class="dm-h2" data-i18n="site_home.contact_title">Contact Us</h2>
+                <p class="dm-lead" style="margin-top:10px" data-i18n="site_home.contact_sub">Send us a message and we will get back to you.</p>
+            </div>
+            <div class="contact-grid">
+                <ul class="contact-info" style="list-style:none">
+                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v14H4z"/><path d="m4 6 8 6 8-6"/></svg><a href="mailto:info@dukamkononi.com">info@dukamkononi.com</a></li>
+                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.6a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.5-1.2a2 2 0 0 1 2.1-.5c.8.3 1.7.6 2.6.7a2 2 0 0 1 1.7 2z"/></svg><a href="tel:0757071967">0757071967</a></li>
+                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.6L3 21l1.9-5.6A8.5 8.5 0 1 1 21 11.5z"/></svg><a href="https://wa.me/255757071967" target="_blank" rel="noopener" data-i18n="site_home.contact_whatsapp">Chat on WhatsApp</a></li>
+                </ul>
+
+                <form class="dm-card" style="padding:26px" id="dmContactForm" novalidate>
+                    <div id="dmContactAlert"></div>
+                    <div class="dm-field">
+                        <label class="dm-label" for="dmcEmail" data-i18n="site_home.form_email">Email address</label>
+                        <input class="dm-input" type="email" id="dmcEmail" required autocomplete="email">
+                        <span class="dm-error" id="dmcEmailErr"></span>
+                    </div>
+                    <div class="dm-field">
+                        <label class="dm-label" for="dmcPhone" data-i18n="site_home.form_phone">Phone number</label>
+                        <input class="dm-input" type="tel" id="dmcPhone" required autocomplete="tel" placeholder="07XXXXXXXX">
+                        <span class="dm-error" id="dmcPhoneErr"></span>
+                    </div>
+                    <div class="dm-field">
+                        <label class="dm-label" for="dmcSubject" data-i18n="site_home.form_subject">Subject</label>
+                        <input class="dm-input" type="text" id="dmcSubject" required maxlength="150">
+                        <span class="dm-error" id="dmcSubjectErr"></span>
+                    </div>
+                    <div class="dm-field">
+                        <label class="dm-label" for="dmcMessage" data-i18n="site_home.form_message">Message</label>
+                        <textarea class="dm-textarea" id="dmcMessage" required maxlength="5000"></textarea>
+                        <span class="dm-error" id="dmcMessageErr"></span>
+                    </div>
+                    <button class="dm-btn dm-btn--primary dm-btn--block" type="submit" id="dmcSubmit" data-i18n="site_home.form_send">Send Message</button>
+                </form>
+            </div>
+        </div>
+    </section>
+</main>
+@endverbatim
+@include('partials.site-footer')
+@verbatim
+<script>
+(function () {
+    'use strict';
+    var t = function (k, p) { return window.DM ? DM.t(k, p) : k; };
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]; }); }
+    function api(path) { return fetch('/api' + path, { headers: { 'Accept': 'application/json' } }).then(function (r) { return r.json(); }); }
+
+    function loadBusinesses() {
+        api('/shop/businesses').then(function (list) {
+            var box = document.getElementById('dmHomeBiz');
+            list = Array.isArray(list) ? list : [];
+            var totalProducts = list.reduce(function (a, b) { return a + (b.product_count || 0); }, 0);
+            document.getElementById('dmStatBiz').textContent = list.length;
+            document.getElementById('dmStatProd').textContent = totalProducts;
+            if (!list.length) {
+                box.innerHTML = '<div class="dm-empty" style="grid-column:1/-1"><h3>' + esc(t('site_home.empty_businesses')) + '</h3></div>';
+                return;
+            }
+            list.slice(0, 8).forEach(function (b) {
+                var card = document.createElement('a');
+                card.className = 'dm-card biz-card';
+                card.href = '/shop?business_id=' + encodeURIComponent(b.id);
+                var logo = b.business_logo_url ? '<img src="' + esc(b.business_logo_url) + '" alt="">' : esc((b.business_name || 'D').trim().charAt(0).toUpperCase());
+                var cert = b.is_certified ? '<span class="dm-badge dm-badge--ok">' + esc(t('site_businesses.certified_badge')) + '</span>' : '';
+                card.innerHTML = '<div style="display:flex;align-items:center;gap:12px"><div class="biz-logo">' + logo + '</div><div style="flex:1"><div class="dm-wrap-anywhere" style="font-weight:700">' + esc(b.business_name || '') + '</div><div class="dm-muted" style="font-size:12.5px">' + esc(b.business_location || '') + '</div></div></div>' +
+                    '<div style="display:flex;gap:8px;flex-wrap:wrap">' + cert + '<span class="dm-badge dm-badge--muted">' + (b.product_count || 0) + ' ' + esc(t('site_common.products')) + '</span></div>' +
+                    '<span class="dm-btn dm-btn--ghost dm-btn--sm dm-btn--block">' + esc(t('site_home.cta_shop')) + '</span>';
+                box.appendChild(card);
+            });
+        }).catch(function () {
+            document.getElementById('dmHomeBiz').innerHTML = '<div class="dm-empty" style="grid-column:1/-1"><h3>' + esc(t('site_common.error_generic')) + '</h3></div>';
+        });
     }
-    </script>
+
+    function loadReviews() {
+        api('/shop/reviews').then(function (list) {
+            if (!Array.isArray(list) || !list.length) return; // section stays hidden
+            var section = document.getElementById('reviews');
+            var box = document.getElementById('dmHomeReviews');
+            section.style.display = '';
+            list.forEach(function (r) {
+                var stars = '';
+                if (r.rating) { for (var i = 0; i < r.rating; i++) stars += '\u2605'; }
+                var card = document.createElement('div');
+                card.className = 'dm-card review-card';
+                card.innerHTML = (stars ? '<div class="stars">' + stars + '</div>' : '') +
+                    (r.title ? '<h3 class="dm-h3 dm-wrap-anywhere">' + esc(r.title) + '</h3>' : '') +
+                    '<p class="dm-muted dm-wrap-anywhere">' + esc(r.body) + '</p>' +
+                    '<div style="font-weight:600;font-size:14px">' + esc(r.display_name || t('site_common.customer')) + '</div>';
+                box.appendChild(card);
+            });
+        }).catch(function () {});
+    }
+
+    function contactForm() {
+        var form = document.getElementById('dmContactForm');
+        if (!form) return;
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var alertBox = document.getElementById('dmContactAlert');
+            ['Email', 'Phone', 'Subject', 'Message'].forEach(function (f) { document.getElementById('dmc' + f + 'Err').textContent = ''; });
+            var payload = {
+                email: document.getElementById('dmcEmail').value.trim(),
+                phone: document.getElementById('dmcPhone').value.trim(),
+                subject: document.getElementById('dmcSubject').value.trim(),
+                message: document.getElementById('dmcMessage').value.trim(),
+                locale: (window.DM && DM.locale()) || 'sw',
+                source: 'website'
+            };
+            var btn = document.getElementById('dmcSubmit'); btn.disabled = true;
+            fetch('/api/inquiries', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify(payload) })
+                .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+                .then(function (res) {
+                    btn.disabled = false;
+                    if (res.ok) {
+                        alertBox.innerHTML = '<div class="dm-alert dm-alert--ok">' + esc(t('site_home.form_success')) + '</div>';
+                        form.reset();
+                        return;
+                    }
+                    var errs = (res.d && res.d.errors) || {};
+                    Object.keys(errs).forEach(function (k) {
+                        var el = document.getElementById('dmc' + k.charAt(0).toUpperCase() + k.slice(1) + 'Err');
+                        if (el) el.textContent = errs[k];
+                    });
+                    alertBox.innerHTML = '<div class="dm-alert dm-alert--err">' + esc((res.d && res.d.error) || t('site_home.form_error')) + '</div>';
+                })
+                .catch(function () { btn.disabled = false; alertBox.innerHTML = '<div class="dm-alert dm-alert--err">' + esc(t('site_common.error_generic')) + '</div>'; });
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () { loadBusinesses(); loadReviews(); contactForm(); });
+    if (window.DM) DM.onChange(function () {});
+})();
+</script>
 </body>
 </html>
 @endverbatim

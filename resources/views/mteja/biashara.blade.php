@@ -642,7 +642,7 @@
     <div id="contactModal" class="contact-modal">
         <div class="contact-modal-content">
             <div class="contact-modal-title" id="modalBusinessName" data-i18n="mteja_biashara.contact_title">Wasiliana na Biashara</div>
-            <div class="contact-modal-sub" data-i18n="mteja_biashara.contact_subtitle">Chagua njia ya kuwasiliana</div>
+            <div class="contact-modal-sub" data-i18n="mteja_biashara.contact_sub">Chagua njia ya kuwasiliana</div>
             <div class="contact-modal-buttons">
                 <button class="contact-call-btn" id="callBtn"><i class="fa-solid fa-phone" style="font-size:14px;" aria-hidden="true"></i> <span data-i18n="mteja_biashara.btn_call">PIGA SIMU</span></button>
                 <button class="contact-sms-btn" id="smsBtn"><i class="fa-solid fa-comment-dots" style="font-size:14px;" aria-hidden="true"></i> <span data-i18n="mteja_biashara.btn_sms">TUMA UJUMBE</span></button>
@@ -663,38 +663,51 @@
         // for script-built strings). Values mirror the sw catalog of the
         // mteja_biashara section in locales.json.
         const SW = {
-            nav_customer: "Mteja",
-            photo_alt: "Picha",
-            err_no_permission: "Huna ruhusa ya kuingia kwenye eneo la Mteja.",
-            not_filled: "Haijajazwa",
-            err_no_phone: "Hakuna namba ya simu inayopatikana kwa biashara hii.",
-            msg_sms_intro: "Habari {name}, naomba kufahamu zaidi kuhusu huduma zako.",
-            contact_with: "Wasiliana na {name}",
-            err_no_location: "Hakuna taarifa za eneo kwa biashara hii.",
-            msg_finding_route: "Inapata njia...",
-            msg_no_popup: "Hakuna dirisha jipya lililofunguliwa — nakupeleka Google Maps hapo hapa.",
-            msg_getting_location: "Inapata eneo lako la sasa...",
-            err_endpoint_missing: "Endpoint ya biashara haipo kwenye server",
-            server_error: "Server error: {status}",
-            err_load_failed: "Imeshindwa kuleta biashara: {message}. Tafadhali jaribu tena.",
-            nav_business: "Biashara",
-            business_nameless: "Biashara Bila Jina",
-            btn_contact: "Wasiliana",
-            btn_go_shop: "Twende Dukani",
-            info_admin_name: "Jina la Msimamizi:",
-            info_location: "Eneo la Biashara:",
-            info_phone: "Namba ya Simu:",
-            info_email: "Barua Pepe:",
-            info_status: "Hali:",
-            status_verified: "Imethibitishwa",
-            business_count: "Biashara Zilizosajiliwa ({count})",
-            empty_title: "Hakuna Biashara Zilizosajiliwa",
-            empty_text: "Hakuna biashara zilizosajiliwa bado.\n\nMsimamizi anahitaji kujisajili kwanza.",
-            btn_refresh: "Pakia Upya",
-            search_empty_title: "Hakuna Biashara Iliyopatikana",
-            search_empty_text: "Hakuna biashara iliyo na \"{query}\".\nTafadhali jaribu neno tofauti.",
-            search_placeholder: "Tafuta biashara... (jina, eneo, au namba ya simu)",
-            loading: "Inapakua orodha ya biashara..."
+            page_title: 'Biashara - Dukamkononi Mteja',
+            logo_short: 'D',
+            logo_brand: 'DukaMkononi',
+            logo_tagline: 'Mteja Portal',
+            nav_business: 'Biashara',
+            nav_ads: 'Matangazo',
+            nav_profile: 'Profaili',
+            nav_customer: 'Mteja',
+            btn_logout: 'Ondoka',
+            loading: 'Inapakua orodha ya biashara...',
+            contact_title: 'Wasiliana na Biashara',
+            contact_sub: 'Chagua njia ya kuwasiliana',
+            btn_call: 'PIGA SIMU',
+            btn_sms: 'TUMA UJUMBE',
+            btn_cancel: 'GHAIRI',
+            photo_alt: 'Picha',
+            err_no_permission: 'Huna ruhusa ya kuingia kwenye eneo la Mteja.',
+            not_filled: 'Haijajazwa',
+            err_no_phone: 'Hakuna namba ya simu inayopatikana kwa biashara hii.',
+            sms_body: 'Habari {business}, naomba kufahamu zaidi kuhusu huduma zako.',
+            contact_business: 'Wasiliana na {business}',
+            err_no_location: 'Hakuna taarifa za eneo kwa biashara hii.',
+            btn_finding_route: 'Inapata njia...',
+            msg_popup_blocked: 'Hakuna dirisha jipya lililofunguliwa — nakupeleka Google Maps hapo hapa.',
+            msg_getting_location: 'Inapata eneo lako la sasa...',
+            err_endpoint_missing: 'Endpoint ya biashara haipo kwenye server',
+            err_server: 'Server error: {status}',
+            err_load_failed: 'Imeshindwa kuleta biashara: {message}. Tafadhali jaribu tena.',
+            business_unnamed: 'Biashara Bila Jina',
+            btn_contact: 'Wasiliana',
+            btn_twende: 'Twende Dukani',
+            label_admin_name: 'Jina la Msimamizi:',
+            label_location: 'Eneo la Biashara:',
+            label_phone: 'Namba ya Simu:',
+            label_email: 'Barua Pepe:',
+            label_status: 'Hali:',
+            status_verified: 'Imethibitishwa',
+            businesses_registered: 'Biashara Zilizosajiliwa ({count})',
+            empty_title: 'Hakuna Biashara Zilizosajiliwa',
+            empty_text: 'Hakuna biashara zilizosajiliwa bado.\\n\\nMsimamizi anahitaji kujisajili kwanza.',
+            btn_refresh: 'Pakia Upya',
+            no_match_title: 'Hakuna Biashara Iliyopatikana',
+            no_match_text: 'Hakuna biashara iliyo na "{query}".\\nTafadhali jaribu neno tofauti.',
+            search_placeholder: 'Tafuta biashara... (jina, eneo, au namba ya simu)',
+            business_generic: 'Biashara',
         };
 
         function t(key, params) {
@@ -710,6 +723,10 @@
             }
             return value;
         }
+
+        // Locale values keep their \n escapes literal (the locales.json
+        // convention); innerHTML needs real newlines, so translate them.
+        function nl(s) { return String(s).replace(/\\n/g, '\n'); }
 
         // ============================== ICONS ==============================
         // Font Awesome 6 icon helper (same convention as msimamizi/muuzaji).
@@ -824,13 +841,13 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 showToast(t('err_no_phone'), 'warning');
                 return;
             }
-            const message = t('msg_sms_intro', { name: businessName });
+            const message = t('sms_body', { business: businessName });
             window.location.href = `sms:${formatted}?body=${encodeURIComponent(message)}`;
         }
 
         function showContactModal(business) {
             currentBusiness = business;
-            modalBusinessName.textContent = t('contact_with', { name: business.business_name || t('nav_business') });
+            modalBusinessName.textContent = t('contact_business', { business: business.business_name || t('business_generic') });
             contactModal.style.display = 'flex';
         }
 
@@ -848,7 +865,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
 
         function handleSMS() {
             if (currentBusiness) {
-                sendSMS(currentBusiness.phone, currentBusiness.business_name || t('nav_business'));
+                sendSMS(currentBusiness.phone, currentBusiness.business_name || t('business_generic'));
             }
             hideContactModal();
         }
@@ -871,7 +888,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
 
             const original = btn.innerHTML;
             twendeBusy = true;
-            btn.innerHTML = ic('spinner', 14, 'fa-spin') + ' ' + t('msg_finding_route');
+            btn.innerHTML = ic('spinner', 14, 'fa-spin') + ' ' + t('btn_finding_route');
             btn.style.opacity = '0.75';
             btn.style.pointerEvents = 'none';
 
@@ -891,7 +908,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 finish();
                 if (!win) {
                     // Popup blocked: same-tab navigation always succeeds.
-                    showToast(t('msg_no_popup'), 'info');
+                    showToast(t('msg_popup_blocked'), 'info');
                     window.location.href = mapsUrl;
                 }
             };
@@ -936,7 +953,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     if (response.status === 404) {
                         throw new Error(t('err_endpoint_missing'));
                     }
-                    throw new Error(t('server_error', { status: response.status }));
+                    throw new Error(t('err_server', { status: response.status }));
                 }
 
                 const data = await response.json();
@@ -972,34 +989,34 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     <div class="card-header">
                         <div style="display:flex;align-items:center;gap:12px;flex:1;">
                             <div class="business-logo ${business.business_logo_url ? '' : 'business-logo-placeholder'}">
-                                ${business.business_logo_url ? `<div class="js-avatar-view" data-full="${escapeHtml(business.business_logo_url)}" data-name="${escapeHtml(business.business_name || t('nav_business'))}" style="width:100%;height:100%;border-radius:12px;overflow:hidden;"><img src="${escapeHtml(business.business_logo_url)}" alt="Logo" style="width:100%;height:100%;object-fit:cover;pointer-events:none;"></div>` : ic('store', 22)}
+                                ${business.business_logo_url ? `<div class="js-avatar-view" data-full="${escapeHtml(business.business_logo_url)}" data-name="${escapeHtml(business.business_name || t('business_generic'))}" style="width:100%;height:100%;border-radius:12px;overflow:hidden;"><img src="${escapeHtml(business.business_logo_url)}" alt="Logo" style="width:100%;height:100%;object-fit:cover;pointer-events:none;"></div>` : ic('store', 22)}
                             </div>
-                            <div class="business-name">${escapeHtml(business.business_name || t('business_nameless'))}</div>
+                            <div class="business-name">${escapeHtml(business.business_name || t('business_unnamed'))}</div>
                         </div>
-                        <button class="contact-btn" data-id="${business.id}" data-phone="${escapeHtml(business.phone || '')}" data-name="${escapeHtml(business.business_name || t('nav_business'))}">${t('btn_contact')}</button>
+                        <button class="contact-btn" data-id="${business.id}" data-phone="${escapeHtml(business.phone || '')}" data-name="${escapeHtml(business.business_name || t('business_generic'))}">${t('btn_contact')}</button>
                     </div>
-                    <button class="twende-btn" data-twende='${JSON.stringify({lat: business.business_latitude, lng: business.business_longitude, loc: business.business_location || ''}).replace(/'/g, "&#39;")}' data-name="${escapeHtml(business.business_name || t('nav_business'))}">
-                        ${ic('compass', 14)} ${t('btn_go_shop')}
+                    <button class="twende-btn" data-twende='${JSON.stringify({lat: business.business_latitude, lng: business.business_longitude, loc: business.business_location || ''}).replace(/'/g, "&#39;")}' data-name="${escapeHtml(business.business_name || t('business_generic'))}">
+                        ${ic('compass', 14)} ${t('btn_twende')}
                     </button>
                     <div class="details-container">
                         <div class="detail-row">
-                            <span class="detail-label">${t('info_admin_name')}</span>
+                            <span class="detail-label">${t('label_admin_name')}</span>
                             <span class="detail-value">${escapeHtml(business.full_name || t('not_filled'))}</span>
                         </div>
                         <div class="detail-row">
-                            <span class="detail-label">${t('info_location')}</span>
+                            <span class="detail-label">${t('label_location')}</span>
                             <span class="detail-value">${escapeHtml(business.business_location || t('not_filled'))}</span>
                         </div>
                         <div class="detail-row">
-                            <span class="detail-label">${t('info_phone')}</span>
+                            <span class="detail-label">${t('label_phone')}</span>
                             <span class="detail-value phone-link" data-phone="${escapeHtml(business.phone || '')}">${escapeHtml(business.phone || t('not_filled'))}</span>
                         </div>
                         <div class="detail-row">
-                            <span class="detail-label">${t('info_email')}</span>
+                            <span class="detail-label">${t('label_email')}</span>
                             <span class="detail-value">${escapeHtml(business.email || t('not_filled'))}</span>
                         </div>
                         <div class="detail-row">
-                            <span class="detail-label">${t('info_status')}</span>
+                            <span class="detail-label">${t('label_status')}</span>
                             <span class="detail-value approved-text">${ic('check', 13)} ${t('status_verified')}</span>
                         </div>
                     </div>
@@ -1016,13 +1033,13 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
 
             const filtered = getFilteredBusinesses();
             const counter = document.getElementById('businessCount');
-            if (counter) counter.textContent = t('business_count', { count: filtered.length });
+            if (counter) counter.textContent = t('businesses_registered', { count: filtered.length });
 
             if (businesses.length === 0) {
                 listHost.innerHTML = `
                     <div class="empty-container">
                         <div class="empty-title">${t('empty_title')}</div>
-                        <div class="empty-text">${t('empty_text')}</div>
+                        <div class="empty-text">${nl(t('empty_text'))}</div>
                         <button class="refresh-btn" id="refreshBtn">${t('btn_refresh')}</button>
                     </div>
                 `;
@@ -1034,8 +1051,8 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             if (filtered.length === 0) {
                 listHost.innerHTML = `
                     <div class="empty-container">
-                        <div class="empty-title">${t('search_empty_title')}</div>
-                        <div class="empty-text">${t('search_empty_text', { query: escapeHtml(searchQuery) })}</div>
+                        <div class="empty-title">${t('no_match_title')}</div>
+                        <div class="empty-text">${nl(t('no_match_text', { query: escapeHtml(searchQuery) }))}</div>
                     </div>
                 `;
                 return;
@@ -1175,14 +1192,14 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             await fetchBusinesses();
         }
 
-        // Repaint JS-built markup when the visitor switches language (static
-        // text is repainted by the widget itself).
+        // Follow the language: static markup is handled by data-i18n, but the
+        // business list, counter, empty states and contact modal are script-built.
         if (window.DM && typeof window.DM.onChange === 'function') {
             window.DM.onChange(() => {
-                updateSidebarUser();
                 render();
-                if (currentBusiness) {
-                    modalBusinessName.textContent = t('contact_with', { name: currentBusiness.business_name || t('nav_business') });
+                updateSidebarUser();
+                if (currentBusiness && contactModal.style.display === 'flex') {
+                    modalBusinessName.textContent = t('contact_business', { business: currentBusiness.business_name || t('business_generic') });
                 }
             });
         }

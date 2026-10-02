@@ -271,128 +271,151 @@
         // for script-built strings). Values mirror the sw catalog of the
         // muuzaji_uza section in locales.json.
         const SW = {
-            nav_seller: "Muuzaji",
-            photo_alt: "Picha",
-            err_no_permission: "Huna ruhusa",
-            not_set: "Haijawekwa",
-            seller_fallback: "Muuza",
-            empty_products: "Hakuna bidhaa zilizopo",
-            no_category: "Hakuna kategoria",
-            badge_yours: "Yako",
-            err_select_product: "Chagua bidhaa kwanza",
-            err_no_selling_price: "\"{name}\" hana bei ya kuuzia. Weka bei ya kuuzia kwanza (kwenye Bidhaa Mpya) ili usiue bei ya kununua.",
-            err_invalid_qty: "Weka kiasi sahihi",
-            err_not_enough: "Kiasi hakitoshi. Inabakia: {available}",
-            msg_added: "Imeongezwa kikapuni! Kikapu kina bidhaa {count}",
-            err_cart_empty: "Tafadhali ongeza bidhaa kwenye kikapu",
-            server_error: "Server error {status}",
-            msg_sale_done: "Mauzo yamekamilika! Jumla: {total}",
-            err_server: "Server imekutana na hitilafu ({status}). Jaribu tena.",
-            err_sale_failed: "Mauzo yameshindikana ({status}).",
-            err_network: "Hitilafu ya mtandao",
-            cart_title: "Kikapu chako",
-            cart_empty: "Kikapu tupu",
-            btn_remove: "Futa",
-            cart_types_label: "Aina za Bidhaa:",
-            cart_total_qty: "Jumla ya Kiasi:",
-            cart_total_payment: "JUMLA YA MALIPO:",
-            btn_continue_sale: "Endelea na Mauzo",
-            page_heading: "Uza Bidhaa",
-            business_label: "Biashara:",
-            business_fallback: "Biashara Yako",
-            selling_as: "Unauza kama:",
-            select_product_label: "Chagua Bidhaa",
-            btn_refresh: "Sasisha",
-            search_placeholder: "Tafuta bidhaa...",
-            err_load_products: "Imeshindikana kupakia bidhaa",
-            err_load_hint: "Hitilafu ya mtandao au server. Hakikisha umeunganishwa kwenye internet kisha jaribu tena.",
-            btn_retry: "🔄 Jaribu tena",
-            products_shown: "{count} bidhaa zinaonyeshwa",
-            selected_product_label: "Bidhaa Iliyochaguliwa:",
-            stock_label: "Stock: {stock}",
-            selling_price_label: "Bei ya kuuzia:",
-            dock_hint: "Tumia dock ya chini kuweka idadi na kuongeza kikapuni — inafuata scroll yako.",
-            label_customer_name: "Jina la Mteja",
-            optional_tag: "(Si-Lazima)",
-            placeholder_customer_name: "Weka jina la mteja (au acha tupu)",
-            label_customer_phone: "Namba ya Simu ya Mteja",
-            placeholder_customer_phone: "Weka namba ya simu",
-            label_sale_date: "Tarehe ya Mauzo",
-            no_stock: "Hakuna Stock",
-            btn_add: "Ongeza",
-            dock_cart: "Kikapu ›",
-            btn_complete: "KAMILISHA",
-            ai_entry_title: "Ingiza Mauzo kwa Picha (AI)",
-            ai_entry_sub: "Ulioandika kwenye karatasi? Piga picha, AI itayafananisha na bidhaa zako na kuyaweka kikapuni",
-            instructions_title: "Maelekezo ya Kikapu:",
-            instructions_1: "1. Chagua bidhaa kutoka kwenye orodha",
-            instructions_2: "2. Weka kiasi unachouza",
-            instructions_3: "3. Bofya \"Ongeza Kikapuni\"",
-            instructions_4: "4. Rudia kwa bidhaa zingine",
-            instructions_5: "5. Kamilisha mauzo",
-            ai_preview_remove: "✕",
-            ai_btn_process: "Chambua Mauzo",
-            ai_progress_1: "Inatayarisha picha...",
-            ai_progress_2: "Inasoma maandishi kwenye karatasi...",
-            ai_progress_3: "Inatafuta bidhaa zinazofanana...",
-            ai_progress_4: "Inatuma kwa Gemini...",
-            ai_progress_5: "Inafananisha na bidhaa zako...",
-            ai_progress_6: "Inakokotoa bei...",
-            ai_progress_7: "Inatayarisha matokeo...",
-            ai_progress_8: "Karibu kuisha...",
-            ai_progress_9: "Tafadhali subiri...",
-            btn_save: "Hifadhi",
-            btn_cancel: "Ghairi",
-            btn_continue: "Endelea",
-            ai_err_too_large: "Picha \"{name}\" ni kubwa mno baada ya kubanwa.",
-            ai_err_total_too_large: "Picha zote ni kubwa mno kwa jumla. Ondoa baadhi.",
-            ai_err_file_too_large: "Picha \"{name}\" ni kubwa mno.",
-            ai_err_file_rejected: "Picha \"{name}\" imekataliwa.",
-            ai_err_too_many: "Umechagua picha {selected}. Upeo ni {limit}.",
-            ai_err_failed: "Uchambuzi umeshindikana. Jaribu tena.",
-            ai_err_gemini: "Uchambuzi umeshindikana (Gemini ilikuwa na tatizo). Jaribu tena baada ya muda mfupi.",
-            ai_err_select_photo: "Chagua angalau picha moja kwanza.",
-            ai_confirm_again_title: "Chambua tena?",
-            ai_confirm_again_msg: "Matokeo ya sasa yataondolewa. Picha zako zitabaki.",
-            ai_banner_ready: "Matokeo yapo. Hakiki kila mstari kisha ubonyeze \"Hifadhi\".",
-            ai_err_no_sales: "Hakuna mauzo yaliyotambuliwa. Jaribu picha nyepesi zenye mwanga mzuri.",
-            ai_err_network: "Hitilafu ya mtandao. Jaribu tena.",
-            ai_chip_rows: "Mistari: ",
-            ai_chip_matched: "Zilizofananishwa: ",
-            ai_status_review: "Hakiki",
-            ai_chip_review: "Hakiki: ",
-            ai_chip_saved: "Zimehifadhiwa: ",
-            ai_conf_stock: "Hisa: ",
-            ai_conf_default_price: "Bei chaguomsingi: ",
-            ai_option_select: "— Chagua bidhaa —",
-            product_fallback: "Bidhaa",
-            ai_no_match: "Hakuna fananio",
-            ai_saved_tag: "Imehifadhiwa",
-            ai_price_placeholder: "chaguomsingi",
-            ai_row_select_product: "Mstari \"{name}\": chagua bidhaa ya mfumo kwanza.",
-            ai_row_bad_qty: "Mstari \"{name}\": idadi si sahihi.",
-            ai_row_no_price: "Mstari \"{name}\": bei haipo (wala bei chaguomsingi).",
-            ai_row_stock: "\"{name}\": hisa inatosha tu {stock} (ulioomba {qty}).",
-            ai_row_saved: "\"{name}\" × {qty} imehifadhiwa ({total}).",
-            ai_err_save_failed: "Imeshindikana kuhifadhi.",
-            ai_stock_issue: "\"{name}\": hisa inatosha tu {stock}.",
-            ai_err_duplicate: "Mauzo haya yameshahifadhiwa tayari.",
-            ai_info_no_pending: "Hakuna mistari inayosubiri (au hakuna iliyofananishwa).",
-            ai_fix_no_product: "Mstari {row}: hakuna bidhaa ya mfumo iliyochaguliwa",
-            ai_fix_bad_qty: "Mstari {row}: idadi si sahihi",
-            ai_fix_no_price: "Mstari {row}: bei haipo",
-            ai_fix_stock: "Mstari {row}: hisa ya \"{name}\" inatosha tu {stock}",
-            ai_fix_header: "Rekebisha kabla ya kuhifadhi zote:",
-            ai_confirm_save_all_title: "Hifadhi Zote?",
-            ai_confirm_save_all_msg: "{count} mistari ya mauzo itaingia kwenye rekodi na hisa itapungua.",
-            ai_saving_prefix: "Inahifadhi ",
-            ai_all_saved: "Mistari yote {saved} imehifadhiwa kikamilifu!",
-            ai_partial: "{saved} zimehifadhiwa, {failed} zilishindikana — rekebisha na ujaribu tena.",
-            ai_import_note: "AI import: {name}",
-            note_seller: "Muuzaji: {seller}",
-            stock_left: "{count} imebaki",
-            stock_in_cart: "({count} kikapuni)",
-            badge_business: "Biashara"
+            page_title: 'Uza - Dukamkononi Muuzaji',
+            logo_short: 'D',
+            logo_brand: 'DukaMkononi',
+            logo_tagline: 'Muuzaji Portal',
+            nav_profile: 'Profaili',
+            nav_sales: 'Mauzo',
+            nav_expenses: 'Matumizi',
+            nav_sell: 'Uza',
+            nav_seller: 'Muuzaji',
+            btn_logout: 'Ondoka',
+            photo_alt: 'Picha',
+            err_no_permission: 'Huna ruhusa',
+            not_set: 'Haijawekwa',
+            seller_generic: 'Muuza',
+            no_products: 'Hakuna bidhaa zilizopo',
+            no_category: 'Hakuna kategoria',
+            yours: 'Yako',
+            err_select_product_first: 'Chagua bidhaa kwanza',
+            err_no_selling_price: '"{product}" hana bei ya kuuzia. Weka bei ya kuuzia kwanza (kwenye Bidhaa Mpya) ili usiue bei ya kununua.',
+            err_invalid_qty: 'Weka kiasi sahihi',
+            err_insufficient_qty: 'Kiasi hakitoshi. Inabakia: {available}',
+            msg_added_to_cart: 'Imeongezwa kikapuni! Kikapu kina bidhaa {count}',
+            err_empty_cart: 'Tafadhali ongeza bidhaa kwenye kikapu',
+            err_server: 'Server error {status}',
+            msg_sale_complete: 'Mauzo yamekamilika! Jumla: {total}',
+            err_server_retry: 'Server imekutana na hitilafu ({status}). Jaribu tena.',
+            err_sale_failed: 'Mauzo yameshindikana ({status}).',
+            err_network: 'Hitilafu ya mtandao',
+            cart_title: 'Kikapu chako',
+            cart_empty: 'Kikapu tupu',
+            btn_delete: 'Futa',
+            cart_product_types: 'Aina za Bidhaa:',
+            cart_total_qty: 'Jumla ya Kiasi:',
+            cart_total_payment: 'JUMLA YA MALIPO:',
+            btn_continue_sale: 'Endelea na Mauzo',
+            title_sell_product: 'Uza Bidhaa',
+            label_business: 'Biashara:',
+            default_business: 'Biashara Yako',
+            label_selling_as: 'Unauza kama:',
+            label_select_product: 'Chagua Bidhaa',
+            btn_refresh: 'Sasisha',
+            search_placeholder: 'Tafuta bidhaa...',
+            err_load_products: 'Imeshindikana kupakia bidhaa',
+            err_load_products_sub: 'Hitilafu ya mtandao au server. Hakikisha umeunganishwa kwenye internet kisha jaribu tena.',
+            btn_try_again: '🔄 Jaribu tena',
+            products_shown: '{count} bidhaa zinaonyeshwa',
+            label_selected_product: 'Bidhaa Iliyochaguliwa:',
+            label_stock: 'Stock: {stock}',
+            label_selling_price: 'Bei ya kuuzia:',
+            hint_dock: 'Tumia dock ya chini kuweka idadi na kuongeza kikapuni — inafuata scroll yako.',
+            label_customer_name: 'Jina la Mteja',
+            label_optional: '(Si-Lazima)',
+            placeholder_customer_name: 'Weka jina la mteja (au acha tupu)',
+            label_customer_phone: 'Namba ya Simu ya Mteja',
+            placeholder_customer_phone: 'Weka namba ya simu',
+            label_sale_date: 'Tarehe ya Mauzo',
+            out_of_stock: 'Hakuna Stock',
+            btn_add: 'Ongeza',
+            cart_link: 'Kikapu ›',
+            btn_complete: 'KAMILISHA',
+            ai_entry_title: 'Ingiza Mauzo kwa Picha (AI)',
+            ai_entry_sub: 'Ulioandika kwenye karatasi? Piga picha, AI itayafananisha na bidhaa zako na kuyaweka kikapuni',
+            instructions_title: 'Maelekezo ya Kikapu:',
+            instruction_1: '1. Chagua bidhaa kutoka kwenye orodha',
+            instruction_2: '2. Weka kiasi unachouza',
+            instruction_3: '3. Bofya "Ongeza Kikapuni"',
+            instruction_4: '4. Rudia kwa bidhaa zingine',
+            instruction_5: '5. Kamilisha mauzo',
+            btn_close_x: '✖',
+            ai_camera_title: 'Piga picha ya mauzo yaliyoandikwa kwenye karatasi',
+            ai_camera_desc: 'AI itasoma maandishi, kuyafananisha na bidhaa zako zilizopo, na kutumia bei uliyoandika — au bei ya kuuzia ya mfumo ukawa hauna.',
+            ai_max_photos: 'Unaweza kutuma picha hadi 6.',
+            btn_remove_x: '✕',
+            btn_take_photo: 'Piga Picha Sasa (Kamera)',
+            btn_process_sales: 'Chambua Mauzo',
+            ai_progress_preparing: 'Inatayarisha picha...',
+            ai_progress_reading: 'Inasoma maandishi kwenye karatasi...',
+            ai_progress_matching: 'Inatafuta bidhaa zinazofanana...',
+            ai_progress_sending: 'Inatuma kwa Gemini...',
+            ai_progress_comparing: 'Inafananisha na bidhaa zako...',
+            ai_progress_calculating: 'Inakokotoa bei...',
+            ai_progress_preparing_results: 'Inatayarisha matokeo...',
+            ai_progress_almost: 'Karibu kuisha...',
+            ai_progress_wait: 'Tafadhali subiri...',
+            ai_col_written: 'Ulioandika',
+            ai_col_product: 'Bidhaa (mfumo)',
+            ai_col_qty: 'Idadi',
+            ai_col_price: 'Bei (kipimo)',
+            ai_col_total: 'Jumla',
+            ai_col_correct: 'Haki',
+            ai_col_save: 'Hifadhi',
+            ai_hint: 'Rekebisha idadi au bei kama inahitajika, kisha bonyeza "Hifadhi" kwa kila mstari au "Hifadhi Zote". Mauzo yataingia kwenye rekodi na hisa itapungua.',
+            btn_start_over: 'Anza Upya',
+            btn_save_all: 'Hifadhi Zote',
+            btn_cancel: 'Ghairi',
+            btn_continue: 'Endelea',
+            err_photo_too_large_compressed: 'Picha "{name}" ni kubwa mno baada ya kubanwa.',
+            err_photos_total_too_large: 'Picha zote ni kubwa mno kwa jumla. Ondoa baadhi.',
+            err_photo_too_large: 'Picha "{name}" ni kubwa mno.',
+            err_photo_rejected: 'Picha "{name}" imekataliwa.',
+            err_too_many_photos: 'Umechagua picha {selected}. Upeo ni {max}.',
+            err_analysis_failed: 'Uchambuzi umeshindikana. Jaribu tena.',
+            err_analysis_failed_gemini: 'Uchambuzi umeshindikana (Gemini ilikuwa na tatizo). Jaribu tena baada ya muda mfupi.',
+            err_select_photo_first: 'Chagua angalau picha moja kwanza.',
+            ai_confirm_reprocess_title: 'Chambua tena?',
+            ai_confirm_reprocess_msg: 'Matokeo ya sasa yataondolewa. Picha zako zitabaki.',
+            ai_results_ready: 'Matokeo yapo. Hakiki kila mstari kisha ubonyeze "Hifadhi".',
+            err_no_sales_recognized: 'Hakuna mauzo yaliyotambuliwa. Jaribu picha nyepesi zenye mwanga mzuri.',
+            err_network_retry: 'Hitilafu ya mtandao. Jaribu tena.',
+            ai_summary_rows: 'Mistari: {count}',
+            ai_summary_matched: 'Zilizofananishwa: {count}',
+            ai_badge_verify: 'Hakiki',
+            ai_summary_review: 'Hakiki: {count}',
+            ai_summary_saved: 'Zimehifadhiwa: {count}',
+            ai_row_stock: 'Hisa: {stock}',
+            ai_row_default_price: 'Bei chaguomsingi: {price}',
+            ai_select_placeholder: '— Chagua bidhaa —',
+            product_generic: 'Bidhaa',
+            ai_no_match: 'Hakuna fananio',
+            ai_saved_tag: 'Imehifadhiwa',
+            ai_default_word: 'chaguomsingi',
+            err_row_select_product: 'Mstari "{row}": chagua bidhaa ya mfumo kwanza.',
+            err_row_invalid_qty: 'Mstari "{row}": idadi si sahihi.',
+            err_row_no_price: 'Mstari "{row}": bei haipo (wala bei chaguomsingi).',
+            err_stock_insufficient: '"{product}": hisa inatosha tu {stock} (ulioomba {qty}).',
+            msg_row_saved: '"{product}" × {qty} imehifadhiwa ({total}).',
+            err_save_failed: 'Imeshindikana kuhifadhi.',
+            err_stock_issue: '"{product}": hisa inatosha tu {available}.',
+            msg_already_saved: 'Mauzo haya yameshahifadhiwa tayari.',
+            ai_nothing_pending: 'Hakuna mistari inayosubiri (au hakuna iliyofananishwa).',
+            ai_problem_no_product: 'Mstari {row}: hakuna bidhaa ya mfumo iliyochaguliwa',
+            ai_problem_bad_qty: 'Mstari {row}: idadi si sahihi',
+            ai_problem_no_price: 'Mstari {row}: bei haipo',
+            ai_problem_stock: 'Mstari {row}: hisa ya "${prod.name}" inatosha tu ${prod.stock}',
+            ai_fix_before_save: 'Rekebisha kabla ya kuhifadhi zote:',
+            ai_confirm_save_all_title: 'Hifadhi Zote?',
+            ai_confirm_save_all_msg: '{count} mistari ya mauzo itaingia kwenye rekodi na hisa itapungua.',
+            ai_saving_progress: 'Inahifadhi {index}/{total}',
+            msg_all_saved: 'Mistari yote {count} imehifadhiwa kikamilifu!',
+            msg_some_failed: '{saved} zimehifadhiwa, {failed} zilishindikana — rekebisha na ujaribu tena.',
+            ai_import_notes: 'AI import: {name}',
+            sale_notes_seller: 'Muuzaji: {name}',
+            business_generic: 'Biashara',
+            stock_left: '{count} imebaki',
+            in_cart_suffix: '({count} kikapuni)',
         };
 
         function t(key, params) {
@@ -516,7 +539,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                         // p.price would show the BUYING price as the selling price
                         // and would record the sale at cost.
                         ...p, expected_selling_price: p.expected_selling_price ?? null,
-                        seller_name: p.seller_name || t('seller_fallback')
+                        seller_name: p.seller_name || t('seller_generic')
                     }));
                     productsError = false;
                 } else { products = []; productsError = true; }
@@ -541,32 +564,32 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         function renderProductGrid() {
             const gridHost = document.getElementById('productGridHost');
             if (!gridHost) { render(); return; }
-            gridHost.innerHTML = filteredProducts.length === 0 ? `<div style="text-align:center;padding:40px;">${t('empty_products')}</div>` :
+            gridHost.innerHTML = filteredProducts.length === 0 ? `<div style="text-align:center;padding:40px;">${t('no_products')}</div>` :
                 filteredProducts.map(p => {
                     const inCart = getInCartQty(p.id);
                     const avail = p.stock - inCart;
                     const stockClass = avail <= 0 ? 'out' : (avail <= 5 ? 'low' : '');
                     return `
                         <div class="product-item ${selectedProduct?.id === p.id ? 'selected' : ''} ${avail <= 0 ? 'out-of-stock' : ''}" onclick="${avail > 0 ? `selectProduct('${p.id}')` : ''}">
-                            <div class="product-header"><span class="product-name">${escapeHtml(p.name)}</span><span class="stock-badge ${stockClass}">${t('stock_left', { count: avail })}${inCart > 0 ? ` ${t('stock_in_cart', { count: inCart })}` : ''}</span></div>
+                            <div class="product-header"><span class="product-name">${escapeHtml(p.name)}</span><span class="stock-badge ${stockClass}">${t('stock_left', { count: avail })}${inCart > 0 ? ' ' + t('in_cart_suffix', { count: inCart }) : ''}</span></div>
                             <div class="product-category">${escapeHtml(p.category || t('no_category'))}</div>
-                            <div class="product-footer"><span class="price">${sellingPriceLabel(p)}</span><span class="owner-badge">${p.seller_id === userData?.id ? t('badge_yours') : t('badge_business')}</span></div>
+                            <div class="product-footer"><span class="price">${sellingPriceLabel(p)}</span><span class="owner-badge">${p.seller_id === userData?.id ? t('yours') : t('business_generic')}</span></div>
                         </div>
                     `;
                 }).join('');
         }
 
         function addToCart() {
-            if (!selectedProduct) { showToast(t('err_select_product'), 'warning'); return; }
+            if (!selectedProduct) { showToast(t('err_select_product_first'), 'warning'); return; }
             if (!hasSellingPrice(selectedProduct)) {
-                showToast(t('err_no_selling_price', { name: selectedProduct.name }), 'warning');
+                showToast(t('err_no_selling_price', { product: selectedProduct.name }), 'warning');
                 return;
             }
             const qty = parseInt(quantity);
             if (isNaN(qty) || qty <= 0) { showToast(t('err_invalid_qty'), 'warning'); return; }
             const inCart = getInCartQty(selectedProduct.id);
             const available = selectedProduct.stock - inCart;
-            if (qty > available) { showToast(t('err_not_enough', { available }), 'warning'); return; }
+            if (qty > available) { showToast(t('err_insufficient_qty', { available: available }), 'warning'); return; }
             
             const existing = cart.find(i => i.product_id === selectedProduct.id);
             if (existing) {
@@ -583,7 +606,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             selectedProduct = null;
             quantity = '1';
             render();
-            showToast(t('msg_added', { count: cart.length }), 'success');
+            showToast(t('msg_added_to_cart', { count: cart.length }), 'success');
         }
 
         function removeFromCart(productId) { cart = cart.filter(i => i.product_id !== productId); render(); }
@@ -596,7 +619,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             const otherInCart = cart.filter(i => i.product_id !== productId).reduce((s, i) => s + i.quantity, 0);
             const available = product.stock - otherInCart;
             if (newQty < 1) { removeFromCart(productId); return; }
-            if (newQty > available) { showToast(t('err_not_enough', { available }), 'warning'); return; }
+            if (newQty > available) { showToast(t('err_insufficient_qty', { available: available }), 'warning'); return; }
             item.quantity = newQty;
             item.total_price = newQty * item.unit_price;
             render();
@@ -637,7 +660,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         }
 
         async function handleSale() {
-            if (cart.length === 0) { showToast(t('err_cart_empty'), 'warning'); return; }
+            if (cart.length === 0) { showToast(t('err_empty_cart'), 'warning'); return; }
             if (loading) return; // double-submit guard: one request per tap
             loading = true;
             const clientSaleKey = 'uza-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
@@ -645,7 +668,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             const token = localStorage.getItem('userToken');
             try {
                 const items = cart.map(i => ({ product_id: i.product_id, quantity: i.quantity, unit_price: i.unit_price }));
-                const saleData = { items, sale_date: saleDate, payment_method: 'cash', notes: t('note_seller', { seller: userData?.full_name || userData?.email }), clientSaleKey };
+                const saleData = { items, sale_date: saleDate, payment_method: 'cash', notes: t('sale_notes_seller', { name: userData?.full_name || userData?.email }), clientSaleKey };
                 
                 // Create/get customer and attach customer_id if name provided
                 if (customerName.trim()) {
@@ -675,17 +698,17 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     ({ res, body: result } = await sendSale());
                 }
                 if (!result && res && res.status >= 500) {
-                    throw new Error(t('server_error', { status: res.status }));
+                    throw new Error(t('err_server', { status: res.status }));
                 }
                 if (res.ok) {
                     const total = getCartTotal();
-                    showToast(t('msg_sale_done', { total: formatCurrency(total) }), 'success');
+                    showToast(t('msg_sale_complete', { total: formatCurrency(total) }), 'success');
                     cart = []; customerName = ''; customerPhone = '';
                     await loadProducts();
                 } else if (result && result.error) {
                     showToast(result.error, 'error');
                 } else {
-                    showToast(res.status >= 500 ? t('err_server', { status: res.status }) : t('err_sale_failed', { status: res.status }), 'error');
+                    showToast(res.status >= 500 ? t('err_server_retry', { status: res.status }) : t('err_sale_failed', { status: res.status }), 'error');
                 }
             } catch(e) { showToast(e && e.message ? e.message : t('err_network'), 'error'); }
             finally { loading = false; render(); }
@@ -709,12 +732,12 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                                 <button class="cart-qty-btn" onclick="updateCartQty('${item.product_id}', -1)">-</button>
                                 <span style="min-width:30px;text-align:center;">${item.quantity}</span>
                                 <button class="cart-qty-btn" onclick="updateCartQty('${item.product_id}', 1)">+</button>
-                                <button class="cart-remove" onclick="removeFromCart('${item.product_id}')">${t('btn_remove')}</button>
+                                <button class="cart-remove" onclick="removeFromCart('${item.product_id}')">${t('btn_delete')}</button>
                             </div>
                         </div>
                     `).join('')}
                     <div class="cart-summary">
-                        <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span>${t('cart_types_label')}</span><strong>${cart.length}</strong></div>
+                        <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span>${t('cart_product_types')}</span><strong>${cart.length}</strong></div>
                         <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span>${t('cart_total_qty')}</span><strong>${getTotalItems()}</strong></div>
                         <div style="height:1px;background:#ecf0f1;margin:10px 0;"></div>
                         <div style="display:flex;justify-content:space-between;"><span style="font-weight:700;">${t('cart_total_payment')}</span><strong style="color:#27ae60;">${formatCurrency(getCartTotal())}</strong></div>
@@ -732,33 +755,33 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             
             container.innerHTML = `
                 <div class="header-card">
-                    <div class="header-top"><div class="title">${ic('cart', 18)} ${t('page_heading')}</div><button class="refresh-btn" onclick="loadProducts()">${ic('refresh', 16)}</button></div>
-                    <div>${t('business_label')} <strong>${escapeHtml(userData?.business_name || t('business_fallback'))}</strong></div>
-                    <div style="font-size:12px;color:#7f8c8d;">${t('selling_as')} ${escapeHtml(userData?.full_name || userData?.email)}</div>
+                    <div class="header-top"><div class="title">${ic('cart', 18)} ${t('title_sell_product')}</div><button class="refresh-btn" onclick="loadProducts()">${ic('refresh', 16)}</button></div>
+                    <div>${t('label_business')} <strong>${escapeHtml(userData?.business_name || t('default_business'))}</strong></div>
+                    <div style="font-size:12px;color:#7f8c8d;"${t('label_selling_as')} ${escapeHtml(userData?.full_name || userData?.email)}</div>
                 </div>
                 
                 <div class="form-card">
-                    <div class="section-header"><span class="label">${t('select_product_label')}</span><button class="refresh-btn" style="font-size:14px;" onclick="loadProducts()">${ic('refresh', 13)} ${t('btn_refresh')}</button></div>
+                    <div class="section-header"><span class="label">${t('label_select_product')}</span><button class="refresh-btn" style="font-size:14px;" onclick="loadProducts()">${ic('refresh', 13)} ${t('btn_refresh')}</button></div>
                     <div class="search-box">${ic('search', 15)}<input type="text" id="searchInput" class="search-input" placeholder="${t('search_placeholder')}" value="${escapeHtml(searchQuery)}"></div>
                     
                     ${loadingProducts ? `<div class="loading-spinner"></div>` : productsError ? `
                         <div style="text-align:center;padding:30px;">
                             <div style="color:#f39c12;">${ic('warning', 32)}</div>
                             <div style="margin:8px 0;font-weight:600;">${t('err_load_products')}</div>
-                            <div style="font-size:12px;color:#7f8c8d;margin-bottom:12px;">${t('err_load_hint')}</div>
-                            <button class="refresh-btn" style="padding:8px 20px;" onclick="loadProducts()">${t('btn_retry')}</button>
+                            <div style="font-size:12px;color:#7f8c8d;margin-bottom:12px;">${t('err_load_products_sub')}</div>
+                            <button class="refresh-btn" style="padding:8px 20px;" onclick="loadProducts()">${t('btn_try_again')}</button>
                         </div>` : `
                         <div class="products-grid" id="productGridHost">
-                            ${filteredProducts.length === 0 ? `<div style="text-align:center;padding:40px;">${t('empty_products')}</div>` : 
+                            ${filteredProducts.length === 0 ? `<div style="text-align:center;padding:40px;">${t('no_products')}</div>` : 
                                 filteredProducts.map(p => {
                                     const inCart = getInCartQty(p.id);
                                     const avail = p.stock - inCart;
                                     const stockClass = avail <= 0 ? 'out' : (avail <= 5 ? 'low' : '');
                                     return `
                                         <div class="product-item ${selectedProduct?.id === p.id ? 'selected' : ''} ${avail <= 0 ? 'out-of-stock' : ''}" onclick="${avail > 0 ? `selectProduct('${p.id}')` : ''}">
-                                            <div class="product-header"><span class="product-name">${escapeHtml(p.name)}</span><span class="stock-badge ${stockClass}">${t('stock_left', { count: avail })}${inCart > 0 ? ` ${t('stock_in_cart', { count: inCart })}` : ''}</span></div>
+                                            <div class="product-header"><span class="product-name">${escapeHtml(p.name)}</span><span class="stock-badge ${stockClass}">${t('stock_left', { count: avail })}${inCart > 0 ? ' ' + t('in_cart_suffix', { count: inCart }) : ''}</span></div>
                                             <div class="product-category">${escapeHtml(p.category || t('no_category'))}</div>
-                                            <div class="product-footer"><span class="price">${sellingPriceLabel(p)}</span><span class="owner-badge">${p.seller_id === userData?.id ? t('badge_yours') : t('badge_business')}</span></div>
+                                            <div class="product-footer"><span class="price">${sellingPriceLabel(p)}</span><span class="owner-badge">${p.seller_id === userData?.id ? t('yours') : t('business_generic')}</span></div>
                                         </div>
                                     `;
                                 }).join('')
@@ -770,15 +793,15 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 
                 ${selectedProduct ? `
                     <div class="selected-product-card">
-                        <div style="font-weight:700;">${ic('box', 15)} ${t('selected_product_label')}</div>
-                        <div><strong>${escapeHtml(selectedProduct.name)}</strong> <span style="font-size:12px;color:#7f8c8d;">${t('stock_label', { stock: availableStock })}</span></div>
-                        <div>${t('selling_price_label')} ${sellingPriceLabel(selectedProduct)}</div>
-                        <div style="font-size:12px;color:#7f8c8d;margin-top:6px;">${t('dock_hint')}</div>
+                        <div style="font-weight:700;">${ic('box', 15)} ${t('label_selected_product')}</div>
+                        <div><strong>${escapeHtml(selectedProduct.name)}</strong> <span style="font-size:12px;color:#7f8c8d;">${t('label_stock', { stock: availableStock })}</span></div>
+                        <div>${t('label_selling_price')} ${sellingPriceLabel(selectedProduct)}</div>
+                        <div style="font-size:12px;color:#7f8c8d;margin-top:6px;">${t('hint_dock')}</div>
                     </div>
                 ` : ''}
                 
                 <div class="form-card">
-                    <div class="label">${t('label_customer_name')} <span style="font-size:11px;color:#95a5a6;">${t('optional_tag')}</span></div>
+                    <div class="label">${t('label_customer_name')} <span style="font-size:11px;color:#95a5a6;">${t('label_optional')}</span></div>
                     <input type="text" id="customerNameInput" class="input-field" placeholder="${t('placeholder_customer_name')}" value="${escapeHtml(customerName)}">
                     
                     <div class="label" style="margin-top:16px;">${t('label_customer_phone')}</div>
@@ -793,21 +816,21 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                         <div class="dock-row">
                             <div class="dock-prod">
                                 <div class="dock-name">${escapeHtml(selectedProduct.name)}</div>
-                                <div class="dock-price">${sellingPriceLabel(selectedProduct)} • ${t('stock_label', { stock: availableStock })}</div>
+                                <div class="dock-price">${sellingPriceLabel(selectedProduct)} • ${t('label_stock', { stock: availableStock })}</div>
                             </div>
                             <div class="quantity-control dock-qty">
                                 <button class="qty-btn" onclick="changeQty(-1)">−</button>
                                 <input type="number" id="qtyInput" class="qty-input" value="${quantity}" min="1" max="${availableStock}">
                                 <button class="qty-btn" onclick="changeQty(1)">+</button>
                             </div>
-                            <button class="add-cart-btn dock-add ${isOut ? 'disabled' : ''}" onclick="addToCart()" ${isOut ? 'disabled' : ''}>${isOut ? t('no_stock') : '<i class="fa-solid fa-plus" style="font-size:13px"></i> ' + t('btn_add')}</button>
+                            <button class="add-cart-btn dock-add ${isOut ? 'disabled' : ''}" onclick="addToCart()" ${isOut ? 'disabled' : ''}>${isOut ? t('out_of_stock') : '<i class="fa-solid fa-plus" style="font-size:13px"></i> ' + t('btn_add')}</button>
                         </div>
                     ` : ''}
                     <div class="dock-row">
                         <div class="dock-cart-info" onclick="openCartModal()">
                             <span class="dock-cart-badge">${getTotalItems()}</span>
                             <span>${formatCurrency(getCartTotal())}</span>
-                            <span style="margin-left:auto;font-size:12px;opacity:.8;">${t('dock_cart')}</span>
+                            <span style="margin-left:auto;font-size:12px;opacity:.8;">${t('cart_link')}</span>
                         </div>
                         <button class="dock-checkout ${cart.length === 0 || loading ? 'disabled' : ''}" ${cart.length === 0 || loading ? 'disabled' : ''} onclick="handleSale()">
                             ${loading ? '<div class="loading-spinner" style="width:18px;height:18px;margin:0 auto;"></div>' : t('btn_complete')}
@@ -827,11 +850,11 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 <div class="instructions-box">
                     <div class="instructions-title">${ic('doc', 14)} ${t('instructions_title')}</div>
                     <div class="instructions-text">
-                        ${t('instructions_1')}<br>
-                        ${t('instructions_2')}<br>
-                        ${t('instructions_3')}<br>
-                        ${t('instructions_4')}<br>
-                        ${t('instructions_5')}
+                        ${t('instruction_1')}<br>
+                        ${t('instruction_2')}<br>
+                        ${t('instruction_3')}<br>
+                        ${t('instruction_4')}<br>
+                        ${t('instruction_5')}
                     </div>
                 </div>
             `;
@@ -878,54 +901,53 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             await loadUserData();
             await loadCustomers();
         }
-
-        // Repaint everything the widget cannot reach (JS-built markup) when
-        // the visitor switches language.
+        // Follow the language: static markup is handled by data-i18n, but the
+        // product grid, floating dock, cart modal and AI modal are script-built.
         if (window.DM && typeof window.DM.onChange === 'function') {
             window.DM.onChange(() => {
                 render();
-                renderCartModal();
                 updateSidebarUser();
-                if (typeof window.uzaAiRepaint === 'function') window.uzaAiRepaint();
+                if (window.refreshAiSaleUi) window.refreshAiSaleUi();
             });
         }
+
         init();
     </script>
 <!-- ===== AI Sales Import Modal ===== -->
 <div id="aiSaleModal" class="ai-modal-overlay">
 <div class="ai-modal-content">
-<div class="ai-modal-header"><div class="ai-modal-title" data-i18n="muuzaji_uza.ai_entry_title">Ingiza Mauzo kwa Picha (AI)</div><div class="ai-modal-close" onclick="closeAiSaleModal()" data-i18n="muuzaji_uza.ai_btn_close">✖</div></div>
+<div class="ai-modal-header"><div class="ai-modal-title" data-i18n="muuzaji_uza.ai_entry_title">Ingiza Mauzo kwa Picha (AI)</div><div class="ai-modal-close" onclick="closeAiSaleModal()" data-i18n="muuzaji_uza.btn_close_x">✖</div></div>
 <div class="ai-modal-body">
 <div id="aiSaleBanner" class="ai-banner"></div>
 <div id="aiSaleUploadSection">
 <div id="aiSaleUploadZone" class="ai-upload-zone">
 <div style="display:flex;justify-content:center;color:#7c5cbf;"><i class="fa-solid fa-camera" style="font-size:38px;"></i></div>
-<div class="ai-uz-main" data-i18n="muuzaji_uza.ai_upload_main">Piga picha ya mauzo yaliyoandikwa kwenye karatasi</div>
-<div class="ai-uz-sub"><span data-i18n="muuzaji_uza.ai_upload_sub">AI itasoma maandishi, kuyafananisha na bidhaa zako zilizopo, na kutumia bei uliyoandika — au bei ya kuuzia ya mfumo ukawa hauna.</span><br><span data-i18n="muuzaji_uza.ai_upload_limit">Unaweza kutuma picha hadi 6.</span></div>
+<div class="ai-uz-main" data-i18n="muuzaji_uza.ai_camera_title">Piga picha ya mauzo yaliyoandikwa kwenye karatasi</div>
+<div class="ai-uz-sub"><span data-i18n="muuzaji_uza.ai_camera_desc">AI itasoma maandishi, kuyafananisha na bidhaa zako zilizopo, na kutumia bei uliyoandika — au bei ya kuuzia ya mfumo ukawa hauna.</span><br><span data-i18n="muuzaji_uza.ai_max_photos">Unaweza kutuma picha hadi 6.</span></div>
 </div>
-<button type="button" class="ai-btn ai-btn-camera" onclick="captureAiSaleImage()"><i class="fa-solid fa-camera" style="font-size:17px;"></i> <span data-i18n="muuzaji_uza.ai_btn_camera">Piga Picha Sasa (Kamera)</span></button>
+<button type="button" class="ai-btn ai-btn-camera" onclick="captureAiSaleImage()"><i class="fa-solid fa-camera" style="font-size:17px;"></i> <span data-i18n="muuzaji_uza.btn_take_photo">Piga Picha Sasa (Kamera)</span></button>
 <input type="file" id="aiSaleFilesInput" accept="image/*" multiple style="display:none">
 <div id="aiSalePreviewGrid" class="ai-preview-grid"></div>
-<div class="ai-controls"><button type="button" class="ai-btn ai-btn-process" id="aiSaleProcessBtn" onclick="startAiSaleProcess()"><i class="fa-solid fa-barcode" style="font-size:17px;"></i> <span data-i18n="muuzaji_uza.ai_btn_process">Chambua Mauzo</span></button></div>
+<div class="ai-controls"><button type="button" class="ai-btn ai-btn-process" id="aiSaleProcessBtn" onclick="startAiSaleProcess()"><i class="fa-solid fa-barcode" style="font-size:17px;"></i> <span data-i18n="muuzaji_uza.btn_process_sales">Chambua Mauzo</span></button></div>
 </div>
 <div id="aiSaleProgress" class="ai-progress" style="display:none">
 <div class="ai-dots"><span></span><span></span><span></span><span></span></div>
-<div id="aiSaleProgressText" class="ai-progress-text" data-i18n="muuzaji_uza.ai_progress_1">Inatayarisha picha...</div>
+<div id="aiSaleProgressText" class="ai-progress-text" data-i18n="muuzaji_uza.ai_progress_preparing">Inatayarisha picha...</div>
 </div>
 <div id="aiSaleResultsWrap" style="display:none">
 <div class="ai-results-summary" id="aiSaleResultsSummary"></div>
 <div class="ai-table-scroll">
 <table class="ai-table">
-<thead><tr><th data-i18n="muuzaji_uza.ai_th_written">Ulioandika</th><th data-i18n="muuzaji_uza.ai_th_product">Bidhaa (mfumo)</th><th data-i18n="muuzaji_uza.ai_th_qty">Idadi</th><th data-i18n="muuzaji_uza.ai_th_price">Bei (kipimo)</th><th data-i18n="muuzaji_uza.ai_th_total">Jumla</th><th data-i18n="muuzaji_uza.ai_th_verify">Haki</th><th data-i18n="muuzaji_uza.btn_save">Hifadhi</th></tr></thead>
+<thead><tr><th data-i18n="muuzaji_uza.ai_col_written">Ulioandika</th><th data-i18n="muuzaji_uza.ai_col_product">Bidhaa (mfumo)</th><th data-i18n="muuzaji_uza.ai_col_qty">Idadi</th><th data-i18n="muuzaji_uza.ai_col_price">Bei (kipimo)</th><th data-i18n="muuzaji_uza.ai_col_total">Jumla</th><th data-i18n="muuzaji_uza.ai_col_correct">Haki</th><th data-i18n="muuzaji_uza.ai_col_save">Hifadhi</th></tr></thead>
 <tbody id="aiSaleTableBody"></tbody>
 </table>
 </div>
 <div style="margin-top:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-<span style="font-size:12px;color:#7f8c8d" data-i18n="muuzaji_uza.ai_results_hint">Rekebisha idadi au bei kama inahitajika, kisha bonyeza "Hifadhi" kwa kila mstari au "Hifadhi Zote". Mauzo yataingia kwenye rekodi na hisa itapungua.</span>
-<button type="button" class="ai-reset" onclick="resetAiSaleSession()" data-i18n="muuzaji_uza.ai_btn_reset">Anza Upya</button>
+<span style="font-size:12px;color:#7f8c8d" data-i18n="muuzaji_uza.ai_hint">Rekebisha idadi au bei kama inahitajika, kisha bonyeza "Hifadhi" kwa kila mstari au "Hifadhi Zote". Mauzo yataingia kwenye rekodi na hisa itapungua.</span>
+<button type="button" class="ai-reset" onclick="resetAiSaleSession()" data-i18n="muuzaji_uza.btn_start_over">Anza Upya</button>
 </div>
 <div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-<button type="button" class="ai-verify-btn" id="aiSaleCommitAllBtn" style="background:#27ae60;padding:12px 22px;font-size:14px" onclick="commitAllAiSaleRows()" data-i18n="muuzaji_uza.ai_btn_save_all">Hifadhi Zote</button>
+<button type="button" class="ai-verify-btn" id="aiSaleCommitAllBtn" style="background:#27ae60;padding:12px 22px;font-size:14px" onclick="commitAllAiSaleRows()" data-i18n="muuzaji_uza.btn_save_all">Hifadhi Zote</button>
 <span id="aiSaleCommitAllStatus" style="font-size:12px;color:#7f8c8d"></span>
 </div>
 </div>
@@ -937,7 +959,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
 var AI_MAX_IMAGES=6;
 var AI_MAX_PER_IMAGE_B64=6*1024*1024;
 var AI_MAX_TOTAL_B64=9*1024*1024;
-var AI_PROGRESS_MSGS=[t('ai_progress_1'),t('ai_progress_2'),t('ai_progress_3'),t('ai_progress_4'),t('ai_progress_5'),t('ai_progress_6'),t('ai_progress_7'),t('ai_progress_8'),t('ai_progress_9')];
+var AI_PROGRESS_MSGS=[t('ai_progress_preparing'),t('ai_progress_reading'),t('ai_progress_matching'),t('ai_progress_sending'),t('ai_progress_comparing'),t('ai_progress_calculating'),t('ai_progress_preparing_results'),t('ai_progress_almost'),t('ai_progress_wait')];
 var aiImages=[];var aiRows=[];var aiProcessing=false;var aiCommitBusy=false;var aiBatchBusy=false;
 var aiProgressTimer=null;var aiUploadReady=false;var aiTableSyncReady=false;
 function aiToken(){return localStorage.getItem('userToken');}
@@ -949,24 +971,24 @@ function hideBanner(){var b=$('aiSaleBanner');if(b)b.className='ai-banner';}
 function stopProgress(){if(aiProgressTimer){clearInterval(aiProgressTimer);aiProgressTimer=null;}}
 function startProgress(){stopProgress();var i=0;var el=$('aiSaleProgressText');if(el)el.textContent=AI_PROGRESS_MSGS[0];aiProgressTimer=setInterval(function(){i=(i+1)%AI_PROGRESS_MSGS.length;var e=$('aiSaleProgressText');if(e)e.textContent=AI_PROGRESS_MSGS[i];},2400);}
 function confirmBox(title,msg){return new Promise(function(res){var ov=document.createElement('div');ov.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:3000;';var box=document.createElement('div');box.style.cssText='background:#fff;border-radius:28px;width:85%;max-width:340px;padding:24px 20px;text-align:center;';box.innerHTML='<div style="font-size:18px;font-weight:800;margin-bottom:12px;color:#2c3e50;">'+esc(title)+'</div><div style="font-size:14px;color:#5d6d7e;margin-bottom:24px;white-space:pre-line;text-align:left;"></div><div style="display:flex;gap:12px;"><div style="flex:1;background:#95a5a6;padding:12px;border-radius:40px;color:#fff;cursor:pointer;font-weight:700;" class="aCNo">'+t('btn_cancel')+'</div><div style="flex:1;background:#27ae60;padding:12px;border-radius:40px;color:#fff;cursor:pointer;font-weight:700;" class="aCYes">'+t('btn_continue')+'</div></div>';ov.appendChild(box);document.body.appendChild(ov);box.querySelector('div:nth-child(2)').textContent=msg;box.querySelector('.aCYes').onclick=function(){ov.remove();res(true);};box.querySelector('.aCNo').onclick=function(){ov.remove();res(false);};ov.addEventListener('click',function(e){if(e.target===ov){ov.remove();res(false);}});});}
-function checkB64(name,b64,cb){var total=aiImages.reduce(function(s,i){return s+(i.base64?i.base64.length:0);},0)+b64.length;if(b64.length>AI_MAX_PER_IMAGE_B64){showBanner('error',t('ai_err_too_large',{name:name}));cb(null);return;}if(total>AI_MAX_TOTAL_B64){showBanner('error',t('ai_err_total_too_large'));cb(null);return;}cb(b64);}
-function compressImage(file,cb){if(file.size>14*1024*1024){showBanner('error',t('ai_err_file_too_large',{name:file.name}));cb(null);return;}var reader=new FileReader();reader.onerror=function(){cb(null);};reader.onload=function(){var original=reader.result;var img=new Image();img.onerror=function(){var b64=original.indexOf(',')>=0?original.slice(original.indexOf(',')+1):original;checkB64(file.name,b64,cb);};img.onload=function(){try{var maxDim=1600;var w=img.naturalWidth,h=img.naturalHeight;var scale=Math.max(w,h)>maxDim?maxDim/Math.max(w,h):1;var canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(w*scale));canvas.height=Math.max(1,Math.round(h*scale));var ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);var out=canvas.toDataURL('image/jpeg',0.85);var b64=out.indexOf(',')>=0?out.slice(out.indexOf(',')+1):out;checkB64(file.name,b64,cb);}catch(e){cb(null);}};img.src=original;};reader.readAsDataURL(file);}
-function addFiles(files){if(aiProcessing)return;var list=Array.prototype.slice.call(files||[]);for(var i=0;i<list.length;i++){var f=list[i];var okType=f.type.indexOf('image/')===0||/\.(png|jpe?g|webp|heic|heif|bmp|tiff?)$/i.test(f.name);if(!okType){showBanner('error',t('ai_err_file_rejected',{name:(f.name||'')}));continue;}if(aiImages.length>=AI_MAX_IMAGES){showBanner('error',t('ai_err_too_many',{selected:aiImages.length,limit:AI_MAX_IMAGES}));break;}var item={id:'ais'+Date.now()+'_'+i+Math.random().toString(36).slice(2,6),name:f.name||('image'+(i+1)),base64:null,preview:null};aiImages.push(item);compressImage(f,function(b64){var ix=aiImages.findIndex(function(x){return x.id===item.id;});if(ix<0)return;if(!b64){aiImages.splice(ix,1);refreshUploadUi();return;}aiImages[ix].base64=b64;aiImages[ix].preview='data:image/jpeg;base64,'+b64;refreshUploadUi();});}refreshUploadUi();}
+function checkB64(name,b64,cb){var total=aiImages.reduce(function(s,i){return s+(i.base64?i.base64.length:0);},0)+b64.length;if(b64.length>AI_MAX_PER_IMAGE_B64){showBanner('error',t('err_photo_too_large_compressed',{name:name}));cb(null);return;}if(total>AI_MAX_TOTAL_B64){showBanner('error',t('err_photos_total_too_large'));cb(null);return;}cb(b64);}
+function compressImage(file,cb){if(file.size>14*1024*1024){showBanner('error',t('err_photo_too_large',{name:file.name}));cb(null);return;}var reader=new FileReader();reader.onerror=function(){cb(null);};reader.onload=function(){var original=reader.result;var img=new Image();img.onerror=function(){var b64=original.indexOf(',')>=0?original.slice(original.indexOf(',')+1):original;checkB64(file.name,b64,cb);};img.onload=function(){try{var maxDim=1600;var w=img.naturalWidth,h=img.naturalHeight;var scale=Math.max(w,h)>maxDim?maxDim/Math.max(w,h):1;var canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(w*scale));canvas.height=Math.max(1,Math.round(h*scale));var ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);var out=canvas.toDataURL('image/jpeg',0.85);var b64=out.indexOf(',')>=0?out.slice(out.indexOf(',')+1):out;checkB64(file.name,b64,cb);}catch(e){cb(null);}};img.src=original;};reader.readAsDataURL(file);}
+function addFiles(files){if(aiProcessing)return;var list=Array.prototype.slice.call(files||[]);for(var i=0;i<list.length;i++){var f=list[i];var okType=f.type.indexOf('image/')===0||/\.(png|jpe?g|webp|heic|heif|bmp|tiff?)$/i.test(f.name);if(!okType){showBanner('error',t('err_photo_rejected',{name:f.name||''}));continue;}if(aiImages.length>=AI_MAX_IMAGES){showBanner('error',t('err_too_many_photos',{selected:aiImages.length,max:AI_MAX_IMAGES}));break;}var item={id:'ais'+Date.now()+'_'+i+Math.random().toString(36).slice(2,6),name:f.name||('image'+(i+1)),base64:null,preview:null};aiImages.push(item);compressImage(f,function(b64){var ix=aiImages.findIndex(function(x){return x.id===item.id;});if(ix<0)return;if(!b64){aiImages.splice(ix,1);refreshUploadUi();return;}aiImages[ix].base64=b64;aiImages[ix].preview='data:image/jpeg;base64,'+b64;refreshUploadUi();});}refreshUploadUi();}
 function removeImage(id){aiImages=aiImages.filter(function(im){return im.id!==id;});refreshUploadUi();}
-function refreshUploadUi(){var grid=$('aiSalePreviewGrid');if(grid){grid.innerHTML=aiImages.length===0?'':aiImages.map(function(im){return '<div class="ai-preview-item"><img src="'+esc(im.preview||'')+'" alt=""><span class="ai-preview-remove" onclick="removeAiSaleImage(\''+im.id+'\')">'+t('ai_preview_remove')+'</span><div class="ai-preview-name">'+esc(im.name)+'</div></div>';}).join('');}var pb=$('aiSaleProcessBtn');if(pb){pb.disabled=aiImages.length===0||aiProcessing;pb.innerHTML='<i class="fa-solid fa-barcode" style="font-size:17px;"></i> '+t('ai_btn_process')+(aiImages.length?' ('+aiImages.length+')':'');}}
+function refreshUploadUi(){var grid=$('aiSalePreviewGrid');if(grid){grid.innerHTML=aiImages.length===0?'':aiImages.map(function(im){return '<div class="ai-preview-item"><img src="'+esc(im.preview||'')+'" alt=""><span class="ai-preview-remove" onclick="removeAiSaleImage(\''+im.id+'\')">'+t('btn_remove_x')+'</span><div class="ai-preview-name">'+esc(im.name)+'</div></div>';}).join('');}var pb=$('aiSaleProcessBtn');if(pb){pb.disabled=aiImages.length===0||aiProcessing;pb.innerHTML='<i class="fa-solid fa-barcode" style="font-size:17px;"></i> <span data-i18n="muuzaji_uza.btn_process_sales">'+t('btn_process_sales')+'</span>'+(aiImages.length?' ('+aiImages.length+')':'');}}
 function initUploadHandlers(){if(aiUploadReady)return;aiUploadReady=true;var zone=$('aiSaleUploadZone'),input=$('aiSaleFilesInput');if(zone)zone.addEventListener('click',function(){if(!aiProcessing)input.click();});['dragover','dragenter'].forEach(function(ev){zone.addEventListener(ev,function(e){e.preventDefault();zone.classList.add('drag');});});['dragleave','drop'].forEach(function(ev){zone.addEventListener(ev,function(e){e.preventDefault();zone.classList.remove('drag');});});zone.addEventListener('drop',function(e){if(e.dataTransfer&&e.dataTransfer.files)addFiles(e.dataTransfer.files);});input.addEventListener('change',function(){addFiles(input.files);input.value='';});}
 function captureImage(){if(aiProcessing)return;var ci=document.createElement('input');ci.type='file';ci.accept='image/*';ci.setAttribute('capture','environment');ci.onchange=function(){if(ci.files&&ci.files.length)addFiles(ci.files);};ci.click();}
-function aiErrMsg(data){if(!data||!data.code)return t('ai_err_failed');var c=String(data.code).toUpperCase();if(['GEMINI_RATE_LIMIT','GEMINI_TIMEOUT','GEMINI_API_ERROR','GEMINI_NETWORK','GEMINI_KEY_MISSING','AI_SALES_IMPORT_ERROR','AI_IMPORT_ERROR'].indexOf(c)>=0)return t('ai_err_gemini');return data.error||t('ai_err_failed');}
-async function startProcess(){if(aiProcessing)return;var ready=aiImages.filter(function(im){return im.base64;});if(!ready.length){showBanner('error',t('ai_err_select_photo'));return;}if(aiRows.length){var ok=await confirmBox(t('ai_confirm_again_title'),t('ai_confirm_again_msg'));if(!ok)return;}aiProcessing=true;aiRows=[];$('aiSaleResultsWrap').style.display='none';$('aiSaleUploadSection').style.display='none';$('aiSaleProgress').style.display='block';hideBanner();startProgress();try{var payload={images:ready.map(function(im){return{name:im.name,base64:im.base64};})};var r=await fetch(API_BASE_URL+'/api/sales/ai-import',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+aiToken()},body:JSON.stringify(payload)});var data=await r.json().catch(function(){return{};});$('aiSaleProgress').style.display='none';$('aiSaleUploadSection').style.display='block';if(r.ok&&data&&Array.isArray(data.items)&&data.items.length>0){aiRows=data.items.map(function(it){return Object.assign({committed:false},it);});$('aiSaleResultsWrap').style.display='block';renderResults();showBanner('info',t('ai_banner_ready'));}else if(r.ok){showBanner('error',t('ai_err_no_sales'));}else{showBanner('error',aiErrMsg(data));}}catch(e){$('aiSaleProgress').style.display='none';$('aiSaleUploadSection').style.display='block';showBanner('error',t('ai_err_network'));}finally{stopProgress();aiProcessing=false;refreshUploadUi();}}
-function updateSummary(){var total=aiRows.length;var matched=aiRows.filter(function(r){return r.status==='MATCHED';}).length;var review=aiRows.filter(function(r){return r.needsReview;}).length;var done=aiRows.filter(function(r){return r.committed;}).length;var s=$('aiSaleResultsSummary');if(!s)return;s.innerHTML='<span class="ai-summary-chip">'+t('ai_chip_rows')+total+'</span><span class="ai-summary-chip existing">'+t('ai_chip_matched')+matched+'</span><span class="ai-summary-chip review">'+t('ai_chip_review')+review+'</span><span class="ai-summary-chip ok">'+t('ai_chip_saved')+done+'</span>';}
+function aiErrMsg(data){if(!data||!data.code)return t('err_analysis_failed');var c=String(data.code).toUpperCase();if(['GEMINI_RATE_LIMIT','GEMINI_TIMEOUT','GEMINI_API_ERROR','GEMINI_NETWORK','GEMINI_KEY_MISSING','AI_SALES_IMPORT_ERROR','AI_IMPORT_ERROR'].indexOf(c)>=0)return t('err_analysis_failed_gemini');return data.error||t('err_analysis_failed');}
+async function startProcess(){if(aiProcessing)return;var ready=aiImages.filter(function(im){return im.base64;});if(!ready.length){showBanner('error',t('err_select_photo_first'));return;}if(aiRows.length){var ok=await confirmBox(t('ai_confirm_reprocess_title'),t('ai_confirm_reprocess_msg'));if(!ok)return;}aiProcessing=true;aiRows=[];$('aiSaleResultsWrap').style.display='none';$('aiSaleUploadSection').style.display='none';$('aiSaleProgress').style.display='block';hideBanner();startProgress();try{var payload={images:ready.map(function(im){return{name:im.name,base64:im.base64};})};var r=await fetch(API_BASE_URL+'/api/sales/ai-import',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+aiToken()},body:JSON.stringify(payload)});var data=await r.json().catch(function(){return{};});$('aiSaleProgress').style.display='none';$('aiSaleUploadSection').style.display='block';if(r.ok&&data&&Array.isArray(data.items)&&data.items.length>0){aiRows=data.items.map(function(it){return Object.assign({committed:false},it);});$('aiSaleResultsWrap').style.display='block';renderResults();showBanner('info',t('ai_results_ready'));}else if(r.ok){showBanner('error',t('err_no_sales_recognized'));}else{showBanner('error',aiErrMsg(data));}}catch(e){$('aiSaleProgress').style.display='none';$('aiSaleUploadSection').style.display='block';showBanner('error',t('err_network_retry'));}finally{stopProgress();aiProcessing=false;refreshUploadUi();}}
+function updateSummary(){var total=aiRows.length;var matched=aiRows.filter(function(r){return r.status==='MATCHED';}).length;var review=aiRows.filter(function(r){return r.needsReview;}).length;var done=aiRows.filter(function(r){return r.committed;}).length;var s=$('aiSaleResultsSummary');if(!s)return;s.innerHTML='<span class="ai-summary-chip">'+t('ai_summary_rows',{count:total})+'</span><span class="ai-summary-chip existing">'+t('ai_summary_matched',{count:matched})+'</span><span class="ai-summary-chip review">'+t('ai_summary_review',{count:review})+'</span><span class="ai-summary-chip ok">'+t('ai_summary_saved',{count:done})+'</span>';}
 function attachSync(){if(aiTableSyncReady)return;aiTableSyncReady=true;var body=$('aiSaleTableBody');if(!body)return;body.addEventListener('input',function(e){var t=e.target;if(!t||!t.id)return;var m=t.id.match(/^aiS(Qty|Price|Prod)(\d+)$/);if(!m)return;var row=aiRows[parseInt(m[2],10)];if(!row)return;var v=t.value;if(m[1]==='Qty')row.quantity=v===''?null:parseInt(v,10);else if(m[1]==='Price')row.unitPrice=v===''?null:Number(v);else if(m[1]==='Prod')row.matchedProductId=v||null;});}
-function renderResults(){var body=$('aiSaleTableBody');if(!body)return;updateSummary();attachSync();body.innerHTML=aiRows.map(function(row,i){var revBadge=row.needsReview?'<span class="ai-status review">'+t('ai_status_review')+'</span>':'';var conf=Math.round((row.confidence||0)*100);var stock=(row.currentStock!==null&&row.currentStock!==undefined)?('<div class="ai-conf-row">'+t('ai_conf_stock')+esc(row.currentStock)+'</div>'):'';var defP=(row.unitPrice===null||row.unitPrice===undefined)?' <div class="ai-conf-row">'+t('ai_conf_default_price')+fmt(row.defaultUnitPrice)+'</div>':'';var warn=(row.warnings||[]).map(function(w){return '<div class="ai-warn">'+esc(w)+'</div>';}).join('');var prodOpts;if(row.status==='MATCHED'&&row.matchedProductId){prodOpts='<span class="ai-status existing">'+esc(row.matchedProductName||t('product_fallback'))+'</span>'+stock;}else{var options=products.filter(function(p){return true;}).slice(0,400).map(function(p){return '<option value="'+p.id+'">'+esc(p.name)+'</option>';}).join('');prodOpts='<select id="aiSProd'+i+'" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:10px;font-size:13px"><option value="">'+t('ai_option_select')+'</option>'+options+'</select>';}var qty=(row.quantity===null||row.quantity===undefined)?'':esc(row.quantity);var price=(row.unitPrice===null||row.unitPrice===undefined)?'':esc(row.unitPrice);var lineTotal=row.quantity&&row.unitPrice?(row.quantity*row.unitPrice):(row.quantity&&row.defaultUnitPrice?(row.quantity*row.defaultUnitPrice):null);var action=row.committed?'<span class="ai-verified-tag">'+t('ai_saved_tag')+'</span>':(row.status==='MATCHED'?'<button type="button" class="ai-verify-btn" id="aiSCommit'+i+'" onclick="commitAiSaleRow('+i+')">'+t('btn_save')+'</button>':'<span class="ai-status review">'+t('ai_no_match')+'</span>');return '<tr>'+'<td style="max-width:140px"><strong style="font-size:13px">'+esc(row.handwrittenName)+'</strong>'+defP+'</td>'+'<td style="min-width:150px">'+prodOpts+'</td>'+'<td style="min-width:80px"><input type="number" min="1" step="1" value="'+qty+'" id="aiSQty'+i+'"></td>'+'<td style="min-width:110px"><input type="number" min="0" value="'+price+'" id="aiSPrice'+i+'" placeholder="'+t('ai_price_placeholder')+'"></td>'+'<td>'+(lineTotal?fmt(lineTotal):'—')+'</td>'+'<td>'+revBadge+'<div class="ai-conf-row">'+conf+'%</div>'+warn+'</td>'+'<td style="width:120px">'+action+'</td>'+'</tr>';}).join('');}
-async function commitRow(i,fromBatch){if(aiProcessing)return;if((aiCommitBusy||aiBatchBusy)&&!fromBatch)return;var row=aiRows[i];if(!row||row.committed)return;var productId=row.matchedProductId;if(!productId){showBanner('error',t('ai_row_select_product',{name:row.handwrittenName}));return;}var qty=parseInt(row.quantity,10);if(!Number.isInteger(qty)||qty<=0){showBanner('error',t('ai_row_bad_qty',{name:row.handwrittenName}));return;}var price=(row.unitPrice!==null&&row.unitPrice!==undefined)?Number(row.unitPrice):Number(row.defaultUnitPrice);if(!Number.isFinite(price)||price<=0){showBanner('error',t('ai_row_no_price',{name:row.handwrittenName}));return;}var prod=products.find(function(p){return p.id===productId;});if(prod&&qty>prod.stock){showBanner('error',t('ai_row_stock',{name:prod.name,stock:prod.stock,qty:qty}));return;}aiCommitBusy=true;var btn=$('aiSCommit'+i);if(btn){btn.disabled=true;btn.innerHTML='...';}try{var r=await fetch(API_BASE_URL+'/api/sales/ai-commit',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+aiToken()},body:JSON.stringify({items:[{product_id:productId,quantity:qty,unit_price:price}],clientSaleKey:row.id,customer_name:(customerName||'').trim(),customer_phone:(customerPhone||'').trim(),sale_date:saleDate,notes:t('ai_import_note',{name:row.handwrittenName})})});var data=await r.json().catch(function(){return{};});if(r.ok){row.committed=true;var td=btn?btn.closest('td'):null;if(td)td.innerHTML='<span class="ai-verified-tag">'+t('ai_saved_tag')+'</span>';updateSummary();await loadProducts();showBanner('info',t('ai_row_saved',{name:(row.matchedProductName||row.handwrittenName),qty:qty,total:fmt(qty*price)}));}else{if(btn){btn.disabled=false;btn.innerHTML=t('btn_save');}var msg=data.error||t('ai_err_save_failed');if(data.code==='STOCK_ISSUES'&&data.stockIssues&&data.stockIssues[0]){msg=t('ai_stock_issue',{name:(data.stockIssues[0].product_name||t('product_fallback')),stock:data.stockIssues[0].available});}if(data.code==='DUPLICATE'){msg=t('ai_err_duplicate');row.committed=true;var td2=btn?btn.closest('td'):null;if(td2)td2.innerHTML='<span class="ai-verified-tag">'+t('ai_saved_tag')+'</span>';updateSummary();}showBanner('error',msg);}}catch(e){if(btn){btn.disabled=false;btn.innerHTML=t('btn_save');}showBanner('error',t('ai_err_network'));}finally{aiCommitBusy=false;}}
-async function commitAll(){if(aiCommitBusy||aiBatchBusy||aiProcessing)return;var pending=aiRows.filter(function(r){return !r.committed&&r.status==='MATCHED';});if(!pending.length){showBanner('info',t('ai_info_no_pending'));return;}var problems=[];for(var i=0;i<aiRows.length;i++){var row=aiRows[i];if(row.committed||row.status!=='MATCHED')continue;var productId=row.matchedProductId;var qty=parseInt(row.quantity,10);var price=(row.unitPrice!==null&&row.unitPrice!==undefined)?Number(row.unitPrice):Number(row.defaultUnitPrice);if(!productId){problems.push(t('ai_fix_no_product',{row:i+1}));continue;}if(!Number.isInteger(qty)||qty<=0){problems.push(t('ai_fix_bad_qty',{row:i+1}));continue;}if(!Number.isFinite(price)||price<=0){problems.push(t('ai_fix_no_price',{row:i+1}));continue;}var prod=products.find(function(p){return p.id===productId;});if(prod&&qty>prod.stock){problems.push(t('ai_fix_stock',{row:i+1,name:prod.name,stock:prod.stock}));}}if(problems.length){showBanner('error',t('ai_fix_header')+'\n'+problems.join('\n'));return;}var ok=await confirmBox(t('ai_confirm_save_all_title'),t('ai_confirm_save_all_msg',{count:pending.length}));if(!ok)return;aiBatchBusy=true;var st=$('aiSaleCommitAllStatus');var allBtn=$('aiSaleCommitAllBtn');var allBtnHtml=allBtn?allBtn.innerHTML:'';var saved=0,failed=0;try{for(var j=0;j<aiRows.length;j++){if(aiRows[j].committed||aiRows[j].status!=='MATCHED')continue;if(st)st.textContent=t('ai_saving_prefix')+(saved+failed+1)+'/'+pending.length+'...';if(allBtn){allBtn.disabled=true;allBtn.innerHTML=ic('refresh',14)+' '+t('ai_saving_prefix')+(saved+failed+1)+'/'+pending.length;}var before=aiRows.filter(function(r){return r.committed;}).length;try{await commitRow(j,true);}catch(e){}var after=aiRows.filter(function(r){return r.committed;}).length;if(after>before)saved++;else failed++;}}finally{aiBatchBusy=false;if(allBtn){allBtn.disabled=false;allBtn.innerHTML=allBtnHtml;}}if(st)st.textContent='';if(failed===0){showBanner('info',t('ai_all_saved',{saved:saved}));resetAiSaleSession();}else{showBanner('error',t('ai_partial',{saved:saved,failed:failed}));}}
+function renderResults(){var body=$('aiSaleTableBody');if(!body)return;updateSummary();attachSync();body.innerHTML=aiRows.map(function(row,i){var revBadge=row.needsReview?'<span class="ai-status review">'+t('ai_badge_verify')+'</span>':'';var conf=Math.round((row.confidence||0)*100);var stock=(row.currentStock!==null&&row.currentStock!==undefined)?('<div class="ai-conf-row">'+t('ai_row_stock',{stock:esc(row.currentStock)})+'</div>'):'';var defP=(row.unitPrice===null||row.unitPrice===undefined)?' <div class="ai-conf-row">'+t('ai_row_default_price',{price:fmt(row.defaultUnitPrice)})+'</div>':'';var warn=(row.warnings||[]).map(function(w){return '<div class="ai-warn">'+esc(w)+'</div>';}).join('');var prodOpts;if(row.status==='MATCHED'&&row.matchedProductId){prodOpts='<span class="ai-status existing">'+esc(row.matchedProductName||t('product_generic'))+'</span>'+stock;}else{var options=products.filter(function(p){return true;}).slice(0,400).map(function(p){return '<option value="'+p.id+'">'+esc(p.name)+'</option>';}).join('');prodOpts='<select id="aiSProd'+i+'" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:10px;font-size:13px"><option value="">'+t('ai_select_placeholder')+'</option>'+options+'</select>';}var qty=(row.quantity===null||row.quantity===undefined)?'':esc(row.quantity);var price=(row.unitPrice===null||row.unitPrice===undefined)?'':esc(row.unitPrice);var lineTotal=row.quantity&&row.unitPrice?(row.quantity*row.unitPrice):(row.quantity&&row.defaultUnitPrice?(row.quantity*row.defaultUnitPrice):null);var action=row.committed?'<span class="ai-verified-tag">'+t('ai_saved_tag')+'</span>':(row.status==='MATCHED'?'<button type="button" class="ai-verify-btn" id="aiSCommit'+i+'" onclick="commitAiSaleRow('+i+')">'+t('ai_col_save')+'</button>':'<span class="ai-status review">'+t('ai_no_match')+'</span>');return '<tr>'+'<td style="max-width:140px"><strong style="font-size:13px">'+esc(row.handwrittenName)+'</strong>'+defP+'</td>'+'<td style="min-width:150px">'+prodOpts+'</td>'+'<td style="min-width:80px"><input type="number" min="1" step="1" value="'+qty+'" id="aiSQty'+i+'"></td>'+'<td style="min-width:110px"><input type="number" min="0" value="'+price+'" id="aiSPrice'+i+'" placeholder="'+t('ai_default_word')+'"></td>'+'<td>'+(lineTotal?fmt(lineTotal):'—')+'</td>'+'<td>'+revBadge+'<div class="ai-conf-row">'+conf+'%</div>'+warn+'</td>'+'<td style="width:120px">'+action+'</td>'+'</tr>';}).join('');}
+async function commitRow(i,fromBatch){if(aiProcessing)return;if((aiCommitBusy||aiBatchBusy)&&!fromBatch)return;var row=aiRows[i];if(!row||row.committed)return;var productId=row.matchedProductId;if(!productId){showBanner('error',t('err_row_select_product',{row:row.handwrittenName}));return;}var qty=parseInt(row.quantity,10);if(!Number.isInteger(qty)||qty<=0){showBanner('error',t('err_row_invalid_qty',{row:row.handwrittenName}));return;}var price=(row.unitPrice!==null&&row.unitPrice!==undefined)?Number(row.unitPrice):Number(row.defaultUnitPrice);if(!Number.isFinite(price)||price<=0){showBanner('error',t('err_row_no_price',{row:row.handwrittenName}));return;}var prod=products.find(function(p){return p.id===productId;});if(prod&&qty>prod.stock){showBanner('error',t('err_stock_insufficient',{product:prod.name,stock:prod.stock,qty:qty}));return;}aiCommitBusy=true;var btn=$('aiSCommit'+i);if(btn){btn.disabled=true;btn.innerHTML='...';}try{var r=await fetch(API_BASE_URL+'/api/sales/ai-commit',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+aiToken()},body:JSON.stringify({items:[{product_id:productId,quantity:qty,unit_price:price}],clientSaleKey:row.id,customer_name:(customerName||'').trim(),customer_phone:(customerPhone||'').trim(),sale_date:saleDate,notes:t('ai_import_notes',{name:row.handwrittenName})})});var data=await r.json().catch(function(){return{};});if(r.ok){row.committed=true;var td=btn?btn.closest('td'):null;if(td)td.innerHTML='<span class="ai-verified-tag">'+t('ai_saved_tag')+'</span>';updateSummary();await loadProducts();showBanner('info',t('msg_row_saved',{product:row.matchedProductName||row.handwrittenName,qty:qty,total:fmt(qty*price)}));}else{if(btn){btn.disabled=false;btn.innerHTML=t('ai_col_save');}var msg=data.error||t('err_save_failed');if(data.code==='STOCK_ISSUES'&&data.stockIssues&&data.stockIssues[0]){msg=t('err_stock_issue',{product:data.stockIssues[0].product_name||t('product_generic'),available:data.stockIssues[0].available});}if(data.code==='DUPLICATE'){msg=t('msg_already_saved');row.committed=true;var td2=btn?btn.closest('td'):null;if(td2)td2.innerHTML='<span class="ai-verified-tag">'+t('ai_saved_tag')+'</span>';updateSummary();}showBanner('error',msg);}}catch(e){if(btn){btn.disabled=false;btn.innerHTML=t('ai_col_save');}showBanner('error',t('err_network_retry'));}finally{aiCommitBusy=false;}}
+async function commitAll(){if(aiCommitBusy||aiBatchBusy||aiProcessing)return;var pending=aiRows.filter(function(r){return !r.committed&&r.status==='MATCHED';});if(!pending.length){showBanner('info',t('ai_nothing_pending'));return;}var problems=[];for(var i=0;i<aiRows.length;i++){var row=aiRows[i];if(row.committed||row.status!=='MATCHED')continue;var productId=row.matchedProductId;var qty=parseInt(row.quantity,10);var price=(row.unitPrice!==null&&row.unitPrice!==undefined)?Number(row.unitPrice):Number(row.defaultUnitPrice);if(!productId){problems.push(t('ai_problem_no_product',{row:i+1}));continue;}if(!Number.isInteger(qty)||qty<=0){problems.push(t('ai_problem_bad_qty',{row:i+1}));continue;}if(!Number.isFinite(price)||price<=0){problems.push(t('ai_problem_no_price',{row:i+1}));continue;}var prod=products.find(function(p){return p.id===productId;});if(prod&&qty>prod.stock){problems.push(t('ai_problem_stock',{row:i+1,product:prod.name,stock:prod.stock}));}}if(problems.length){showBanner('error',t('ai_fix_before_save')+'\n'+problems.join('\n'));return;}var ok=await confirmBox(t('ai_confirm_save_all_title'),t('ai_confirm_save_all_msg',{count:pending.length}));if(!ok)return;aiBatchBusy=true;var st=$('aiSaleCommitAllStatus');var allBtn=$('aiSaleCommitAllBtn');var allBtnHtml=allBtn?allBtn.innerHTML:'';var saved=0,failed=0;try{for(var j=0;j<aiRows.length;j++){if(aiRows[j].committed||aiRows[j].status!=='MATCHED')continue;if(st)st.textContent=t('ai_saving_progress',{index:saved+failed+1,total:pending.length})+'...';if(allBtn){allBtn.disabled=true;allBtn.innerHTML=ic('refresh',14)+' '+t('ai_saving_progress',{index:saved+failed+1,total:pending.length});}var before=aiRows.filter(function(r){return r.committed;}).length;try{await commitRow(j,true);}catch(e){}var after=aiRows.filter(function(r){return r.committed;}).length;if(after>before)saved++;else failed++;}}finally{aiBatchBusy=false;if(allBtn){allBtn.disabled=false;allBtn.innerHTML=allBtnHtml;}}if(st)st.textContent='';if(failed===0){showBanner('info',t('msg_all_saved',{count:saved}));resetAiSaleSession();}else{showBanner('error',t('msg_some_failed',{saved:saved,failed:failed}));}}
 function resetSession(){if(aiProcessing)return;aiRows=[];aiImages=[];$('aiSaleResultsWrap').style.display='none';hideBanner();refreshUploadUi();}
 function openModal(){var m=$('aiSaleModal');if(m)m.classList.add('show');initUploadHandlers();refreshUploadUi();var uw=$('aiSaleResultsWrap');if(uw)uw.style.display=aiRows.length?'block':'none';hideBanner();}
 function closeModal(){var m=$('aiSaleModal');if(m)m.classList.remove('show');stopProgress();}
-window.openAiSaleModal=openModal;window.closeAiSaleModal=closeModal;window.startAiSaleProcess=startProcess;window.captureAiSaleImage=captureImage;window.removeAiSaleImage=removeImage;window.commitAiSaleRow=commitRow;window.commitAllAiSaleRows=commitAll;window.resetAiSaleSession=resetSession;window.uzaAiRepaint=function(){refreshUploadUi();if(aiRows.length){renderResults();}};
+window.refreshAiSaleUi=function(){refreshUploadUi();if(aiRows.length){renderResults();}};window.openAiSaleModal=openModal;window.closeAiSaleModal=closeModal;window.startAiSaleProcess=startProcess;window.captureAiSaleImage=captureImage;window.removeAiSaleImage=removeImage;window.commitAiSaleRow=commitRow;window.commitAllAiSaleRows=commitAll;window.resetAiSaleSession=resetSession;
 })();
 </script>
 </body>

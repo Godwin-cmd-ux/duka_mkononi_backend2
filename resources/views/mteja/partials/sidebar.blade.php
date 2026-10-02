@@ -363,15 +363,27 @@
         // for script-built strings). Values mirror the sw catalog of the
         // mteja_sidebar section in locales.json.
         const SW = {
-            nav_customer: "Mteja",
-            err_no_permission: "Huna ruhusa ya kuingia kwenye eneo la Mteja.",
-            error_title: "Hitilafu",
-            err_page_load: "Huwezi kupakia ukurasa huu. Hakikisha faili zote zipo.",
-            btn_retry: "Jaribu Tena",
-            title_default: "DukaMkononi - Mteja",
-            title_biashara: "Biashara - DukaMkononi Mteja",
-            title_matangazo: "Matangazo - DukaMkononi Mteja",
-            title_profaili: "Profaili - DukaMkononi Mteja"
+            page_title: 'Dukamkononi - Mteja',
+            logo_short: 'D',
+            logo_brand: 'DukaMkononi',
+            logo_tagline: 'Mteja Portal',
+            icon_business: '🏪',
+            nav_business: 'Biashara',
+            icon_ads: '📢',
+            nav_ads: 'Matangazo',
+            icon_profile: '👤',
+            nav_profile: 'Profaili',
+            nav_customer: 'Mteja',
+            btn_logout: 'Ondoka',
+            loading: 'Loading...',
+            err_no_permission: 'Huna ruhusa ya kuingia kwenye eneo la Mteja.',
+            err_title: 'Hitilafu',
+            err_page_load: 'Huwezi kupakia ukurasa huu. Hakikisha faili zote zipo.',
+            btn_try_again: 'Jaribu Tena',
+            title_default: 'DukaMkononi - Mteja',
+            title_business: 'Biashara - DukaMkononi Mteja',
+            title_ads: 'Matangazo - DukaMkononi Mteja',
+            title_profile: 'Profaili - DukaMkononi Mteja',
         };
 
         function t(key, params) {
@@ -443,12 +455,11 @@
             profaili: '/mteja/profaili'
         };
 
-        // Page titles (keys resolved through t() at use time so a language
-        // switch repaints document.title).
-        const pageTitles = {
-            biashara: 'title_biashara',
-            matangazo: 'title_matangazo',
-            profaili: 'title_profaili'
+        // Page titles (resolved through t() so they follow the language)
+        const pageTitleKeys = {
+            biashara: 'title_business',
+            matangazo: 'title_ads',
+            profaili: 'title_profile'
         };
 
         let currentPage = 'biashara';
@@ -458,29 +469,6 @@
             const overlay = document.getElementById('loadingOverlay');
             if (overlay) {
                 overlay.style.display = show ? 'flex' : 'none';
-            }
-        }
-
-        // Last load failure (kept so the error panel can be repainted on a
-        // language switch).
-        let loadError = null;
-
-        function renderLoadError() {
-            if (!loadError) return;
-            const pageContainer = document.getElementById('pageContainer');
-            if (pageContainer) {
-                pageContainer.innerHTML = `
-                    <div style="text-align: center; padding: 60px 20px; background: white; border-radius: 20px;">
-                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#667eea" stroke-width="1.5">
-                            <circle cx="12" cy="12" r="10"/>
-                            <path d="M12 8V12M12 16H12.01"/>
-                        </svg>
-                        <h3 style="margin-top: 20px; color: #667eea;">${t('error_title')}</h3>
-                        <p style="margin-top: 10px; color: #7f8c8d;">${t('err_page_load')}</p>
-                        <p style="margin-top: 8px; font-size: 12px; color: #95a5a6;">${loadError.message}</p>
-                        <button onclick="location.reload()" style="margin-top: 20px; padding: 10px 24px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer;">${t('btn_retry')}</button>
-                    </div>
-                `;
             }
         }
 
@@ -496,7 +484,6 @@
             currentPage = pageName;
 
             try {
-                loadError = null;
                 // Fetch the HTML content of the page
                 const response = await fetch(pageUrl);
                 if (!response.ok) {
@@ -540,7 +527,7 @@
                 }
                 
                 // Update page title
-                document.title = t(pageTitles[pageName] || 'title_default');
+                document.title = t(pageTitleKeys[pageName] || 'title_default');
                 
                 // Update active state in sidebar
                 updateActiveNavItem(pageName);
@@ -551,8 +538,21 @@
                 
             } catch (error) {
                 console.error('Failed to load page:', error);
-                loadError = error;
-                renderLoadError();
+                const pageContainer = document.getElementById('pageContainer');
+                if (pageContainer) {
+                    pageContainer.innerHTML = `
+                        <div style="text-align: center; padding: 60px 20px; background: white; border-radius: 20px;">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#667eea" stroke-width="1.5">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M12 8V12M12 16H12.01"/>
+                            </svg>
+                            <h3 style="margin-top: 20px; color: #667eea;">${t('err_title')}</h3>
+                            <p style="margin-top: 10px; color: #7f8c8d;">${t('err_page_load')}</p>
+                            <p style="margin-top: 8px; font-size: 12px; color: #95a5a6;">${error.message}</p>
+                            <button onclick="location.reload()" style="margin-top: 20px; padding: 10px 24px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer;">${t('btn_try_again')}</button>
+                        </div>
+                    `;
+                }
             } finally {
                 showLoading(false);
             }
@@ -674,12 +674,13 @@
             await loadPage(initialPage);
         }
         
-        // Repaint JS-built bits when the visitor switches language (static
-        // text is repainted by the widget itself).
+        // Follow the language: static markup is handled by data-i18n, but the
+        // document title, error panel and user name are script-built.
         if (window.DM && typeof window.DM.onChange === 'function') {
             window.DM.onChange(() => {
-                document.title = t(pageTitles[currentPage] || 'title_default');
-                renderLoadError();
+                document.title = t(pageTitleKeys[currentPage] || 'title_default');
+                const u = getCurrentUser();
+                if (u) updateUserInfo(u);
             });
         }
 

@@ -619,7 +619,15 @@
             }
             return value;
         }
-        
+
+        // Date locale per language so weekday/month names (including the days
+        // of the week) follow the active language instead of always Swahili.
+        const DATE_LOCALES = { sw: 'sw-TZ', en: 'en-GB', fr: 'fr-FR', hi: 'hi-IN', es: 'es-ES', ur: 'ur-PK', de: 'de-DE', zh: 'zh-CN' };
+        function dateLocale() {
+            const active = (window.DM && typeof window.DM.locale === 'function') ? window.DM.locale() : (document.documentElement.getAttribute('data-dm-locale') || 'sw');
+            return DATE_LOCALES[active] || 'sw-TZ';
+        }
+
         let userData = { businessName: '', businessLocation: '', userId: '', userRole: '' };
         let dailySummaries = [];
         let businessEvents = [];
@@ -661,13 +669,13 @@
 
         function formatDate(dateStr) {
             try {
-                return new Date(dateStr).toLocaleDateString('sw-TZ', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                return new Date(dateStr).toLocaleDateString(dateLocale(), { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
             } catch { return dateStr; }
         }
 
         function getShortDate(dateStr) {
             try {
-                return new Date(dateStr).toLocaleDateString('sw-TZ', { weekday: 'short', month: 'short', day: 'numeric' });
+                return new Date(dateStr).toLocaleDateString(dateLocale(), { weekday: 'short', month: 'short', day: 'numeric' });
             } catch { return dateStr; }
         }
 
@@ -1315,7 +1323,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                         : `<div style="color:#95a5a6;font-size:13px;">` + t('msimamizi_preview.no_sales_day_print') + `</div>`}
 
                     <div style="margin-top:20px;padding-top:10px;border-top:1px solid #ecf0f1;font-size:11px;color:#95a5a6;text-align:center;">
-                        ${t('msimamizi_preview.printed_at', { datetime: esc(new Date().toLocaleString('sw-TZ')) })}
+                        ${t('msimamizi_preview.printed_at', { datetime: esc(new Date().toLocaleString(dateLocale())) })}
                     </div>
                 </body></html>`;
 

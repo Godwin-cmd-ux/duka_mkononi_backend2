@@ -1,0 +1,1124 @@
+# MASTER IMPLEMENTATION PROMPT — DUKA MKONONI WEBSITE REDESIGN, CUSTOMER SHOPPING, ORDER MANAGEMENT, AND INQUIRY MODULE
+
+## 1. Project Context
+
+You are working on **Duka Mkononi**, an existing e-commerce and business-management platform with:
+
+* A Laravel backend.
+* Laravel Blade files powering the website.
+* An existing mobile application.
+* An existing database and business-management structure.
+* Multiple user roles, including Super Admin, Ms imamizi (administrator), Muuzaji (seller), and Mteja (customer).
+* Existing authentication, product management, business management, and other operational modules.
+
+Your task is to implement the modifications described below professionally and safely.
+
+**This is an existing production-oriented project, not a new project. Do not rebuild it from scratch. Do not replace working functionality unnecessarily.**
+
+The project website is `https://www.dukamkononi.com`.
+
+## 2. Mandatory Rules Before Implementation
+
+Before modifying any code:
+
+1. Inspect the repository structure and identify the Laravel backend, Blade templates, controllers, routes, models, migrations, API endpoints, authentication mechanisms, and mobile application source files.
+2. Understand how products, businesses, users, roles, reviews, and existing business relationships are stored in the database.
+3. Inspect the existing mobile application's API integration to understand how its screens communicate with the backend.
+4. Identify the existing authorization policies, middleware, validation rules, and database relationships.
+5. Determine which requested features already exist and extend them rather than creating duplicates.
+6. Identify any existing reusable components, layouts, stylesheets, translations, and API services.
+7. Prepare an implementation plan grouped by backend, website, mobile application, database, and testing.
+
+Do not begin by blindly replacing files.
+
+### Critical preservation requirements
+
+* Do not delete existing features.
+* Do not rename routes, tables, columns, or models without a demonstrated technical necessity.
+* Do not introduce a second, conflicting implementation of an existing feature.
+* Do not create duplicate product, business, user, order, or authentication systems.
+* Do not expose confidential information, internal database details, or administrator functionality to customers.
+* Do not hardcode fake products, businesses, orders, reviews, or inquiry records.
+* Do not change the mobile application's landing page or navigation as part of the website redesign.
+* Do not remove the application's existing multilingual functionality.
+* Do not introduce breaking API changes.
+* Do not use destructive migrations or reset the database.
+* Never modify production data merely to make a test pass.
+
+Make small, traceable changes and test them before proceeding to the next implementation stage.
+
+---
+
+# PART A — PROFESSIONAL WEBSITE REDESIGN
+
+## 3. Redesign the Website Landing Page
+
+The current Duka Mkononi landing page is visually unsatisfactory. It uses local emojis as interface icons, has an excessively large logo, and does not have the professional quality expected of a competitive e-commerce platform.
+
+Redesign the landing page using the existing Laravel Blade architecture.
+
+### Design requirements
+
+Create a polished, modern, responsive e-commerce interface with:
+
+* Professional typography and consistent spacing.
+* A well-proportioned Duka Mkononi logo.
+* A clean, responsive top navigation bar.
+* Properly designed buttons, cards, forms, and product displays.
+* Professional icons from an appropriate icon library already installed in the project, or another compatible solution.
+* Consistent colors, borders, shadows, and hover effects.
+* Attractive product photography sourced from existing product records.
+* Proper loading, empty, and error states.
+* Responsive layouts for mobile phones, tablets, laptops, and desktop screens.
+* Accessible text contrast, keyboard navigation, and clearly labeled controls.
+
+Do not use emoji characters as substitutes for professional interface icons.
+
+Avoid excessive animations, oversized logos, cluttered layouts, unnecessary gradients, and generic template styling.
+
+The final result should feel like a professionally designed shopping platform rather than an unfinished student project.
+
+Use the existing brand identity where available. Do not change the application's established identity unnecessarily.
+
+## 4. Landing Page Sections
+
+Build the homepage with the following sections.
+
+### 4.1 Home / Hero Section
+
+Introduce Duka Mkononi clearly.
+
+Explain briefly that Duka Mkononi connects customers with businesses and products available on the platform.
+
+Include clear calls to action, such as:
+
+* Start Shopping.
+* Explore Businesses.
+* Download the App.
+
+Buttons must lead to the correct destinations.
+
+Use genuine platform data wherever applicable.
+
+### 4.2 Shop by Category / Business
+
+Create a section titled **Shop by Category** or an equivalent clear Swahili/English-friendly label.
+
+The section must display the actual businesses and their relevant categories or product groupings using the existing database relationships.
+
+When a customer selects a business, redirect them to the Shop page with that business selected as the active filter.
+
+The resulting product list must contain products belonging to the selected business only.
+
+Do not confuse a business with a product category. If the database has both concepts, preserve their distinct meanings and implement the requested business-based filtering explicitly.
+
+If no businesses are available, display a professional empty state instead of fake business cards.
+
+### 4.3 Our Story
+
+Create an **Our Story** section explaining the purpose of Duka Mkononi.
+
+Use a concise description focused on connecting customers with businesses, making product discovery easier, and supporting convenient shopping.
+
+Do not invent founding dates, founder biographies, customer counts, or achievements that are not documented in the project.
+
+Keep the content easy to maintain.
+
+### 4.4 Available Accounts
+
+Create a section introducing the platform's account types:
+
+* **Msimamizi:** Administrative account for authorized business management.
+* **Muuzaji:** Seller account for managing the seller's authorized products and orders.
+* **Mteja:** Customer experience for discovering products and shopping.
+
+Use professional cards and explain the purpose of each account.
+
+The section must respect the existing authentication and role system. Do not introduce new roles merely for presentation.
+
+The website's public shopping experience must not require customers to create an account if the existing requirements allow shopping without login.
+
+### 4.5 Customer Reviews
+
+Create a **Customer Reviews** section with a strict visibility rule.
+
+* Display the section only when at least one eligible review exists.
+* When no eligible reviews exist, do not render the section.
+* Show only approved or published reviews.
+* Never expose pending, rejected, private, or internal comments.
+* Display only the review information permitted for public viewing.
+* Validate and safely escape user-generated text.
+* Do not manufacture sample reviews for production.
+
+The review source must be the actual database records managed by the system.
+
+The Super Admin must be able to control which eligible inquiries are published as customer reviews through the Inquiry module described below.
+
+### 4.6 Contact Us
+
+Create a professional Contact Us section containing:
+
+* Email address: `info@dukamkononi.com`.
+* The existing official contact phone number, if configured.
+* A WhatsApp contact link if an official WhatsApp number is configured.
+* A customer inquiry form.
+
+Do not invent a phone number or WhatsApp number. Inspect the existing settings or configuration and reuse verified contact details.
+
+The email must be a functional `mailto:` link.
+
+The WhatsApp link, when a verified number exists, must open the appropriate WhatsApp conversation using a valid `https://wa.me/` URL.
+
+The Contact navigation item must scroll to the homepage Contact Us section or open the appropriate contact page, depending on the existing website routing.
+
+### Customer inquiry form
+
+The form must contain:
+
+1. Customer email address.
+2. Customer phone number.
+3. Inquiry subject or heading.
+4. Inquiry message.
+5. Send Message button.
+
+Implement both frontend and backend validation.
+
+Requirements:
+
+* Email must have a valid format.
+* Phone number must be validated according to the supported format.
+* Subject and message must be required and have sensible length limits.
+* Use Laravel validation and CSRF protection.
+* Protect the endpoint against spam and automated abuse using appropriate rate limiting and existing security mechanisms.
+* Save the inquiry to the database.
+* Display a clear success message after successful submission.
+* Display useful validation errors if submission fails.
+* Preserve entered values where safe and appropriate after validation failures.
+* Do not send emails or claim that customer care has responded. For this phase, the inquiry is stored in the database only.
+
+Use the existing database conventions and relationships wherever possible.
+
+---
+
+# PART B — WEBSITE NAVIGATION
+
+## 5. Main Website Navigation
+
+Implement the following navigation items in a clean, responsive top navbar:
+
+1. Home
+2. Shop
+3. Track Orders
+4. Advertisements
+5. Contact
+6. Businesses
+7. Login
+8. Download App
+
+The exact visual arrangement can adapt to screen size, but every destination must remain accessible.
+
+### Home
+
+Return to the website landing page.
+
+### Shop
+
+Open the dedicated Shop page containing all publicly available products that are eligible for sale.
+
+### Track Orders
+
+Open the customer order-tracking page.
+
+### Advertisements
+
+Open a page showing advertisements posted on Duka Mkononi.
+
+Only display advertisements that are active, published, and within their applicable display dates, according to the existing advertisement rules and data structure.
+
+### Contact
+
+Navigate to the Contact Us section or page.
+
+### Businesses
+
+Open a page displaying certified businesses registered on Duka Mkononi.
+
+Only show businesses that satisfy the platform's actual certification or approval requirements.
+
+Do not treat every registered business as certified automatically.
+
+Each business card should use real business information and link to the relevant business profile or its filtered products where appropriate.
+
+### Login
+
+Redirect to the existing login route. Preserve all current authentication behavior and role-based redirection.
+
+### Download App
+
+Link to the existing official mobile application download destination.
+
+Inspect the project's existing download configuration and use the correct destination. Do not invent an APK or app-store URL.
+
+### Navigation preservation
+
+The new public website navigation must be implemented in the Laravel Blade website only.
+
+Do not replace, redesign, or alter the mobile application's existing landing page, tabs, or navigation to match this website navbar.
+
+---
+
+# PART C — SHOP PAGE AND PRODUCT FILTERING
+
+## 6. Dedicated Shop Page
+
+Create or update the dedicated Shop page using Laravel Blade.
+
+### Desktop layout
+
+Use a two-column layout:
+
+**Left sidebar: Businesses**
+
+Display a list of businesses available for shopping.
+
+Include an **All Businesses** filter at the top.
+
+**Right content area: Products**
+
+Display the eligible products belonging to the selected business or all businesses.
+
+### Default behavior
+
+When the customer opens the Shop page without selecting a business:
+
+* All Businesses must be selected by default.
+* Products from all eligible businesses must be displayed.
+* Products must be retrieved from the actual database.
+* The business filter must not restrict results accidentally.
+
+### Business filtering
+
+When the customer selects a specific business:
+
+* Mark that business as selected.
+* Show only products associated with that business.
+* Ensure products belonging to other businesses disappear from the results.
+* Provide a clear way to return to All Businesses.
+* Preserve the selected filter in the URL where practical, allowing links to be shared or bookmarked.
+
+Use the established `business_id` relationship or the actual canonical relationship in the existing schema. Do not filter using editable business names when a stable business identifier is available.
+
+The filtering must be enforced on the server side. Hiding unrelated products only with JavaScript is insufficient.
+
+### Product cards
+
+Each product card must display, where the data exists:
+
+* Product image.
+* Product name.
+* Selling price.
+* Relevant availability information.
+* Business name.
+* Order / View Details button.
+
+Use the correct selling price from the existing product model and currency conventions.
+
+Do not display products that are inactive, unavailable for public sale, or otherwise restricted by the existing business rules.
+
+### Product details and ordering
+
+When a customer clicks a product's View Details or Order button, open an appropriate product detail or ordering interface.
+
+Display the relevant product details and allow the customer to:
+
+1. Enter a valid quantity.
+2. View the applicable unit price.
+3. See the calculated total price update when quantity changes.
+4. Enter their phone number.
+5. Review their order before submitting it.
+6. Submit the order.
+
+The quantity must be a positive valid value that respects product-specific quantity rules, available stock, and any existing minimum or maximum order requirements.
+
+Calculate the displayed total in the interface for convenience, but **the backend must independently calculate and verify the final total** using trusted database prices.
+
+Never trust a price or total submitted by the browser.
+
+The server must validate stock and prices, prevent invalid quantities, and handle concurrent orders safely where stock control applies.
+
+### Cart behavior
+
+Inspect whether the project already has a cart implementation.
+
+* If one exists, extend and reuse it.
+* If one does not exist, implement a suitable cart compatible with the existing architecture.
+
+A cart may contain products from different businesses if permitted by the existing business rules.
+
+If the existing platform requires orders to belong to one business, enforce that rule clearly rather than silently combining incompatible orders.
+
+Before final submission, show a clear order summary including the products, quantities, applicable prices, and total.
+
+---
+
+# PART D — ORDER CREATION AND SELLER MANAGEMENT
+
+## 7. New Muuzaji Orders Module
+
+Introduce or extend an **Orders** module in the Muuzaji account.
+
+This module must be integrated into the existing seller dashboard and permissions.
+
+### Seller functionality
+
+Authorized sellers must be able to:
+
+* View orders assigned to their business.
+* Open an order to see its details.
+* View ordered products and quantities.
+* View the customer's supplied phone number.
+* View order totals.
+* Update order statuses according to authorized transitions.
+* Add or update order notes.
+* View relevant order history where supported.
+* Search or filter orders by status, date, or order reference where practical.
+
+An order belonging to one business must not be visible to another unrelated seller.
+
+Super Admin and other authorized administrators must retain their appropriate oversight according to existing permissions.
+
+### Order creation
+
+When a customer submits an order:
+
+* Save the order in the database.
+* Save the order's line items and quantities.
+* Save the customer phone number supplied during ordering.
+* Associate each order with the correct business and seller workflow.
+* Save the applicable prices and totals.
+* Generate or reuse a unique order reference.
+* Set the initial status according to the existing order lifecycle.
+* Make the order appear in the appropriate Muuzaji Orders module.
+
+Do not save an order merely in browser storage and assume it has reached the seller.
+
+The order must persist in the backend database.
+
+### Data integrity
+
+Inspect the existing schema before implementing the order model.
+
+Reuse existing orders and order-item tables if they are suitable.
+
+If additional tables or columns are necessary, create backward-compatible Laravel migrations.
+
+Ensure that:
+
+* Order totals are consistent with line items.
+* Prices are recorded appropriately for historical orders.
+* Business ownership is preserved.
+* Invalid status changes are rejected.
+* Duplicate submissions are handled appropriately.
+* The system uses database transactions where multiple related records must be saved together.
+
+Do not break existing orders or seller operations.
+
+---
+
+# PART E — CUSTOMER ORDER TRACKING
+
+## 8. Track Orders Page
+
+Create a customer-facing Track Orders page.
+
+The customer must be able to retrieve their orders using the phone number supplied during shopping.
+
+### Customer flow
+
+1. The customer opens Track Orders.
+2. The customer enters the phone number used during ordering.
+3. The customer submits the form.
+4. The system validates the phone number.
+5. The system retrieves matching orders and displays the permitted information.
+
+Show each order with:
+
+* Order reference.
+* Order date.
+* Relevant ordered products.
+* Quantities.
+* Total amount.
+* Current order status.
+* Order progress or milestone information, where supported.
+* Seller's latest customer-visible order note.
+* Relevant status update dates, where available.
+
+Customers should be able to view the orders they have placed using the supplied phone number.
+
+### Privacy and security
+
+A phone number alone is not a strong authentication mechanism. Do not expose sensitive information or allow unrestricted access to internal administrative notes.
+
+At a minimum:
+
+* Apply rate limiting to tracking requests.
+* Normalize phone numbers consistently.
+* Return only the information necessary to track an order.
+* Exclude private staff notes, payment secrets, internal identifiers, and other sensitive information.
+* Avoid exposing sequential internal database IDs.
+* Prevent enumeration attacks and excessive repeated lookups.
+* Use a suitable verification mechanism, such as an order reference or OTP, if needed to protect detailed order information.
+
+Preserve the requested phone-number lookup experience while implementing appropriate safeguards.
+
+### Order notes
+
+Sellers may maintain internal notes and customer-visible notes separately if necessary.
+
+Only customer-visible notes may appear on the public Track Orders page.
+
+When a seller updates the order status or a customer-visible note, the tracking page must retrieve the updated database values.
+
+Do not hardcode progress information.
+
+---
+
+# PART F — ADVERTISEMENTS AND CERTIFIED BUSINESSES
+
+## 9. Advertisements Page
+
+Create a public page that lists eligible advertisements posted on Duka Mkononi.
+
+Reuse the existing advertisement module and database records.
+
+Display available information such as:
+
+* Advertisement image.
+* Title.
+* Description.
+* Associated business.
+* Validity period, where relevant.
+* A destination or action link when configured.
+
+Only display advertisements authorized for public visibility.
+
+Respect the existing publication, approval, expiration, and visibility rules.
+
+Provide a professional empty state if no advertisements are currently available.
+
+Do not create fake advertisements to populate the page.
+
+## 10. Certified Businesses Page
+
+Create a public Businesses page listing certified businesses.
+
+Retrieve businesses from the canonical business model and use the actual certification or approval status.
+
+Each business card should display relevant available information, such as:
+
+* Business name.
+* Logo or image.
+* Short description.
+* Location, if publicly available.
+* Certification indicator, only when the business is actually certified.
+* Link to view its products.
+
+Clicking a business's products link must open the Shop page with that business selected.
+
+Ensure the implementation follows the platform's business ownership rules and stable business IDs.
+
+---
+
+# PART G — SUPER ADMIN INQUIRY MODULE
+
+## 11. New Inquiry Module
+
+Introduce a new **Inquiry** module in the existing Super Admin dashboard.
+
+This module manages inquiries submitted through the public Contact Us form.
+
+The same Inquiry management capability must be accessible when an authorized Super Admin uses the mobile application, provided the application supports the relevant Super Admin interface.
+
+**The backend and database functionality must be shared. The website and mobile application must not maintain separate inquiry databases or duplicate inquiry records.**
+
+### Inquiry list
+
+The Super Admin must be able to:
+
+* View all inquiries.
+* Open an inquiry to read its complete details.
+* See the customer's email address.
+* See the customer's phone number.
+* See the subject.
+* See the message.
+* See the submission date and time.
+* Identify whether an inquiry has been reviewed.
+* Filter or search inquiries.
+* Distinguish published reviews from ordinary inquiries.
+
+Use pagination when appropriate.
+
+### Inquiry statuses
+
+Implement a suitable inquiry lifecycle, reusing existing conventions where possible.
+
+For example:
+
+* New.
+* Reviewed.
+* Published as Review.
+
+Do not confuse publishing an inquiry as a review with sending a response to the customer.
+
+The current scope does not include a full customer care or reply-management system.
+
+### Publish as Customer Review
+
+The Super Admin must be able to select an inquiry and publish it as a customer review.
+
+Before publishing:
+
+* Show the inquiry's subject and message.
+* Allow the administrator to confirm the public content.
+* Prevent accidental publication of private contact details.
+* Ensure only authorized administrators can perform the action.
+
+When an inquiry is published:
+
+* Make its approved public content available to the Customer Reviews section.
+* Exclude private email addresses and phone numbers from the public review.
+* Record the publication status and appropriate timestamps.
+* Prevent duplicate review publication.
+* Allow authorized administrators to unpublish a review if necessary.
+
+Publishing must not make every inquiry public automatically.
+
+An inquiry should remain private unless an authorized administrator explicitly approves it for public display.
+
+If necessary, implement a dedicated review record or a clear publication relationship instead of exposing the entire inquiry record to the public.
+
+### Super Admin security
+
+Use existing authorization middleware, policies, and role checks.
+
+Do not rely on hiding the Inquiry menu item in the interface as the only security mechanism.
+
+Every relevant backend endpoint must verify that the authenticated user has permission to access or modify inquiries.
+
+A seller, ordinary customer, or unauthorized administrator must not be able to access private inquiry records.
+
+### Mobile application integration
+
+The Inquiry module must use the same backend endpoints and records as the website.
+
+Inspect the mobile application before implementing this feature.
+
+If a Super Admin interface exists in the mobile application, add the Inquiry module to that authorized interface while preserving existing navigation and design.
+
+If the mobile application lacks the necessary screen, implement a screen consistent with its current architecture and UI conventions.
+
+Do not redesign the entire mobile application.
+
+If mobile API endpoints are required, implement them with the existing API authentication and authorization mechanisms.
+
+---
+
+# PART H — WEBSITE-ONLY VERSUS SHARED FEATURES
+
+## 12. Strict Separation of Website and Mobile Application Changes
+
+This distinction is mandatory.
+
+### Website-only modifications
+
+The following changes apply only to Laravel Blade website files and their website-specific assets:
+
+* Homepage redesign.
+* Website landing page sections.
+* Public website navbar.
+* Website Home, Shop, Advertisements, Businesses, Contact, Login, and Download App navigation.
+* Website product cards and website-specific presentation.
+* Website layout, typography, responsive styling, and public-page components.
+* Website-only navigation behavior.
+
+Do not modify the mobile application's home screen or navigation just because these website sections are being introduced.
+
+### Shared backend features
+
+The following must use shared backend business logic and persistent database records:
+
+* Order creation.
+* Product price and quantity validation.
+* Order status management.
+* Seller order management.
+* Customer order tracking.
+* Customer inquiry submission.
+* Super Admin inquiry management.
+* Publishing and unpublishing customer reviews.
+* Business certification and product relationships.
+* Advertisement visibility rules.
+
+### Mobile application modifications
+
+Mobile application changes are required for newly introduced account-level operational modules.
+
+In particular:
+
+* Add the Muuzaji Orders module to the mobile seller account.
+* Ensure sellers can view and manage authorized orders through the application.
+* Ensure the Super Admin Inquiry module is accessible through the mobile application when the Super Admin uses it.
+* Integrate these screens with the same Laravel backend and database.
+* Preserve existing login, language selection, navigation, and account functionality.
+
+Do not redesign the mobile application's landing page, public homepage, or navigation as part of the Blade-only website redesign.
+
+Before changing mobile source files, verify the current application architecture and identify the smallest changes necessary.
+
+If a required mobile feature cannot be implemented without changing a shared component, explain the dependency and minimize the impact.
+
+---
+
+# PART I — BACKEND, DATABASE, AND API DESIGN
+
+## 13. Laravel Implementation Standards
+
+Use the existing Laravel conventions and architecture.
+
+Prefer appropriate separation of responsibilities among:
+
+* Routes.
+* Controllers.
+* Form Requests or equivalent validation.
+* Models and relationships.
+* Policies and middleware.
+* Services, where they add meaningful value.
+* Blade views.
+* API resources or serializers.
+* Database migrations.
+
+Do not move the entire application into a new architecture.
+
+### Database requirements
+
+Inspect the current schema before designing any new tables.
+
+Reuse existing records and relationships whenever possible.
+
+Where new structures are genuinely necessary, design appropriate relationships for:
+
+* Customer inquiries.
+* Customer reviews or approved inquiry publications.
+* Orders.
+* Order line items.
+* Order status history, if required.
+* Any missing ownership or publication metadata.
+
+Do not automatically create all these tables if equivalent structures already exist.
+
+Use foreign keys, appropriate indexes, sensible nullability, timestamps, and unique constraints where suitable.
+
+Preserve compatibility with existing data and existing mobile clients.
+
+Never use a database reset, destructive schema replacement, or mass deletion as an implementation shortcut.
+
+### API requirements
+
+Where website and mobile features need the same business operations, share backend logic and expose appropriate authenticated or public endpoints.
+
+For each endpoint:
+
+* Validate incoming data.
+* Enforce authorization.
+* Return predictable response structures.
+* Handle errors safely.
+* Avoid exposing private database information.
+* Preserve existing API contracts wherever possible.
+* Document any new endpoint or necessary contract change.
+
+Do not expose Super Admin functionality through public endpoints.
+
+Do not allow clients to set privileged statuses, business ownership, approval flags, or trusted totals without server-side authorization and validation.
+
+---
+
+# PART J — TESTING AND ACCEPTANCE CRITERIA
+
+## 14. Required Testing
+
+Do not mark the work complete merely because the pages render.
+
+Test the actual functionality.
+
+### Website tests
+
+Verify that:
+
+* The homepage is professional, responsive, and free of emoji-based interface icons.
+* The logo has appropriate dimensions.
+* All required homepage sections are present.
+* Customer Reviews are hidden when no published reviews exist.
+* The Contact Us form validates and saves inquiries.
+* Email and configured phone or WhatsApp details work correctly.
+* Every navbar item opens the correct destination.
+* The Download App link uses the existing configured destination.
+* The Shop page initially displays eligible products across all businesses.
+* Selecting a business filters products correctly.
+* Product quantities and totals update correctly.
+* The backend independently verifies prices and quantities.
+* The customer can submit an order successfully.
+* Advertisements display only when eligible.
+* Only certified businesses appear on the certified Businesses page.
+
+### Seller tests
+
+Verify that:
+
+* New orders appear in the correct Muuzaji Orders module.
+* Sellers see only orders they are authorized to manage.
+* Order details, quantities, totals, and phone numbers are correct.
+* Authorized status updates persist in the database.
+* Customer-visible notes appear in Track Orders.
+* Internal notes remain private.
+* Existing seller product-management functionality still works.
+
+### Customer tracking tests
+
+Verify that:
+
+* A valid phone number retrieves matching orders.
+* An unknown phone number produces a safe response.
+* Rate limiting works.
+* Sensitive information is not exposed.
+* Updated order statuses appear correctly.
+* Customers cannot access internal administrative notes.
+
+### Super Admin tests
+
+Verify that:
+
+* Super Admin can view all inquiries.
+* Unauthorized users cannot access private inquiries.
+* Inquiry details display correctly.
+* An inquiry can be reviewed.
+* An inquiry can be published as a customer review.
+* Publishing does not expose private customer contact details.
+* Unpublishing removes the review from public display.
+* The mobile Super Admin interface accesses the same inquiry records.
+
+### Mobile application tests
+
+Verify that:
+
+* The Muuzaji Orders module works with the existing Laravel backend.
+* The Super Admin Inquiry module works where implemented.
+* Existing login and role-based access still work.
+* Existing multilingual behavior remains intact.
+* Existing product, inventory, business, and account-management features remain functional.
+* Existing API consumers do not break.
+
+### Regression testing
+
+Run the available automated tests, relevant database migration checks, backend tests, frontend checks, and mobile build or type checks supported by the repository.
+
+Where automated tests are unavailable, perform and document equivalent manual tests.
+
+Do not claim that a test passed if it was not actually run.
+
+---
+
+# PART K — IMPLEMENTATION ORDER AND FINAL REPORT
+
+## 15. Recommended Implementation Sequence
+
+Implement in controlled phases:
+
+**Phase 1:** Repository inspection, schema verification, dependency mapping, and implementation plan.
+
+**Phase 2:** Database and backend support for inquiries, order processing, order tracking, and review publication.
+
+**Phase 3:** Super Admin Inquiry module, including appropriate mobile application integration.
+
+**Phase 4:** Muuzaji Orders module across the website and mobile application.
+
+**Phase 5:** Website-only landing page redesign and responsive navigation.
+
+**Phase 6:** Shop page, business filtering, product details, cart, and order submission.
+
+**Phase 7:** Track Orders, Advertisements, and certified Businesses pages.
+
+**Phase 8:** Full regression testing, security checks, and documentation.
+
+Adjust this sequence if repository inspection identifies dependencies that require a different order. Explain the reason for any significant change.
+
+## 16. Final Delivery Report
+
+After implementation, provide a factual report containing:
+
+1. Files created.
+2. Files modified.
+3. Database migrations created and their purpose.
+4. New or modified routes and API endpoints.
+5. Features completed.
+6. Features that could not be completed and why.
+7. Tests actually executed and their results.
+8. Any manual configuration still required.
+9. Any risks or compatibility concerns.
+10. Instructions for safely deploying the changes.
+
+Clearly distinguish implemented features from planned or partially completed features.
+
+Do not report success for functionality that has not been verified.
+
+## Final Instruction
+
+Your priority is to improve Duka Mkononi without destabilizing the existing platform.
+
+Make the website look professionally designed, make shopping and order tracking functional, introduce the Inquiry and seller Orders modules, and ensure the website and mobile application share the correct backend functionality.
+
+**Website homepage and public navigation modifications must remain confined to the Laravel Blade website. Shared business operations must remain compatible with both the website and mobile application.**
+
+Inspect first, plan carefully, implement incrementally, test thoroughly, and preserve existing working functionality throughout the process.
+
+# ADDITIONAL MANDATORY REQUIREMENT — COMPLETE BLADE RESPONSIVE REDESIGN
+
+## 17. Inspect and Restyle EVERY Blade File
+
+This requirement applies to **ALL Laravel Blade files in the project**, not only the homepage.
+
+The agent must systematically scan the entire Blade directory and identify every `.blade.php` file used by the website.
+
+### Mandatory process
+
+Go through the Blade files **one by one**.
+
+For every Blade file:
+
+1. Open and inspect the complete file.
+2. Identify its purpose and which user role uses it.
+3. Identify its parent layout and shared components.
+4. Inspect its existing CSS, JavaScript, forms, tables, cards, navigation, modals, buttons, and responsive behavior.
+5. Determine how it behaves on small screens.
+6. Restyle or restructure the page where necessary.
+7. Test that the page remains functional.
+8. Verify that the page works properly on mobile-phone screen sizes.
+9. Only then move to the next Blade file.
+
+Do not assume that making the main layout responsive automatically makes every Blade page responsive.
+
+### Mobile-first requirement
+
+Every Blade page must provide a professional experience on:
+
+* Small mobile phones.
+* Large mobile phones.
+* Tablets.
+* Laptops.
+* Desktop screens.
+
+The design should be **mobile-first**, not desktop-only with a few media queries added afterward.
+
+The interface must adapt naturally to narrow screens.
+
+### Mobile layout requirements
+
+On mobile phones:
+
+* No horizontal page scrolling unless the content genuinely requires it.
+* No elements should overflow outside the viewport.
+* No text should be cut off.
+* Buttons must remain accessible and easy to tap.
+* Forms must fit comfortably within the screen.
+* Inputs must have appropriate sizes for touch interaction.
+* Cards must resize appropriately.
+* Images must remain proportional.
+* Tables must have a deliberate mobile strategy.
+* Navigation must collapse appropriately.
+* Sidebars must transform into an appropriate mobile layout.
+* Modals must fit within the viewport.
+* Dropdowns must remain usable.
+* Search fields must remain accessible.
+* Pagination must not overflow.
+* Alerts and validation messages must remain readable.
+* Long product names and business names must wrap correctly.
+* Prices and quantities must remain clearly visible.
+* Action buttons must not become too small to use.
+* Fixed elements must not cover important content.
+* Footer content must stack correctly.
+* Empty states must remain visually balanced.
+
+### Tables
+
+Pay particular attention to administrative pages containing tables.
+
+Do not simply allow large desktop tables to overflow horizontally without considering usability.
+
+Where appropriate:
+
+* Convert rows into responsive cards on mobile.
+* Hide secondary columns on small screens while keeping important information available.
+* Provide an intentional horizontal-scroll container when a table genuinely requires tabular structure.
+* Keep critical actions accessible.
+
+Do not destroy useful information merely to make a table fit.
+
+### Forms
+
+Every form must be checked on mobile.
+
+Ensure:
+
+* Labels are clearly associated with fields.
+* Inputs fit the screen.
+* Textareas resize appropriately.
+* Select fields are usable.
+* Validation errors are visible.
+* Submit buttons are easy to tap.
+* Multi-column desktop forms collapse into a logical single-column mobile layout.
+* File/image upload controls remain usable.
+* No form requires awkward zooming or horizontal scrolling.
+
+### Dashboards
+
+For dashboards belonging to:
+
+* Super Admin
+* Msimamizi
+* Muuzaji
+* Other authorized roles
+
+ensure that:
+
+* Sidebar/navigation adapts properly to mobile.
+* Dashboard cards stack correctly.
+* Statistics remain readable.
+* Charts do not overflow.
+* Tables have a mobile strategy.
+* Filters become usable on narrow screens.
+* Action buttons remain accessible.
+* Modals fit on mobile.
+* Notifications and alerts remain readable.
+
+Do not redesign the business logic of these dashboards. This task concerns presentation, responsiveness, usability, and consistency.
+
+### Shared layouts and components
+
+Inspect reusable Blade components and layouts such as:
+
+* Main layouts.
+* Navigation components.
+* Sidebar components.
+* Headers.
+* Footers.
+* Modals.
+* Alerts.
+* Forms.
+* Cards.
+* Tables.
+* Pagination.
+* Authentication layouts.
+
+If fixing a shared component makes multiple pages responsive, make the shared fix where appropriate rather than duplicating CSS unnecessarily.
+
+However, verify every affected Blade page after changing a shared component.
+
+### Visual consistency
+
+All Blade pages should feel like parts of the same professional platform.
+
+Maintain a consistent design system for:
+
+* Typography.
+* Colors.
+* Buttons.
+* Form controls.
+* Cards.
+* Spacing.
+* Borders.
+* Shadows.
+* Icons.
+* Alerts.
+* Navigation.
+* Tables.
+* Modals.
+
+Do not randomly apply different designs to different pages.
+
+Avoid emoji-based UI icons.
+
+Use professional icons consistent with the application's design.
+
+### Do not break functionality
+
+While restyling Blade files:
+
+* Do not remove existing forms.
+* Do not remove existing fields.
+* Do not remove existing buttons.
+* Do not remove working routes.
+* Do not remove authorization checks.
+* Do not remove validation.
+* Do not remove existing JavaScript functionality.
+* Do not remove translations.
+* Do not change business logic unnecessarily.
+* Do not change database behavior merely for styling.
+* Do not rename backend variables without checking every dependent file.
+
+If a page currently works, preserve its functionality while improving its presentation.
+
+### Blade-by-Blade Completion Checklist
+
+For every Blade file, verify:
+
+* [ ] Page purpose understood.
+* [ ] Existing functionality preserved.
+* [ ] Desktop layout checked.
+* [ ] Mobile layout checked.
+* [ ] Tablet layout checked.
+* [ ] No unwanted horizontal overflow.
+* [ ] Navigation works.
+* [ ] Forms work.
+* [ ] Buttons work.
+* [ ] Tables are mobile-friendly.
+* [ ] Modals are mobile-friendly.
+* [ ] Images are responsive.
+* [ ] Text wraps correctly.
+* [ ] Existing translations remain functional.
+* [ ] Existing authorization behavior remains intact.
+* [ ] No console-breaking JavaScript errors introduced.
+* [ ] No unnecessary duplicate CSS introduced.
+
+### Required final Blade audit
+
+After modifying all individual Blade files, perform a **second complete scan of the Blade directory**.
+
+The final audit must verify that:
+
+1. No Blade file was accidentally skipped.
+2. No major page remains desktop-only.
+3. Shared layouts are consistent.
+4. Public pages are responsive.
+5. Authentication pages are responsive.
+6. Super Admin pages are responsive.
+7. Msimamizi pages are responsive.
+8. Muuzaji pages are responsive.
+9. Customer-facing pages are responsive.
+10. Tables and dashboards have appropriate mobile behavior.
+11. No obvious horizontal overflow remains.
+12. No major UI element is unusable on a mobile phone.
+
+Do not report the Blade redesign as complete until **all relevant Blade files have been inspected individually**.
+
+## Important Scope Boundary
+
+This Blade-wide responsive redesign applies to the **Laravel website only**.
+
+Do **not** redesign the mobile application's screens merely because the Blade pages are being redesigned.
+
+Mobile application modifications should only be made for the explicitly requested shared/account-level functionality, such as:
+
+* Muuzaji Orders.
+* Super Admin Inquiry.
+* Other backend-connected operational modules specifically requested in this prompt.
+
+The website's homepage, website navigation, website layout, and Blade styling must remain separate from the mobile application's UI.
+NOTE:THIS PROJECTS ARE MULTILINGUAL SO EVERY MODIFICATION INVOLVING CHANGE IN TEXT CONTENT MUST INVOLVE PROPER LANGUAGE TRANSLATION. I FORGOT SOMETHING IN MSIMAMIZI PREVIEW DAYS OF THE WEEK ARE NOT TRANSLATED PLEASE CONSIDER THAT.

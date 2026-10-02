@@ -645,57 +645,65 @@
         // for script-built strings). Values mirror the sw catalog of the
         // mteja_profaili section in locales.json.
         const SW = {
-            not_available: "Haipatikani",
-            nav_customer: "Mteja",
-            role_admin: "Msimamizi",
-            role_user: "Mtumiaji",
-            photo_alt: "Picha",
-            err_no_permission: "Huna ruhusa ya kuingia kwenye eneo la Mteja.",
-            err_login_view: "Tafadhali ingia kwenye akaunti yako kuona wasifu",
-            err_load_profile: "Imeshindwa kupakua wasifu",
-            err_load_info: "Imeshindwa kupakua taarifa za wasifu",
-            err_name_required: "Jina kamili linahitajika",
-            err_phone_invalid: "Tafadhali weka nambari ya simu sahihi",
-            err_login_update: "Tafadhali ingia kwenye akaunti yako kusasisha wasifu",
-            msg_saved: "Wasifu umesasishwa kikamilifu!",
-            err_save_failed: "Imeshindwa kusasisha wasifu",
-            confirm_logout: "Una uhakika unataka kutoka?",
-            msg_uploading_photo: "Inapakia picha...",
-            err_photo_failed: "Imeshindwa kupakia picha",
-            msg_photo_saved: "Picha ya wasifu imesasishwa!",
-            err_prefix: "Hitilafu: ",
-            photo_err_prefix: "Imeshindikana kupakia picha: ",
-            try_again: "jaribu tena",
-            status_approved: "imeidhinishwa",
-            status_pending: "inasubiri",
-            loading: "Inapakua wasifu...",
-            empty_title: "Hakuna taarifa za wasifu",
-            btn_retry: "Jaribu Tena",
-            btn_change_photo: "Badilisha picha",
-            greeting: "Habari, {name}!",
-            section_profile: "Taarifa za Wasifu",
-            label_full_name: "Jina Kamili",
-            placeholder_full_name: "Weka jina lako kamili",
-            label_email: "Barua Pepe",
-            label_phone: "Nambari ya Simu",
-            placeholder_phone: "Weka nambari yako ya simu",
-            label_role: "Wadhifa",
-            label_status: "Hali",
-            label_location: "Eneo la Biashara",
-            label_coords: "Koordineti za Ramani",
-            label_member_since: "Mwanachama Tangu",
-            section_settings: "Mipangilio",
-            setting_alerts: "Arifa za Kujiongeza",
-            setting_alerts_desc: "Pokewa taarifa kuhusu matangazo mapya na promosheni",
-            btn_cancel: "Ghairi",
-            btn_edit: "Hariri Wasifu",
-            btn_saving: "Inahifadhi...",
-            btn_save: "Hifadhi",
-            section_actions: "Vitendo vya Akaunti",
-            btn_logout_account: "Toka kwenye Akaunti",
-            footer_copyright: "Duka Mkononi © 2026",
-            footer_version: "Toleo 1.0.0",
-            not_set: "Haijawekwa"
+            page_title: 'Profaili - Dukamkononi Mteja',
+            logo_short: 'D',
+            logo_brand: 'DukaMkononi',
+            logo_tagline: 'Mteja Portal',
+            nav_business: 'Biashara',
+            nav_ads: 'Matangazo',
+            nav_profile: 'Profaili',
+            nav_customer: 'Mteja',
+            btn_logout: 'Ondoka',
+            loading: 'Inapakua wasifu...',
+            photo_alt: 'Picha',
+            err_no_permission: 'Huna ruhusa ya kuingia kwenye eneo la Mteja.',
+            err_signin_view: 'Tafadhali ingia kwenye akaunti yako kuona wasifu',
+            err_load_profile: 'Imeshindwa kupakua wasifu',
+            err_load_profile_info: 'Imeshindwa kupakua taarifa za wasifu',
+            err_name_required: 'Jina kamili linahitajika',
+            err_phone_invalid: 'Tafadhali weka nambari ya simu sahihi',
+            err_signin_update: 'Tafadhali ingia kwenye akaunti yako kusasisha wasifu',
+            msg_profile_updated: 'Wasifu umesasishwa kikamilifu!',
+            err_update_failed: 'Imeshindwa kusasisha wasifu',
+            confirm_logout: 'Una uhakika unataka kutoka?',
+            msg_uploading_photo: 'Inapakia picha...',
+            err_upload_photo: 'Imeshindwa kupakia picha',
+            msg_photo_updated: 'Picha ya wasifu imesasishwa!',
+            err_prefix: 'Hitilafu: ',
+            err_upload_prefix: 'Imeshindikana kupakia picha: ',
+            try_again: 'jaribu tena',
+            not_available: 'Haipatikani',
+            status_approved: 'imeidhinishwa',
+            status_pending: 'inasubiri',
+            role_user: 'Mtumiaji',
+            role_admin: 'Msimamizi',
+            not_set: 'Haijawekwa',
+            no_profile_info: 'Hakuna taarifa za wasifu',
+            btn_try_again: 'Jaribu Tena',
+            btn_change_photo: 'Badilisha picha',
+            greeting: 'Habari, {name}!',
+            section_profile_info: 'Taarifa za Wasifu',
+            label_full_name: 'Jina Kamili',
+            placeholder_full_name: 'Weka jina lako kamili',
+            label_email: 'Barua Pepe',
+            label_phone: 'Nambari ya Simu',
+            placeholder_phone: 'Weka nambari yako ya simu',
+            label_role: 'Wadhifa',
+            label_status: 'Hali',
+            label_business_location: 'Eneo la Biashara',
+            label_map_coords: 'Koordineti za Ramani',
+            label_member_since: 'Mwanachama Tangu',
+            section_settings: 'Mipangilio',
+            setting_notifications: 'Arifa za Kujiongeza',
+            setting_notifications_desc: 'Pokewa taarifa kuhusu matangazo mapya na promosheni',
+            btn_cancel: 'Ghairi',
+            btn_edit_profile: 'Hariri Wasifu',
+            btn_saving: 'Inahifadhi...',
+            btn_save: 'Hifadhi',
+            section_account_actions: 'Vitendo vya Akaunti',
+            btn_logout_account: 'Toka kwenye Akaunti',
+            footer_copyright: 'Duka Mkononi © 2026',
+            version: 'Toleo 1.0.0',
         };
 
         function t(key, params) {
@@ -710,6 +718,13 @@
                 for (const k in params) value = String(value).split('{' + k + '}').join(String(params[k]));
             }
             return value;
+        }
+
+        // Date locale follows the active language (member-since date).
+        const DATE_LOCALES = { sw: 'sw-TZ', en: 'en-GB', fr: 'fr-FR', hi: 'hi-IN', es: 'es-ES', ur: 'ur-PK', de: 'de-DE', zh: 'zh-CN' };
+        function dateLocale() {
+            const code = (window.DM && typeof window.DM.locale === 'function' && window.DM.locale()) || document.documentElement.getAttribute('data-dm-locale') || 'sw';
+            return DATE_LOCALES[code] || 'sw-TZ';
         }
 
         // ============================== ICONS ==============================
@@ -747,7 +762,7 @@
         function formatDate(dateStr) {
             if (!dateStr) return t('not_available');
             try {
-                return new Date(dateStr).toLocaleDateString('sw-TZ', {
+                return new Date(dateStr).toLocaleDateString(dateLocale(), {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric'
@@ -848,7 +863,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             const token = localStorage.getItem('userToken');
             
             if (!token) {
-                showToast(t('err_login_view'), 'warning');
+                showToast(t('err_signin_view'), 'warning');
                 loading = false;
                 render();
                 return;
@@ -880,7 +895,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 }
             } catch (error) {
                 console.error('Error loading profile:', error);
-                showToast(t('err_load_info'), 'error');
+                showToast(t('err_load_profile_info'), 'error');
             } finally {
                 loading = false;
                 render();
@@ -908,7 +923,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             const token = localStorage.getItem('userToken');
             
             if (!token) {
-                showToast(t('err_login_update'), 'warning');
+                showToast(t('err_signin_update'), 'warning');
                 saving = false;
                 render();
                 return;
@@ -929,7 +944,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     const result = await response.json();
                     profile = result.user;
                     editing = false;
-                    showToast(t('msg_saved'), 'success');
+                    showToast(t('msg_profile_updated'), 'success');
                     
                     if (result.user.full_name) {
                         localStorage.setItem('userName', result.user.full_name);
@@ -937,11 +952,11 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     }
                 } else {
                     const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.error || t('err_save_failed'));
+                    throw new Error(errorData.error || t('err_update_failed'));
                 }
             } catch (error) {
                 console.error('Error updating profile:', error);
-                showToast(error.message || t('err_save_failed'), 'error');
+                showToast(error.message || t('err_update_failed'), 'error');
             } finally {
                 saving = false;
                 render();
@@ -1030,7 +1045,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
 
                 if (!response.ok) {
                     const errBody = await response.json().catch(() => ({}));
-                    throw new Error(errBody?.error?.message || t('err_photo_failed'));
+                    throw new Error(errBody?.error?.message || t('err_upload_photo'));
                 }
 
                 const data = await response.json();
@@ -1057,16 +1072,16 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     localStorage.setItem('userData', JSON.stringify(userData));
                     updateSidebarUser();
                     if (progressEl) progressEl.textContent = '';
-                    showToast(t('msg_photo_saved'), 'success');
+                    showToast(t('msg_photo_updated'), 'success');
                     render();
                 } else {
                     const errBody = await updateResponse.json().catch(() => ({}));
-                    throw new Error(errBody?.error?.message || t('err_save_failed'));
+                    throw new Error(errBody?.error?.message || t('err_update_failed'));
                 }
             } catch (error) {
                 console.error('Photo upload error:', error);
                 if (progressEl) progressEl.textContent = t('err_prefix') + error.message;
-                showToast(t('photo_err_prefix') + (error.message || t('try_again')), 'error');
+                showToast(t('err_upload_prefix') + (error.message || t('try_again')), 'error');
             } finally {
                 uploadingPhoto = false;
                 restoreBadge();
@@ -1088,8 +1103,8 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             if (!profile) {
                 container.innerHTML = `
                     <div class="loading-container">
-                        <div class="loading-text">${t('empty_title')}</div>
-                        <button onclick="location.reload()" style="margin-top:20px;padding:10px 20px;background:#667eea;color:white;border:none;border-radius:10px;cursor:pointer;">${t('btn_retry')}</button>
+                        <div class="loading-text">${t('no_profile_info')}</div>
+                        <button onclick="location.reload()" style="margin-top:20px;padding:10px 20px;background:#667eea;color:white;border:none;border-radius:10px;cursor:pointer;">${t('btn_try_again')}</button>
                     </div>
                 `;
                 return;
@@ -1106,7 +1121,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 <div class="profile-header">
                     <div class="avatar-wrap">
                         <div class="avatar">
-                            ${profile.business_logo_url ? `<div class="js-avatar-view" data-full="${escapeHtml(profile.business_logo_url)}" data-name="${escapeHtml(profile.full_name || profile.email || '')}" style="width:100%;height:100%;border-radius:50%;overflow:hidden;"><img src="${escapeHtml(profile.business_logo_url)}" alt="${t('photo_alt')}" style="width:100%;height:100%;object-fit:cover;pointer-events:none;"></div>` : `<div class="avatar-text">${escapeHtml(initial)}</div>`}
+                            ${profile.business_logo_url ? `<div class="js-avatar-view" data-full="${escapeHtml(profile.business_logo_url)}" data-name="${escapeHtml(profile.full_name || profile.email || '')}" style="width:100%;height:100%;border-radius:50%;overflow:hidden;"><img src="${escapeHtml(profile.business_logo_url)}" alt="Profile" style="width:100%;height:100%;object-fit:cover;pointer-events:none;"></div>` : `<div class="avatar-text">${escapeHtml(initial)}</div>`}
                         </div>
                         <div class="camera-badge" id="cameraBadge" title="${t('btn_change_photo')}">
                             ${ic('camera', 13)}
@@ -1119,7 +1134,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 </div>
 
                 <div class="section">
-                    <div class="section-title">${t('section_profile')}</div>
+                    <div class="section-title">${t('section_profile_info')}</div>
                     <div class="info-card">
                         <div class="field">
                             <div class="label">${t('label_full_name')}</div>
@@ -1152,8 +1167,8 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                             <div><span class="status-badge ${statusClass}">${escapeHtml(statusName)}</span></div>
                         </div>
 
-                        ${profile.business_location ? `<div class="field"><div class="label">${t('label_location')}</div><div class="value">${escapeHtml(profile.business_location)}</div></div>` : ''}
-                        ${profile.business_latitude && profile.business_longitude ? `<div class="field"><div class="label">${t('label_coords')}</div><div class="value">${escapeHtml(String(profile.business_latitude))}, ${escapeHtml(String(profile.business_longitude))}</div></div>` : ''}
+                        ${profile.business_location ? `<div class="field"><div class="label">${t('label_business_location')}</div><div class="value">${escapeHtml(profile.business_location)}</div></div>` : ''}
+                        ${profile.business_latitude && profile.business_longitude ? `<div class="field"><div class="label">${t('label_map_coords')}</div><div class="value">${escapeHtml(String(profile.business_latitude))}, ${escapeHtml(String(profile.business_longitude))}</div></div>` : ''}
 
                         <div class="field">
                             <div class="label">${t('label_member_since')}</div>
@@ -1167,8 +1182,8 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     <div class="info-card">
                         <div class="setting-row">
                             <div class="setting-info">
-                                <div class="setting-label">${t('setting_alerts')}</div>
-                                <div class="setting-description">${t('setting_alerts_desc')}</div>
+                                <div class="setting-label">${t('setting_notifications')}</div>
+                                <div class="setting-description">${t('setting_notifications_desc')}</div>
                             </div>
                             <label class="switch">
                                 <input type="checkbox" id="notificationSwitch" ${notifications ? 'checked' : ''}>
@@ -1178,7 +1193,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
 
                         <div class="button-row">
                             <button class="btn ${editing ? 'btn-cancel' : 'btn-edit'}" id="editBtn">
-                                ${editing ? t('btn_cancel') : ic('edit', 13) + ' ' + t('btn_edit')}
+                                ${editing ? t('btn_cancel') : ic('edit', 13) + ' ' + t('btn_edit_profile')}
                             </button>
                             ${editing ? `
                                 <button class="btn btn-save" id="saveBtn" ${saving ? 'disabled' : ''}>
@@ -1190,7 +1205,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 </div>
 
                 <div class="section">
-                    <div class="section-title">${t('section_actions')}</div>
+                    <div class="section-title">${t('section_account_actions')}</div>
                     <div class="info-card">
                         <button class="btn-logout" id="logoutAccountBtn">${ic('logout', 14)} ${t('btn_logout_account')}</button>
                     </div>
@@ -1198,7 +1213,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
 
                 <div class="footer">
                     <div class="footer-text">${t('footer_copyright')}</div>
-                    <div class="footer-text" style="font-size: 11px;">${t('footer_version')}</div>
+                    <div class="footer-text" style="font-size: 11px;">${t('version')}</div>
                 </div>
             `;
 
@@ -1267,12 +1282,15 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             await loadUserProfile();
         }
         
+        // Follow the language: static markup is handled by data-i18n, but the
+        // profile card, settings and actions are script-built.
         if (window.DM && typeof window.DM.onChange === 'function') {
             window.DM.onChange(() => {
-                updateSidebarUser();
                 render();
+                updateSidebarUser();
             });
         }
+
         init();
     </script>
 </body>

@@ -334,7 +334,7 @@
                 <!-- Dynamic content loads here -->
                 <div style="text-align: center; padding: 60px 20px;">
                     <div class="spinner" style="border-top-color: #9b59b6;"></div>
-                    <p data-i18n="system_admin_sidebar.loading" style="margin-top: 20px; color: #7f8c8d;">Loading...</p>
+                    <p style="margin-top: 20px; color: #7f8c8d;" data-i18n="system_admin_sidebar.loading">Loading...</p>
                 </div>
             </div>
         </main>
@@ -359,19 +359,29 @@
 
         const API_BASE_URL = '';
 
-        // Swahili fallback used when the language widget is not present.
-        // Values mirror the sw catalog of the system_admin_sidebar section in locales.json.
+        // Swahili fallback used when the language widget is not present (and
+        // for script-built strings). Values mirror the sw catalog of the
+        // system_admin_sidebar section in locales.json.
         const SW = {
-            err_no_permission: "Huna ruhusa ya kuingia kwenye eneo la System Admin.",
-            user_fallback: "System Admin",
-            error_title: "Hitilafu",
-            err_page_load: "Huwezi kupakia ukurasa huu. Hakikisha faili zote zipo.",
-            btn_retry: "Jaribu Tena",
-            confirm_logout: "Una uhakika unataka kutoka?",
-            title_default: "DukaMkononi - System Admin",
-            title_dashboard: "Dashbodi - DukaMkononi System Admin",
-            title_home: "Nyumbani - DukaMkononi System Admin",
-            title_notify: "Notisi - DukaMkononi System Admin"
+            page_title: 'Dukamkononi - System Admin',
+            logo_short: 'D',
+            logo_brand: 'DukaMkononi',
+            logo_tagline: 'System Admin',
+            nav_dashboard: 'Dashbodi',
+            nav_home: 'Nyumbani',
+            nav_notify: 'Notisi',
+            btn_logout: 'Ondoka',
+            loading: 'Loading...',
+            err_no_permission: 'Huna ruhusa ya kuingia kwenye eneo la System Admin.',
+            err_title: 'Hitilafu',
+            err_page_load: 'Huwezi kupakia ukurasa huu. Hakikisha faili zote zipo.',
+            btn_try_again: 'Jaribu Tena',
+            confirm_logout: 'Una uhakika unataka kutoka?',
+            user_role: 'Msimamizi Mkuu',
+            title_default: 'DukaMkononi - System Admin',
+            title_dashboard: 'Dashbodi - DukaMkononi System Admin',
+            title_home: 'Nyumbani - DukaMkononi System Admin',
+            title_notify: 'Notisi - DukaMkononi System Admin',
         };
 
         function t(key, params) {
@@ -429,7 +439,7 @@
         function updateUserInfo(user) {
             const userNameEl = document.getElementById('userName');
             const userAvatarEl = document.getElementById('userAvatar');
-            const displayName = user.full_name || user.email?.split('@')[0] || t('user_fallback');
+            const displayName = user.full_name || user.email?.split('@')[0] || t('logo_tagline');
             if (userNameEl) userNameEl.textContent = displayName;
             if (userAvatarEl) {
                 if (user.business_logo_url) {
@@ -447,8 +457,8 @@
             notify: '/system_admin/notify'
         };
 
-        // Page titles
-        const pageTitles = {
+        // Page titles (resolved through t() so they follow the language)
+        const pageTitleKeys = {
             dashboard: 'title_dashboard',
             index: 'title_home',
             notify: 'title_notify'
@@ -462,25 +472,6 @@
             if (overlay) {
                 overlay.style.display = show ? 'flex' : 'none';
             }
-        }
-
-        // Load-failure panel (state kept so a language switch can repaint it)
-        let lastLoadError = null;
-        function renderLoadError() {
-            const pageContainer = document.getElementById('pageContainer');
-            if (!pageContainer) return;
-            pageContainer.innerHTML = `
-                        <div style="text-align: center; padding: 60px 20px; background: white; border-radius: 20px;">
-                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#9b59b6" stroke-width="1.5">
-                                <circle cx="12" cy="12" r="10"/>
-                                <path d="M12 8V12M12 16H12.01"/>
-                            </svg>
-                            <h3 style="margin-top: 20px; color: #9b59b6;">${t('error_title')}</h3>
-                            <p style="margin-top: 10px; color: #7f8c8d;">${t('err_page_load')}</p>
-                            <p style="margin-top: 8px; font-size: 12px; color: #95a5a6;">${lastLoadError}</p>
-                            <button onclick="location.reload()" style="margin-top: 20px; padding: 10px 24px; background: #9b59b6; color: white; border: none; border-radius: 8px; cursor: pointer;">${t('btn_retry')}</button>
-                        </div>
-                    `;
         }
 
         // Load page content dynamically via fetch
@@ -522,7 +513,6 @@
                 const pageContainer = document.getElementById('pageContainer');
                 if (pageContainer) {
                     pageContainer.innerHTML = contentHtml;
-                    lastLoadError = null;
                     
                     // Re-execute any scripts that were in the loaded content
                     const scripts = pageContainer.querySelectorAll('script');
@@ -539,7 +529,7 @@
                 }
                 
                 // Update page title
-                document.title = t(pageTitles[pageName] || 'title_default');
+                document.title = pageTitleKeys[pageName] ? t(pageTitleKeys[pageName]) : t('title_default');
                 
                 // Update active state in sidebar
                 updateActiveNavItem(pageName);
@@ -550,8 +540,21 @@
                 
             } catch (error) {
                 console.error('Failed to load page:', error);
-                lastLoadError = error.message;
-                renderLoadError();
+                const pageContainer = document.getElementById('pageContainer');
+                if (pageContainer) {
+                    pageContainer.innerHTML = `
+                        <div style="text-align: center; padding: 60px 20px; background: white; border-radius: 20px;">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#9b59b6" stroke-width="1.5">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M12 8V12M12 16H12.01"/>
+                            </svg>
+                            <h3 style="margin-top: 20px; color: #9b59b6;">${t('err_title')}</h3>
+                            <p style="margin-top: 10px; color: #7f8c8d;">${t('err_page_load')}</p>
+                            <p style="margin-top: 8px; font-size: 12px; color: #95a5a6;">${error.message}</p>
+                            <button onclick="location.reload()" style="margin-top: 20px; padding: 10px 24px; background: #9b59b6; color: white; border: none; border-radius: 8px; cursor: pointer;">${t('btn_try_again')}</button>
+                        </div>
+                    `;
+                }
             } finally {
                 showLoading(false);
             }
@@ -656,13 +659,6 @@
             });
         }
 
-        if (window.DM && typeof window.DM.onChange === 'function') {
-            window.DM.onChange(() => {
-                document.title = t(pageTitles[currentPage] || 'title_default');
-                if (lastLoadError !== null) renderLoadError();
-            });
-        }
-
         // Initialize: check auth, then load default page (dashboard)
         async function init() {
             if (!checkAuth()) return;
@@ -682,6 +678,16 @@
             await loadPage(initialPage);
         }
         
+        // Follow the language: static markup is handled by data-i18n, but the
+        // document title and sidebar user info are script-built.
+        if (window.DM && typeof window.DM.onChange === 'function') {
+            window.DM.onChange(() => {
+                document.title = pageTitleKeys[currentPage] ? t(pageTitleKeys[currentPage]) : t('title_default');
+                const u = getCurrentUser();
+                if (u) updateUserInfo(u);
+            });
+        }
+
         // Run init
         init();
         

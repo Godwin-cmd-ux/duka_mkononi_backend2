@@ -33,6 +33,12 @@ Route::get('/language/{code}', function (string $code) use ($dukamkononiLocales)
 
 Route::view('/', 'index');
 Route::view('/home', 'home');
+
+// Public shopping experience (website-only)
+Route::view('/shop', 'shop');
+Route::view('/track-orders', 'track-orders');
+Route::view('/advertisements', 'advertisements');
+Route::view('/businesses', 'businesses');
 Route::view('/login', 'login');
 Route::view('/forgot', 'forgot');
 Route::view('/admin-signup', 'admin-signup');
@@ -53,6 +59,7 @@ Route::view('/mteja/profaili', 'mteja.profaili');
 
 Route::view('/muuzaji', 'muuzaji.profaili');
 Route::view('/muuzaji/profaili', 'muuzaji.profaili');
+Route::view('/muuzaji/orders', 'muuzaji.orders');
 Route::view('/muuzaji/mauzo', 'muuzaji.mauzo');
 Route::view('/muuzaji/matumizi', 'muuzaji.matumizi');
 Route::view('/muuzaji/uza', 'muuzaji.uza');
@@ -61,6 +68,7 @@ Route::view('/system_admin', 'system_admin.index');
 Route::view('/system_admin/index', 'system_admin.index');
 Route::view('/system_admin/dashboard', 'system_admin.dashboard');
 Route::view('/system_admin/notify', 'system_admin.notify');
+Route::view('/system_admin/inquiries', 'system_admin.inquiries');
 
 Route::redirect('/bidhaa-mpya', '/msimamizi/bidhaa-mpya');
 Route::redirect('/ripoti', '/msimamizi/ripoti');

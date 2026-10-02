@@ -110,16 +110,16 @@
 @verbatim
     <div class="redirect-container">
         <div class="logo">
-            <span data-i18n="system_admin_index.logo_short">D</span>
+            <span data-i18n="system_admin_index.logo_letter">D</span>
         </div>
-        <div class="title" data-i18n="system_admin_index.logo_brand">DukaMkononi</div>
-        <div class="subtitle" data-i18n="system_admin_index.portal_name">System Admin Portal</div>
+        <div class="title" data-i18n="system_admin_index.brand">DukaMkononi</div>
+        <div class="subtitle" data-i18n="system_admin_index.portal_label">System Admin Portal</div>
         
         <div class="loading-spinner"></div>
         
-        <div class="message" id="message" data-i18n="system_admin_index.loading">Inaelekeza kwenye dashbodi...</div>
+        <div class="message" id="message" data-i18n="system_admin_index.redirecting_dashboard">Inaelekeza kwenye dashbodi...</div>
         
-        <div class="redirect-note" data-i18n="system_admin_index.redirect_note">
+        <div class="redirect-note" data-i18n="system_admin_index.please_wait">
             Tafadhali subiri, unaelekezwa kwenye ukurasa wa dashbodi
         </div>
         
@@ -136,15 +136,22 @@
         
         const API_BASE_URL = '';
 
-        // Swahili fallback used when the language widget is not present.
-        // Values mirror the sw catalog of the system_admin_index section in locales.json.
+        // Swahili fallback used when the language widget is not present (and
+        // for script-built strings). Values mirror the sw catalog of the
+        // system_admin_index section in locales.json.
         const SW = {
-            loading: "Inaelekeza kwenye dashbodi...",
-            err_not_logged_in: "Hakuna mtumiaji aliyeingia. Unaelekezwa kwenye ukurasa wa kuingia...",
-            err_no_permission: "Huna ruhusa ya kuingia kwenye eneo hili. Unaelekezwa nyumbani...",
-            err_session_expired: "Weka muda umeisha. Unaelekezwa kwenye ukurasa wa kuingia...",
-            msg_success: "Umeingia kikamilifu! Unaelekezwa kwenye dashbodi...",
-            err_user_data: "Hitilafu katika data ya mtumiaji. Unaelekezwa kwenye ukurasa wa kuingia..."
+            page_title: 'DukaMkononi - System Admin',
+            logo_letter: 'D',
+            brand: 'DukaMkononi',
+            portal_label: 'System Admin Portal',
+            redirecting_dashboard: 'Inaelekeza kwenye dashbodi...',
+            please_wait: 'Tafadhali subiri, unaelekezwa kwenye ukurasa wa dashbodi',
+            manual_link: 'Bonyeza hapa ikiwa huelekezwi',
+            no_user: 'Hakuna mtumiaji aliyeingia. Unaelekezwa kwenye ukurasa wa kuingia...',
+            no_permission: 'Huna ruhusa ya kuingia kwenye eneo hili. Unaelekezwa nyumbani...',
+            session_expired: 'Weka muda umeisha. Unaelekezwa kwenye ukurasa wa kuingia...',
+            signed_in_ok: 'Umeingia kikamilifu! Unaelekezwa kwenye dashbodi...',
+            data_error: 'Hitilafu katika data ya mtumiaji. Unaelekezwa kwenye ukurasa wa kuingia...',
         };
 
         function t(key, params) {
@@ -161,15 +168,14 @@
             return value;
         }
 
-        // Redirect-page status line: keep the current message key so a language
-        // switch can repaint it after the script has replaced the static text.
-        let currentMsgKey = 'loading';
-        function setMsg(key) {
+        // The current status message, so the language picker can repaint it.
+        let currentMsgKey = 'redirecting_dashboard';
+        function setMessage(key) {
             currentMsgKey = key;
             const el = document.getElementById('message');
             if (el) el.innerHTML = t(key);
         }
-        
+
         // Check if user is logged in and is system admin
         async function checkAuthAndRedirect() {
             const token = localStorage.getItem('userToken');
@@ -181,7 +187,7 @@
                 setTimeout(() => {
                     window.location.href = '/login?role=msimamizi';
                 }, 1500);
-                setMsg('err_not_logged_in');
+                setMessage('no_user');
                 return;
             }
             
@@ -193,7 +199,7 @@
                 if (!isSystemAdmin && userData.role !== 'system_admin') {
                     // User is not system admin, redirect to home
                     console.log('User is not system admin, redirecting to home...');
-                    setMsg('err_no_permission');
+                    setMessage('no_permission');
                     setTimeout(() => {
                         window.location.href = '/home';
                     }, 2000);
@@ -214,7 +220,7 @@
                         console.log('Invalid token, clearing storage...');
                         localStorage.removeItem('userToken');
                         localStorage.removeItem('userData');
-                        setMsg('err_session_expired');
+                        setMessage('session_expired');
                         setTimeout(() => {
                             window.location.href = '/login?role=msimamizi';
                         }, 2000);
@@ -226,7 +232,7 @@
                 
                 // User is authenticated and is system admin, redirect to dashboard
                 console.log('Authenticated as system admin, redirecting to dashboard...');
-                setMsg('msg_success');
+                setMessage('signed_in_ok');
                 
                 setTimeout(() => {
                     window.location.href = 'dashboard';
@@ -234,7 +240,7 @@
                 
             } catch (error) {
                 console.error('Error parsing user data:', error);
-                setMsg('err_user_data');
+                setMessage('data_error');
                 setTimeout(() => {
                     window.location.href = '/login?role=msimamizi';
                 }, 2000);
@@ -247,10 +253,10 @@
             window.location.href = 'dashboard';
         });
         
+        // Follow the language: static markup is handled by data-i18n, but the
+        // status message is set by script.
         if (window.DM && typeof window.DM.onChange === 'function') {
-            window.DM.onChange(() => {
-                setMsg(currentMsgKey);
-            });
+            window.DM.onChange(() => setMessage(currentMsgKey));
         }
 
         // Start the redirect process

@@ -15,6 +15,10 @@ use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ProfitController;
 use App\Http\Controllers\Api\ReactionController;
 use App\Http\Controllers\Api\ResetPasswordController;
+use App\Http\Controllers\Api\ShopController;
+use App\Http\Controllers\Api\InquiryController;
+use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\SystemAdminController;
 use App\Http\Controllers\Api\RevenueController;
 use App\Http\Controllers\Api\SaleController;
 use App\Http\Controllers\Api\AdminController;
@@ -49,6 +53,21 @@ use Illuminate\Support\Facades\Route;
     Route::get('businesses/{id}', [BusinessController::class, 'show']);
     Route::get('businesses/search/{query}', [BusinessController::class, 'search']);
     Route::get('business/by-name/{business_name}', [BusinessController::class, 'byName']);
+
+    // Public catalogue (Shop, Businesses, Advertisements, Reviews)
+    Route::get('shop/businesses', [ShopController::class, 'businesses']);
+    Route::get('shop/businesses/certified', [ShopController::class, 'certifiedBusinesses']);
+    Route::get('shop/products', [ShopController::class, 'products']);
+    Route::get('shop/products/{id}', [ShopController::class, 'product']);
+    Route::get('shop/advertisements', [ShopController::class, 'advertisements']);
+    Route::get('shop/reviews', [ShopController::class, 'reviews']);
+
+    // Public inquiry submission (rate limited against spam)
+    Route::post('inquiries', [InquiryController::class, 'store'])->middleware('throttle:10,1');
+
+    // Public order placement + tracking (rate limited)
+    Route::post('orders', [OrderController::class, 'store'])->middleware('throttle:20,1');
+    Route::get('orders/track', [OrderController::class, 'track'])->middleware('throttle:20,1');
 
     Route::get('matangazo', [AdvertisementController::class, 'publicIndex']);
     Route::post('payments/pesapal-ipn', [PaymentController::class, 'ipn']);
@@ -121,6 +140,21 @@ use Illuminate\Support\Facades\Route;
         Route::post('payments/record', [PaymentController::class, 'record']);
         Route::post('payments/pesapal/initiate', [PaymentController::class, 'initiate']);
         Route::get('payments/pesapal/status/{order_tracking_id}', [PaymentController::class, 'pesapalStatus']);
+
+        // Seller order management (business scoped server-side)
+        Route::get('seller/orders', [OrderController::class, 'sellerIndex']);
+        Route::get('seller/orders/{id}', [OrderController::class, 'sellerShow']);
+        Route::put('seller/orders/{id}/status', [OrderController::class, 'sellerUpdateStatus']);
+        Route::post('seller/orders/{id}/notes', [OrderController::class, 'sellerAddNote']);
+
+        // Super Admin: inquiries + review publishing + business certification
+        Route::get('system-admin/inquiries', [InquiryController::class, 'adminIndex']);
+        Route::get('system-admin/inquiries/{id}', [InquiryController::class, 'adminShow']);
+        Route::put('system-admin/inquiries/{id}/reviewed', [InquiryController::class, 'markReviewed']);
+        Route::post('system-admin/inquiries/{id}/publish', [InquiryController::class, 'publish']);
+        Route::post('system-admin/inquiries/{id}/unpublish', [InquiryController::class, 'unpublish']);
+        Route::get('system-admin/businesses', [SystemAdminController::class, 'businesses']);
+        Route::put('system-admin/businesses/{id}/certify', [SystemAdminController::class, 'certify']);
 
         Route::get('admin/users', [AdminController::class, 'users']);
         Route::get('admin/products', [AdminController::class, 'products']);
