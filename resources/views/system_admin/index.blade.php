@@ -106,7 +106,7 @@
 </head>
 <body>
 @endverbatim
-@include('partials.dm-lang-widget')
+@include('partials.dm-lang-widget', ['dmLangHideButton' => true])
 @verbatim
     <div class="redirect-container">
         <div class="logo">
