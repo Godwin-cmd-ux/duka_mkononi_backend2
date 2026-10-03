@@ -23,7 +23,7 @@ svg.icon{flex-shrink:0}
 @verbatim
 <body>
 @endverbatim
-@include('partials.dm-lang-widget')
+@include('partials.dm-lang-widget', ['dmLangHideButton' => true])
 @verbatim
 <div class="mobile-menu-toggle" id="mobileMenuToggle"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2"><path d="M3 12H21M3 6H21M3 18H21"/></svg></div>
 <div class="msimamizi-layout">

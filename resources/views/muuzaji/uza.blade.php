@@ -235,7 +235,7 @@
 </head>
 <body>
 @endverbatim
-@include('partials.dm-lang-widget')
+@include('partials.dm-lang-widget', ['dmLangHideButton' => true])
 @include('partials.toast')
 @include('partials.photo-viewer')
 @verbatim

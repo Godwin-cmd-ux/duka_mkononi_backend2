@@ -140,7 +140,13 @@
         .dm-lang-name { font-size: 13px; }
     }
 </style>
-
+@endverbatim
+{{-- Authenticated pages (mteja / muuzaji / msimamizi) hide the floating
+     button after login. They still need the DM runtime for data-i18n, so they
+     include this partial with ['dmLangHideButton' => true] instead of dropping
+     it, which would leave their data-i18n text untranslated. --}}
+@if (empty($dmLangHideButton))
+@verbatim
 <div class="dm-lang-widget" id="dmLangWidget">
     <button type="button" class="dm-lang-main" id="dmLangToggle" aria-haspopup="true" aria-expanded="false">
         <svg class="dm-lang-globe" width="26" height="26" viewBox="0 0 24 24" fill="none"
@@ -154,6 +160,7 @@
     <div class="dm-lang-menu" id="dmLangMenu" role="menu"></div>
 </div>
 @endverbatim
+@endif
 <script>
 (function (global) {
     'use strict';

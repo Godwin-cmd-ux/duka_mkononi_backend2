@@ -528,7 +528,7 @@
 @verbatim
     <body>
     @endverbatim
-    @include('partials.dm-lang-widget')
+    @include('partials.dm-lang-widget', ['dmLangHideButton' => true])
     @verbatim
     <div class="mobile-menu-toggle" id="mobileMenuToggle">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2">

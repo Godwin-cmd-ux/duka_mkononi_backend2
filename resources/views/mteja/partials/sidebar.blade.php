@@ -270,7 +270,7 @@
 </head>
 <body>
 @endverbatim
-@include('partials.dm-lang-widget')
+@include('partials.dm-lang-widget', ['dmLangHideButton' => true])
 @include('partials.toast')
 @verbatim
     <!-- Mobile menu toggle button -->

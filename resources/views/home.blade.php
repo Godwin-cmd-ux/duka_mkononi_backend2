@@ -314,6 +314,174 @@
             margin-top: 5px;
         }
 
+        /* ---- Language switcher (top right, mirrors the mobile app home screen) ---- */
+        .lang-switcher-row {
+            width: 100%;
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 10px;
+        }
+        .lang-switcher {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #f0f4f8;
+            border: none;
+            cursor: pointer;
+            padding: 8px 14px;
+            border-radius: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            font-family: inherit;
+            transition: background 0.2s ease, transform 0.08s ease;
+        }
+        .lang-switcher:hover { background: #e6edf5; }
+        .lang-switcher:active { transform: scale(0.97); }
+        .lang-switcher svg { display: block; color: #2c3e50; }
+        .lang-switcher-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 0 2px;
+            white-space: nowrap;
+        }
+        .lang-chevron { color: #7f8c8d !important; }
+
+        /* ---- Language selector modal (bottom sheet, mirrors the mobile app) ---- */
+        .lang-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.25s ease, visibility 0.25s ease;
+        }
+        .lang-modal-overlay.open { opacity: 1; visibility: visible; }
+        .lang-modal-sheet {
+            width: 100%;
+            max-width: 550px;
+            background: #ffffff;
+            border-top-left-radius: 28px;
+            border-top-right-radius: 28px;
+            padding: 12px 24px 34px;
+            max-height: 75vh;
+            display: flex;
+            flex-direction: column;
+            transform: translateY(100%);
+            transition: transform 0.28s cubic-bezier(0.2, 0.9, 0.4, 1);
+            box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.1);
+        }
+        .lang-modal-overlay.open .lang-modal-sheet { transform: translateY(0); }
+        .lang-modal-handle {
+            width: 40px;
+            height: 4px;
+            border-radius: 2px;
+            background: #e0e0e0;
+            margin: 0 auto 16px;
+        }
+        .lang-modal-header { text-align: center; margin-bottom: 20px; }
+        .lang-modal-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: #e8f4fd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px;
+            color: #3498db;
+        }
+        .lang-modal-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 4px;
+        }
+        .lang-modal-subtitle { font-size: 14px; color: #7f8c8d; }
+        .lang-modal-list {
+            overflow-y: auto;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .lang-modal-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            border-radius: 12px;
+            background: #f8f9fa;
+            border: 1.5px solid transparent;
+            cursor: pointer;
+            width: 100%;
+            text-align: left;
+            font-family: inherit;
+        }
+        .lang-modal-item.selected { background: #e8f4fd; border-color: #3498db; }
+        .lang-modal-item-left { display: flex; align-items: center; }
+        .lang-modal-flag { font-size: 30px; margin-right: 14px; line-height: 1; }
+        .lang-modal-info { display: flex; flex-direction: column; }
+        .lang-modal-name { font-size: 16px; font-weight: 600; color: #2c3e50; }
+        .lang-modal-item.selected .lang-modal-name { color: #3498db; }
+        .lang-modal-code { font-size: 12px; color: #95a5a6; font-weight: 500; margin-top: 2px; }
+        .lang-modal-radio {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 2px solid #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .lang-modal-item.selected .lang-modal-radio { border-color: #3498db; }
+        .lang-modal-radio span {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #3498db;
+            display: none;
+        }
+        .lang-modal-item.selected .lang-modal-radio span { display: block; }
+        .lang-modal-actions { display: flex; gap: 12px; }
+        .lang-modal-cancel {
+            flex: 1;
+            height: 50px;
+            border: none;
+            border-radius: 12px;
+            background: #f0f4f8;
+            color: #7f8c8d;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .lang-modal-apply {
+            flex: 1.5;
+            height: 50px;
+            border: none;
+            border-radius: 12px;
+            background: #3498db;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
+        }
+        .lang-modal-apply:disabled {
+            background: #85c1e9;
+            box-shadow: none;
+            cursor: default;
+        }
+
         /* animations keyframes */
         @keyframes fadeSlideUp {
             0% {
@@ -354,12 +522,27 @@
 </head>
 <body>
 @endverbatim
-@include('partials.dm-lang-widget')
+@include('partials.dm-lang-widget', ['dmLangHideButton' => true])
 @verbatim
 <div class="safe-area">
     <div class="scroll-view">
         <div class="scroll-content">
             <div class="container">
+
+                <!-- Language switcher - top right, mirrors the mobile app home screen -->
+                <div class="lang-switcher-row">
+                    <button type="button" class="lang-switcher" id="homeLangBtn" aria-haspopup="dialog" aria-expanded="false">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="9"></circle>
+                            <path d="M3 12H21"></path>
+                            <path d="M12 3C14.6 5.6 14.6 18.4 12 21C9.4 18.4 9.4 5.6 12 3Z"></path>
+                        </svg>
+                        <span class="lang-switcher-label" id="homeLangLabel">SW</span>
+                        <svg class="lang-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m6 9 6 6 6-6"></path>
+                        </svg>
+                    </button>
+                </div>
 
                 <!-- Header animated -->
                 <div class="header-container">
@@ -524,6 +707,35 @@
     </div>
 </div>
 
+<!-- Language selector modal (bottom sheet, mirrors the mobile app home screen) -->
+<div class="lang-modal-overlay" id="homeLangModal" aria-hidden="true">
+    <div class="lang-modal-sheet" role="dialog" aria-modal="true" aria-labelledby="homeLangTitle">
+        <div class="lang-modal-handle"></div>
+        <div class="lang-modal-header">
+            <div class="lang-modal-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="9"></circle>
+                    <path d="M3 12H21"></path>
+                    <path d="M12 3C14.6 5.6 14.6 18.4 12 21C9.4 18.4 9.4 5.6 12 3Z"></path>
+                </svg>
+            </div>
+            <h3 class="lang-modal-title" id="homeLangTitle" data-i18n="home.language_title">Badili Lugha</h3>
+            <p class="lang-modal-subtitle" data-i18n="home.choose_role">Chagua nafasi yako kuanza</p>
+        </div>
+        <div class="lang-modal-list" id="homeLangList" role="radiogroup"></div>
+        <div class="lang-modal-actions">
+            <button type="button" class="lang-modal-cancel" id="homeLangCancel" data-i18n="home.language_close">Funga</button>
+            <button type="button" class="lang-modal-apply" id="homeLangApply">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="9"></circle>
+                    <path d="m8.5 12.5 2.5 2.5 4.5-5"></path>
+                </svg>
+                <span data-i18n="home.language_apply">Tuma</span>
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
     // This script replicates the exact navigation and press animation logic
     // without any framework, preserving the RN behavior: 
@@ -575,6 +787,130 @@
     });
 
     console.log('Dukamkononi Web: home screen replicated from HomeScreen.tsx (WASHA button removed)');
+
+    // ---- Language switcher: top-right button + bottom-sheet modal ----
+    // Mirrors the mobile app home screen (Duka_mkononi/app/(tabs)/index.tsx).
+    // It drives the DM runtime provided by partials.dm-lang-widget, which is
+    // included in hidden mode on this page so only this button switches language.
+    (function () {
+        var btn = document.getElementById('homeLangBtn');
+        var overlay = document.getElementById('homeLangModal');
+        var list = document.getElementById('homeLangList');
+        var label = document.getElementById('homeLangLabel');
+        var cancel = document.getElementById('homeLangCancel');
+        var apply = document.getElementById('homeLangApply');
+        if (!btn || !overlay || !list) return;
+
+        var selected = current();
+
+        function dm() { return window.DM; }
+
+        function current() {
+            return (dm() && typeof dm().locale === 'function' && dm().locale()) || 'sw';
+        }
+
+        function langs() {
+            return (dm() && typeof dm().languages === 'function' && dm().languages()) || [];
+        }
+
+        function findLang(code) {
+            var all = langs();
+            for (var i = 0; i < all.length; i++) {
+                if (all[i].code === code) return all[i];
+            }
+            return null;
+        }
+
+        function paintLabel() {
+            var lang = findLang(current());
+            if (label) label.textContent = lang ? ((lang.flag || '') + ' ' + (lang.name || lang.code)) : current().toUpperCase();
+        }
+
+        function buildList() {
+            list.innerHTML = '';
+            var all = langs();
+            if (!all.length) return;
+            all.forEach(function (lang) {
+                var item = document.createElement('button');
+                item.type = 'button';
+                item.className = 'lang-modal-item' + (lang.code === selected ? ' selected' : '');
+                item.setAttribute('data-code', lang.code);
+                item.setAttribute('role', 'radio');
+                item.setAttribute('aria-checked', lang.code === selected ? 'true' : 'false');
+
+                var left = document.createElement('span');
+                left.className = 'lang-modal-item-left';
+                var flag = document.createElement('span');
+                flag.className = 'lang-modal-flag';
+                flag.textContent = lang.flag || '';
+                var info = document.createElement('span');
+                info.className = 'lang-modal-info';
+                var name = document.createElement('span');
+                name.className = 'lang-modal-name';
+                name.textContent = lang.name || lang.code;
+                var code = document.createElement('span');
+                code.className = 'lang-modal-code';
+                code.textContent = String(lang.code).toUpperCase();
+                info.appendChild(name);
+                info.appendChild(code);
+                left.appendChild(flag);
+                left.appendChild(info);
+
+                var radio = document.createElement('span');
+                radio.className = 'lang-modal-radio';
+                radio.appendChild(document.createElement('span'));
+
+                item.appendChild(left);
+                item.appendChild(radio);
+                item.addEventListener('click', function () {
+                    selected = lang.code;
+                    buildList();
+                    syncApply();
+                });
+                list.appendChild(item);
+            });
+        }
+
+        function syncApply() {
+            if (apply) apply.disabled = selected === current();
+        }
+
+        function openModal() {
+            selected = current();
+            buildList();
+            syncApply();
+            overlay.classList.add('open');
+            overlay.setAttribute('aria-hidden', 'false');
+            btn.setAttribute('aria-expanded', 'true');
+        }
+
+        function closeModal() {
+            overlay.classList.remove('open');
+            overlay.setAttribute('aria-hidden', 'true');
+            btn.setAttribute('aria-expanded', 'false');
+        }
+
+        btn.addEventListener('click', openModal);
+        if (cancel) cancel.addEventListener('click', closeModal);
+        overlay.addEventListener('click', function (e) { if (e.target === overlay) closeModal(); });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModal(); });
+        if (apply) {
+            apply.addEventListener('click', function () {
+                if (selected !== current() && dm() && typeof dm().setLocale === 'function') {
+                    dm().setLocale(selected);
+                }
+                closeModal();
+            });
+        }
+
+        paintLabel();
+        if (dm() && typeof dm().onChange === 'function') {
+            dm().onChange(function () {
+                paintLabel();
+                if (overlay.classList.contains('open')) { buildList(); syncApply(); }
+            });
+        }
+    })();
 </script>
 </body>
 </html>

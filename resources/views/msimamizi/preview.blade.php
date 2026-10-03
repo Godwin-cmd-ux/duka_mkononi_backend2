@@ -435,7 +435,7 @@
 @verbatim
 <body>
 @endverbatim
-@include('partials.dm-lang-widget')
+@include('partials.dm-lang-widget', ['dmLangHideButton' => true])
 @verbatim
     <div class="mobile-menu-toggle" id="mobileMenuToggle">☰</div>
 
