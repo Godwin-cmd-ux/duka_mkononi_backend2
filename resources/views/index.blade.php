@@ -53,7 +53,7 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>
                         <span data-i18n="site_home.cta_businesses">Explore Businesses</span>
                     </a>
-                    <a class="dm-btn dm-btn--accent" href="https://expo.dev/artifacts/eas/9TKXD6b4FGjwYZDZos8OcAWmuyY4N4tvgO397xOsUu0.apk" target="_blank" rel="noopener">
+                    <a class="dm-btn dm-btn--accent" href="https://expo.dev/artifacts/eas/ZRIDMBDq4PlR47LI2j_iuOItHZs6sz6DdPyFFJyqO8w.apk" target="_blank" rel="noopener">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
                         <span data-i18n="site_home.cta_download">Download the App</span>
                     </a>
