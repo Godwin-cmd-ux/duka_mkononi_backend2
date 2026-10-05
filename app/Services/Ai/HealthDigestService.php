@@ -453,7 +453,7 @@ class HealthDigestService
 
         if (($result['sufficient'] ?? false) === false) {
             $empty['code'] = 'INSUFFICIENT_EVIDENCE';
-            $empty['reason'] = 'Data haitoshi kutoa ushauri wa AI.';
+            $empty['reason'] = AiException::reasonForCode('INSUFFICIENT_EVIDENCE', $locale);
 
             return $empty;
         }
@@ -509,12 +509,12 @@ class HealthDigestService
             return $sanitized;
         } catch (AiException $error) {
             $empty['code'] = $error->errorCode;
-            $empty['reason'] = $error->getMessage();
+            $empty['reason'] = $error->userReason($locale);
 
             return $empty;
         } catch (Throwable) {
             $empty['code'] = 'AI_ERROR';
-            $empty['reason'] = 'AI haipatikani kwa sasa.';
+            $empty['reason'] = AiException::reasonForCode('AI_ERROR', $locale);
 
             return $empty;
         }

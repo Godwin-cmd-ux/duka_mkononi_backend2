@@ -62,12 +62,18 @@ class GeminiClient
         $timeout = (int) ($options['timeout'] ?? config('ai.timeout', 45));
         $maxRetries = max(0, (int) ($options['retries'] ?? config('ai.retries', 3)));
 
+        // A thinking model spends part of the output budget before it writes the
+        // answer, so an over-small budget silently truncates the JSON and looks
+        // like a parsing bug. Enforce a floor: never ask for less than this.
+        $requestedTokens = (int) ($options['maxOutputTokens'] ?? config('ai.max_output_tokens', 4096));
+        $maxOutputTokens = max((int) config('ai.min_output_tokens', 1024), $requestedTokens);
+
         $body = [
             'contents' => [['role' => 'user', 'parts' => array_values($userParts)]],
             'generationConfig' => [
                 'responseMimeType' => 'application/json',
                 'temperature' => (float) ($options['temperature'] ?? config('ai.temperature', 0.2)),
-                'maxOutputTokens' => (int) ($options['maxOutputTokens'] ?? config('ai.max_output_tokens', 4096)),
+                'maxOutputTokens' => $maxOutputTokens,
             ],
         ];
         if ($system && trim($system) !== '') {
@@ -107,6 +113,15 @@ class GeminiClient
                 try {
                     $result = $this->parseSuccess($payload, $model, $requestId, $startedAt, $attempts);
                 } catch (AiException $e) {
+                    // An empty or malformed answer is often transient (a cut-off or
+                    // degraded stream), so honour the exception's retryable flag
+                    // instead of surfacing a hard failure on the first bad response.
+                    if ($e->retryable && $attempt < $maxRetries) {
+                        $lastError = $e;
+
+                        continue;
+                    }
+
                     $this->audit($options, $capability, $requestId, $model, $startedAt, $attempts, null, 'invalid', $e->errorCode);
                     throw $e;
                 }
@@ -150,20 +165,33 @@ class GeminiClient
             throw AiException::emptyResponse();
         }
 
+        $candidate = is_array($candidates[0] ?? null) ? $candidates[0] : [];
+        $finishReason = (string) ($candidate['finishReason'] ?? '');
+
+        // The provider can stop a response early. Report that honestly instead
+        // of mislabelling a truncated answer as invalid JSON.
+        if (in_array($finishReason, ['SAFETY', 'RECITATION', 'PROHIBITED_CONTENT', 'BLOCKLIST'], true)) {
+            throw AiException::blocked($finishReason);
+        }
+
         $texts = [];
-        foreach (($candidates[0]['content']['parts'] ?? []) as $part) {
+        foreach (($candidate['content']['parts'] ?? []) as $part) {
             if (isset($part['text']) && is_string($part['text'])) {
                 $texts[] = $part['text'];
             }
         }
         $text = trim(implode("\n", $texts));
         if ($text === '') {
-            throw AiException::emptyResponse();
+            throw $finishReason === 'MAX_TOKENS'
+                ? AiException::truncated($finishReason)
+                : AiException::emptyResponse();
         }
 
         $data = $this->decodeJson($text);
         if ($data === null) {
-            throw AiException::invalidJson();
+            throw $finishReason === 'MAX_TOKENS'
+                ? AiException::truncated($finishReason)
+                : AiException::invalidJson();
         }
 
         $usage = $this->normalizeUsage($payload['usageMetadata'] ?? []);

@@ -409,7 +409,7 @@ class AiReportController extends BaseController
 
         if (($result['data'] ?? []) === [] || isset($result['data']['supported_examples'])) {
             $fallback['code'] = 'NO_TOOL';
-            $fallback['reason'] = 'Hakuna data ya kueleza.';
+            $fallback['reason'] = AiException::reasonForCode('NO_TOOL', $locale);
 
             return $fallback;
         }
@@ -417,13 +417,13 @@ class AiReportController extends BaseController
         $client = new GeminiClient;
         if (! $client->isEnabled()) {
             $fallback['code'] = 'AI_DISABLED';
-            $fallback['reason'] = 'AI imezimwa kwenye server.';
+            $fallback['reason'] = AiException::reasonForCode('AI_DISABLED', $locale);
 
             return $fallback;
         }
         if (! $client->isConfigured()) {
             $fallback['code'] = 'AI_NOT_CONFIGURED';
-            $fallback['reason'] = 'AI haijawekwa kwenye server (GEMINI_API_KEY).';
+            $fallback['reason'] = AiException::reasonForCode('AI_NOT_CONFIGURED', $locale);
 
             return $fallback;
         }
@@ -474,12 +474,12 @@ class AiReportController extends BaseController
             ];
         } catch (AiException $error) {
             $fallback['code'] = $error->errorCode;
-            $fallback['reason'] = $error->getMessage();
+            $fallback['reason'] = $error->userReason($locale);
 
             return $fallback;
         } catch (Throwable $error) {
             $fallback['code'] = 'AI_ERROR';
-            $fallback['reason'] = 'AI haipatikani kwa sasa.';
+            $fallback['reason'] = AiException::reasonForCode('AI_ERROR', $locale);
 
             return $fallback;
         }

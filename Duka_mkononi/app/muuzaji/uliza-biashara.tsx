@@ -60,6 +60,7 @@ interface ReportResponse {
     available: boolean;
     degraded: boolean;
     code: string | null;
+    reason?: string | null;
     explanation: string;
   };
 }
@@ -281,7 +282,10 @@ export default function UlizaBiasharaScreen() {
             <Text style={styles.aiCardText}>{result.ai.explanation}</Text>
           </View>
         ) : result.ai.code && result.ai.code !== 'AI_CLASSIFIER_ONLY' ? (
-          <Text style={styles.muted}>{t('business_report.ai_degraded_title')}</Text>
+          <Text style={styles.muted}>
+            {t('business_report.ai_degraded_title')}
+            {result.ai.reason ? ` — ${result.ai.reason}` : ''}
+          </Text>
         ) : null}
         {renderChart()}
         {renderTable()}

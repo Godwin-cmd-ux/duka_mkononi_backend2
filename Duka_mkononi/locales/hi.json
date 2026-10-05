@@ -1606,6 +1606,7 @@
     "insufficient_title": "पर्याप्त डेटा नहीं",
     "store_warning": "रिपोर्ट अभी इतिहास में सहेजी नहीं गई।",
     "ai_title": "AI टिप्पणियाँ",
+    "ai_degraded_title": "AI टिप्पणियाँ उपलब्ध नहीं",
     "no_history": "अभी कोई इतिहास नहीं।"
   },
   "price_advisor": {

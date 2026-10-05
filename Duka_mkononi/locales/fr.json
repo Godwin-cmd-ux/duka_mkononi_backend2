@@ -1606,6 +1606,7 @@
     "insufficient_title": "Données insuffisantes",
     "store_warning": "Le rapport n'a pas été enregistré dans l'historique.",
     "ai_title": "Notes IA",
+    "ai_degraded_title": "Notes IA indisponibles",
     "no_history": "Aucun historique pour l'instant."
   },
   "price_advisor": {

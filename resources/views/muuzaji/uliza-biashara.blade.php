@@ -77,6 +77,8 @@
         .ai-card { background: #e8f8f0; border-radius: 16px; padding: 16px; margin-bottom: 16px; }
         .ai-card-title { font-size: 13px; font-weight: 700; color: #1e8449; margin-bottom: 6px; }
         .ai-card-text { font-size: 14px; color: #1e8449; line-height: 1.55; }
+        .banner { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 14px; margin-bottom: 16px; font-size: 13px; font-weight: 600; }
+        .banner.warn { background: #fef5e7; color: #b9770e; }
 
         .meta-row { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 12px; }
         .meta-text { font-size: 12px; color: #95a5a6; }
@@ -399,6 +401,8 @@
             html += `<div class="card answer-card"><div class="card-title">${escapeHtml(t('answer_title'))}</div><div class="answer-text">${escapeHtml(report.answer.summary_text)}</div></div>`;
             if (report.ai && report.ai.explanation) {
                 html += `<div class="ai-card"><div class="ai-card-title"><i class="fa-solid fa-wand-magic-sparkles"></i> ${escapeHtml(t('ai_ready'))}</div><div class="ai-card-text">${escapeHtml(report.ai.explanation)}</div></div>`;
+            } else if (report.ai && report.ai.code && report.ai.code !== 'AI_CLASSIFIER_ONLY') {
+                html += `<div class="banner warn"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> ${escapeHtml(t('ai_degraded_title'))}${report.ai.reason ? ' &mdash; ' + escapeHtml(report.ai.reason) : ''}</div>`;
             }
             html += renderChart();
             html += renderTable();

@@ -71,7 +71,7 @@ interface HealthDigest {
   changes: HealthChange[];
   actions: HealthAction[];
   limitations: string[];
-  ai: { available: boolean; degraded: boolean; code: string | null; interpretation: string };
+  ai: { available: boolean; degraded: boolean; code: string | null; reason?: string | null; interpretation: string };
 }
 
 interface HistoryRow {
@@ -298,6 +298,11 @@ export default function AfyaBiasharaScreen() {
             </Text>
             <Text style={styles.aiCardText}>{digest.ai.interpretation}</Text>
           </View>
+        ) : digest.ai?.code ? (
+          <Text style={styles.muted}>
+            {t('health_digest.ai_degraded_title')}
+            {digest.ai.reason ? ` — ${digest.ai.reason}` : ''}
+          </Text>
         ) : null}
         {renderComponents()}
         {renderChanges()}

@@ -26,6 +26,10 @@ return [
     'retry_base_delay_ms' => (int) env('AI_RETRY_BASE_DELAY_MS', 800),
     'retry_max_delay_ms' => (int) env('AI_RETRY_MAX_DELAY_MS', 8000),
     'max_output_tokens' => (int) env('AI_MAX_OUTPUT_TOKENS', 4096),
+    // Thinking models spend part of the output budget before writing the answer,
+    // so requests for fewer tokens are raised to this floor. Without it a small
+    // budget silently truncates the JSON and surfaces as "invalid JSON".
+    'min_output_tokens' => (int) env('AI_MIN_OUTPUT_TOKENS', 1024),
     'temperature' => (float) env('AI_TEMPERATURE', 0.2),
     // Hard ceiling on the characters we will ever send to the provider in one
     // request. Larger prompts are rejected before any network call is made.

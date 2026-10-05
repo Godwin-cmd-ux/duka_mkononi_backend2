@@ -1606,6 +1606,7 @@
     "insufficient_title": "Not enough data",
     "store_warning": "The report was not saved to history right now.",
     "ai_title": "AI notes",
+    "ai_degraded_title": "AI notes unavailable",
     "no_history": "No history yet."
   },
   "price_advisor": {

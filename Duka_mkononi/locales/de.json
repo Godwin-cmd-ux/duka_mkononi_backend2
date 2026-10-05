@@ -1598,6 +1598,7 @@
     "insufficient_title": "Zu wenig Daten",
     "store_warning": "Der Bericht wurde gerade nicht im Verlauf gespeichert.",
     "ai_title": "KI-Hinweise",
+    "ai_degraded_title": "KI-Hinweise nicht verfügbar",
     "no_history": "Noch kein Verlauf."
   },
   "price_advisor": {

@@ -154,7 +154,7 @@ class AiPricingController extends BaseController
 
         if ($topProducts === []) {
             $fallback['code'] = 'NO_PRODUCTS';
-            $fallback['reason'] = 'Hakuna bidhaa hai kuchambua.';
+            $fallback['reason'] = AiException::reasonForCode('NO_PRODUCTS', $locale);
 
             return $fallback;
         }
@@ -163,13 +163,13 @@ class AiPricingController extends BaseController
 
         if (! $client->isEnabled()) {
             $fallback['code'] = 'AI_DISABLED';
-            $fallback['reason'] = 'AI imezimwa kwenye server.';
+            $fallback['reason'] = AiException::reasonForCode('AI_DISABLED', $locale);
 
             return $fallback;
         }
         if (! $client->isConfigured()) {
             $fallback['code'] = 'AI_NOT_CONFIGURED';
-            $fallback['reason'] = 'AI haijawekwa kwenye server (GEMINI_API_KEY).';
+            $fallback['reason'] = AiException::reasonForCode('AI_NOT_CONFIGURED', $locale);
 
             return $fallback;
         }
@@ -224,12 +224,12 @@ class AiPricingController extends BaseController
             return $sanitized;
         } catch (AiException $error) {
             $fallback['code'] = $error->errorCode;
-            $fallback['reason'] = $error->getMessage();
+            $fallback['reason'] = $error->userReason($locale);
 
             return $fallback;
         } catch (Throwable $error) {
             $fallback['code'] = 'AI_ERROR';
-            $fallback['reason'] = 'AI haipatikani kwa sasa.';
+            $fallback['reason'] = AiException::reasonForCode('AI_ERROR', $locale);
 
             return $fallback;
         }

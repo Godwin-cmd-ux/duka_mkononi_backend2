@@ -80,15 +80,60 @@ class AiGeminiClientTest extends TestCase
         }
     }
 
-    public function test_it_rejects_invalid_json_from_the_provider(): void
+    public function test_it_retries_a_malformed_answer_before_reporting_invalid_json(): void
+    {
+        Http::fake(['*' => Http::sequence()
+            ->push(['candidates' => [['content' => ['parts' => [['text' => 'not json at all']]]]]], 200)
+            ->push($this->successBody(), 200),
+        ]);
+
+        $result = (new GeminiClient)->generateJson([['text' => 'hello']], null, ['capability' => 'test']);
+
+        $this->assertSame('ok', $result->data['headline']);
+        $this->assertSame(2, $result->attempts);
+    }
+
+    public function test_it_reports_invalid_json_only_after_exhausting_retries(): void
     {
         Http::fake(['*' => Http::response([
             'candidates' => [['content' => ['parts' => [['text' => 'not json at all']]]]],
         ], 200)]);
 
-        $this->expectException(AiException::class);
+        try {
+            (new GeminiClient)->generateJson([['text' => 'hello']], null, ['capability' => 'test', 'retries' => 1]);
+            $this->fail('Expected an AiException.');
+        } catch (AiException $e) {
+            $this->assertSame('AI_INVALID_JSON', $e->errorCode);
+            $this->assertTrue($e->retryable);
+        }
+    }
 
-        (new GeminiClient)->generateJson([['text' => 'hello']], null, ['capability' => 'test']);
+    public function test_a_response_cut_off_by_the_token_limit_is_reported_as_truncated(): void
+    {
+        Http::fake(['*' => Http::response([
+            'candidates' => [[
+                'finishReason' => 'MAX_TOKENS',
+                'content' => ['parts' => [['text' => '{"headline": "cut off']]],
+            ]],
+        ], 200)]);
+
+        try {
+            (new GeminiClient)->generateJson([['text' => 'hello']], null, ['capability' => 'test', 'retries' => 0]);
+            $this->fail('Expected an AiException.');
+        } catch (AiException $e) {
+            $this->assertSame('AI_TRUNCATED', $e->errorCode);
+            $this->assertSame('Jibu la AI lilikatika kabla ya kukamilika. Tafadhali jaribu tena.', $e->userReason('sw'));
+        }
+    }
+
+    public function test_user_facing_reasons_avoid_internal_jargon(): void
+    {
+        $busy = AiException::rateLimited();
+
+        $this->assertStringContainsString('shughuli nyingi', (string) $busy->userReason('sw'));
+        $this->assertStringContainsString('busy', (string) $busy->userReason('en'));
+        // Unknown locales fall back to English rather than showing nothing.
+        $this->assertSame($busy->userReason('en'), $busy->userReason('fr'));
     }
 
     public function test_it_fails_cleanly_when_unconfigured(): void

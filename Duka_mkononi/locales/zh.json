@@ -1597,6 +1597,7 @@
     "insufficient_title": "数据不足",
     "store_warning": "报告暂时未保存到历史。",
     "ai_title": "AI 说明",
+    "ai_degraded_title": "AI 说明不可用",
     "no_history": "暂无历史。"
   },
   "price_advisor": {

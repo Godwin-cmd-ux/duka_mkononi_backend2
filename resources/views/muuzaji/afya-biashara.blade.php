@@ -231,6 +231,7 @@
             history_title: 'Historia ya wiki',
             limitations_title: 'Maelezo ya ziada',
             ai_title: 'Maoni ya AI',
+            ai_degraded_title: 'Maoni ya AI hayapatikani',
             no_history: 'Hakuna historia bado.',
             insufficient_title: 'Data haitoshi',
             store_warning: 'Ripoti haikuhifadhiwa kwenye historia kwa sasa.',
@@ -482,6 +483,8 @@
             }
             if (digest.ai && digest.ai.interpretation) {
                 html += `<div class="ai-card"><div class="ai-card-title"><i class="fa-solid fa-wand-magic-sparkles"></i> ${escapeHtml(t('ai_title'))}</div><div class="ai-card-text">${escapeHtml(digest.ai.interpretation)}</div></div>`;
+            } else if (digest.ai && digest.ai.code) {
+                html += `<div class="notice"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> ${escapeHtml(t('ai_degraded_title'))}${digest.ai.reason ? ' &mdash; ' + escapeHtml(digest.ai.reason) : ''}</div>`;
             }
             html += renderComponents();
             html += renderChanges();
