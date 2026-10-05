@@ -28,7 +28,7 @@ import { getCache, setCache } from '../../db/cache';
 import { registerLive } from '../../lib/syncer';
 // Shared helper (not a local copy): it retries reads on the alternate API host,
 // so this page survives carriers where the primary host is unreachable.
-import { fetchWithTimeout, isAbortError, requireNetwork } from '../../lib/network';
+import { fetchWithTimeout, isAbortError, isNetworkStable, requireNetwork } from '../../lib/network';
 
 // 🔥 MAX FILE SIZES (in bytes)
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -124,12 +124,12 @@ export default function TangazaScreen() {
 
   useEffect(() => {
     const checkNetwork = async () => {
-      try {
-        const response = await fetch('https://www.google.com', { method: 'HEAD' });
-        setIsOnline(response.ok);
-      } catch {
-        setIsOnline(false);
-      }
+      // Probe our own API instead of google.com: a raw fetch to Google has no
+      // timeout, so on a carrier with a bad route (e.g. Halotel) it hangs
+      // instead of failing, and it says nothing about whether the backend
+      // itself is reachable. isNetworkStable() is bounded, tries every host,
+      // and shares its cached result with the write guards.
+      setIsOnline(await isNetworkStable());
     };
     
     checkNetwork();

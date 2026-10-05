@@ -763,6 +763,10 @@
                     </div>
                     <span class="nav-label" data-i18n="muuzaji_orders.nav_orders">Oda</span>
                 </a>
+                <a href="huduma-nyingine" class="nav-item">
+                    <div class="nav-icon">🧩</div>
+                    <span class="nav-label" data-i18n="muuzaji_huduma.nav_other">Huduma Nyingine</span>
+                </a>
             </div>
             <div class="sidebar-footer">
                 <div class="user-info">

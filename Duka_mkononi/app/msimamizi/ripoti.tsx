@@ -1,5 +1,8 @@
 ﻿import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { File, Paths } from 'expo-file-system';
+import * as Print from 'expo-print';
+import { shareAsync } from 'expo-sharing';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator,
@@ -841,13 +844,132 @@ export default function RipotiScreen() {
     }
   };
 
-  const handlePrintPDF = () => {      Alert.alert(t('reports.export'), t('reports.coming_soon'));
+  // ============================== EXPORTS ==============================
+  // The web report page builds a standalone HTML document for the active tab
+  // and hands it to the browser's print dialog (PDF / Print) or downloads a
+  // CSV (Excel). A phone has no popup, so the same content is rendered here
+  // and driven through expo-print / expo-sharing instead.
+  const exportFileStamp = () => new Date().toISOString().slice(0, 10);
+
+  const escapeHtml = (value: unknown) => String(value ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  // Mirrors buildExportTable() in resources/views/msimamizi/ripoti.blade.php:
+  // first row is the header, the rest are data rows for the active tab.
+  const buildExportRows = (): { title: string; rows: (string | number)[][] } => {
+    const isAdmin = userData.role === 'admin';
+    const scope = isAdmin ? userData.businessName : t('reports.personal_report');
+
+    switch (activeReport) {
+      case 'sales':
+        return {
+          title: `${t('reports.sales_report')} - ${scope}`,
+          rows: [
+            [t('reports.col_product'), t('reports.col_customer'), t('reports.col_seller'), t('reports.col_date'), t('reports.col_quantity'), t('reports.col_price'), t('reports.col_total'), t('reports.profit_label')],
+            ...getFilteredSales().map(s => [s.product_name, s.customer_name || t('reports.customer_name_header'), s.seller_name, s.sale_date, s.quantity, s.unit_price, s.total_amount, typeof s.profit === 'number' ? s.profit : ''])
+          ]
+        };
+      case 'products': {
+        const list = activeProductTab === 'sold' ? getFilteredSoldProducts() : getFilteredUnsoldProducts();
+        return {
+          title: `${t(activeProductTab === 'sold' ? 'reports.sold_products' : 'reports.unsold_products')} - ${scope}`,
+          rows: [
+            [t('reports.col_product'), t('reports.col_category'), t('reports.col_stock'), t('reports.purchase_price'), t('reports.expected_selling_price'), t('reports.col_sold'), t('reports.total_revenue'), t('reports.profit_label')],
+            ...list.map(p => [p.name, p.category || t('reports.no_category'), p.stock, p.price ?? '', p.expected_selling_price ?? '', p.total_sold || 0, p.total_revenue || 0, p.total_profit || 0])
+          ]
+        };
+      }
+      case 'customers':
+        return {
+          title: `${t('reports.customer_report')} - ${scope}`,
+          rows: [
+            [t('reports.col_name'), t('reports.col_phone'), t('reports.col_email'), t('reports.col_sales'), t('reports.customer_total_sw')],
+            ...getFilteredCustomers().map(c => [c.name, c.phone || '', c.email || '', c.purchases_count || 0, c.total_purchases || 0])
+          ]
+        };
+      default: {
+        const stats = businessStats;
+        const rows: (string | number)[][] = [
+          [t('reports.col_metric'), t('reports.col_value')],
+          [t('reports.total_sales'), stats ? stats.totalSales : 0],
+          [t('reports.total_profit'), stats ? stats.totalProfit : 0],
+          [t('reports.all_customers'), stats ? stats.totalCustomers : 0],
+          [t('reports.all_products'), stats ? stats.totalProducts : 0],
+          [t('reports.col_sellers'), stats ? stats.totalSellers : 0]
+        ];
+        if (stats) {
+          rows.push([t('reports.today_sales'), stats.todaySales]);
+          rows.push([t('reports.today_profit'), stats.todayProfit]);
+          rows.push([t('reports.avg_margin'), `${stats.averageProfitMargin.toFixed(1)}%`]);
+          if (stats.unknownCostSales > 0) {
+            rows.push([t('reports.cost_not_recorded'), stats.unknownCostSales]);
+          }
+        }
+        return { title: `${t('reports.business_report')} - ${scope}`, rows };
+      }
+    }
   };
 
-  const handleExportExcel = () => {      Alert.alert(t('reports.export'), t('reports.coming_soon'));
+  const buildExportHtml = () => {
+    const { title, rows } = buildExportRows();
+    const cell = 'border:1px solid #ecf0f1;padding:6px 10px;';
+    const head = rows[0].map(h => `<th style="border:1px solid #bdc3c7;padding:6px 10px;background:#f4f6f7;text-align:left;">${escapeHtml(h)}</th>`).join('');
+    const body = rows.slice(1).map(r => `<tr>${r.map(v => `<td style="${cell}">${escapeHtml(v)}</td>`).join('')}</tr>`).join('');
+    return `<html><head><meta charset="UTF-8"><title>${escapeHtml(title)}</title></head>
+      <body><h2 style="font-family:sans-serif;">${escapeHtml(title)}</h2>
+      <p style="font-family:sans-serif;font-size:12px;color:#555;">${escapeHtml(t('reports.generated_at', { date: new Date().toLocaleString() }))}</p>
+      <table style="border-collapse:collapse;font-family:sans-serif;font-size:12px;"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></body></html>`;
   };
 
-  const handlePrint = () => {      Alert.alert(t('reports.print'), t('reports.coming_soon'));
+  // RFC 4180 escaping plus a BOM so Excel reads commas/quotes and UTF-8 right.
+  const buildExportCsv = () => {
+    const esc = (v: unknown) => { const s = String(v ?? ''); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+    const { rows } = buildExportRows();
+    return '\ufeff' + rows.map(r => r.map(esc).join(',')).join('\r\n');
+  };
+
+  const handlePrintPDF = async () => {
+    try {
+      const { uri } = await Print.printToFileAsync({ html: buildExportHtml(), base64: false });
+      await shareAsync(uri, {
+        UTI: '.pdf',
+        mimeType: 'application/pdf',
+        dialogTitle: t('reports.export_pdf'),
+      });
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      Alert.alert(t('reports.export'), t('reports.export_failed'));
+    }
+  };
+
+  const handleExportExcel = () => {
+    try {
+      // expo-print exposes no file-system API and expo-sharing can only share
+      // an existing file, so the CSV is written with expo-file-system first.
+      const file = new File(Paths.cache, `DukaMkononi-${activeReport}-${exportFileStamp()}.csv`);
+      file.create({ overwrite: true });
+      file.write(buildExportCsv());
+      shareAsync(file.uri, {
+        UTI: 'text/csv',
+        mimeType: 'text/csv',
+        dialogTitle: t('reports.export_excel'),
+      }).catch((error) => {
+        console.error('Error sharing Excel file:', error);
+        Alert.alert(t('reports.export'), t('reports.export_failed'));
+      });
+    } catch (error) {
+      console.error('Error exporting Excel:', error);
+      Alert.alert(t('reports.export'), t('reports.export_failed'));
+    }
+  };
+
+  const handlePrint = async () => {
+    try {
+      await Print.printAsync({ html: buildExportHtml() });
+    } catch (error) {
+      console.error('Error printing report:', error);
+      Alert.alert(t('reports.print'), t('reports.export_failed'));
+    }
   };
 
   const renderOverview = () => {

@@ -96,6 +96,7 @@
         </div>
         <nav class="nav-items">
             <a class="nav-item active" href="/muuzaji/orders"><i class="fa-solid fa-receipt"></i><span data-i18n="muuzaji_orders.nav_orders">Orders</span></a>
+            <a class="nav-item" href="/muuzaji/huduma-nyingine"><i class="fa-solid fa-puzzle-piece"></i><span data-i18n="muuzaji_huduma.nav_other">Other Services</span></a>
             <a class="nav-item" href="/muuzaji/uza"><i class="fa-solid fa-cash-register"></i><span data-i18n="muuzaji_orders.nav_sell">Sell</span></a>
             <a class="nav-item" href="/muuzaji/mauzo"><i class="fa-solid fa-chart-line"></i><span data-i18n="muuzaji_orders.nav_sales">Sales</span></a>
             <a class="nav-item" href="/muuzaji/matumizi"><i class="fa-solid fa-money-bill-wave"></i><span data-i18n="muuzaji_orders.nav_expenses">Expenses</span></a>

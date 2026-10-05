@@ -1,0 +1,84 @@
+================================================================================
+ DUKA MKONONI — USER TEST WORKFLOWS (steps only)
+================================================================================
+
+
+-----------------------------------
+ LOGIN (do this first)
+-----------------------------------
+1. Open the Duka Mkononi website.
+2. Log in with the Seller email and password.
+3. You land on the Seller portal.
+4. In the left menu, find the four items at the bottom:
+     Ushauri wa Bei | Mpango wa Kuagiza | Uliza Biashara | Afya ya Biashara
+
+
+================================================================================
+ WORKFLOW 1 — PRICE ADVICE  (Ushauri wa Bei)
+================================================================================
+1. Click "Ushauri wa Bei" in the left menu.
+2. Wait for the page to load.
+3. Read the summary at the top ("Muhtasari wa biashara").
+4. Scroll through the product list.
+5. Find a product flagged "Hasara" (loss) or "Faida ndogo" (small profit).
+6. Read its buying price, selling price, and proposed price
+   ("Bei inayopendekezwa").
+7. Click the refresh arrow at the top-right.
+8. Wait for it to reload.
+
+
+================================================================================
+ WORKFLOW 2 — RESTOCK PLAN  (Mpango wa Kuagiza)
+================================================================================
+1. Click "Mpango wa Kuagiza" in the left menu.
+2. Wait for the page to load.
+3. Read the summary at the top ("Muhtasari wa kuagiza").
+4. Scroll through the product list.
+5. Find a product flagged "Imeisha" (out of stock) or "Stock ndogo" (low).
+6. Read its stock, selling speed ("Mauzo kwa siku"), and days left
+   ("Siku zilizosalia").
+7. Read the "Agiza" box to see how many to order and the estimated cost.
+8. Click the refresh arrow at the top-right.
+9. Wait for it to reload.
+
+
+================================================================================
+ WORKFLOW 3 — ASK A QUESTION  (Uliza Biashara)
+================================================================================
+1. Click "Uliza Biashara" in the left menu.
+2. Click one of the example questions under "Jaribu kuuliza"
+   (e.g. "Niliuza mangapi wiki hii?").
+3. Wait for the answer to appear.
+4. Read the "Jibu" (answer), any table ("Maelezo") and any chart ("Chati").
+5. Type your own question in the box (e.g. "Nilitumia kiasi gani kwenye
+   usafiri?").
+6. Press the send button ("Uliza").
+7. Wait for the answer.
+8. Ask one more follow-up question and wait for the answer.
+
+
+================================================================================
+ WORKFLOW 4 — BUSINESS HEALTH  (Afya ya Biashara)
+================================================================================
+1. Click "Afya ya Biashara" in the left menu.
+2. Wait for the page to load.
+3. Read the round score at the top ("Alama ya afya", out of 100).
+4. Read the summary sentence and the period ("Kipindi").
+5. Scroll down to "Vipimo" and read each bar.
+6. Read "Mabadiliko muhimu" (what changed).
+7. Read "Vitendo vinavyopendekezwa" (suggested actions).
+8. Read "Historia ya wiki" (past weeks).
+9. Click "Sasisha" at the top-right.
+10. Wait for the new report to generate.
+
+
+================================================================================
+ PHONE APP (same four features as bottom tabs)
+================================================================================
+1. Open the Duka Mkononi app.
+2. Log in as the Seller.
+3. Tap the "Bei" tab    -> repeat WORKFLOW 1 steps.
+4. Tap the "Agiza" tab  -> repeat WORKFLOW 2 steps.
+5. Tap the "Uliza" tab  -> repeat WORKFLOW 3 steps.
+6. Tap the "Afya" tab   -> repeat WORKFLOW 4 steps.
+================================================================================

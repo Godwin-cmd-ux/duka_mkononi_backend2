@@ -1,0 +1,786 @@
+==============================================================================
+ TEST FLOW — CAPABILITY #2: PRICING & MARGIN ADVISOR
+ Duka Mkononi  (Gemini-Powered Expert System)
+==============================================================================
+
+WHAT WAS BUILT
+--------------
+A read-only AI capability that reviews your business's products and tells you
+which ones are LOSING money, have THIN margins, or are missing prices — with a
+suggested selling price computed in trusted PHP (never guessed by the AI).
+
+Endpoint:  POST /api/ai/price/suggest     (requires a logged-in seller/admin)
+
+All money math happens in trusted code. Gemini only explains and prioritises,
+and its output is sanitised so it can never invent a product, a price, or a
+number.
+
+Files added/changed
+  config/ai.php
+  app/Services/Ai/AiException.php
+  app/Services/Ai/AiResult.php
+  app/Services/Ai/AiAudit.php
+  app/Services/Ai/GeminiClient.php          <- shared provider service
+  app/Services/Ai/BusinessDataProvider.php  <- trusted retrieval (business-scoped)
+  app/Services/Ai/PricingAdvisor.php        <- the math + AI sanitiser
+  app/Http/Controllers/Api/AiPricingController.php
+  routes/api.php                            <- one new route
+  tests/Unit/PricingAdvisorTest.php
+  tests/Feature/AiPricingRouteTest.php
+  tests/Feature/AiGeminiClientTest.php
+
+FRONTEND (seller app + website, in all 8 languages)
+  Duka_mkononi/app/muuzaji/ushauri-bei.tsx   <- mobile screen (new tab)
+  Duka_mkononi/app/muuzaji/_layout.tsx       <- registers the new tab
+  Duka_mkononi/locales/{sw,en,fr,hi,es,ur,de,zh}.json  <- price_advisor strings
+  resources/views/muuzaji/ushauri-bei.blade.php        <- website page
+  routes/web.php                             <- /muuzaji/ushauri-bei
+  locales.json                               <- muuzaji_ushauri_bei strings
+  resources/views/muuzaji/*.blade.php        <- "Ushauri wa Bei" nav link added
+
+
+STEP 0 — PREREQUISITES
+----------------------
+1. GEMINI_API_KEY must be set in .env   (it already is).
+2. Start the API:      php artisan serve
+   Base URL used below: http://127.0.0.1:8000
+3. You need at least ONE active product that belongs to your business, ideally:
+     - one product where selling price < buying price   (LOSS)
+     - one product with a thin margin                   (THIN)
+     - one product with no buying price                 (MISSING_COST)
+   If you don't have these, you can still run the test and just check the shape.
+
+
+STEP 1 — GET A TOKEN (log in)
+-----------------------------
+Replace the email/password with a real seller or admin account.
+
+curl -s -X POST http://127.0.0.1:8000/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"SELLER_EMAIL","password":"SELLER_PASSWORD","role":"seller"}'
+
+Expected: a JSON body containing  "message":"Login successful",  "token":"...".
+Copy the token. In every command below, paste it after "Bearer ".
+
+(WINDOWS USERS: if the single-quoted JSON is awkward in cmd.exe, run these in
+ Git Bash, which the project already uses.)
+
+
+STEP 2 — HAPPY PATH
+-------------------
+curl -s -X POST http://127.0.0.1:8000/api/ai/price/suggest \
+  -H "Authorization: Bearer PASTE_TOKEN_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+
+EXPECTED (HTTP 200)
+  {
+    "success": true,
+    "capability": "price_advisor",
+    "locale": "sw",
+    "currency": "TZS",
+    "summary": {
+      "product_count": <n>,
+      "counts": { "LOSS": n, "ZERO_MARGIN": n, "THIN": n, "HEALTHY": n,
+                  "MISSING_COST": n, "MISSING_SELLING_PRICE": n },
+      "at_risk_count": <n>,
+      "inventory_value_cost": <number>,
+      "revenue_window": <number>,
+      "margin_pct_window": <number|null>,
+      ...
+    },
+    "products": [
+      {
+        "id": "...", "name": "...", "status": "LOSS",
+        "buying_price": 1000, "selling_price": 900, "margin": -100,
+        "suggested_price": 1200, "floor_price": 1100,
+        "priority_score": <number>,
+        "ai": { "severity": "...", "title": "...", "action": "..." }
+      },
+      ... sorted with the most urgent (LOSS) first ...
+    ],
+    "insights": [ { "product_id": "...", "severity": "high|medium|low",
+                    "title": "...", "action": "..." } ],
+    "watchouts": [ "..." ],
+    "limitations": [ "...", "...", "..." ],
+    "ai": { "available": true, "degraded": false, "code": null,
+            "headline": "...", "meta": { "model": "...", "tokens": {...} } }
+  }
+
+WHAT TO CHECK
+  [ ] success = true
+  [ ] products[0] is usually a LOSS/THIN item (highest priority first)
+  [ ] a LOSS item shows margin < 0 AND a suggested_price > buying_price
+  [ ] suggested_price is a multiple of 500 (rounded up), never invented by AI
+  [ ] limitations[] mentions any products with missing prices
+  [ ] ai.degraded = false  (i.e. Gemini really answered)
+
+
+STEP 3 — PARAMETERS
+-------------------
+Try a different language, window and target margin:
+
+curl -s -X POST http://127.0.0.1:8000/api/ai/price/suggest \
+  -H "Authorization: Bearer PASTE_TOKEN_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{"locale":"en","window_days":90,"target_margin_pct":30,"limit":10}'
+
+WHAT TO CHECK
+  [ ] locale echoed as "en" and the AI headline/insights are in English
+  [ ] window_days echoed as 90 in summary
+  [ ] summary.target_margin_pct = 30
+  [ ] suggested prices now reflect a 30% target (higher than the 20% run)
+  [ ] at most 10 products returned
+
+
+STEP 4 — AUTHORISATION (must fail)
+----------------------------------
+curl -s -o /dev/null -w "%{http_code}\n" -X POST \
+  http://127.0.0.1:8000/api/ai/price/suggest \
+  -H "Content-Type: application/json" -d '{}'
+
+EXPECTED: 401.  (No token => "Token inahitajika".)
+
+
+STEP 5 — TENANT ISOLATION (must fail safely)
+--------------------------------------------
+Log in as a DIFFERENT business and call the endpoint. The response must only
+contain that business's products — never the first shop's.
+
+WHAT TO CHECK
+  [ ] summary.product_count matches the second business only
+  [ ] no product id from the first business appears anywhere
+
+
+STEP 6 — HONEST DEGRADATION (AI down, metrics still real)
+---------------------------------------------------------
+1. In .env set:   GEMINI_API_KEY=
+2. Clear config:  php artisan config:clear
+3. Call STEP 2 again.
+
+EXPECTED (still HTTP 200)
+  [ ] success = true
+  [ ] summary + products are STILL populated (real numbers)
+  [ ] ai.available = false, ai.degraded = true,
+      ai.code = "AI_NOT_CONFIGURED"
+  [ ] a clear ai.reason is present
+4. Restore your key and re-run `php artisan config:clear`.
+
+(Optional: set AI_FEATURE_PRICE_ADVISOR=false + config:clear => HTTP 403
+ with code "FEATURE_DISABLED".)
+
+
+STEP 7 — AUDIT TRAIL
+--------------------
+Every AI call is logged to the existing `user_logs` table (no migration needed).
+
+In Supabase SQL editor:
+  SELECT action, endpoint, status, details, created_at
+  FROM user_logs
+  WHERE action IN ('AI_REQUEST','AI_PRICE_ADVISOR')
+  ORDER BY created_at DESC LIMIT 20;
+
+WHAT TO CHECK
+  [ ] an AI_REQUEST row per call, with capability, model, request_id,
+      duration_ms, attempts, tokens and error_code when it failed
+  [ ] no API key, password or prompt text is ever stored
+  [ ] an AI_PRICE_ADVISOR row per successful request
+
+
+STEP 8 — AUTOMATED TESTS
+------------------------
+php artisan test --filter "PricingAdvisor|AiPricingRoute|AiGeminiClient"
+
+EXPECTED: 23 passed. (Full suite: `php artisan test` => 34 passed.)
+
+Mobile typecheck:  cd Duka_mkononi && npx tsc --noEmit   (expect no output)
+
+
+STEP 9 — MOBILE APP (seller)
+----------------------------
+1. Start the app:   cd Duka_mkononi && npx expo start
+2. Log in as a SELLER (muuzaji).
+3. On the bottom tab bar, tap the new "Bei" / "Prices" tab (💡).
+
+WHAT TO CHECK
+  [ ] a loading spinner shows "Inachambua bei na faida..." (or the chosen language)
+  [ ] a green "Ushauri wa AI" banner appears when the AI answered
+  [ ] the business summary card shows Products / Need attention / Avg. margin,
+      plus inventory value, sales and gross profit for the period
+  [ ] products needing attention are listed first, each with a coloured status
+      badge (Hasara / Faida ndogo / ...) and buying + selling price
+  [ ] at-risk items show a "Bei inayopendekezwa" and "Bei ya chini kabisa" box
+  [ ] the AI shows a short advice note inside the relevant product card
+  [ ] "Mambo ya kuangalia" and "Mipaka ya uchambuzi" lists appear at the bottom
+  [ ] pull-to-refresh re-runs the analysis; the refresh icon spins
+
+DEGRADED / EMPTY / OFFLINE
+  [ ] with no products, the screen shows "Hakuna bidhaa" and guidance
+  [ ] if AI is disabled, the amber "Ushauri wa AI haupatikani" banner shows a
+      reason while the real numbers are still displayed
+  [ ] turn off the network and refresh: a cached result or a clear network
+      message appears — never blank numbers
+
+TRANSLATION
+  [ ] switch the app language (Profaili -> language) and reopen the tab:
+      title, labels, statuses and the AI text all follow the language
+
+
+STEP 10 — WEBSITE (Blade)
+-------------------------
+1. php artisan serve
+2. Open  http://127.0.0.1:8000/muuzaji/ushauri-bei  (log in as a seller first).
+
+WHAT TO CHECK
+  [ ] the page renders with the seller sidebar; "Ushauri wa Bei" is active
+  [ ] the same summary, product cards, AI notes and limitation lists as mobile
+  [ ] the refresh button reloads; the status badge colours match the data
+  [ ] if there are no products, the empty state is shown
+  [ ] switch the language with the floating language button: the page reloads
+      the advice in that language (the request is re-sent with the new locale)
+
+NAV LINK
+  [ ] every muuzaji page (profaili / mauzo / matumizi / uza / orders) now shows
+      a "Ushauri wa Bei" item in the sidebar that opens the new page
+
+
+QUICK SANITY (design guarantees)
+--------------------------------
+  * The AI never supplies a price: suggested_price/floor_price come from PHP.
+  * An insight naming a product id that is not in the business is DROPPED.
+  * Severity outside high/medium/low is clamped to medium.
+  * Strings from the model are length-bounded (no runaway output).
+  * Money missing in the data is reported as missing, never invented.
+
+
+==============================================================================
+ TEST FLOW — CAPABILITY #3: RESTOCK & STOCK-OUT PREDICTION
+ Duka Mkononi  (Gemini-Powered Expert System)
+==============================================================================
+
+WHAT WAS BUILT
+--------------
+A read-only planning capability that reads real completed sales and current
+stock, then tells you which products will run out, when, and how many units to
+order — computed in trusted PHP. It never purchases and never changes stock.
+
+Endpoint:  POST /api/ai/restock/list     (requires a logged-in seller/admin)
+
+Files added/changed
+  config/ai.php                                <- restock flag + defaults
+  app/Services/Ai/InsightSanitizer.php         <- shared AI-output guard (now
+                                                  also used by capability #2)
+  app/Services/Ai/BusinessDataProvider.php     <- + salesVelocityDetailed()
+  app/Services/Ai/RestockPlanner.php           <- the engine + AI sanitiser
+  app/Http/Controllers/Api/AiRestockController.php
+  routes/api.php                               <- one new route
+  tests/Unit/RestockPlannerTest.php
+  tests/Feature/AiRestockRouteTest.php
+
+FRONTEND (seller app + website, in all 8 languages)
+  Duka_mkononi/app/muuzaji/mpango-stock.tsx            <- mobile screen (new tab)
+  Duka_mkononi/locales/{sw,en,fr,hi,es,ur,de,zh}.json  <- restock_planner strings
+  resources/views/muuzaji/mpango-stock.blade.php       <- website page
+  routes/web.php                                        <- /muuzaji/mpango-stock
+  locales.json                                          <- muuzaji_restock strings
+
+
+STEP 0 — PREREQUISITES
+----------------------
+1. GEMINI_API_KEY must be set in .env   (it already is).
+2. Start the API:      php artisan serve
+   Base URL below: http://127.0.0.1:8000
+3. Ideally have a product that sells regularly with low stock (to see a
+   restock recommendation) and one with no recent sales.
+
+
+STEP 1 — GET A TOKEN
+--------------------
+Use the same login as capability #2 (see that section above).
+
+
+STEP 2 — HAPPY PATH
+-------------------
+curl -s -X POST http://127.0.0.1:8000/api/ai/restock/list \
+  -H "Authorization: Bearer PASTE_TOKEN_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+
+EXPECTED (HTTP 200)
+  {
+    "success": true,
+    "capability": "restock_planner",
+    "currency": "TZS",
+    "summary": {
+      "product_count": <n>, "restock_count": <n>,
+      "out_of_stock_count": <n>, "low_stock_count": <n>,
+      "total_proposed_units": <n>, "estimated_restock_cost": <n>,
+      "window_days": 30, "lead_time_days": 7,
+      ...
+    },
+    "products": [
+      { "id": "...", "name": "...", "status": "OUT_OF_STOCK",
+        "stock": 0, "daily_velocity": 1.0, "days_until_stockout": 0,
+        "min_stock_level": 14, "proposed_quantity": 21,
+        "confidence": "high", "sparse_data": false,
+        "ai": { "severity": "high", "title": "...", "action": "..." } },
+      ... most urgent first ...
+    ],
+    "watchouts": [ "..." ],
+    "limitations": [ "..." ],
+    "ai": { "available": true, "degraded": false, "headline": "..." }
+  }
+
+WHAT TO CHECK
+  [ ] products[0] is the most urgent (OUT_OF_STOCK / LOW_STOCK first)
+  [ ] a product with 0 stock and real sales shows OUT_OF_STOCK + a proposed order
+  [ ] proposed_quantity is never negative and is at least 1 for an out-of-stock item
+  [ ] days_until_stockout is null (not 0) for products with no sales
+  [ ] limitations mention sparse / no-demand products
+  [ ] ai.degraded = false
+
+
+STEP 3 — PARAMETERS
+-------------------
+curl -s -X POST http://127.0.0.1:8000/api/ai/restock/list \
+  -H "Authorization: Bearer PASTE_TOKEN_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{"locale":"en","window_days":60,"lead_time_days":14,"safety_days":7,"review_days":7}'
+
+WHAT TO CHECK
+  [ ] window_days/lead_time_days echoed in summary; larger lead time raises
+      min_stock_level and the proposed quantities
+  [ ] the AI headline/insights are in English
+
+
+STEP 4 — AUTHORISATION (must fail)
+----------------------------------
+curl -s -o /dev/null -w "%{http_code}\n" -X POST \
+  http://127.0.0.1:8000/api/ai/restock/list \
+  -H "Content-Type: application/json" -d '{}'
+
+EXPECTED: 401.
+
+
+STEP 5 — TENANT ISOLATION
+-------------------------
+Log in as a different business: the response must contain only that shop's
+products, never the first shop's.
+
+
+STEP 6 — HONEST DEGRADATION
+---------------------------
+Set GEMINI_API_KEY= then php artisan config:clear, and call STEP 2 again.
+  [ ] success = true, but the summary + proposed quantities are STILL real
+  [ ] ai.available = false, ai.degraded = true, ai.code = "AI_NOT_CONFIGURED"
+  [ ] with only healthy products and nothing to order, ai.code = "NO_RESTOCK"
+Restore the key and re-run php artisan config:clear.
+
+
+STEP 7 — AUDIT TRAIL
+--------------------
+  SELECT action, endpoint, status, details, created_at
+  FROM user_logs
+  WHERE action IN ('AI_REQUEST','AI_RESTOCK_PLANNER')
+  ORDER BY created_at DESC LIMIT 20;
+
+  [ ] an AI_RESTOCK_PLANNER row per request; no keys or prompts stored
+
+
+STEP 8 — AUTOMATED TESTS
+------------------------
+php artisan test --filter "RestockPlanner|AiRestockRoute"
+
+EXPECTED: 17 passed. (Full suite: `php artisan test` => 51 passed.)
+
+Mobile typecheck:  cd Duka_mkononi && npx tsc --noEmit   (expect no output)
+
+
+STEP 9 — MOBILE APP (seller)
+----------------------------
+1. cd Duka_mkononi && npx expo start, log in as a seller.
+2. Tap the new "Agiza" / "Restock" tab (inbox icon).
+
+  [ ] summary shows Products / To restock / Out of stock, units to order and
+      estimated cost, plus the period and lead-time line
+  [ ] low/out-of-stock products appear first with a coloured status badge,
+      stock, sales per day and days left
+  [ ] restockable products show an order box (order quantity, min stock, cost)
+  [ ] fast/slow-moving and sparse-data mini badges appear; confidence is shown
+  [ ] the AI gives a short advice note per product; watch-outs and limits follow
+  [ ] pull-to-refresh re-runs the plan
+  [ ] no products => "Hakuna bidhaa"; AI off => amber banner with real numbers
+  [ ] switching the app language translates the whole screen and refetches
+
+
+STEP 10 — WEBSITE (Blade)
+-------------------------
+1. php artisan serve
+2. Open  http://127.0.0.1:8000/muuzaji/mpango-stock  (log in as a seller).
+
+  [ ] the page renders with the sidebar; "Mpango wa Kuagiza" is active
+  [ ] same summary, product cards, order boxes and AI notes as mobile
+  [ ] the language button reloads the plan in the chosen language
+  [ ] every muuzaji page now shows the "Mpango wa Kuagiza" sidebar item
+
+
+==============================================================================
+ TEST FLOW — CAPABILITY #4: NATURAL-LANGUAGE BUSINESS REPORTING
+ Duka Mkononi  (Gemini-Powered Expert System)
+==============================================================================
+
+WHAT WAS BUILT
+--------------
+A seller can ask a business question in ordinary language (Swahili or English)
+and get an answer built ONLY from their own shop's real rows. The question is
+mapped to an allow-listed read-only report and a resolved date range in trusted
+PHP; financial figures are computed in PHP; the model at most interprets them.
+
+Endpoint:  POST /api/ai/report/ask     (requires a logged-in seller/admin)
+
+Supported reports: revenue summary, top products, sales comparison, expenses
+(with category), customers, stock value.
+
+Files added/changed
+  config/ai.php                                    <- reports feature flag
+  app/Services/Ai/ReportIntentParser.php           <- NL question -> tool + range
+  app/Services/Ai/BusinessReporter.php             <- trusted computations
+  app/Services/Ai/ReportNarrator.php               <- localized answer text (8 locales)
+  app/Services/Ai/BusinessDataProvider.php         <- + range queries
+  app/Http/Controllers/Api/AiReportController.php
+  routes/api.php                                   <- one new route
+  tests/Unit/ReportIntentParserTest.php
+  tests/Unit/BusinessReporterTest.php
+  tests/Feature/AiReportRouteTest.php
+
+FRONTEND (seller app + website, in all 8 languages)
+  Duka_mkononi/app/muuzaji/uliza-biashara.tsx          <- mobile screen (new tab)
+  Duka_mkononi/locales/{sw,en,fr,hi,es,ur,de,zh}.json  <- business_report strings
+  resources/views/muuzaji/uliza-biashara.blade.php     <- website page
+  routes/web.php                                        <- /muuzaji/uliza-biashara
+  locales.json                                          <- muuzaji_uliza strings
+
+
+STEP 1 — HAPPY PATH (curl)
+--------------------------
+Use the login from above to get a token, then:
+
+curl -s -X POST http://127.0.0.1:8000/api/ai/report/ask \
+  -H "Authorization: Bearer PASTE_TOKEN_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{"question":"Niliuza mangapi wiki hii?","locale":"sw"}'
+
+EXPECTED (HTTP 200)
+  {
+    "success": true,
+    "capability": "business_report",
+    "understanding": { "tool":"revenue_summary", "metric":"units",
+                       "range_key":"this_week", "range":{"from":"...","to":"..."},
+                       "confidence":"high" },
+    "answer": { "summary_text": "Kati ya ... na ... uliuza TZS ... kwa mauzo ..." },
+    "data": { "revenue": <n>, "sales_count": <n>, "gross_profit": <n>, "margin_pct": <n> },
+    "ai": { "available": true, "degraded": false, "explanation": "..." }
+  }
+
+WHAT TO CHECK
+  [ ] the range matches the current week (Mon..today)
+  [ ] data.revenue / gross_profit are real numbers for that week, not invented
+  [ ] answer.summary_text repeats exactly those numbers
+  [ ] ai.explanation is present (Gemini interpreted the figures)
+
+
+STEP 2 — THE SIX SUPPORTED QUESTIONS
+------------------------------------
+Try each (swap "locale":"en" for English):
+
+  A. '{"question":"Bidhaa zipi zilizalisha faida kubwa mwezi huu?"}'
+     -> tool top_products, metric profit, a table + chart returned
+  B. '{"question":"Linganisha wiki hii na wiki iliyopita."}'
+     -> tool sales_comparison, comparison{} with change_pct
+  C. '{"question":"Nilitumia kiasi gani kwenye usafiri?"}'
+     -> tool expenses, category_filter usafiri, data.by_category[]
+  D. '{"question":"Nina wateja wangapi?"}'
+     -> tool customers, data.customer_count + new_customers
+  E. '{"question":"Thamani ya bidhaa zangu ni kiasi gani?"}'
+     -> tool stock_value, data.inventory_value_cost
+
+  [ ] each maps to the right tool and period
+  [ ] table/chart present where useful (top products, expenses)
+  [ ] numbers agree with what the app shows elsewhere (e.g. ripoti)
+
+
+STEP 3 — HONEST "CANNOT COMPUTE"
+--------------------------------
+  '{"question":"Habari yako?"}'
+
+  [ ] understanding.tool = null
+  [ ] answer.summary_text says it could not understand, and lists what it can answer
+  [ ] no fabricated figures anywhere in the response
+
+
+STEP 4 — AUTHORISATION + ISOLATION
+----------------------------------
+  [ ] no token -> HTTP 401
+  [ ] a second business sees only its own numbers (customer_count, revenue)
+
+
+STEP 5 — DEGRADATION
+--------------------
+Set GEMINI_API_KEY= then php artisan config:clear, ask again:
+  [ ] success = true, answer.summary_text and data are STILL correct (trusted PHP)
+  [ ] ai.available = false / ai.degraded = true with a clear code
+Restore the key and re-run php artisan config:clear.
+
+
+STEP 6 — FOLLOW-UP (context, not authorization)
+-----------------------------------------------
+1. Ask 'Niliuza mangapi wiki hii?' (tool revenue_summary remembered).
+2. Then ask 'Na mwezi uliopita?' with the same conversation_id:
+     -d '{"question":"Na mwezi uliopita?","conversation_id":"abc"}'
+  [ ] the previous tool is reused, but the business scope still comes from the JWT
+
+
+STEP 7 — AUDIT
+--------------
+  SELECT action, status, details, created_at FROM user_logs
+  WHERE action IN ('AI_BUSINESS_REPORT','AI_REQUEST') ORDER BY created_at DESC LIMIT 20;
+  [ ] tool, range_key, confidence and duration logged; no keys/prompts
+
+
+STEP 8 — AUTOMATED TESTS
+------------------------
+php artisan test --filter "ReportIntentParser|BusinessReporter|AiReportRoute"
+
+EXPECTED: 21 passed. (Full suite: `php artisan test` => 72 passed.)
+Mobile typecheck:  cd Duka_mkononi && npx tsc --noEmit   (expect no output)
+
+
+STEP 9 — MOBILE APP (seller)
+----------------------------
+1. cd Duka_mkononi && npx expo start, log in as a seller.
+2. Tap the new "Uliza" / "Ask" tab (speech icon).
+
+  [ ] type or tap an example question; an answer card appears
+  [ ] the answer sentence shows the real figures; a chart/table follows when useful
+  [ ] the AI insight card appears when Gemini is available
+  [ ] the period and metric are shown above the answer
+  [ ] an unrecognised question shows the honest "not understood" message
+  [ ] switching the app language re-asks in that language and translates the UI
+
+
+STEP 10 — WEBSITE (Blade)
+-------------------------
+1. php artisan serve
+2. Open  http://127.0.0.1:8000/muuzaji/uliza-biashara  (log in as a seller).
+
+  [ ] type a question (or click an example chip) and press Uliza/Ask
+  [ ] the same answer, chart, table and AI insight render as on mobile
+  [ ] the language button switches the question language and the page labels
+  [ ] every muuzaji page now shows the "Uliza Biashara" sidebar item
+
+
+==============================================================================
+ TEST FLOW — CAPABILITY #5: BUSINESS HEALTH SCORE & WEEKLY COACHING
+ Duka Mkononi  (Gemini-Powered Expert System)
+==============================================================================
+
+WHAT WAS BUILT
+--------------
+A weekly, explainable business health digest. Four documented components —
+margin, stock cover, sales trend and expense ratio — are scored 0–100 in
+trusted PHP, weighted, and combined into one band. If there is not enough
+evidence the app produces NO score at all (never a misleading one). Each digest
+also lists meaningful changes vs. the previous week and up to three evidence-
+based suggested actions, and is stored once per business + week so authorized
+users can review the history.
+
+Endpoints (all require a logged-in seller/admin)
+  POST /api/ai/reports/weekly          generate / refresh a digest
+  GET  /api/ai/reports/weekly          latest stored digest
+  GET  /api/ai/reports/weekly/history  stored digest summaries
+  POST /api/ai/health/setup            admin: create the storage table
+
+Scheduled job
+  php artisan ai:weekly-digests        (runs weekly per ai.health.delivery)
+
+Files added/changed
+  config/ai.php                                    <- health weights/thresholds/delivery
+  app/Models/AiWeeklyDigest.php
+  app/Services/Ai/HealthNarrator.php               <- 8-locale digest text
+  app/Services/Ai/BusinessHealthScore.php          <- the score engine
+  app/Services/Ai/HealthDigestService.php          <- retrieve + store (idempotent)
+  app/Http/Controllers/Api/AiHealthController.php
+  app/Console/Commands/GenerateWeeklyHealthDigests.php
+  routes/api.php, routes/console.php
+  tests/Unit/BusinessHealthScoreTest.php, tests/Feature/AiHealthRouteTest.php
+
+FRONTEND (seller app + website, in all 8 languages)
+  Duka_mkononi/app/muuzaji/afya-biashara.tsx   <- mobile screen (new tab)
+  Duka_mkononi/app/muuzaji/_layout.tsx         <- registers the new tab
+  Duka_mkononi/locales/{sw,en,fr,hi,es,ur,de,zh}.json  <- health_digest strings
+  resources/views/muuzaji/afya-biashara.blade.php      <- website page
+  routes/web.php                               <- /muuzaji/afya-biashara
+  locales.json                                 <- muuzaji_afya strings
+  resources/views/muuzaji/*.blade.php          <- "Afya ya Biashara" nav link added
+
+
+STEP 0 — FIRST, CREATE THE STORAGE TABLE (once)
+-----------------------------------------------
+The digest history lives in a Supabase table. Create it with an admin call to
+POST /api/ai/health/setup, or paste this SQL in the Supabase SQL Editor:
+
+  CREATE TABLE IF NOT EXISTS ai_weekly_digests (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+      period_start DATE NOT NULL,
+      period_end DATE NOT NULL,
+      locale TEXT NOT NULL DEFAULT 'sw',
+      score NUMERIC,
+      band TEXT,
+      sufficient BOOLEAN NOT NULL DEFAULT FALSE,
+      coverage NUMERIC NOT NULL DEFAULT 0,
+      headline TEXT,
+      digest JSONB NOT NULL DEFAULT '{}'::jsonb,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE (business_id, period_start, period_end)
+  );
+  CREATE INDEX IF NOT EXISTS idx_ai_weekly_digests_business
+      ON ai_weekly_digests (business_id, period_start DESC);
+
+  [ ] POST /api/ai/health/setup -> success: true  (or "already exists")
+
+(Without the table the digest still computes and returns, with stored:false and
+ a store_warning — nothing is lost, there is just no history.)
+
+
+STEP 1 — GET A TOKEN
+--------------------
+curl -s http://127.0.0.1:8000/api/login -H "Content-Type: application/json" \
+  -d '{"email":"SELLER@EXAMPLE.COM","password":"...","role":"seller"}'
+Take the token as TOKEN.
+
+
+STEP 2 — GENERATE THE WEEKLY DIGEST
+-----------------------------------
+curl -s -X POST http://127.0.0.1:8000/api/ai/reports/weekly \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"locale":"sw"}'
+
+  [ ] success: true, capability: "business_health"
+  [ ] period.start / period.end is last week (Mon–Sun), with a previous period
+  [ ] score is 0–100 (or null when sufficient=false) and band is one of
+      strong | steady | watch | attention | insufficient_evidence
+  [ ] components[] has up to 4 entries, each with label, value, score (0–100),
+      weight, status and a plain-language evidence sentence
+  [ ] changes[] lists only week-over-week moves of >= 5% (with figures)
+  [ ] actions[] holds up to 3 practical actions, each with a title AND a body
+      that quotes real figures
+  [ ] limitations[] explains anything that could not be measured
+  [ ] stored: true (when the table from STEP 0 exists)
+
+
+STEP 3 — IDEMPOTENCY (one digest per business + week)
+-----------------------------------------------------
+Run the same POST again WITHOUT refresh.
+  [ ] reused: true (the stored digest is returned, not a second row)
+Now send {"locale":"sw","refresh":true}:
+  [ ] reused: false, the figures are recomputed
+Confirm one row per period:
+  SELECT business_id, period_start, period_end, COUNT(*)
+  FROM ai_weekly_digests GROUP BY 1,2,3 HAVING COUNT(*) > 1;
+  [ ] no rows
+
+
+STEP 4 — HISTORY + LATEST
+-------------------------
+curl -s http://127.0.0.1:8000/api/ai/reports/weekly \
+  -H "Authorization: Bearer $TOKEN"            # latest full digest
+curl -s "http://127.0.0.1:8000/api/ai/reports/weekly/history?limit=12" \
+  -H "Authorization: Bearer $TOKEN"            # stored summaries
+
+  [ ] GET weekly returns the full digest (score, components, actions...)
+  [ ] history lists past weeks newest-first with score + band label
+
+
+STEP 5 — INSUFFICIENT EVIDENCE IS HONEST
+----------------------------------------
+Use a business with no sales/stock for the period (or a brand-new shop).
+  [ ] sufficient: false, score: null, band: "insufficient_evidence"
+  [ ] actions: [] (no fake advice) and limitations explain the missing data
+  [ ] the app never labels the shop "failing" or "successful"
+
+
+STEP 6 — AUTHORISATION + ISOLATION
+----------------------------------
+  [ ] no token -> HTTP 401
+  [ ] a second business's GET /weekly returns only its own digest
+  [ ] POST /api/ai/health/setup with a non-admin token -> 403
+
+
+STEP 7 — DEGRADATION
+--------------------
+Set GEMINI_API_KEY= then php artisan config:clear, generate again:
+  [ ] score, components, changes and actions are STILL correct (trusted PHP)
+  [ ] ai.available = false / ai.degraded = true with a clear code
+  [ ] headline falls back to the deterministic band headline
+Restore the key and re-run php artisan config:clear.
+
+
+STEP 8 — SCHEDULED JOB + DELIVERY
+---------------------------------
+php artisan ai:weekly-digests --week=2026-10-01
+  [ ] prints the period, then "Generated N, reused M, failed F"
+  [ ] re-running the same week reuses (no duplicates)
+php artisan schedule:list
+  [ ] ai:weekly-digests appears, weekly on the configured day/time
+Disable delivery (AI_HEALTH_DELIVERY_ENABLED=false, config:clear):
+  [ ] the command warns and exits without generating
+
+
+STEP 9 — AUDIT
+--------------
+  SELECT action, status, details, created_at FROM user_logs
+  WHERE action IN ('AI_BUSINESS_HEALTH','AI_BUSINESS_HEALTH_VIEW')
+  ORDER BY created_at DESC LIMIT 20;
+  [ ] period, band, score, stored/reused and duration logged; no keys/prompts
+
+
+STEP 10 — AUTOMATED TESTS
+-------------------------
+php artisan test --filter "BusinessHealthScore|AiHealthRoute"
+
+EXPECTED: 21 passed. (Full suite: `php artisan test` => 93 passed.)
+Mobile typecheck:  cd Duka_mkononi && npx tsc --noEmit   (expect no output)
+
+
+STEP 11 — MOBILE APP (seller)
+-----------------------------
+1. cd Duka_mkononi && npx expo start, log in as a seller.
+2. Tap the new "Afya" / "Health" tab (heart-rate icon).
+
+  [ ] the score ring + band + summary appear
+  [ ] each component shows its status, a bar and its evidence sentence
+  [ ] meaningful changes and up to 3 suggested actions render with figures
+  [ ] weekly history is listed, newest first
+  [ ] the Refresh button regenerates the digest
+  [ ] pull-to-refresh reloads; the empty/insufficient states are honest
+  [ ] switching the app language shows the digest in that language and
+      translates the UI labels
+
+
+STEP 12 — WEBSITE (Blade)
+-------------------------
+1. php artisan serve
+2. Open  http://127.0.0.1:8000/muuzaji/afya-biashara  (log in as a seller).
+
+  [ ] the same score ring, components, changes, actions and history render
+  [ ] "Sasisha" regenerates the digest; the store warning shows if unstored
+  [ ] the language button switches the page labels
+  [ ] every seller page now shows the "Afya ya Biashara" sidebar item
+
+
+WHEN YOU'RE DONE
+----------------
+Reply "next" and I'll implement the next capability (#6 — Anomaly and Leak
+Detection) on top of this same shared AI layer.

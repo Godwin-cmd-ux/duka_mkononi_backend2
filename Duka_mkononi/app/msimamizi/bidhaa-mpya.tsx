@@ -736,7 +736,7 @@ export default function BidhaaMpyaScreen() {
         expected_selling_price: parseFloat(product.expected_selling_price || product.price)
       };
 
-      const response = await fetch(`${API_BASE_URL}/api/products/${product.id}`, {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/api/products/${product.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -776,7 +776,7 @@ export default function BidhaaMpyaScreen() {
 
       if (!(await requireNetwork())) return false;
 
-      const response = await fetch(`${API_BASE_URL}/api/products/${product.id}`, {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/api/products/${product.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -816,7 +816,7 @@ export default function BidhaaMpyaScreen() {
 
       if (!(await requireNetwork())) return false;
 
-      const response = await fetch(`${API_BASE_URL}/api/products/${product.id}`, {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/api/products/${product.id}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -1027,7 +1027,7 @@ export default function BidhaaMpyaScreen() {
       
       let response;
       if (isUpdate) {
-        response = await fetch(`${API_BASE_URL}/api/products/${existingProduct.id}`, {
+        response = await fetchWithTimeout(`${API_BASE_URL}/api/products/${existingProduct.id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -1037,7 +1037,7 @@ export default function BidhaaMpyaScreen() {
           body: JSON.stringify(productData),
         });
       } else {
-        response = await fetch(`${API_BASE_URL}/api/products`, {
+        response = await fetchWithTimeout(`${API_BASE_URL}/api/products`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -1119,7 +1119,7 @@ export default function BidhaaMpyaScreen() {
 
       console.log('🆕 Adding as new product:', productData);
       
-      const response = await fetch(`${API_BASE_URL}/api/products`, {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/api/products`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

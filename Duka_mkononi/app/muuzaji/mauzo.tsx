@@ -388,7 +388,7 @@ export default function MauzoScreen() {
       });
 
       setSavingSale(true);
-      const response = await fetch(`${API_BASE_URL}/api/sales/${selectedSale.id}`, {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/api/sales/${selectedSale.id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

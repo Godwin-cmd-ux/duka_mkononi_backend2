@@ -475,6 +475,10 @@
                     </div>
                     <span class="nav-label" data-i18n="muuzaji_orders.nav_orders">Oda</span>
                 </a>
+                <a href="huduma-nyingine" class="nav-item">
+                    <div class="nav-icon">🧩</div>
+                    <span class="nav-label" data-i18n="muuzaji_huduma.nav_other">Huduma Nyingine</span>
+                </a>
             </div>
             <div class="sidebar-footer">
                 <div class="user-info">
@@ -520,9 +524,31 @@
             <input type="text" id="editFullName" class="input-field" data-i18n="muuzaji_profaili.placeholder_full_name" data-i18n-attr="placeholder" placeholder="Weka jina lako kamili">
             <label class="input-label" data-i18n="muuzaji_profaili.label_phone">Namba ya Simu</label>
             <input type="tel" id="editPhone" class="input-field" data-i18n="muuzaji_profaili.placeholder_phone" data-i18n-attr="placeholder" placeholder="Weka namba yako ya simu">
+            <div class="edit-profile-btn" id="openPasswordBtn" style="margin:0 0 16px;">
+                <i class="fa-solid fa-lock" style="font-size:13px;" aria-hidden="true"></i>
+                <span data-i18n="muuzaji_profaili.change_password">Badilisha Nenosiri</span>
+            </div>
             <div class="modal-buttons">
                 <div class="modal-btn btn-cancel" id="cancelEditBtn" onclick="closeEditModal()" data-i18n="muuzaji_profaili.btn_cancel">Ghairi</div>
                 <div class="modal-btn btn-save" id="saveProfileBtn" onclick="updateProfile()" data-i18n="muuzaji_profaili.btn_save">Hifadhi</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="passwordModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-title" data-i18n="muuzaji_profaili.change_password_title">Badilisha Nenosiri</div>
+            <div class="modal-subtitle" data-i18n="muuzaji_profaili.change_password_subtitle">Weka nenosiri lako la sasa kisha chagua nenosiri jipya.</div>
+            <label class="input-label" data-i18n="muuzaji_profaili.current_password">Nenosiri la Sasa</label>
+            <input type="password" id="currentPassword" class="input-field" placeholder="Weka nenosiri la sasa" data-i18n="muuzaji_profaili.current_password_placeholder" data-i18n-attr="placeholder">
+            <label class="input-label" data-i18n="muuzaji_profaili.new_password">Nenosiri Jipya</label>
+            <input type="password" id="newPassword" class="input-field" placeholder="Weka nenosiri jipya" data-i18n="muuzaji_profaili.new_password_placeholder" data-i18n-attr="placeholder">
+            <label class="input-label" data-i18n="muuzaji_profaili.confirm_password">Rudia Nenosiri Jipya</label>
+            <input type="password" id="confirmPassword" class="input-field" placeholder="Rudia nenosiri jipya" data-i18n="muuzaji_profaili.confirm_password_placeholder" data-i18n-attr="placeholder">
+            <div class="modal-buttons">
+                <div class="modal-btn btn-cancel" id="cancelPasswordBtn" onclick="closePasswordModal()" data-i18n="muuzaji_profaili.btn_cancel">Ghairi</div>
+                <div class="modal-btn btn-save" id="savePasswordBtn" onclick="changePassword()" data-i18n="muuzaji_profaili.change_password_save">Badilisha</div>
             </div>
         </div>
     </div>
@@ -548,6 +574,21 @@
             err_photo_failed: 'Imeshindikana kupakia picha',
             confirm_logout: 'Una uhakika unataka kutoka?',
             title_my_profile: 'Wasifu Wangu',
+            change_password: 'Badilisha Nenosiri',
+            change_password_title: 'Badilisha Nenosiri',
+            change_password_subtitle: 'Weka nenosiri lako la sasa kisha chagua nenosiri jipya.',
+            current_password: 'Nenosiri la Sasa',
+            current_password_placeholder: 'Weka nenosiri la sasa',
+            new_password: 'Nenosiri Jipya',
+            new_password_placeholder: 'Weka nenosiri jipya',
+            confirm_password: 'Rudia Nenosiri Jipya',
+            confirm_password_placeholder: 'Rudia nenosiri jipya',
+            change_password_save: 'Badilisha',
+            err_password_fields: 'Tafadhali jaza nenosiri la sasa, jipya na uthibitisho',
+            err_password_mismatch: 'Nenosiri jipya na uthibitisho havifanani',
+            err_password_short: 'Nenosiri jipya lazima liwe na herufi 6 au zaidi',
+            msg_password_changed: 'Nenosiri limebadilishwa kikamilifu!',
+            err_password_change_failed: 'Imeshindikana kubadilisha nenosiri',
             badge_admin: '(Msimamizi)',
             btn_edit_profile: 'Badili Taarifa za Wasifu',
             btn_save: 'Hifadhi',
@@ -607,6 +648,77 @@
         };
         function ic(name, size = 16, cls = '') {
             return `<i class="fa-solid ${FA_MAP[name] || 'fa-circle-info'} ${cls}" style="font-size:${size}px;" aria-hidden="true"></i>`;
+        }
+
+        // Change-password modal: one open/close pair plus a submit that mirrors
+        // the edit modal's busy handling, so neither can be double-clicked.
+        function openPasswordModal() {
+            ['currentPassword', 'newPassword', 'confirmPassword'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            document.getElementById('passwordModal').style.display = 'flex';
+        }
+
+        function closePasswordModal() {
+            document.getElementById('passwordModal').style.display = 'none';
+        }
+
+        function setPasswordModalBusy(busy) {
+            const save = document.getElementById('savePasswordBtn');
+            const cancel = document.getElementById('cancelPasswordBtn');
+            if (save) {
+                save.innerHTML = busy ? ic('spinner', 15, 'fa-spin') + ' ' + t('change_password_save') : t('change_password_save');
+                save.style.opacity = busy ? '0.7' : '1';
+                save.style.pointerEvents = busy ? 'none' : 'auto';
+            }
+            if (cancel) {
+                cancel.style.opacity = busy ? '0.5' : '1';
+                cancel.style.pointerEvents = busy ? 'none' : 'auto';
+            }
+        }
+
+        async function changePassword() {
+            const current = document.getElementById('currentPassword').value;
+            const next = document.getElementById('newPassword').value;
+            const confirm = document.getElementById('confirmPassword').value;
+
+            if (!current || !next || !confirm) {
+                showToast(t('err_password_fields'), 'warning');
+                return;
+            }
+            if (next !== confirm) {
+                showToast(t('err_password_mismatch'), 'warning');
+                return;
+            }
+            if (next.length < 6) {
+                showToast(t('err_password_short'), 'warning');
+                return;
+            }
+
+            const token = localStorage.getItem('userToken');
+            if (!token) return;
+
+            setPasswordModalBusy(true);
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/user/password`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ current_password: current, new_password: next, confirm_password: confirm })
+                });
+
+                if (response.ok) {
+                    closePasswordModal();
+                    showToast(t('msg_password_changed'), 'success');
+                } else {
+                    const err = await response.json().catch(() => ({}));
+                    showToast(err.error || t('err_password_change_failed'), 'error');
+                }
+            } catch (error) {
+                showToast(t('err_network'), 'error');
+            } finally {
+                setPasswordModalBusy(false);
+            }
         }
 
         // Edit-modal button busy state: Hifadhi shows a spinner while the
@@ -1003,6 +1115,9 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             // Profile photo: the seller may change their own photo. The rest of
             // the business fields (name, location, type, description, GPS
             // coordinates) are read-only, so there is no GPS button to wire.
+            const openPasswordBtn = document.getElementById('openPasswordBtn');
+            if (openPasswordBtn) openPasswordBtn.addEventListener('click', openPasswordModal);
+
             const changePhotoBtn = document.getElementById('changePhotoBtn');
             const profileImageInput = document.getElementById('profileImageInput');
             if (changePhotoBtn && profileImageInput) {
@@ -1028,6 +1143,9 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         window.openEditModal = openEditModal;
         window.closeEditModal = closeEditModal;
         window.updateProfile = updateProfile;
+        window.openPasswordModal = openPasswordModal;
+        window.closePasswordModal = closePasswordModal;
+        window.changePassword = changePassword;
         window.handleLogout = handleLogout;
         window.refreshData = refreshData;
 

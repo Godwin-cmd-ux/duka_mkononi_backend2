@@ -94,7 +94,7 @@ export default function ForgotPasswordScreen() {
     const testAPIConnection = async () => {
         try {
             console.log('🔗 Testing connection to:', `${API_BASE_URL}/api/test`);
-            const response = await fetch(`${API_BASE_URL}/api/test`, {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/api/test`, {
                 method: 'GET',
                 headers: {
                     'Accept': 'application/json',

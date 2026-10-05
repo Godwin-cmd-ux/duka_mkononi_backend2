@@ -1,0 +1,318 @@
+================================================================================
+ DUKA MKONONI — AI FEATURES
+ A SIMPLE TESTING GUIDE FOR NON-TECHNICAL TESTERS
+================================================================================
+
+ Fill in before you start:
+   Tester name  : ______________________________
+   Date         : ______________________________
+   Device used  : [ ] Computer / website      [ ] Phone app
+   Seller account used: ______________________________
+
+
+ABOUT THIS GUIDE
+----------------
+This guide helps you check the new AI helpers in the Seller (Muuzaji) side of
+Duka Mkononi. You do NOT need to understand any code. Just follow the steps and
+watch what appears on the screen.
+
+Everything here uses the normal Seller login. These AI helpers are for the
+SHOP OWNER (Muuzaji), not for the admin. Wherever this guide says "AI", it means
+the smart helper that explains your business in ordinary language.
+
+IMPORTANT: The AI is only a helper. All the numbers (prices, profit, stock,
+sales) come straight from your shop's real records. If the AI text is missing,
+the numbers are still real and correct.
+
+
+A QUICK NOTE ON HOW MANY FEATURES
+---------------------------------
+You mentioned 3 features. There are actually 4 ready to test. All four are for
+the Seller account:
+
+   1. PRICE ADVICE        (Swahili: Ushauri wa Bei)
+   2. RESTOCK PLAN        (Swahili: Mpango wa Kuagiza)
+   3. ASK A QUESTION      (Swahili: Uliza Biashara)
+   4. BUSINESS HEALTH     (Swahili: Afya ya Biashara)
+
+Feature 4 (Business Health) needs a one-time setup by your technical person
+before its weekly history can be saved. You can still test and see it — details
+are in TEST 4 below.
+
+
+THE FOUR FEATURES AT A GLANCE
+-----------------------------
+   FEATURE            | WHERE TO FIND IT (website)      | WHAT IT DOES
+   -------------------+---------------------------------+------------------------------
+   1 Price Advice     | Seller portal > "Ushauri wa Bei"| Shows which products are
+                      |                                 | losing money or have small
+                      |                                 | profit, and a suggested price.
+   -------------------+---------------------------------+------------------------------
+   2 Restock Plan     | Seller portal > "Mpango wa     | Shows which products are
+                      | Kuagiza"                        | running out and how many to
+                      |                                 | re-order.
+   -------------------+---------------------------------+------------------------------
+   3 Ask a Question   | Seller portal > "Uliza         | You type a normal question,
+                      | Biashara"                       | it answers with your numbers.
+   -------------------+---------------------------------+------------------------------
+   4 Business Health  | Seller portal > "Afya ya      | A weekly score (out of 100)
+                      | Biashara"                       | with what is going well and
+                      |                                 | what to improve.
+
+(On the phone app these are the last four tabs at the bottom: "Bei", "Agiza",
+"Uliza", "Afya".)
+
+
+WHAT YOU NEED BEFORE YOU START
+------------------------------
+- A Seller account that already has:
+     * a few products with a BUYING price and a SELLING price,
+     * at least some sales and one or two expenses,
+     * ideally one product where the selling price is lower than the buying
+       price (so you can see a warning).
+- A working internet connection.
+- Either a computer with a browser, or the Duka Mkononi phone app.
+
+
+HOW TO LOG IN AND GET IN (on a computer / website)
+--------------------------------------------------
+   1. Open the Duka Mkononi website in your browser.
+   2. Go to the Login page and sign in with the SELLER email and password.
+   3. You will land on the Seller portal. On the left side there is a menu with
+      items such as: Profaili, Mauzo, Matumizi, Uza, Oda.
+   4. Scroll down in that menu. The four new items are at the bottom:
+         - Ushauri wa Bei
+         - Mpango wa Kuagiza
+         - Uliza Biashara
+         - Afya ya Biashara
+   5. Use these menu items to move between the four features.
+
+   (On the phone app: open the app, log in as the Seller, and the last four
+    icons along the bottom are these same four features.)
+
+
+================================================================================
+ TEST 1 — PRICE ADVICE  (Ushauri wa Bei)
+================================================================================
+
+WHAT IT IS
+   A list of your products that need attention because of their price, plus a
+   suggested better selling price for each one. The suggested price is worked
+   out precisely from your own buying/selling prices — the AI only explains it.
+
+STEPS
+   1. In the Seller menu, click "Ushauri wa Bei".
+   2. Wait a few seconds for it to load ("Inachambua bei na faida...").
+   3. Look at the summary at the top ("Muhtasari wa biashara").
+   4. Scroll through the product list ("Bidhaa zinazohitaji uangalizi").
+   5. Look at any product shown in red or orange, and read its label.
+   6. Scroll to the bottom and read "Mambo ya kuangalia" and "Mipaka ya
+      uchambuzi".
+   7. Click the round refresh arrow at the top-right to reload.
+
+WHAT YOU SHOULD SEE
+   - A summary with: number of products, number needing attention, and the
+     average profit (Faida wastani).
+   - Each product shows its buying price ("Bei ya kununua"), selling price
+     ("Bei ya kuuzia"), profit ("Faida") and current stock ("Idadi iliyopo").
+   - Some products are labelled in colour, for example:
+         "Hasara" (Loss), "Faida ndogo" (Small profit), or "Nzuri" (Good).
+   - For products that need attention, a green or blue box shows a
+     "Bei inayopendekezwa" (suggested price) and a "Bei ya chini kabisa"
+     (the lowest safe price).
+   - At the top there is a small banner. If it says "Ushauri wa AI", the smart
+     explanation is working. If it says the AI advice is unavailable, that is
+     NOT a failure — the real numbers still show.
+
+CHECK WHEN DONE
+   [ ] The page loaded and showed products.
+   [ ] A product with a low price is clearly flagged (Loss / small profit).
+   [ ] The suggested price is higher than the buying price for that product.
+   [ ] Money amounts look sensible (e.g. "TZS 1,500").
+
+
+================================================================================
+ TEST 2 — RESTOCK PLAN  (Mpango wa Kuagiza)
+================================================================================
+
+WHAT IT IS
+   A shopping list of what to re-order. It looks at how fast each product sells
+   and how much is left, then suggests how many to buy. This is only a plan — it
+   never changes your stock on its own.
+
+STEPS
+   1. In the Seller menu, click "Mpango wa Kuagiza".
+   2. Wait for it to load ("Inachambua stock na mahitaji...").
+   3. Look at the summary at the top ("Muhtasari wa kuagiza").
+   4. Scroll through the product list ("Bidhaa zinazohitajika kuagizwa").
+   5. Read the "Agiza" (order this many) box on any product that needs ordering.
+   6. Read "Mambo ya kuangalia" and "Mipaka ya uchambuzi" at the bottom.
+   7. Click the refresh arrow at the top-right to reload.
+
+WHAT YOU SHOULD SEE
+   - A summary with: number of products, number to re-order, and number already
+     finished ("Zimeisha").
+   - Total suggested units and the estimated cost of re-ordering
+     ("Gharama inayokadiriwa").
+   - Each product shows: stock left ("Idadi iliyopo"), how fast it sells
+     ("Mauzo kwa siku"), and days left ("Siku zilizosalia").
+   - A product that is out of stock or low is clearly flagged, for example
+     "Imeisha" (finished) or "Stock ndogo" (low stock).
+   - Where it suggests an order, you see "Agiza" (how many), "Kiwango cha
+     chini" (minimum you should keep) and "Gharama ya kuagiza" (cost).
+   - Small labels may appear such as "Inaenda haraka" (fast-moving) or
+     "Data chache" (little data).
+
+CHECK WHEN DONE
+   [ ] The page loaded and showed products.
+   [ ] At least one product that is out of stock or low is flagged.
+   [ ] The suggested order quantity and cost look sensible.
+   [ ] Nothing in your stock changed just by opening this page.
+
+
+================================================================================
+ TEST 3 — ASK A QUESTION  (Uliza Biashara)
+================================================================================
+
+WHAT IT IS
+   A question box where you type in normal language and it answers using your
+   own shop's numbers. You can write in Swahili or English (or any of the
+   supported languages).
+
+STEPS
+   1. In the Seller menu, click "Uliza Biashara".
+   2. Tap one of the ready-made example questions under "Jaribu kuuliza"
+      (for example "Niliuza mangapi wiki hii?").
+   3. Watch the answer appear ("Inatafuta jibu...").
+   4. Now type your OWN question in the box and press the send button
+      ("Uliza"). For example: "Nilitumia kiasi gani kwenye usafiri?"
+   5. Read the "Jibu" (answer), any table ("Maelezo") and any chart ("Chati").
+   6. Ask a second, related question to check it still understands.
+
+WHAT YOU SHOULD SEE
+   - First, a line showing what it understood: the period ("Kipindi") and the
+     kind of figure (Mauzo / Faida / Idadi).
+   - A clear answer in your language, with your real figures.
+   - Often a small table or a simple bar chart below the answer.
+   - A green box called "Maoni ya AI" with a short comment. If this box is not
+     there, the answer and numbers are still correct — not a failure.
+   - If it does not understand the question, it says "Sikuelewa" instead of
+     guessing.
+
+CHECK WHEN DONE
+   [ ] An example question gave a real answer with numbers.
+   [ ] Your own typed question also gave a sensible answer.
+   [ ] The numbers match what you expect from your recent sales.
+   [ ] Asking "How many customers do I have?" gives a sensible reply.
+
+
+================================================================================
+ TEST 4 — BUSINESS HEALTH  (Afya ya Biashara)
+================================================================================
+
+WHAT IT IS
+   A weekly report card for your shop: a score out of 100, what went well, what
+   changed, and a few suggested actions for next week.
+
+   NOTE FOR THE TECHNICAL PERSON: this feature needs a one-time setup (a small
+   storage table) before the weekly history can be saved. Until that is done,
+   the page will still open and show a score, but it will warn that the report
+   was not saved and the history list will be empty. That warning alone is not
+   a bug.
+
+STEPS
+   1. In the Seller menu, click "Afya ya Biashara".
+   2. Wait for it to load ("Inatafuta ripoti...").
+   3. Look at the big round score at the top ("Alama ya afya", out of 100).
+   4. Read the summary text next to it, and the period ("Kipindi").
+   5. Scroll down and read "Vipimo" (the parts that make up the score).
+   6. Read "Mabadiliko muhimu" (what changed) and "Vitendo vinavyopendekezwa"
+      (suggested actions).
+   7. Read "Historia ya wiki" (past weeks).
+   8. Click "Sasisha" (Refresh) at the top-right to create this week's report.
+
+WHAT YOU SHOULD SEE
+   - A round score out of 100, coloured green / blue / orange / red.
+   - A short sentence explaining the score, and the week it covers.
+   - Bars under "Vipimo" with short explanations (for example profit, stock
+     cover, spending).
+   - Up/down arrows under "Mabadiliko muhimu" comparing with last week.
+   - Two or three numbered suggested actions under "Vitendo vinavyopendekezwa".
+   - A green "Maoni ya AI" box with extra comments.
+
+   IMPORTANT: If your shop does not have enough sales or expense records, the
+   page will honestly say "Data haitoshi" (not enough data) instead of giving a
+   fake score. That is correct behaviour, not a failure.
+
+CHECK WHEN DONE
+   [ ] The page loaded and showed a score (or an honest "not enough data" note).
+   [ ] The score, bars and changes all look connected to your real activity.
+   [ ] "Sasisha" created a fresh report.
+   [ ] If you were warned that history was not saved, note it for the
+       technical person (one-time setup still needed).
+
+
+================================================================================
+ EXTRA CHECKS (DO THESE ONCE, FOR ALL FOUR FEATURES)
+================================================================================
+
+LANGUAGE CHECK
+   1. Find the language switcher on the page.
+   2. Change the language to English and open each of the four features again.
+   3. The titles, buttons and labels should be in English.
+   4. Internet and the AI text should also follow the chosen language.
+   [ ] All four features shown in the second language correctly.
+
+NO-CONNECTION CHECK
+   1. Turn off your internet (or aeroplane mode on the phone).
+   2. Open one of the four features and press refresh.
+   3. You should see a friendly message ("Hitilafu ya mtandao...").
+   4. Turn the internet back on and refresh — it should load again.
+   [ ] The app stayed usable and recovered after the connection returned.
+
+SAFETY CHECK
+   1. Notice that opening any of these pages does NOT change your stock, your
+      sales or your expenses by itself. They only show information and advice.
+   [ ] Nothing changed without you confirming it.
+
+SECURITY CHECK (if possible, with two different shops)
+   1. Log in as Seller A and note a product name and a sales figure.
+   2. Log in as Seller B and open the same four features.
+   3. Seller B must NEVER see Seller A's products, sales or numbers.
+   [ ] Each seller only sees their own shop's information.
+
+
+================================================================================
+ IF SOMETHING GOES WRONG — WHAT TO WRITE DOWN
+================================================================================
+Write these details for the technical person. Plain words are fine:
+
+   - Which feature were you in? (Price / Restock / Ask / Health)
+   - What did you do just before the problem?
+   - What did you expect to see?
+   - What actually happened? (copy the message on the screen)
+   - A screenshot or photo of the screen, if you can.
+   - The seller account you were using.
+   - The time and date it happened.
+
+
+================================================================================
+ SUMMARY SHEET (TICK WHEN DONE)
+================================================================================
+   TEST 1 - Price Advice .............. [ ] passed   [ ] problem
+   TEST 2 - Restock Plan .............. [ ] passed   [ ] problem
+   TEST 3 - Ask a Question ............ [ ] passed   [ ] problem
+   TEST 4 - Business Health ........... [ ] passed   [ ] problem
+   Extra - Language check ............. [ ] passed   [ ] problem
+   Extra - No-connection check ........ [ ] passed   [ ] problem
+   Extra - Safety check ............... [ ] passed   [ ] problem
+   Extra - Security check ............. [ ] passed   [ ] problem
+
+   Overall notes:
+   ____________________________________________________________________
+   ____________________________________________________________________
+   ____________________________________________________________________
+
+================================================================================
+ END OF GUIDE
+================================================================================

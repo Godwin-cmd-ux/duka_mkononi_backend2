@@ -85,6 +85,15 @@ export default function MsimamiziHomeScreen() {
     businessDescription: ''
   });
   const [updatingProfile, setUpdatingProfile] = useState(false);
+
+  // Badilisha nenosiri modal
+  const [passwordModalVisible, setPasswordModalVisible] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    current: '',
+    newPass: '',
+    confirm: ''
+  });
+  const [changingPassword, setChangingPassword] = useState(false);
   const [updatingSellerStatus, setUpdatingSellerStatus] = useState<string | null>(null);
   const [deletingSellerId, setDeletingSellerId] = useState<string | null>(null);
 
@@ -315,7 +324,7 @@ export default function MsimamiziHomeScreen() {
       console.log('📡 Updating profile to:', `${API_BASE_URL}/api/user/profile`);
       console.log('📝 Data being sent:', editFormData);
 
-      const response = await fetch(`${API_BASE_URL}/api/user/profile`, {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/api/user/profile`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -379,6 +388,73 @@ export default function MsimamiziHomeScreen() {
     }
   };
 
+  const handleChangePassword = async () => {
+    const { current, newPass, confirm } = passwordForm;
+
+    if (!current || !newPass || !confirm) {
+      Alert.alert(t('app.error'), t('admin_dashboard.password_fields_required'));
+      return;
+    }
+
+    if (newPass !== confirm) {
+      Alert.alert(t('app.error'), t('admin_dashboard.password_mismatch'));
+      return;
+    }
+
+    if (newPass.length < 6) {
+      Alert.alert(t('app.error'), t('admin_dashboard.password_too_short'));
+      return;
+    }
+
+    setChangingPassword(true);
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) {
+        Alert.alert(t('app.error'), t('admin_dashboard.error_auth'));
+        return;
+      }
+
+      if (!(await requireNetwork())) return;
+
+      const response = await fetchWithTimeout(`${API_BASE_URL}/api/user/password`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          current_password: current,
+          new_password: newPass,
+          confirm_password: confirm
+        }),
+      });
+
+      const responseText = await response.text();
+      let data: any = {};
+      try { data = JSON.parse(responseText); } catch { /* non-JSON error body */ }
+
+      if (response.ok) {
+        setPasswordModalVisible(false);
+        setPasswordForm({ current: '', newPass: '', confirm: '' });
+        Alert.alert(t('admin_dashboard.password_success_title'), t('admin_dashboard.password_success'));
+      } else {
+        Alert.alert(t('app.error'), data.error || t('admin_dashboard.password_change_failed'));
+      }
+    } catch (error: any) {
+      console.error('❌ Error changing password:', error);
+      Alert.alert(t('app.error'), error?.message || t('admin_dashboard.password_change_failed'));
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
+  const closePasswordModal = () => {
+    setPasswordModalVisible(false);
+    setPasswordForm({ current: '', newPass: '', confirm: '' });
+  };
+
   // Seller Management Functions
   const handleApproveSeller = async (sellerId: string) => {
     try {
@@ -393,7 +469,7 @@ export default function MsimamiziHomeScreen() {
 
       console.log('✅ Inathibitisha muuzaji:', sellerId);
       
-      const response = await fetch(`${API_BASE_URL}/api/admin/users/${sellerId}/status`, {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/api/admin/users/${sellerId}/status`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -437,7 +513,7 @@ export default function MsimamiziHomeScreen() {
 
       console.log('❌ Inabatilisha muuzaji:', sellerId);
       
-      const response = await fetch(`${API_BASE_URL}/api/admin/users/${sellerId}/status`, {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/api/admin/users/${sellerId}/status`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -492,7 +568,7 @@ export default function MsimamiziHomeScreen() {
               console.log('🗑️ Inafuta muuzaji kabisa:', sellerId);
               
               // Tumia DELETE endpoint mpya
-              const response = await fetch(`${API_BASE_URL}/api/admin/users/${sellerId}`, {
+              const response = await fetchWithTimeout(`${API_BASE_URL}/api/admin/users/${sellerId}`, {
                 method: 'DELETE',
                 headers: {
                   'Authorization': `Bearer ${token}`,
@@ -556,7 +632,7 @@ export default function MsimamiziHomeScreen() {
       console.log('🔄 Using fallback delete method for seller:', sellerId);
       
       // Fallback: Weka status kuwa 'inactive' kwa sasa
-      const response = await fetch(`${API_BASE_URL}/api/admin/users/${sellerId}/status`, {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/api/admin/users/${sellerId}/status`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -612,7 +688,7 @@ export default function MsimamiziHomeScreen() {
               console.log('🗑️ Inafuta muuzaji (inactive):', sellerId);
               
               // Weka status ya 'inactive'
-              const response = await fetch(`${API_BASE_URL}/api/admin/users/${sellerId}/status`, {
+              const response = await fetchWithTimeout(`${API_BASE_URL}/api/admin/users/${sellerId}/status`, {
                 method: 'PUT',
                 headers: {
                   'Authorization': `Bearer ${token}`,
@@ -698,7 +774,7 @@ export default function MsimamiziHomeScreen() {
 
       if (!(await requireNetwork())) { setLocationTracking(false); return; }
 
-      const response = await fetch(`${API_BASE_URL}/api/user/profile`, {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/api/user/profile`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -774,7 +850,7 @@ export default function MsimamiziHomeScreen() {
         return;
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/user/profile`, {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/api/user/profile`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -1237,6 +1313,16 @@ export default function MsimamiziHomeScreen() {
               />
               <Text style={styles.descriptionHint}>{t('profile.business_description_hint')}</Text>
             </View>
+
+            {/* Badilisha nenosiri */}
+            <TouchableOpacity
+              style={styles.changePasswordRow}
+              onPress={() => setPasswordModalVisible(true)}
+            >
+              <Ionicons name="lock-closed-outline" size={18} color="#3498db" />
+              <Text style={styles.changePasswordText}>{t('admin_dashboard.change_password')}</Text>
+              <Ionicons name="chevron-forward" size={18} color="#bdc3c7" />
+            </TouchableOpacity>
             </ScrollView>
 
             <View style={styles.modalButtons}>
@@ -1256,6 +1342,81 @@ export default function MsimamiziHomeScreen() {
                   <ActivityIndicator size="small" color="white" />
                 ) : (
                   <Text style={styles.saveButtonText}>{t('admin_dashboard.modal_save')}</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modali ya Kubadilisha Nenosiri */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={passwordModalVisible}
+        onRequestClose={closePasswordModal}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{t('admin_dashboard.change_password_title')}</Text>
+              <TouchableOpacity onPress={closePasswordModal} style={styles.closeButton}>
+                <Ionicons name="close" size={22} color="#7f8c8d" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalScroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>{t('admin_dashboard.current_password')} *</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder={t('admin_dashboard.current_password_placeholder')}
+                  secureTextEntry
+                  value={passwordForm.current}
+                  onChangeText={(text) => setPasswordForm(prev => ({ ...prev, current: text }))}
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>{t('admin_dashboard.new_password')} *</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder={t('admin_dashboard.new_password_placeholder')}
+                  secureTextEntry
+                  value={passwordForm.newPass}
+                  onChangeText={(text) => setPasswordForm(prev => ({ ...prev, newPass: text }))}
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>{t('admin_dashboard.confirm_password')} *</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder={t('admin_dashboard.confirm_password_placeholder')}
+                  secureTextEntry
+                  value={passwordForm.confirm}
+                  onChangeText={(text) => setPasswordForm(prev => ({ ...prev, confirm: text }))}
+                />
+              </View>
+            </ScrollView>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={closePasswordModal}
+                disabled={changingPassword}
+              >
+                <Text style={styles.cancelButtonText}>{t('admin_dashboard.modal_cancel')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.saveButton]}
+                onPress={handleChangePassword}
+                disabled={changingPassword || !passwordForm.current || !passwordForm.newPass || !passwordForm.confirm}
+              >
+                {changingPassword ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : (
+                  <Text style={styles.saveButtonText}>{t('admin_dashboard.change_password_save')}</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -1444,6 +1605,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginLeft: 7,
     letterSpacing: 0.3,
+  },
+  changePasswordRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+  changePasswordText: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#3498db',
   },
   filterInfo: {
     flexDirection: 'row',

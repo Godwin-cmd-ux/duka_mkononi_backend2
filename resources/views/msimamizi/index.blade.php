@@ -623,6 +623,21 @@
             err_fill_business_location: "Tafadhali jaza jina la biashara na eneo",
             msg_profile_updated: "Wasifu umesasishwa",
             err_update_profile: "Imeshindikana kusasisha wasifu",
+            change_password: "Badilisha Nenosiri",
+            change_password_title: "Badilisha Nenosiri",
+            change_password_subtitle: "Weka nenosiri lako la sasa kisha chagua nenosiri jipya.",
+            current_password: "Nenosiri la Sasa",
+            current_password_placeholder: "Weka nenosiri la sasa",
+            new_password: "Nenosiri Jipya",
+            new_password_placeholder: "Weka nenosiri jipya",
+            confirm_password: "Rudia Nenosiri Jipya",
+            confirm_password_placeholder: "Rudia nenosiri jipya",
+            change_password_save: "Badilisha",
+            err_password_fields: "Tafadhali jaza nenosiri la sasa, jipya na uthibitisho",
+            err_password_mismatch: "Nenosiri jipya na uthibitisho havifanani",
+            err_password_short: "Nenosiri jipya lazima liwe na herufi 6 au zaidi",
+            msg_password_changed: "Nenosiri limebadilishwa kikamilifu!",
+            err_password_change_failed: "Imeshindikana kubadilisha nenosiri",
             type_auto_parts: "Sehemu za Gari",
             type_motorcycle_spare: "Spea za Pikipiki",
             type_supermarket: "Supermarket",
@@ -1069,6 +1084,72 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         function closeEditModal() {
             document.getElementById('editModal').style.display = 'none';
         }
+
+        // Change-password modal: static markup, populated/cleared on open.
+        function openPasswordModal() {
+            ['currentPassword', 'newPassword', 'confirmPassword'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            const modal = document.getElementById('passwordModal');
+            if (modal) modal.style.display = 'flex';
+        }
+
+        function closePasswordModal() {
+            const modal = document.getElementById('passwordModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        async function changePassword() {
+            const current = document.getElementById('currentPassword').value;
+            const next = document.getElementById('newPassword').value;
+            const confirm = document.getElementById('confirmPassword').value;
+
+            if (!current || !next || !confirm) {
+                showAlert(t('msimamizi_index.alert_error_title'), t('msimamizi_index.err_password_fields'));
+                return;
+            }
+            if (next !== confirm) {
+                showAlert(t('msimamizi_index.alert_error_title'), t('msimamizi_index.err_password_mismatch'));
+                return;
+            }
+            if (next.length < 6) {
+                showAlert(t('msimamizi_index.alert_error_title'), t('msimamizi_index.err_password_short'));
+                return;
+            }
+
+            const token = localStorage.getItem('userToken');
+            if (!token) return;
+
+            const saveBtn = document.getElementById('savePasswordBtn');
+            const cancelBtn = document.getElementById('cancelPasswordBtn');
+            const restore = () => {
+                if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = t('msimamizi_index.change_password_save'); }
+                if (cancelBtn) cancelBtn.disabled = false;
+            };
+            if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = t('msimamizi_index.saving'); }
+            if (cancelBtn) cancelBtn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/user/password`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ current_password: current, new_password: next, confirm_password: confirm })
+                });
+
+                if (response.ok) {
+                    closePasswordModal();
+                    showAlert(t('msimamizi_index.alert_success_title'), t('msimamizi_index.msg_password_changed'));
+                } else {
+                    const err = await response.json().catch(() => ({}));
+                    showAlert(t('msimamizi_index.alert_error_title'), err.error || t('msimamizi_index.err_password_change_failed'));
+                }
+            } catch (error) {
+                showAlert(t('msimamizi_index.alert_error_title'), t('msimamizi_index.err_network'));
+            } finally {
+                restore();
+            }
+        }
         
         function saveEditModal() {
             editFormData.name = document.getElementById('editName').value;
@@ -1340,6 +1421,9 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             // The persistent sidebar logout button had no listener
             // attached anywhere — clicking it did nothing.
             document.getElementById('logoutBtn')?.addEventListener('click', handleLogout);
+            document.getElementById('openPasswordBtn')?.addEventListener('click', openPasswordModal);
+            document.getElementById('cancelPasswordBtn')?.addEventListener('click', closePasswordModal);
+            document.getElementById('savePasswordBtn')?.addEventListener('click', changePassword);
         }
         
         // Pull the authoritative profile (includes business_type and
@@ -1441,9 +1525,39 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 <label class="input-label" data-i18n="msimamizi_index.label_business_description">Maelezo mafupi ya Biashara</label>
                 <textarea id="editBusinessDescription" class="input-field" rows="2" placeholder="Mfano: Tunauza sehemu za magari ya Toyota na Nissan..." data-i18n="msimamizi_index.placeholder_business_description" data-i18n-attr="placeholder" style="resize:vertical;"></textarea>
             </div>
+            <div id="openPasswordBtn" style="display:flex;align-items:center;gap:8px;padding:12px;background:#e8f4fd;border-radius:10px;cursor:pointer;font-weight:600;color:#3498db;margin-bottom:8px;">
+                <i class="fa-solid fa-lock" aria-hidden="true"></i>
+                <span data-i18n="msimamizi_index.change_password">Badilisha Nenosiri</span>
+            </div>
             <div class="modal-buttons">
                 <div class="modal-btn btn-cancel" onclick="closeEditModal()" data-i18n="msimamizi_index.btn_cancel">Ghairi</div>
                 <div class="modal-btn btn-save" id="editSaveBtn" onclick="saveEditModal()" data-i18n="msimamizi_index.btn_save">Hifadhi</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="passwordModal" class="modal-overlay" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" data-i18n="msimamizi_index.change_password_title">Badilisha Nenosiri</h3>
+                <span style="cursor:pointer; font-size:24px;" onclick="closePasswordModal()">✖</span>
+            </div>
+            <div class="input-group">
+                <label class="input-label" data-i18n="msimamizi_index.current_password">Nenosiri la Sasa</label>
+                <input type="password" id="currentPassword" class="input-field" placeholder="Weka nenosiri la sasa" data-i18n="msimamizi_index.current_password_placeholder" data-i18n-attr="placeholder">
+            </div>
+            <div class="input-group">
+                <label class="input-label" data-i18n="msimamizi_index.new_password">Nenosiri Jipya</label>
+                <input type="password" id="newPassword" class="input-field" placeholder="Weka nenosiri jipya" data-i18n="msimamizi_index.new_password_placeholder" data-i18n-attr="placeholder">
+            </div>
+            <div class="input-group">
+                <label class="input-label" data-i18n="msimamizi_index.confirm_password">Rudia Nenosiri Jipya</label>
+                <input type="password" id="confirmPassword" class="input-field" placeholder="Rudia nenosiri jipya" data-i18n="msimamizi_index.confirm_password_placeholder" data-i18n-attr="placeholder">
+            </div>
+            <div class="modal-buttons">
+                <div class="modal-btn btn-cancel" id="cancelPasswordBtn" onclick="closePasswordModal()" data-i18n="msimamizi_index.btn_cancel">Ghairi</div>
+                <div class="modal-btn btn-save" id="savePasswordBtn" onclick="changePassword()" data-i18n="msimamizi_index.change_password_save">Badilisha</div>
             </div>
         </div>
     </div>

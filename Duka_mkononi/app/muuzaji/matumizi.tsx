@@ -89,7 +89,7 @@ export default function MatumiziScreen() {
     const loadCategories = async () => {
         try {
             const token = await AsyncStorage.getItem('userToken');
-            const response = await fetch(`${API_BASE_URL}/api/office-expenses/categories`, {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/api/office-expenses/categories`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await response.json();
@@ -189,7 +189,7 @@ export default function MatumiziScreen() {
             const token = await AsyncStorage.getItem('userToken');
             if (!(await requireNetwork())) return;
             
-            const response = await fetch(`${API_BASE_URL}/api/office-expenses`, {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/api/office-expenses`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -234,7 +234,7 @@ export default function MatumiziScreen() {
                         if (!(await requireNetwork())) return;
                         try {
                             const token = await AsyncStorage.getItem('userToken');
-                            const response = await fetch(`${API_BASE_URL}/api/office-expenses/${expenseId}`, {
+                            const response = await fetchWithTimeout(`${API_BASE_URL}/api/office-expenses/${expenseId}`, {
                                 method: 'DELETE',
                                 headers: { 'Authorization': `Bearer ${token}` }
                             });

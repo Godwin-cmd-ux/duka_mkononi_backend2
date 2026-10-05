@@ -174,6 +174,75 @@ class ProfileController extends BaseController
     }
 
     /**
+     * Change the authenticated user's own password.
+     *
+     * The current password is verified before the new one is written, so a
+     * hijacked session cannot silently lock the owner out. Passwords are stored
+     * with the same bcrypt scheme as registration and reset (AuthController /
+     * ResetPasswordController), so password_verify can read them back.
+     */
+    public function changePassword(Request $request)
+    {
+        $userId = $this->userId($request);
+        $ip = $this->ip($request);
+
+        // Accept both the camelCase used by the password-reset screens and the
+        // snake_case used elsewhere in this API.
+        $currentPassword = $request->input('current_password', $request->input('currentPassword'));
+        $newPassword = $request->input('new_password', $request->input('newPassword'));
+        $confirmPassword = $request->input('confirm_password', $request->input('confirmPassword'));
+
+        if (!$currentPassword || !$newPassword || !$confirmPassword) {
+            $this->log($userId, 'PASSWORD_CHANGE_FAILED', '/api/user/password', ['reason' => 'Missing fields'], $ip, 'failed');
+            return $this->json(['error' => 'Nenosiri la sasa, nenosiri jipya na uthibitisho zinahitajika'], 400);
+        }
+
+        if ($newPassword !== $confirmPassword) {
+            $this->log($userId, 'PASSWORD_CHANGE_FAILED', '/api/user/password', ['reason' => 'Passwords do not match'], $ip, 'failed');
+            return $this->json(['error' => 'Nenosiri jipya na uthibitisho havifanani'], 400);
+        }
+
+        if (strlen($newPassword) < 6) {
+            $this->log($userId, 'PASSWORD_CHANGE_FAILED', '/api/user/password', ['reason' => 'Password too short'], $ip, 'failed');
+            return $this->json(['error' => 'Nenosiri jipya lazima liwe na herufi 6 au zaidi'], 400);
+        }
+
+        try {
+            $user = \App\Models\User::select('id', 'password')->where('id', $userId)->first();
+
+            if (!$user) {
+                $this->log($userId, 'PASSWORD_CHANGE_FAILED', '/api/user/password', ['reason' => 'User not found'], $ip, 'failed');
+                return $this->json(['error' => 'Akaunti haipatikani'], 404);
+            }
+
+            if (!password_verify($currentPassword, (string) $user->password)) {
+                $this->log($userId, 'PASSWORD_CHANGE_FAILED', '/api/user/password', ['reason' => 'Current password incorrect'], $ip, 'failed');
+                return $this->json(['error' => 'Nenosiri la sasa si sahihi'], 400);
+            }
+
+            if (password_verify($newPassword, (string) $user->password)) {
+                $this->log($userId, 'PASSWORD_CHANGE_FAILED', '/api/user/password', ['reason' => 'New password same as current'], $ip, 'failed');
+                return $this->json(['error' => 'Nenosiri jipya linapaswa kuwa tofauti na la sasa'], 400);
+            }
+
+            \App\Models\User::where('id', $userId)->update([
+                'password' => password_hash($newPassword, PASSWORD_BCRYPT),
+                'updated_at' => $this->isoNow(),
+            ]);
+
+            $this->log($userId, 'PASSWORD_CHANGED', '/api/user/password', ['success' => true], $ip, 'success');
+
+            return $this->json([
+                'success' => true,
+                'message' => 'Nenosiri limebadilishwa kikamilifu!',
+            ]);
+        } catch (\Throwable $error) {
+            $this->log($userId, 'PASSWORD_CHANGE_ERROR', '/api/user/password', ['error' => $error->getMessage()], $ip, 'failed');
+            return $this->dbError($error, 'Hitilafu ya ndani ya server');
+        }
+    }
+
+    /**
      * Read the user row and merge the business columns from `businesses` into
      * the same flat shape the clients already consume.
      *

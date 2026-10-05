@@ -6,6 +6,7 @@ import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
+    Modal,
     ScrollView,
     StyleSheet,
     Switch,
@@ -79,6 +80,15 @@ export default function ProfailiScreen() {
   });
   const [notifications, setNotifications] = useState(true);
   const [photoUploading, setPhotoUploading] = useState(false);
+
+  // Change-password modal
+  const [passwordModalVisible, setPasswordModalVisible] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    current: '',
+    newPass: '',
+    confirm: ''
+  });
+  const [changingPassword, setChangingPassword] = useState(false);
   
   const router = useRouter();
 
@@ -264,6 +274,73 @@ export default function ProfailiScreen() {
       });
     }
     setEditing(!editing);
+  };
+
+  const handleChangePassword = async () => {
+    const { current, newPass, confirm } = passwordForm;
+
+    if (!current || !newPass || !confirm) {
+      Alert.alert(t('app.error'), t('profile.password_fields_required'));
+      return;
+    }
+
+    if (newPass !== confirm) {
+      Alert.alert(t('app.error'), t('profile.password_mismatch'));
+      return;
+    }
+
+    if (newPass.length < 6) {
+      Alert.alert(t('app.error'), t('profile.password_too_short'));
+      return;
+    }
+
+    setChangingPassword(true);
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) {
+        Alert.alert(t('app.error'), t('profile.login_required'));
+        return;
+      }
+
+      if (!(await requireNetwork())) return;
+
+      const response = await fetchWithTimeout(`${API_BASE_URL}/api/user/password`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          current_password: current,
+          new_password: newPass,
+          confirm_password: confirm
+        }),
+      });
+
+      const responseText = await response.text();
+      let data: any = {};
+      try { data = JSON.parse(responseText); } catch { /* non-JSON error body */ }
+
+      if (response.ok) {
+        setPasswordModalVisible(false);
+        setPasswordForm({ current: '', newPass: '', confirm: '' });
+        Alert.alert(t('profile.password_success_title'), t('profile.password_success'));
+      } else {
+        Alert.alert(t('app.error'), data.error || t('profile.password_change_failed'));
+      }
+    } catch (error: any) {
+      console.error('❌ Error changing password:', error);
+      Alert.alert(t('app.error'), error?.message || t('profile.password_change_failed'));
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
+  const closePasswordModal = () => {
+    setPasswordModalVisible(false);
+    setPasswordForm({ current: '', newPass: '', confirm: '' });
   };
 
   const handleLogout = async () => {
@@ -519,6 +596,16 @@ export default function ProfailiScreen() {
             />
           </View>
 
+          {/* Badilisha Nenosiri */}
+          <TouchableOpacity
+            style={styles.changePasswordRow}
+            onPress={() => setPasswordModalVisible(true)}
+          >
+            <Ionicons name="lock-closed-outline" size={18} color="#007AFF" />
+            <Text style={styles.changePasswordText}>{t('profile.change_password')}</Text>
+            <Ionicons name="chevron-forward" size={18} color="#bdc3c7" />
+          </TouchableOpacity>
+
           {/* Vitufe vya Hariri/Hifadhi */}
           <View style={styles.buttonRow}>
             <TouchableOpacity 
@@ -561,6 +648,71 @@ export default function ProfailiScreen() {
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Modali ya Kubadilisha Nenosiri */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={passwordModalVisible}
+        onRequestClose={closePasswordModal}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{t('profile.change_password_title')}</Text>
+            <Text style={styles.modalSubtitle}>{t('profile.change_password_subtitle')}</Text>
+
+            <ScrollView style={styles.modalScroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+              <Text style={styles.inputLabel}>{t('profile.current_password')} *</Text>
+              <TextInput
+                style={styles.input}
+                placeholder={t('profile.current_password_placeholder')}
+                secureTextEntry
+                value={passwordForm.current}
+                onChangeText={(text) => setPasswordForm(prev => ({ ...prev, current: text }))}
+              />
+
+              <Text style={styles.inputLabel}>{t('profile.new_password')} *</Text>
+              <TextInput
+                style={styles.input}
+                placeholder={t('profile.new_password_placeholder')}
+                secureTextEntry
+                value={passwordForm.newPass}
+                onChangeText={(text) => setPasswordForm(prev => ({ ...prev, newPass: text }))}
+              />
+
+              <Text style={styles.inputLabel}>{t('profile.confirm_password')} *</Text>
+              <TextInput
+                style={styles.input}
+                placeholder={t('profile.confirm_password_placeholder')}
+                secureTextEntry
+                value={passwordForm.confirm}
+                onChangeText={(text) => setPasswordForm(prev => ({ ...prev, confirm: text }))}
+              />
+            </ScrollView>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={closePasswordModal}
+                disabled={changingPassword}
+              >
+                <Text style={styles.buttonText}>{t('profile.cancel')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.saveButton]}
+                onPress={handleChangePassword}
+                disabled={changingPassword || !passwordForm.current || !passwordForm.newPass || !passwordForm.confirm}
+              >
+                {changingPassword ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.buttonText}>{t('profile.change_password_save')}</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Sehemu ya Mwisho */}
       <View style={styles.footer}>
@@ -796,5 +948,71 @@ const styles = StyleSheet.create({
   footerSubtext: {
     fontSize: 12,
     color: '#999',
+  },
+  changePasswordRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 4,
+    marginBottom: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+  changePasswordText: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#007AFF',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 24,
+    borderRadius: 16,
+    width: '100%',
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#2c3e50',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#7f8c8d',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2c3e50',
+    marginBottom: 6,
+    marginTop: 12,
+  },
+  modalScroll: {
+    maxHeight: '70%',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 24,
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

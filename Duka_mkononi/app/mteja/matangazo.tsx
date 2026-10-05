@@ -277,7 +277,7 @@ export default function MatangazoScreen() {
         }));
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/reactions/like`, {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/api/reactions/like`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -410,7 +410,7 @@ export default function MatangazoScreen() {
                 }));
               }
 
-              const response = await fetch(`${API_BASE_URL}/api/reactions/report`, {
+              const response = await fetchWithTimeout(`${API_BASE_URL}/api/reactions/report`, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',

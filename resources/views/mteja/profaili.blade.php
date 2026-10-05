@@ -633,6 +633,24 @@
         </main>
     </div>
 
+    <!-- Change Password Modal -->
+    <div id="passwordModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:1000;">
+        <div style="background:white;border-radius:20px;width:90%;max-width:420px;padding:24px;">
+            <div style="font-size:20px;font-weight:800;text-align:center;margin-bottom:4px;" data-i18n="mteja_profaili.change_password_title">Badilisha Nenosiri</div>
+            <div style="font-size:13px;color:#7f8c8d;text-align:center;margin-bottom:20px;" data-i18n="mteja_profaili.change_password_subtitle">Weka nenosiri lako la sasa kisha chagua nenosiri jipya.</div>
+            <label style="font-size:14px;font-weight:600;display:block;margin-bottom:6px;" data-i18n="mteja_profaili.current_password">Nenosiri la Sasa</label>
+            <input type="password" id="currentPassword" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:10px;font-size:14px;margin-bottom:14px;" placeholder="Weka nenosiri la sasa" data-i18n="mteja_profaili.current_password_placeholder" data-i18n-attr="placeholder">
+            <label style="font-size:14px;font-weight:600;display:block;margin-bottom:6px;" data-i18n="mteja_profaili.new_password">Nenosiri Jipya</label>
+            <input type="password" id="newPassword" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:10px;font-size:14px;margin-bottom:14px;" placeholder="Weka nenosiri jipya" data-i18n="mteja_profaili.new_password_placeholder" data-i18n-attr="placeholder">
+            <label style="font-size:14px;font-weight:600;display:block;margin-bottom:6px;" data-i18n="mteja_profaili.confirm_password">Rudia Nenosiri Jipya</label>
+            <input type="password" id="confirmPassword" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:10px;font-size:14px;margin-bottom:18px;" placeholder="Rudia nenosiri jipya" data-i18n="mteja_profaili.confirm_password_placeholder" data-i18n-attr="placeholder">
+            <div style="display:flex;gap:12px;">
+                <button class="btn btn-cancel" id="cancelPasswordBtn" style="flex:1;" data-i18n="mteja_profaili.btn_cancel">Ghairi</button>
+                <button class="btn btn-save" id="savePasswordBtn" style="flex:1;" data-i18n="mteja_profaili.change_password_save">Badilisha</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ============================================
         // PROFAILI SCREEN - Mteja Web Replica
@@ -698,6 +716,21 @@
             setting_notifications_desc: 'Pokewa taarifa kuhusu matangazo mapya na promosheni',
             btn_cancel: 'Ghairi',
             btn_edit_profile: 'Hariri Wasifu',
+            change_password: 'Badilisha Nenosiri',
+            change_password_title: 'Badilisha Nenosiri',
+            change_password_subtitle: 'Weka nenosiri lako la sasa kisha chagua nenosiri jipya.',
+            current_password: 'Nenosiri la Sasa',
+            current_password_placeholder: 'Weka nenosiri la sasa',
+            new_password: 'Nenosiri Jipya',
+            new_password_placeholder: 'Weka nenosiri jipya',
+            confirm_password: 'Rudia Nenosiri Jipya',
+            confirm_password_placeholder: 'Rudia nenosiri jipya',
+            change_password_save: 'Badilisha',
+            err_password_fields: 'Tafadhali jaza nenosiri la sasa, jipya na uthibitisho',
+            err_password_mismatch: 'Nenosiri jipya na uthibitisho havifanani',
+            err_password_short: 'Nenosiri jipya lazima liwe na herufi 6 au zaidi',
+            msg_password_changed: 'Nenosiri limebadilishwa kikamilifu!',
+            err_password_change_failed: 'Imeshindikana kubadilisha nenosiri',
             btn_saving: 'Inahifadhi...',
             btn_save: 'Hifadhi',
             section_account_actions: 'Vitendo vya Akaunti',
@@ -733,7 +766,7 @@
             store: 'fa-store', megaphone: 'fa-bullhorn', user: 'fa-user',
             camera: 'fa-camera', logout: 'fa-arrow-right-from-bracket',
             save: 'fa-floppy-disk', spinner: 'fa-spinner', edit: 'fa-pen-to-square',
-            warning: 'fa-triangle-exclamation', refresh: 'fa-rotate-right'
+            warning: 'fa-triangle-exclamation', refresh: 'fa-rotate-right', lock: 'fa-lock'
         };
         function ic(name, size = 16, cls = '') {
             return `<i class="fa-solid ${FA_MAP[name] || 'fa-circle-info'} ${cls}" style="font-size:${size}px;" aria-hidden="true"></i>`;
@@ -974,6 +1007,78 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             render();
         }
 
+        function openPasswordModal() {
+            ['currentPassword', 'newPassword', 'confirmPassword'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            const modal = document.getElementById('passwordModal');
+            if (modal) modal.style.display = 'flex';
+        }
+
+        function closePasswordModal() {
+            const modal = document.getElementById('passwordModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        async function changePassword() {
+            const current = document.getElementById('currentPassword').value;
+            const next = document.getElementById('newPassword').value;
+            const confirm = document.getElementById('confirmPassword').value;
+
+            if (!current || !next || !confirm) {
+                showToast(t('err_password_fields'), 'warning');
+                return;
+            }
+            if (next !== confirm) {
+                showToast(t('err_password_mismatch'), 'warning');
+                return;
+            }
+            if (next.length < 6) {
+                showToast(t('err_password_short'), 'warning');
+                return;
+            }
+
+            const token = localStorage.getItem('userToken');
+            if (!token) return;
+
+            const saveBtn = document.getElementById('savePasswordBtn');
+            const cancelBtn = document.getElementById('cancelPasswordBtn');
+            const restore = () => {
+                if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = t('change_password_save'); }
+                if (cancelBtn) cancelBtn.disabled = false;
+            };
+            if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = t('btn_saving'); }
+            if (cancelBtn) cancelBtn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/user/password`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ current_password: current, new_password: next, confirm_password: confirm })
+                });
+
+                if (response.ok) {
+                    closePasswordModal();
+                    showToast(t('msg_password_changed'), 'success');
+                } else {
+                    const err = await response.json().catch(() => ({}));
+                    showToast(err.error || t('err_password_change_failed'), 'error');
+                }
+            } catch (error) {
+                showToast(t('err_update_failed'), 'error');
+            } finally {
+                restore();
+            }
+        }
+
+        function setupPasswordModal() {
+            const cancelBtn = document.getElementById('cancelPasswordBtn');
+            const saveBtn = document.getElementById('savePasswordBtn');
+            if (cancelBtn) cancelBtn.addEventListener('click', closePasswordModal);
+            if (saveBtn) saveBtn.addEventListener('click', changePassword);
+        }
+
         function toggleNotifications(value) {
             notifications = value;
             saveNotificationSettings(value);
@@ -1201,6 +1306,10 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                                 </button>
                             ` : ''}
                         </div>
+
+                        <div class="button-row" style="margin-top:10px;">
+                            <button class="btn btn-edit" id="changePasswordBtn">${ic('lock', 13)} ${t('change_password')}</button>
+                        </div>
                     </div>
                 </div>
 
@@ -1231,6 +1340,9 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
 
             const editBtn = document.getElementById('editBtn');
             if (editBtn) editBtn.addEventListener('click', handleEditToggle);
+
+            const changePasswordBtn = document.getElementById('changePasswordBtn');
+            if (changePasswordBtn) changePasswordBtn.addEventListener('click', openPasswordModal);
 
             const saveBtn = document.getElementById('saveBtn');
             if (saveBtn) saveBtn.addEventListener('click', handleSaveProfile);
@@ -1278,6 +1390,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             if (!checkAuth()) return;
             updateSidebarUser();
             setupSidebar();
+            setupPasswordModal();
             loadNotificationSettings();
             await loadUserProfile();
         }

@@ -732,7 +732,7 @@ export default function UzaScreen() {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 30000);
         try {
-          return await fetch(`${API_BASE_URL}/api/sales`, {
+          return await fetchWithTimeout(`${API_BASE_URL}/api/sales`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,

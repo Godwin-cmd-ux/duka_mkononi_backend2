@@ -1,0 +1,1082 @@
+# MASTER IMPLEMENTATION PROMPT: DUКA MKONONI GEMINI-POWERED EXPERT SYSTEM
+
+## Implement All 24 New AI Capabilities + Safely Extend the Existing Capability #1
+
+**Project:** Duka Mkononi
+**Primary backend:** Laravel API
+**Database:** Supabase / PostgreSQL
+**Mobile application:** Expo / React Native
+**Web application:** Laravel Blade
+**AI provider:** Google Gemini
+**Supported locales:** `sw`, `en`, `fr`, `hi`, `es`, `ur`, `de`, `zh`
+
+---
+
+# 1. YOUR MISSION
+
+Act as a senior software architect, Laravel engineer, AI/ML engineer, Supabase/PostgreSQL engineer, Expo React Native developer, security engineer, QA engineer, and product designer.
+
+Your mission is to transform the existing Duka Mkononi platform into a production-quality, multilingual, Gemini-powered commerce expert system.
+
+You have access to the project repository. Inspect the actual implementation before making decisions. Do not assume that the repository matches an old report perfectly; verify every relevant file, route, database relationship, service, permission, and existing feature.
+
+The official capability catalogue contains 25 capabilities. Capability #1, Photo Inventory & Sales Capture, already exists partially. Preserve and extend it. Implement capabilities #2 through #25, giving us **24 new capabilities**, integrated into the existing platform.
+
+This is a real implementation task, not a proposal-writing exercise.
+
+Do not stop after:
+
+* Producing an implementation plan.
+* Creating database migrations without using them.
+* Creating API routes without working controllers.
+* Building frontend screens with mock data.
+* Adding buttons that do not perform real operations.
+* Writing placeholder functions or TODO comments.
+* Returning hardcoded AI answers.
+* Implementing only a chatbot while ignoring the other capabilities.
+
+Every capability must have a real implementation appropriate to its requirements, including backend processing, data retrieval, authorization, validation, user interface, error handling, testing, and documentation.
+
+Do not rewrite the whole application unnecessarily. Preserve working functionality, current business rules, visual identity, routes, integrations, and existing user workflows.
+
+# 2. NON-NEGOTIABLE WORKING RULES
+
+## 2.1 Inspect before editing
+
+First inspect:
+
+* The Laravel routes, controllers, middleware, services, policies, jobs, scheduled tasks, and configuration.
+* Supabase tables, relationships, indexes, RLS policies, authentication, and the existing database access layer.
+* The existing Gemini implementation, including both the Laravel AI import implementation and the legacy Node `ai/` pipeline.
+* Existing inventory and sales import endpoints, validators, verification tokens, retry handling, and audit records.
+* The Expo application's navigation, screens, API client, authentication, language context, and existing design tokens.
+* All Blade pages relevant to sellers, customers, managers, system administrators, and the public website.
+* The existing search, reporting, order tracking, customer, advertisement, review, expense, activity, and certification functionality.
+* Existing automated tests, dependency versions, environment variables, deployment configuration, and background jobs.
+
+Produce an internal implementation inventory identifying what already works, what is partially implemented, what is missing, and what is unsafe.
+
+Do not duplicate existing features merely because their implementations are in different files.
+
+## 2.2 Establish one authoritative backend
+
+Laravel must be the authoritative API and owner of business logic wherever the repository's current architecture permits.
+
+The legacy Node/Express server must not receive a second, conflicting implementation of the same AI or business API.
+
+Preserve any required WebSocket presence and email functionality. Consolidate overlapping API responsibilities into Laravel when safe, or document a precise ownership boundary if immediate consolidation would break production.
+
+Reuse the existing Supabase service layer and business-resolution logic. Do not introduce a separate, competing database abstraction without a compelling technical reason.
+
+## 2.3 Work safely with production data
+
+Before database changes:
+
+1. Inspect the current schema and migration conventions.
+2. Identify dependencies and backward-compatibility requirements.
+3. Create reversible migrations where applicable.
+4. Check whether existing records can be backfilled safely.
+5. Avoid destructive schema changes and production data deletion.
+6. Never run destructive production commands or reset the live database.
+
+Do not change existing product IDs, business identities, order statuses, payment workflows, or role definitions without a verified requirement.
+
+Never modify production records merely to make tests pass.
+
+## 2.4 No fake functionality
+
+Every implemented feature must be connected to real, authorized data.
+
+If a capability needs a Gemini API key, embeddings service, speech provider, scheduler, queue worker, or another external dependency, implement its integration and configuration properly.
+
+If credentials are missing, implement the relevant code, automated tests, and setup documentation, and report the missing deployment prerequisite honestly. Do not simulate a successful production integration.
+
+## 2.5 Maintain the existing application
+
+Keep existing routes and response formats compatible unless a migration is explicitly justified.
+
+Do not replace real database calls with sample arrays. Do not remove existing features, language switching, authentication, role dashboards, or working AI imports.
+
+Use feature flags for new capabilities where appropriate, allowing safe rollout and rollback.
+
+---
+
+# 3. SHARED AI ARCHITECTURE — REQUIRED BEFORE EXPANDING FEATURES
+
+Build or refactor a reusable AI infrastructure that every capability can use.
+
+## 3.1 Shared provider service
+
+Create or improve a central AI provider adapter responsible for:
+
+* Gemini API communication.
+* Model selection by capability.
+* Timeouts and bounded retries.
+* Exponential backoff with jitter for retryable failures.
+* Handling HTTP 429 and 503 responses.
+* Request and response size limits.
+* Structured JSON output and schema validation.
+* Token usage and estimated cost tracking when provider data permits.
+* Request correlation IDs.
+* Safe logging and standardized error handling.
+* Cancellation or timeout handling where supported.
+
+Use environment-driven configuration, following Laravel conventions such as `config/ai.php`.
+
+Keep API keys server-side. Never expose Gemini credentials to JavaScript, the mobile application, Blade templates, API responses, or public repository files.
+
+## 3.2 Shared retrieval and tool-calling layer
+
+Build reusable, allow-listed server-side tools for retrieving authorized information, such as:
+
+* Product search and product details.
+* Inventory availability and stock movements.
+* Sales summaries and historical sales.
+* Revenue, cost, profit, and margin calculations.
+* Expenses and expense categories.
+* Customer information, with strict access controls.
+* Order status and delivery tracking.
+* Reviews and public business trust signals.
+* Business activity and staff logs.
+* Administrative aggregate statistics.
+* Public help content and marketplace listings.
+
+Only implement tools supported by the real schema. Adapt the names to the existing architecture.
+
+All tools must enforce authentication, authorization, business ownership, permitted date ranges, result limits, and validated parameters in server-side code.
+
+The model may request a tool call, but only trusted application code may execute it.
+
+Never let Gemini execute arbitrary SQL, generate unrestricted database queries, choose another tenant's ID without authorization, or write directly to the database.
+
+## 3.3 Structured contracts
+
+Every capability must have an explicit input contract, output schema, validation rules, error contract, and permission requirements.
+
+Validate model output before returning it to the frontend or allowing any database mutation.
+
+Reject malformed data, invalid identifiers, invalid dates, non-finite numbers, out-of-range values, and unexpected fields where strict schemas are appropriate.
+
+If output repair is attempted, limit it to a bounded number of attempts. Never silently turn unreliable AI output into trusted business data.
+
+## 3.4 Grounding rules
+
+Enforce these rules across the entire expert system:
+
+1. Real stock, prices, sales, revenue, expenses, and orders must come from authorized database records.
+2. Financial calculations and inventory arithmetic must be performed in trusted application code or PostgreSQL, not estimated by the model.
+3. Missing information must be reported as missing.
+4. Distinguish measured facts, computed estimates, recommendations, and predictions.
+5. Show relevant date ranges, data sources, and limitations.
+6. Never invent a product, transaction, customer, order status, or business record.
+7. Treat database content, uploaded documents, reviews, and user prompts as untrusted input.
+8. Do not disclose another business's data through prompts, logs, embeddings, caches, or conversation history.
+
+## 3.5 Human confirmation and idempotency
+
+Any AI-proposed action affecting stock, selling prices, expenses, sales, customer-facing messages, published advertisements, or other consequential records must follow the appropriate confirmation workflow.
+
+The normal flow is:
+
+**Retrieve → Generate proposal → Validate → Preview → Confirm → Authorize → Commit → Audit.**
+
+Read-only questions and summaries should not require unnecessary confirmation.
+
+Use server-generated, single-use verification tokens or equivalent idempotency mechanisms for consequential operations. Bind confirmations to the authenticated user, authorized business, proposed action, and relevant record version or payload hash.
+
+A repeated request must not create duplicate transactions.
+
+## 3.6 Audit and observability
+
+Create or extend an AI request log and action audit system.
+
+Record, where applicable:
+
+* Request ID and capability name.
+* Authenticated user and authorized business identifiers.
+* Model and prompt version.
+* Request status, duration, and retry count.
+* Token usage and estimated cost.
+* Validation failures and standardized error codes.
+* Whether a human confirmed, edited, rejected, or undid a proposal.
+* References to affected records and audit events.
+
+Do not log API keys, passwords, OTPs, payment credentials, or unnecessary personal data. Apply appropriate retention rules.
+
+---
+
+# 4. IMPLEMENT THE 24 NEW CAPABILITIES
+
+## SELLER / MUUZAJI
+
+### CAPABILITY #2 — Pricing and Margin Advisor
+
+Build a product-level pricing advisor.
+
+Requirements:
+
+* Retrieve the authorized seller's actual product cost, current selling price, available historical sales, and relevant category information.
+* Compute gross margin and markup correctly, distinguishing between them.
+* Identify products priced below known cost and products whose margins fall below configurable business thresholds.
+* Propose a selling price based on explicit margin targets, reliable historical evidence, and optional category benchmarks where trustworthy data is actually available.
+* Clearly distinguish evidence-based recommendations from estimates.
+* Explain the calculation and display the assumptions used.
+* Allow authorized sellers to edit or reject the suggestion.
+* Require confirmation before changing a stored selling price.
+* Recheck ownership, cost, and current price before committing.
+
+If the cost basis, historical evidence, or relevant benchmark is missing, disclose the limitation rather than inventing a market price.
+
+### CAPABILITY #3 — Restock and Stock-Out Prediction
+
+Build a demand-aware inventory planning system.
+
+Requirements:
+
+* Calculate sales velocity from real historical sales, with configurable observation windows.
+* Account for current stock, available sales history, recent demand changes, and recorded incoming stock where supported.
+* Estimate days until stock-out when the data is sufficient.
+* Identify low-stock, fast-moving, and potentially overstocked products.
+* Generate a prioritized restock list with proposed quantities and reasons.
+* Support configurable minimum stock levels and lead times when these are known.
+* Explain uncertainty for products with sparse or irregular sales.
+* Avoid treating returns, cancelled orders, or unfulfilled orders as completed sales.
+* Allow the seller to review a proposed replenishment list without automatically purchasing or modifying stock.
+
+Perform numerical calculations in trusted code or SQL. Gemini may explain and prioritize calculated results but must not invent demand figures.
+
+### CAPABILITY #4 — Natural-Language Business Reporting
+
+Allow sellers to ask business questions in ordinary language.
+
+Examples:
+
+* "Niliuza mangapi wiki hii?"
+* "Which products generated the highest profit this month?"
+* "Compare sales this week with last week."
+* "How much did we spend on transport?"
+
+Requirements:
+
+* Understand the question and identify the required metrics and date range.
+* Call approved, read-only reporting tools.
+* Use the authenticated seller's authorized business context.
+* Apply consistent timezone, currency, date, status, and financial calculation rules.
+* Return a concise explanation with relevant figures, comparisons, and source information.
+* Render a small chart or structured table when useful.
+* State when a requested metric cannot be computed from available fields.
+* Support follow-up questions without allowing conversation context to override current authorization.
+
+Never send unrestricted raw database tables to Gemini.
+
+### CAPABILITY #5 — Business Health Score and Weekly Coaching
+
+Build a weekly business performance digest.
+
+Requirements:
+
+* Calculate an explainable score using documented components such as margin, stock cover, sales trends, and expense ratio.
+* Define component formulas, weights, thresholds, missing-data behavior, and score interpretation.
+* Do not assign a misleading score when the required evidence is insufficient.
+* Identify meaningful changes and provide three practical, evidence-based suggested actions when sufficient data exists.
+* Explain the figures behind each recommendation.
+* Generate the digest through Laravel scheduled jobs or the repository's established scheduling system.
+* Prevent duplicate digests for the same business and reporting period.
+* Store historical summaries and allow authorized users to review them.
+* Respect language preferences and configurable delivery behavior.
+
+Do not label a business as failing or successful based solely on an unsupported AI opinion.
+
+### CAPABILITY #6 — Anomaly and Leak Detection
+
+Build a rule-based anomaly detection engine with AI explanations.
+
+Detect configurable patterns such as:
+
+* Unusual gross-margin drops.
+* Potential duplicate sales.
+* Unexpected expense increases.
+* Stock discrepancies or shrinkage signals.
+* Abnormal sales or inventory adjustments.
+
+Requirements:
+
+* Define thresholds and statistical rules in application code or SQL.
+* Account for transaction status, time period, business size, and historical variability.
+* Distinguish a potential anomaly from proven fraud or theft.
+* Include evidence, affected records, timestamps, severity, and recommended verification steps.
+* Avoid repeatedly generating the same unresolved alert.
+* Provide a review and dismissal workflow with audit history.
+* Ensure the AI explains findings without determining guilt or changing records automatically.
+
+### CAPABILITY #7 — Smart Expense Categorisation
+
+Allow sellers to enter expenses using natural language or dictate them.
+
+Examples:
+
+* "Nauli ya usafiri 5000."
+* "Paid 20,000 TSh for shop electricity yesterday."
+
+Requirements:
+
+* Extract the description, amount, currency, date, and expense category.
+* Use configured expense categories from the existing database when available.
+* Support the eight approved locales.
+* Flag ambiguous dates, amounts, and categories for correction.
+* Validate numerical precision and allowed expense fields.
+* Display an editable expense preview.
+* Require confirmation before saving.
+* Prevent duplicate submissions and enforce business ownership.
+* Preserve the application's existing expense reporting and accounting behavior.
+
+Never invent a missing amount or silently convert an ambiguous amount into a confirmed expense.
+
+### CAPABILITY #8 — Advertisement and Product-Copy Generator
+
+Build an AI marketing-content studio.
+
+Requirements:
+
+* Generate advertisement headlines, descriptions, product descriptions, and short promotional messages.
+* Use authorized product information, actual prices, available images, and the user's selected objective.
+* Support all eight locales and appropriate marketplace tone.
+* Provide useful controls such as language, tone, audience, length, and content type.
+* Preserve brand names, product identifiers, and other terms that should not be translated.
+* Avoid unsupported product claims, fabricated discounts, fake guarantees, and invented availability.
+* Validate output length and apply suitable content moderation.
+* Allow previewing, editing, saving drafts, and publishing through the existing authorized advertisement workflow.
+* Never publish automatically without the required user approval.
+
+### CAPABILITY #9 — Customer-Reply Drafting
+
+Build a reply assistant for seller inquiries and price questions.
+
+Requirements:
+
+* Retrieve the relevant inquiry and authorized product information.
+* Draft replies in the selected or detected language and tone.
+* Support formal and casual styles.
+* Use real prices, stock availability, delivery information, and policies only when verified.
+* Clearly identify missing information that the seller must supply.
+* Allow editing and previewing before sending.
+* Integrate with the existing inquiry or messaging workflow.
+* Prevent accidental duplicate sends.
+* Record the appropriate audit event.
+
+Do not automatically promise delivery dates, discounts, refunds, or availability that the business has not confirmed.
+
+### CAPABILITY #10 — Seller Copilot Q&A
+
+Build a persistent, business-scoped seller assistant that can answer questions and invoke the approved tools from capabilities #3–#7.
+
+Requirements:
+
+* Support multi-turn conversations and relevant follow-up questions.
+* Understand questions about sales, inventory, profit, expenses, restocking, and business performance.
+* Call the shared read-only tools rather than inventing answers.
+* Include references to the reporting period and relevant source records or aggregates.
+* Provide concise answers, tables, and actionable next steps.
+* Maintain short, bounded conversation context.
+* Store conversation history securely if persistence is required, with appropriate deletion and retention controls.
+* Prevent conversations or cached results from crossing business boundaries.
+* Provide links or quick actions to relevant application screens.
+* Require confirmation for any consequential operation initiated from the conversation.
+
+This is a genuine tool-using assistant, not a chatbot with hardcoded answers.
+
+## CUSTOMER / MTEJA
+
+### CAPABILITY #11 — Conversational Shopping Assistant
+
+Build a shopping assistant for finding products and businesses.
+
+Requirements:
+
+* Interpret natural-language requests, including Swahili and mixed-language product descriptions.
+* Support questions such as "Natafuta breki za Toyota Harrier."
+* Convert requests into useful search queries and filters.
+* Search the real public product catalogue and authorized public business information.
+* Use semantic retrieval when available, followed by relevance ranking.
+* Return actual product details, business identity, prices, images, availability, and links supported by the database.
+* Respect public visibility and product availability rules.
+* Ask for clarification when multiple interpretations are plausible.
+* Allow users to refine, compare, and open results.
+* Never invent a listing or imply a product is in stock without verified data.
+
+Integrate the experience into the existing mobile shopping interface and relevant website pages.
+
+### CAPABILITY #12 — Business and Review Summarisation
+
+Help customers understand available business trust signals.
+
+Requirements:
+
+* Summarize actual published reviews, recurring themes, and relevant feedback.
+* Surface verified certification status, available activity information, and response-history indicators where these exist.
+* Distinguish verified facts from customer opinions.
+* Include sample size and relevant dates when available.
+* Identify mixed or conflicting feedback fairly.
+* Avoid revealing private account information or unpublished moderation notes.
+* Cache summaries safely and invalidate them when relevant public data changes.
+* Provide access to the original reviews and underlying trust information.
+
+Do not invent reviews, certification, ratings, or trust scores.
+
+### CAPABILITY #13 — Order and Delivery Q&A
+
+Let customers ask questions about their existing orders.
+
+Requirements:
+
+* Resolve the order using authenticated ownership or a secure guest-order verification mechanism already supported by the platform.
+* Retrieve current order-tracking records from the authoritative database.
+* Return only statuses actually recorded by the system.
+* Explain available order states in the customer's language.
+* Show timestamps and tracking details where available.
+* Never expose another customer's order.
+* Never invent dispatch, delivery, payment, or cancellation status.
+* Direct customers to the existing order-tracking workflow when verification is needed.
+* Use structured templates for status-critical answers.
+
+A missing tracking record must produce an honest response, not a guessed status.
+
+### CAPABILITY #14 — Personalised Recommendations
+
+Recommend products and businesses using relevant customer interactions.
+
+Requirements:
+
+* Generate candidates using actual catalogue data, product similarity, purchase history, likes, and available location preferences where permitted.
+* Apply authorization and public-visibility filters before ranking.
+* Consider stock availability where relevant.
+* Explain recommendations using real signals.
+* Respect consent, privacy, and applicable data-retention rules.
+* Provide useful recommendations for new users with insufficient history.
+* Avoid exposing one customer's behavior to another.
+* Allow users to dismiss irrelevant recommendations.
+* Evaluate relevance using measurable feedback.
+
+Never fabricate customer preferences or use protected personal characteristics to determine recommendations.
+
+## MANAGER / MSIMAMIZI
+
+### CAPABILITY #15 — AI Report Summaries
+
+Enhance existing manager reporting screens with grounded explanations.
+
+Requirements:
+
+* Reuse existing report queries and verified aggregate calculations.
+* Summarize revenue, sales trends, expenses, margins, and product performance as available.
+* Compare periods only when the periods and metrics are comparable.
+* Explain the main contributors to a change.
+* Display source figures and reporting periods.
+* Provide relevant tables or charts.
+* Support all eight locales.
+* Respect manager permissions and business scope.
+* Avoid claiming that one event caused another without evidence.
+
+If a report lacks the necessary data, disclose that limitation.
+
+### CAPABILITY #16 — Advertisement and Content Review Assistant
+
+Assist authorized staff in reviewing advertisements and product listings.
+
+Requirements:
+
+* Check for incomplete information, unsupported claims, misleading prices, prohibited content, and configurable marketplace policy violations.
+* Return structured findings with a category, explanation, severity, and relevant text.
+* Distinguish definite policy violations from uncertain concerns.
+* Use deterministic checks for objective requirements such as missing mandatory fields.
+* Apply AI classification to contextual cases.
+* Provide an interface for reviewing and approving, rejecting, or requesting edits.
+* Record the human decision and audit trail.
+* Avoid publishing or rejecting content solely because of an unreviewed AI judgment.
+
+The assistant is a moderation aid, not an unquestionable enforcement authority.
+
+### CAPABILITY #17 — Team Activity Digest
+
+Build a manager-facing summary of business activity.
+
+Requirements:
+
+* Retrieve authorized activity records from existing `user_logs` or the actual activity-log system.
+* Summarize relevant product additions, sales entries, expense entries, and other recorded events.
+* Support daily and weekly reporting windows.
+* Identify activity counts and noteworthy events using actual log records.
+* Link to relevant records where permissions allow.
+* Respect staff and business access restrictions.
+* Avoid inferring intent, misconduct, or employee performance from incomplete logs.
+* Make missing logging coverage visible.
+* Keep historical digests auditable.
+
+## SYSTEM ADMIN AND PUBLIC WEBSITE
+
+### CAPABILITY #18 — Inquiry Triage and Auto-Draft Replies
+
+Automate the first stage of inquiry management.
+
+Requirements:
+
+* Classify incoming inquiries by topic, such as account access, payments, technical support, business certification, or general questions.
+* Assign urgency based on documented criteria.
+* Route inquiries to the correct team or authorized role using actual routing rules.
+* Generate a draft reply grounded in approved help content and verified records.
+* Identify cases requiring human support.
+* Integrate with the existing inquiry workflow.
+* Prevent unauthorized disclosure of internal records.
+* Require approval before sending AI-generated replies unless a separately authorized, narrowly defined automation policy explicitly permits otherwise.
+* Record classification, routing, approval, and delivery outcomes.
+
+Do not claim an issue is resolved simply because an AI reply was generated.
+
+### CAPABILITY #19 — Certification and Onboarding Assistant
+
+Build tools to help administrators review business certification and guide new users through onboarding.
+
+Requirements:
+
+* Summarize submitted certification details and identify missing required documents or fields.
+* Compare submissions against actual configured certification requirements.
+* Present evidence and a checklist to authorized administrators.
+* Keep final certification decisions under the existing authorized human workflow.
+* Answer onboarding questions using approved documentation, help articles, and real application rules.
+* Guide users through signup and setup in their chosen language.
+* Avoid exposing submitted documents or sensitive details to unauthorized users.
+* Never invent missing evidence or approve certification automatically based solely on an AI summary.
+
+### CAPABILITY #20 — Natural-Language Admin Analytics
+
+Allow authorized system administrators to ask questions about platform operations.
+
+Examples:
+
+* "How many sellers joined last month?"
+* "How many users are online now?"
+* "How many businesses are awaiting certification?"
+
+Requirements:
+
+* Reuse existing admin statistics and presence endpoints or equivalent trusted data sources.
+* Create a small allow-listed set of read-only analytics tools.
+* Apply precise time ranges, aggregation rules, and authorized system scope.
+* Distinguish current presence from historical activity.
+* Support tables, simple charts, and concise explanations.
+* Protect sensitive information and avoid unnecessary personal-level reporting.
+* Require strict system-admin authorization for platform-wide analytics.
+* Validate all tool parameters and bound query cost.
+* Never allow model-generated arbitrary SQL or cross-tenant data access.
+
+### CAPABILITY #21 — Public AI Concierge
+
+Integrate a public assistant into appropriate homepage and shopping pages.
+
+Requirements:
+
+* Explain what Duka Mkononi is, how the marketplace works, and how users can get started.
+* Answer questions using approved public website content and help documentation.
+* Help visitors find actual businesses and products.
+* Explain how to download the application using verified links and instructions.
+* Respect the active locale.
+* Avoid revealing internal administration details, private business data, credentials, or unpublished information.
+* Use a bounded public knowledge base and approved search tools.
+* Apply request limits and abuse protection.
+* Provide graceful fallback links to existing website sections and contact channels.
+
+The assistant must remain within its public-commerce scope.
+
+## CROSS-CUTTING CAPABILITIES
+
+### CAPABILITY #22 — Truly Multilingual Assistant
+
+Unify language handling across all AI capabilities.
+
+The authoritative locale allow-list is:
+
+* `sw` — Swahili
+* `en` — English
+* `fr` — French
+* `hi` — Hindi
+* `es` — Spanish
+* `ur` — Urdu
+* `de` — German
+* `zh` — Chinese
+
+Requirements:
+
+* Reuse the existing `locales.json`, mobile `LanguageContext`, and existing account-language mechanisms.
+* Inspect whether the preferred language is already saved during login and whether authenticated pages retrieve it correctly.
+* Preserve existing language behavior and avoid creating competing language settings.
+* Pass the selected locale to the AI service.
+* Fall back to the configured account or application locale and then a documented default.
+* Keep brand names and identifiers such as Duka Mkononi unchanged.
+* Support language-specific currency, number, and date formatting.
+* Implement correct right-to-left rendering for Urdu in both mobile and web interfaces, including navigation, text alignment, icons, forms, and modals.
+* Ensure AI-generated content, validation messages, loading states, and errors are translated.
+* Test all eight locales rather than testing only Swahili and English.
+
+Do not claim eight-language support if the interface or responses still contain untranslated strings.
+
+### CAPABILITY #23 — Voice Input and Voice Answers
+
+Implement accessible speech interaction for supported devices and browsers.
+
+Requirements:
+
+* Add a microphone action to appropriate AI input interfaces.
+* Support Swahili speech-to-text and other supported languages where the selected speech provider offers adequate coverage.
+* Convert speech into editable text before consequential actions.
+* Allow users to review, correct, and submit recognized text.
+* Provide spoken answers using an appropriate text-to-speech provider.
+* Respect the user's selected language and available voice capabilities.
+* Clearly communicate microphone permission requirements and provider limitations.
+* Do not record continuously or retain audio unnecessarily.
+* Provide keyboard and text-input alternatives.
+* Handle denied permissions, unavailable services, silence, recognition failures, and network errors gracefully.
+* Keep API credentials server-side where applicable.
+
+Do not claim a language is supported by the speech engine until its actual capabilities have been verified.
+
+### CAPABILITY #24 — Semantic and Typo-Tolerant Search
+
+Enhance search across the public catalogue and authorized product inventory.
+
+Requirements:
+
+* Support spelling mistakes, alternative product names, common synonyms, transliteration, and mixed-language queries.
+* Use embeddings and a suitable vector retrieval implementation when justified by the actual Supabase/PostgreSQL setup.
+* Combine semantic similarity with exact matching, fuzzy matching, and existing search filters.
+* Support queries such as "brake pads for premio" even when the product description uses different wording.
+* Filter results by public visibility, business scope, and relevant stock or availability rules.
+* Rank actual database results using transparent relevance signals.
+* Return useful results even when semantic services are unavailable, using an existing or improved lexical fallback.
+* Avoid embedding secrets or unnecessary personal information.
+* Version embeddings and define a reliable refresh strategy when products change.
+* Keep retrieval bounded and monitor performance.
+
+Do not download an expensive embedding model onto the mobile application. Use suitable server-side or managed infrastructure.
+
+### CAPABILITY #25 — Schema-Free Natural-Language Data Entry
+
+Create a unified input interface through which authorized users can describe a business operation in ordinary text or speech.
+
+Examples:
+
+* "Add 20 bottles of blue perfume to stock."
+* "Record today's transport expense of 5,000 TSh."
+* "I sold three units of product X for 15,000 each."
+* "Add this item to my product catalogue."
+
+Requirements:
+
+* Classify the intended record type using an allow-list: product, sale, expense, customer, or another explicitly supported record type.
+* Map the request to the corresponding existing schema and business workflow.
+* Extract fields into strict structured JSON.
+* Resolve product references against the authorized business catalogue.
+* Distinguish existing records from proposed new records.
+* Detect ambiguous quantities, units, prices, dates, and customer references.
+* Never guess a product identifier or silently choose an ambiguous match.
+* Display an editable preview and identify missing required fields.
+* Route confirmed operations through existing validated services and business rules.
+* Require the correct confirmation and permission checks.
+* Use idempotency protection for committed operations.
+* Provide an explanation when the requested operation cannot be performed.
+* Never permit the model to create arbitrary tables, fields, or SQL statements.
+
+This capability must reuse the other AI services where possible rather than introducing a competing inventory, sales, or expense system.
+
+---
+
+# 5. IMPROVE EXISTING CAPABILITY #1 WITHOUT BREAKING IT
+
+The existing photo inventory and sales capture feature must remain operational.
+
+Inspect both existing AI import implementations and determine which is authoritative for each live workflow.
+
+Extend the existing implementation with:
+
+1. Correction memory scoped to each business, such as a seller correcting a recurring product-name transcription.
+2. A review queue prioritizing uncertain fields.
+3. Field-level confidence and clearly explained warnings.
+4. The ability to correct selected fields without redoing an entire import.
+5. Safe re-import with duplicate detection and idempotency.
+6. Regression tests for OCR, interpretation, matching, verification, and database commits.
+7. Shared AI service integration where it can be achieved without changing existing behavior unexpectedly.
+
+Correction memory must store approved corrections only, be business-scoped, and avoid treating one seller's correction as another seller's truth.
+
+Do not remove the current staged pipeline, strict validation, human verification, or audit trail.
+
+---
+
+# 6. FRONTEND INTEGRATION AND USER EXPERIENCE
+
+Integrate capabilities into the appropriate existing mobile, Blade, and administrative screens.
+
+Do not build a disconnected AI dashboard that users must visit to access every feature.
+
+Examples of appropriate entry points:
+
+* Seller inventory: restock, pricing, anomaly alerts, photo import.
+* Seller reports: natural-language reporting, health digest, report summaries.
+* Seller expense screens: natural-language expense entry.
+* Product and advertisement screens: marketing-copy generation and moderation.
+* Customer shop: conversational discovery, semantic search, recommendations, and public concierge.
+* Order tracking: grounded order questions.
+* Manager dashboards: report summaries and team activity.
+* System administration: inquiry triage, certification assistance, and platform analytics.
+
+Follow the existing design system, responsive layouts, navigation, authentication, and role boundaries.
+
+Every capability must include appropriate:
+
+* Loading and progress states.
+* Empty states.
+* Editable previews.
+* Validation errors.
+* Retry controls.
+* Clear success and failure feedback.
+* Accessible touch targets and labels.
+* Mobile-friendly tables or cards.
+* Language-aware formatting.
+* Relevant links to existing workflows.
+
+Show that a response is AI-generated where appropriate, expose relevant sources, and explain uncertainty.
+
+Avoid placing a large global AI bubble over critical navigation or business controls.
+
+---
+
+# 7. SECURITY AND PRIVACY REQUIREMENTS
+
+Treat this section as a release blocker, not optional cleanup.
+
+## 7.1 Secrets
+
+Inspect the legacy `server.js` and all relevant configuration for hardcoded Supabase credentials or other secrets.
+
+If exposed credentials exist:
+
+* Remove them from source code and replace them with environment-driven configuration.
+* Do not print secrets into logs, terminal output, reports, or generated documentation.
+* Determine which credentials have been exposed and identify the rotation steps.
+* Recommend immediate rotation of exposed credentials.
+* Do not falsely claim a credential has been rotated unless this has actually been completed and verified.
+* Add suitable secret scanning to the development workflow.
+
+Never expose Supabase service-role credentials to client applications.
+
+## 7.2 Tenant isolation
+
+For every seller or business-specific operation:
+
+* Resolve the authenticated user and authorized business server-side.
+* Verify ownership for every product, sale, expense, customer, order, and other private record.
+* Apply tenant restrictions to every retrieval query, tool call, vector search, cache key, and persisted conversation.
+* Never trust a client-supplied `business_id` merely because it exists.
+* Preserve existing business identity and membership rules.
+* Verify RLS and service-layer behavior against the actual architecture.
+
+Test attempts to access another business's records.
+
+## 7.3 Prompt injection
+
+Treat user text, reviews, product descriptions, uploaded images, OCR text, and retrieved content as untrusted.
+
+System instructions must remain authoritative. Data retrieved from the database must never be allowed to redefine system instructions or grant new permissions.
+
+Use explicit tool allow-lists, validated parameters, limited context, output validation, and server-side authorization.
+
+## 7.4 Data minimisation
+
+Send Gemini only the information needed for a specific task.
+
+Prefer aggregate statistics over raw customer records for reporting. Avoid transmitting customer PII unless strictly necessary and appropriately disclosed.
+
+Document third-party AI processing and provide an appropriate opt-out mechanism that preserves manual workflows.
+
+Apply retention and deletion rules to AI conversations, logs, embeddings, and generated artifacts.
+
+## 7.5 Financial and consequential operations
+
+All financial calculations must be performed using trusted numeric code with appropriate precision.
+
+Do not automatically change prices, stock, expenses, sales, order statuses, certification decisions, or published content merely because the model recommends it.
+
+Use existing business rules, transactional operations where supported, authorization, idempotency, and audit trails.
+
+---
+
+# 8. API DESIGN AND IMPLEMENTATION QUALITY
+
+Create a consistent API surface under the existing Laravel API conventions.
+
+The advisory suggests endpoint patterns such as:
+
+* `POST /api/ai/ask`
+* `GET /api/ai/reports/weekly`
+* `POST /api/ai/restock/list`
+* `POST /api/ai/price/suggest`
+* `POST /api/ai/expenses/parse`
+* `POST /api/ai/marketing/draft`
+* `GET /api/ai/search`
+
+Treat these as design examples, not instructions to duplicate routes that already exist.
+
+Design additional endpoints or reuse existing routes according to actual capability requirements.
+
+Requirements:
+
+* Follow established authentication and middleware conventions.
+* Use request validation classes or equivalent centralized validation.
+* Keep controllers thin and move AI orchestration into services.
+* Use consistent response structures and stable error codes.
+* Apply pagination and result limits.
+* Enforce rate limits by user and, where appropriate, business.
+* Validate locale against the eight supported values.
+* Apply timeouts and appropriate caching.
+* Use queues for suitable background work.
+* Provide retry-safe behavior.
+* Keep public and administrative endpoints separate where their access rules differ.
+* Document each endpoint, required permission, input, output, errors, and side effects.
+
+Do not create endpoints solely to make the implementation appear complete. Every endpoint must serve a working user-facing or internal workflow.
+
+---
+
+# 9. COST, PERFORMANCE AND RELIABILITY
+
+Build for a real small-business marketplace, not an unlimited AI budget.
+
+Requirements:
+
+* Use an appropriate fast model for simple classification and extraction.
+* Reserve stronger models for tasks that genuinely need more reasoning.
+* Make model choice configurable per capability.
+* Limit prompt size, history, image size, retrieved records, and tool-call iterations.
+* Cache safe, deterministic outputs where appropriate.
+* Invalidate cached data when its underlying records change.
+* Do not reuse private AI results across tenants.
+* Apply per-user and per-business request limits.
+* Track usage and estimated costs.
+* Set configurable budgets and alert thresholds.
+* Implement graceful fallbacks when Gemini or another provider is unavailable.
+* Keep manual inventory, sales, expense, search, and reporting workflows operational.
+* Avoid repeated AI calls when a deterministic calculation is sufficient.
+* Avoid introducing infrastructure that the project cannot reasonably operate.
+
+For offline mobile workflows, preserve the existing application behavior and introduce queued synchronization only where compatible with the existing data model and conflict-resolution rules.
+
+---
+
+# 10. AUTOMATED TESTING AND ACCEPTANCE CRITERIA
+
+Testing is mandatory for every capability.
+
+## 10.1 Unit tests
+
+Test:
+
+* Financial formulas.
+* Margin and markup calculations.
+* Stock velocity and stock-out estimates.
+* Date ranges and aggregation rules.
+* Expense parsing and validation.
+* Confidence handling.
+* Output-schema validation.
+* Intent classification and record routing.
+* Locale resolution.
+* Permission decisions.
+* Idempotency logic.
+* Error mapping and retry limits.
+
+## 10.2 Integration tests
+
+Test the real Laravel service boundaries with controlled test fixtures and mocked external Gemini responses where appropriate.
+
+Verify:
+
+* Existing inventory and sales imports still work.
+* AI tools retrieve only authorized data.
+* Reports agree with trusted database calculations.
+* Proposals are not committed before confirmation.
+* Confirmed actions create the intended records exactly once.
+* Public assistants cannot access private tools.
+* Feature flags and fallbacks work.
+* All supported locale codes are accepted.
+* Invalid model output is rejected safely.
+
+Use a dedicated test database or isolated test fixtures. Never use live customer data for destructive tests.
+
+## 10.3 Security tests
+
+At minimum, test:
+
+* Seller A attempting to access Seller B's product or sales.
+* A manipulated `business_id` in an API request.
+* An unauthorized manager attempting system-admin analytics.
+* A customer attempting to read another customer's order.
+* Prompt injection inside product descriptions and retrieved content.
+* Duplicate confirmation requests.
+* Invalid, expired, or reused verification tokens.
+* Rate-limit enforcement.
+* Missing or invalid credentials.
+* Malformed model responses.
+* Sensitive information accidentally appearing in logs.
+
+## 10.4 End-to-end tests
+
+For each implemented capability, verify the complete workflow from the relevant frontend through the API and back.
+
+Where external credentials or hardware are unavailable, separate automated tests from deployment-dependent manual verification.
+
+Do not report an integration as fully verified merely because its code compiles.
+
+## 10.5 Definition of done
+
+A capability is complete only when:
+
+1. Its backend logic is implemented.
+2. Its real data retrieval is implemented.
+3. Authorization is enforced server-side.
+4. Input and output validation exist.
+5. Its frontend entry point and interaction work.
+6. Loading, empty, and error states exist.
+7. Confirmation is implemented wherever required.
+8. Audit and usage logging are implemented where applicable.
+9. Automated tests cover its important success and failure paths.
+10. Its documentation and setup requirements are complete.
+11. No unresolved critical security defect is introduced.
+12. Existing relevant functionality passes regression tests.
+
+If a requirement cannot be completed, report it as incomplete with the exact blocker. Never mark a placeholder as complete.
+
+---
+
+# 11. EVALUATION AND MEASUREMENT
+
+Build the observability needed to measure actual usefulness.
+
+Track, where appropriate:
+
+* Import correction rates.
+* AI proposals accepted, edited, and rejected.
+* Time saved per task.
+* Seller copilot usage.
+* Restock recommendations acted upon.
+* Search result engagement.
+* Customer shopping-assistant conversions.
+* Inquiry classification accuracy.
+* Human moderation overrides.
+* User feedback and escalation rates.
+* Token usage and estimated cost per capability.
+* Latency, failure rates, retry rates, and fallback frequency.
+* Tenant-isolation test results.
+
+Create an anonymized evaluation dataset from representative examples where authorized.
+
+Run regression evaluations before changing prompts or model configurations.
+
+Do not place real customer secrets or unnecessary personal data in evaluation fixtures.
+
+---
+
+# 12. REQUIRED IMPLEMENTATION WORKFLOW
+
+Execute the work in controlled phases. The phases organize implementation; they are not permission to abandon later capabilities.
+
+## Phase 0 — Audit and foundations
+
+* Inspect the full relevant repository.
+* Inventory all 25 catalogue capabilities.
+* Identify existing functionality and avoid duplication.
+* Address the shared AI service architecture.
+* Inspect secrets and document rotation requirements.
+* Establish structured output validation, audit logging, tenant-safe tools, feature flags, and baseline tests.
+* Preserve the existing AI import behavior.
+
+## Phase 1 — Seller expert system
+
+Implement capabilities #2–#10 and extend #1.
+
+Prioritize accurate calculations, safe inventory access, reporting, pricing, restocking, expenses, anomaly detection, marketing, reply drafting, and the seller copilot.
+
+## Phase 2 — Customer experience
+
+Implement capabilities #11–#14.
+
+Integrate shopping assistance, trust summaries, order Q&A, and personalized recommendations into the real customer workflows.
+
+## Phase 3 — Management and administration
+
+Implement capabilities #15–#21.
+
+Integrate manager reporting, content moderation, activity digests, inquiry triage, certification assistance, administrative analytics, and the public concierge.
+
+## Phase 4 — Cross-cutting capabilities
+
+Implement capabilities #22–#25.
+
+Complete multilingual behavior, voice, semantic search, and schema-free data entry.
+
+## Phase 5 — Hardening and release
+
+* Run unit, integration, authorization, and regression tests.
+* Verify all supported languages.
+* Verify mobile and web interfaces.
+* Test failure handling and non-AI fallbacks.
+* Review costs and query performance.
+* Verify logs and audit trails.
+* Document deployment, migrations, environment variables, queue workers, schedules, provider dependencies, and rollback procedures.
+* Produce a final capability-by-capability acceptance report.
+
+Within each phase, deliver working vertical slices rather than creating every database table and frontend screen first and leaving the integrations unfinished.
+
+Do not enable all features for all users simultaneously. Roll out using feature flags and staged verification.
+
+---
+
+# 13. FINAL DELIVERABLES
+
+At completion, provide:
+
+1. A summary of the actual existing architecture discovered.
+2. A capability matrix covering #1–#25, showing what was already present, what changed, and the implementation status.
+3. A list of new and modified files with a concise explanation of each.
+4. All database migrations and instructions for safely applying them.
+5. API endpoint documentation and authorization requirements.
+6. Mobile and Blade integration details.
+7. Configuration and environment-variable documentation, without exposing secret values.
+8. Queue, scheduler, embedding, speech-provider, and other infrastructure requirements.
+9. Automated test results, including failures.
+10. Security findings and unresolved risks.
+11. Required manual verification steps.
+12. Deployment and rollback instructions.
+13. A list of any incomplete capabilities and their exact blockers.
+14. A clear statement of which features were actually tested against real services and which were verified only with mocks.
+
+Do not claim that tests passed unless you ran them and inspected their results.
+
+Do not claim that a migration was applied to production unless it actually was.
+
+Do not claim that credentials were rotated, external integrations were connected, or every feature is production-ready unless verified.
+
+---
+
+# 14. FINAL ENGINEERING DIRECTIVE
+
+Think like an engineer responsible for a live commerce platform serving real sellers and customers.
+
+Correctness, data integrity, security, backward compatibility, usability, and maintainability take priority over flashy demonstrations.
+
+Use Gemini as an intelligent interpretation, reasoning, and communication layer. Use the database and trusted application code as the authority for business facts and calculations.
+
+Reuse the existing implementation wherever practical. Improve the architecture incrementally. Avoid unnecessary dependencies and duplicated business logic.
+
+Implement all 24 new capabilities and safely improve capability #1, following the catalogue in this prompt.
+
+**Begin by inspecting the repository and establishing the implementation inventory. Then implement the system phase by phase, testing each vertical slice before moving forward. Continue through every phase until the acceptance criteria have been addressed or a specific blocker is documented.**
+
+The final result must be a real, integrated, secure, multilingual Duka Mkononi expert system—not a prototype, mockup, or collection of disconnected AI features.
