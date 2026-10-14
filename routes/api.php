@@ -47,18 +47,16 @@ use App\Http\Controllers\Api\RevenueController;
 use App\Http\Controllers\Api\SaleController;
 use App\Http\Controllers\Api\ShopController;
 use App\Http\Controllers\Api\SystemAdminController;
-use App\Http\Controllers\Api\TempDumpController;
 use App\Http\Controllers\Api\UserActivityController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('health', [MiscController::class, 'health']);
 Route::get('test', [MiscController::class, 'test']);
 
-// TEMPORARY: schema/data dump for SYSTEM_SCHEMA.sql + SYSTEM_SEED.sql. Delete after use.
-Route::get('temp/schema', [TempDumpController::class, 'schema']);
-Route::get('temp/tables', [TempDumpController::class, 'tables']);
-Route::get('temp/dump/{table}', [TempDumpController::class, 'dump']);
-Route::get('temp/count/{table}', [TempDumpController::class, 'count']);
+// The /api/temp/* schema+dump endpoints were removed: they ran outside
+// auth.jwt with the service_role key, so anyone could read the whole schema,
+// row counts and table contents. Take a snapshot from the Supabase dashboard
+// instead. (They are still in git history if a one-off run is ever needed.)
 
 // Auth
 Route::post('register', [AuthController::class, 'register']);
@@ -153,10 +151,14 @@ Route::post('payments/simulate', [PaymentController::class, 'simulate']);
 Route::match(['get', 'post'], 'backup', [BackupController::class, 'backup']);
 Route::get('backup/status', [BackupController::class, 'status']);
 Route::get('backup/download/{index}', [BackupController::class, 'download']);
-Route::get('debug/check-user/{email}', [DebugController::class, 'checkUser']);
-Route::get('debug/check-business', [DebugController::class, 'checkBusiness']);
 
 Route::middleware('auth.jwt')->group(function () {
+    // Debug/support helpers. These read the caller's OWN business (or, for
+    // check-user, the whole user table) so they must never be reachable
+    // anonymously: the mobile admin screen already sends its Bearer token.
+    Route::get('debug/check-user/{email}', [DebugController::class, 'checkUser']);
+    Route::get('debug/check-business', [DebugController::class, 'checkBusiness']);
+
     Route::get('user/profile', [ProfileController::class, 'show']);
     Route::put('user/profile', [ProfileController::class, 'update']);
     Route::put('user/password', [ProfileController::class, 'changePassword']);

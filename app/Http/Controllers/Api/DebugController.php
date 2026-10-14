@@ -15,8 +15,26 @@ class DebugController extends BaseController
         return $request->header('x-forwarded-for', '') ?: $request->ip();
     }
 
+    /**
+     * Account lookup for support. This is the one debug action that can see
+     * users other than the caller, so it is restricted to the super admin
+     * (system_admin) account - user enumeration by email is otherwise a gift to
+     * anyone with a customer login.
+     */
     public function checkUser(Request $request, string $email): JsonResponse
     {
+        if (strtolower((string) $this->role($request)) !== 'system_admin') {
+            $this->log($this->userId($request), 'DEBUG_CHECK_USER_FORBIDDEN', '/api/debug/check-user', [
+                'role' => $this->role($request),
+            ], $this->requestIp($request), 'failed');
+
+            return $this->json([
+                'success' => false,
+                'error' => 'Huna ruhusa ya kuangalia akaunti nyingine.',
+                'code' => 'FORBIDDEN_ROLE',
+            ], 403);
+        }
+
         try {
             $users = User::where('email', $email)
                 ->select('id', 'email', 'role', 'status')
