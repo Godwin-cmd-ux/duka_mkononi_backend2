@@ -11,9 +11,10 @@ namespace App\Models;
  * {role, content, tool, sub, at} entries, trimmed to ai.copilot.store_messages
  * on save; rows older than ai.copilot.retention_days are pruned on read.
  *
- * The table is created from supabase/migrations/20261012110000_create_ai_copilot_conversations.sql;
- * when it is missing the copilot falls back to a short-lived cache context and
- * says so in the response instead of pretending history is durable.
+ * The table must exist in the project's database (columns: id, business_id,
+ * user_id, messages, created_at, updated_at); when it is missing the copilot
+ * falls back to a short-lived cache context and says so in the response instead
+ * of pretending history is durable.
  */
 class AiCopilotConversation extends SupabaseModel
 {

@@ -82,9 +82,10 @@ fi
 if [ "$APP_ENV" = "production" ] && [ "${SKIP_BOOT_OPS:-}" != "1" ]; then
     echo "entrypoint: php artisan optimize"
     php artisan optimize || echo "entrypoint: optimize failed (continuing)"
-    # Schema changes are applied via the Supabase SQL editor (supabase/*.sql).
-    # `migrate` needs real Postgres credentials (DB_HOST/DB_URL) which this
-    # app doesn't ship — only attempt it when they exist.
+    # Schema changes are applied in the Supabase SQL editor; the SQL is no
+    # longer kept in this repository. `migrate` needs real Postgres credentials
+    # (DB_HOST/DB_URL) which this app doesn't ship — only attempt it when they
+    # exist.
     if [ -n "${DB_HOST:-}" ] || [ -n "${DB_URL:-}" ]; then
         echo "entrypoint: guarded migrations"
         php artisan migrate --force || echo "entrypoint: migrate failed (will retry next boot)"
