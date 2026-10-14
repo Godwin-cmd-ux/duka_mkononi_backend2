@@ -1,4 +1,5 @@
 @include('partials.dm-locale')
+<link rel="stylesheet" href="/css/smartcart-loader.css">
 @verbatim
 <head>
     <meta charset="UTF-8">
@@ -207,7 +208,7 @@
         <main class="main-content">
             <div class="page-container" id="restockContent">
                 <div class="loading-container">
-                    <div class="loading-spinner"></div>
+                    <div class="loading-spinner dm-sc"></div>
                     <div class="loading-text" data-i18n="muuzaji_restock.loading">Inachambua stock na mahitaji...</div>
                 </div>
             </div>
@@ -379,7 +380,7 @@
 
             if (isRefresh) {
                 const spinner = document.querySelector('.refresh-btn i');
-                if (spinner) spinner.classList.add('fa-spin');
+                if (spinner) spinner.outerHTML = '<div class="loading-spinner dm-sc" style="width:18px;height:18px;margin:0;"></div>';
             } else {
                 loading = true;
                 loadError = null;
@@ -509,7 +510,7 @@
             if (loading) {
                 container.innerHTML = `
                     <div class="loading-container">
-                        <div class="loading-spinner"></div>
+                        <div class="loading-spinner dm-sc"></div>
                         <div class="loading-text">${escapeHtml(t('loading'))}</div>
                     </div>`;
                 return;

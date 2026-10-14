@@ -14,6 +14,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import SmartCartLoader from '../../components/SmartCartLoader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLang } from '../../context/LanguageContext';
 import { useSession } from '../../context/SessionContext';
@@ -73,6 +74,16 @@ export default function MatumiziScreen() {
         category: '',
         notes: ''
     });
+
+    // Capability #7 - Smart Expense Categorisation (AI parse). Read-only:
+    // it only fills the editable form above; saving still goes through the
+    // existing POST /api/office-expenses flow in addExpense().
+    const [aiText, setAiText] = useState('');
+    const [aiParsing, setAiParsing] = useState(false);
+    const [aiFlags, setAiFlags] = useState<{ code: string; message: string }[]>([]);
+    const [aiDup, setAiDup] = useState<{ amount?: number; description?: string } | null>(null);
+    const [aiNote, setAiNote] = useState<string | null>(null);
+    const [aiLimits, setAiLimits] = useState<string[]>([]);
 
     const today = new Date().toISOString().split('T')[0];
     const isToday = selectedDate === today;
@@ -270,6 +281,72 @@ export default function MatumiziScreen() {
             category: categories[0] || '',
             notes: ''
         });
+        setAiText('');
+        setAiFlags([]);
+        setAiDup(null);
+        setAiNote(null);
+        setAiLimits([]);
+    };
+
+    // Capability #7 - parse a natural-language expense note into the form.
+    const parseWithAi = async () => {
+        const text = aiText.trim();
+        if (!text) {
+            Alert.alert(t('app.error'), t('expense_parser.ai_err_empty'));
+            return;
+        }
+        if (aiParsing) return;
+
+        setAiParsing(true);
+        try {
+            if (!(await requireNetwork())) return;
+
+            const token = await AsyncStorage.getItem('userToken');
+            const response = await fetchWithTimeout(
+                `${API_BASE_URL}/api/ai/expenses/parse`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Accept: 'application/json',
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ text, locale: lang }),
+                },
+                45000
+            );
+
+            if (response.status === 401) {
+                Alert.alert(t('app.error'), t('expense_parser.ai_err_auth'));
+                return;
+            }
+
+            const data = await response.json().catch(() => ({} as any));
+            if (!response.ok || !data.success) {
+                Alert.alert(t('app.error'), data.error || t('expense_parser.ai_err_failed'));
+                return;
+            }
+
+            const preview = data.preview || {};
+            setFormData((prev) => ({
+                ...prev,
+                amount: preview.amount != null ? String(preview.amount) : prev.amount,
+                description: preview.description || prev.description,
+                category: preview.category || prev.category,
+            }));
+            setAiFlags(Array.isArray(data.flags) ? data.flags : []);
+            setAiDup(data.possible_duplicate || null);
+            setAiNote(data.ai && data.ai.degraded && data.ai.reason ? data.ai.reason : null);
+            setAiLimits(Array.isArray(data.limitations) ? data.limitations : []);
+
+            if (Array.isArray(data.missing_required) && data.missing_required.length) {
+                Alert.alert(t('expense_parser.ai_title'), t('expense_parser.ai_missing_hint'));
+            }
+        } catch (error) {
+            Alert.alert(t('app.error'), t('expense_parser.ai_err_network'));
+        } finally {
+            setAiParsing(false);
+        }
     };
 
     useEffect(() => {
@@ -339,7 +416,7 @@ export default function MatumiziScreen() {
         return (
             <SafeAreaView style={styles.screenSafe} edges={['top']}>
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#2ecc71" />
+                    <SmartCartLoader size="large" color="#2ecc71" />
                     <Text style={styles.loadingText}>{t('app.loading')}</Text>
                 </View>
             </SafeAreaView>
@@ -530,6 +607,56 @@ export default function MatumiziScreen() {
                         </View>
 
                         <ScrollView style={styles.modalBody}>
+                            {/* Capability #7 - Smart Expense Categorisation */}
+                            <View style={styles.formGroup}>
+                                <Text style={styles.formLabel}>{t('expense_parser.ai_label')}</Text>
+                                <TextInput
+                                    style={styles.formInput}
+                                    value={aiText}
+                                    onChangeText={setAiText}
+                                    placeholder={t('expense_parser.ai_placeholder')}
+                                    placeholderTextColor="#999"
+                                    multiline
+                                    numberOfLines={2}
+                                    editable={!aiParsing}
+                                />
+                                <TouchableOpacity
+                                    style={[
+                                        styles.aiParseBtn,
+                                        (aiParsing || !aiText.trim()) && styles.aiParseBtnDisabled,
+                                    ]}
+                                    disabled={aiParsing || !aiText.trim()}
+                                    onPress={parseWithAi}
+                                >
+                                    {aiParsing ? (
+                                        <ActivityIndicator size="small" color="#fff" />
+                                    ) : (
+                                        <>
+                                            <Ionicons name="sparkles" size={15} color="#fff" />
+                                            <Text style={styles.aiParseBtnText}>{t('expense_parser.ai_btn')}</Text>
+                                        </>
+                                    )}
+                                </TouchableOpacity>
+                                {aiFlags.map((flag, index) => (
+                                    <Text key={index} style={styles.aiFlagText}>
+                                        {flag.message || flag.code}
+                                    </Text>
+                                ))}
+                                {aiDup && (
+                                    <View style={styles.aiDupBox}>
+                                        <Text style={styles.aiDupText}>
+                                            {t('expense_parser.ai_dup_warn')
+                                                .replace('{amount}', formatCurrency(aiDup.amount || 0))
+                                                .replace('{desc}', aiDup.description || '')}
+                                        </Text>
+                                    </View>
+                                )}
+                                {aiNote && <Text style={styles.aiNoteText}>{aiNote}</Text>}
+                                {aiLimits.map((line, index) => (
+                                    <Text key={index} style={styles.aiLimitsText}>{line}</Text>
+                                ))}
+                            </View>
+
                             {/* Amount Input */}
                             <View style={styles.formGroup}>
                                 <Text style={styles.formLabel}>
@@ -556,7 +683,7 @@ export default function MatumiziScreen() {
                                 
                                 <View style={styles.categoryContainer}>
                                     {categories.length === 0 ? (
-                                        <ActivityIndicator size="small" color="#2ecc71" />
+                                        <SmartCartLoader size="compact" color="#2ecc71" />
                                     ) : (
                                         <>
                                             <ScrollView 
@@ -1072,6 +1199,42 @@ const styles = StyleSheet.create({
         color: '#2c3e50',
     },
     
+    // Capability #7 - AI expense parse
+    aiParseBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#2ecc71',
+        borderRadius: 12,
+        paddingVertical: 12,
+        marginTop: 8,
+    },
+    aiParseBtnDisabled: { opacity: 0.5 },
+    aiParseBtnText: { color: '#fff', fontWeight: '700', fontSize: 14, marginLeft: 8 },
+    aiFlagText: {
+        backgroundColor: '#fff8e8',
+        borderColor: '#f5dfa8',
+        borderWidth: 1,
+        borderRadius: 10,
+        paddingHorizontal: 10,
+        paddingVertical: 8,
+        fontSize: 12.5,
+        color: '#7a5c14',
+        marginTop: 6,
+    },
+    aiDupBox: {
+        backgroundColor: '#fdecec',
+        borderColor: '#f5c2c2',
+        borderWidth: 1,
+        borderRadius: 10,
+        paddingHorizontal: 10,
+        paddingVertical: 8,
+        marginTop: 6,
+    },
+    aiDupText: { fontSize: 12.5, color: '#a94442' },
+    aiNoteText: { fontSize: 12, color: '#7f8c8d', marginTop: 6, fontStyle: 'italic' },
+    aiLimitsText: { fontSize: 11.5, color: '#95a5a6', lineHeight: 16, marginTop: 4 },
+
     modalBody: {
         padding: 20,
     },

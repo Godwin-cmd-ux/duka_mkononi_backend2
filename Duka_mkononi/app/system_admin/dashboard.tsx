@@ -4,7 +4,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
     Alert,
     FlatList,
     Modal,
@@ -17,6 +16,7 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
+import SmartCartLoader from '../../components/SmartCartLoader';
 import { useLang } from '../../context/LanguageContext';
 import { useSession } from '../../context/SessionContext';
 
@@ -1448,7 +1448,7 @@ export default function SystemAdminDashboard() {
   if (loading && !refreshing) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#3498db" />
+        <SmartCartLoader size="large" color="#3498db" />
         <Text style={styles.loadingText}>{t('system_admin.loading_dashboard')}</Text>
         <Text style={styles.loadingSubtext}>
           {t('system_admin.connecting_db')}

@@ -3,7 +3,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState, useRef } from 'react';
 import {
-    ActivityIndicator,
     Alert,
     Dimensions,
     KeyboardAvoidingView,
@@ -15,6 +14,7 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
+import SmartCartLoader from '../components/SmartCartLoader';
 import { useLang, Lang, ALL_LANGUAGES } from '../context/LanguageContext';
 import { useSession } from '../context/SessionContext';
 
@@ -606,7 +606,7 @@ export default function LoginScreen() {
                                 activeOpacity={0.8}
                             >
                                 {loading ? (
-                                    <ActivityIndicator size="small" color="white" />
+                                    <SmartCartLoader size="compact" color="#ffffff" />
                                 ) : (
                                     <>
                                         <Ionicons name="log-in-outline" size={22} color="white" />

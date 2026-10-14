@@ -1,4 +1,5 @@
 @include('partials.dm-locale')
+<link rel="stylesheet" href="/css/smartcart-loader.css">
 @verbatim
 <head>
     <meta charset="UTF-8">
@@ -385,7 +386,7 @@
             if (!container) return;
 
             if (loading) {
-                container.innerHTML = `<div class="loading-container"><div class="loading-spinner"></div><div class="loading-text">${escapeHtml(t('loading'))}</div></div>`;
+                container.innerHTML = `<div class="loading-container"><div class="loading-spinner dm-sc"></div><div class="loading-text">${escapeHtml(t('loading'))}</div></div>`;
                 return;
             }
             if (loadError) {

@@ -92,9 +92,17 @@
         .hub-ask .hub-icon { background: #8e44ad; }
         .hub-ask .hub-title, .hub-ask .hub-arrow { color: #6c3483; }
 
+        .hub-copilot { background: #eef0fb; border-color: #3f51b5; }
+        .hub-copilot .hub-icon { background: #3f51b5; }
+        .hub-copilot .hub-title, .hub-copilot .hub-arrow { color: #35419e; }
+
         .hub-health { background: #e6f7f3; border-color: #16a085; }
         .hub-health .hub-icon { background: #16a085; }
         .hub-health .hub-title, .hub-health .hub-arrow { color: #117a65; }
+
+        .hub-ads { background: #fdecea; border-color: #c0392b; }
+        .hub-ads .hub-icon { background: #c0392b; }
+        .hub-ads .hub-title, .hub-ads .hub-arrow { color: #922b21; }
 
         @media (max-width: 768px) {
             .sidebar { transform: translateX(-100%); }
@@ -157,6 +165,14 @@
                     <div class="hub-subtitle" data-i18n="muuzaji_huduma.subtitle">Zana za ziada zinazotumia AI kukusaidia kuendesha biashara yako vizuri zaidi.</div>
                 </div>
                 <div class="hub-grid">
+                    <a href="msaidizi" class="hub-card hub-copilot">
+                        <div class="hub-icon">🧭</div>
+                        <div class="hub-info">
+                            <div class="hub-title" data-i18n="muuzaji_huduma.svc_copilot_title">Msaidizi wa Biashara</div>
+                            <div class="hub-desc" data-i18n="muuzaji_huduma.svc_copilot_desc">Uliza maswali ya mauzo, stock na faida kupitia mazungumzo.</div>
+                        </div>
+                        <div class="hub-arrow">›</div>
+                    </a>
                     <a href="ushauri-bei" class="hub-card hub-price">
                         <div class="hub-icon">💹</div>
                         <div class="hub-info">
@@ -186,6 +202,14 @@
                         <div class="hub-info">
                             <div class="hub-title" data-i18n="muuzaji_huduma.svc_health_title">Afya ya Biashara</div>
                             <div class="hub-desc" data-i18n="muuzaji_huduma.svc_health_desc">Fuatilia afya ya biashara yako kwa alama na mapendekezo.</div>
+                        </div>
+                        <div class="hub-arrow">›</div>
+                    </a>
+                    <a href="tangaza" class="hub-card hub-ads">
+                        <div class="hub-icon">📣</div>
+                        <div class="hub-info">
+                            <div class="hub-title" data-i18n="muuzaji_huduma.svc_ad_title">Tangaza Bidhaa</div>
+                            <div class="hub-desc" data-i18n="muuzaji_huduma.svc_ad_desc">Tengeneza vichwa na maelezo ya matangazo kwa AI kwa bidhaa zako.</div>
                         </div>
                         <div class="hub-arrow">›</div>
                     </a>

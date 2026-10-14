@@ -20,6 +20,18 @@
     .bl-row .lbl { font-weight: 600; color: var(--dm-ink); }
     .bl-row .val { color: var(--dm-muted); text-align: right; overflow-wrap: anywhere; }
     .bl-row .val a { color: var(--dm-primary); font-weight: 600; }
+    /* Capability #12 - trust summary panel */
+    .trust-btn { margin-top: 2px; }
+    .trust-panel { display: none; border-top: 1px solid var(--dm-line); margin-top: 12px; padding-top: 12px; }
+    .trust-answer { background: #f8fafc; border: 1px solid var(--dm-line); border-radius: 12px; padding: 11px 13px; font-size: 14px; line-height: 1.55; color: var(--dm-ink); }
+    .trust-block { margin-top: 10px; }
+    .trust-lbl { display: block; font-size: 10.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--dm-muted); margin-bottom: 5px; }
+    .trust-line { font-size: 13px; color: var(--dm-ink); line-height: 1.65; }
+    .trust-review { border: 1px solid var(--dm-line); border-radius: 10px; padding: 9px 11px; margin-bottom: 7px; font-size: 13px; color: var(--dm-ink); }
+    .trust-review-head { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; margin-bottom: 3px; }
+    .trust-stars { color: #f59e0b; letter-spacing: 1px; font-size: 12px; }
+    .trust-link { display: inline-block; margin-top: 6px; font-size: 12.5px; font-weight: 700; color: var(--dm-primary); }
+    .trust-limits { margin-top: 10px; font-size: 11.5px; color: var(--dm-muted); line-height: 1.6; }
 </style>
 <main class="dm-section">
     <div class="dm-container">
@@ -93,7 +105,92 @@
                 '<div class="bl-row"><span class="lbl">' + esc(t('label_email')) + '</span><span class="val">' + emailCell + '</span></div>' +
             '</div>' +
             '<a class="dm-btn dm-btn--primary dm-btn--sm dm-btn--block" href="/shop?business_id=' + encodeURIComponent(b.id) + '">' + esc(t('site_businesses.view_products')) + '</a>' +
+            '<button type="button" class="dm-btn dm-btn--ghost dm-btn--sm dm-btn--block trust-btn" data-trust="' + esc(b.id) + '">✨ ' + esc(t('site_businesses.trust_btn')) + '</button>' +
+            '<div class="trust-panel" data-trust-panel="' + esc(b.id) + '"></div>' +
         '</article>';
+    }
+
+    /* ---------------- capability #12 - trust summary ---------------- */
+    var trustCache = {}; // business id -> payload
+    var trustLocale = null;
+
+    function dmLocale() {
+        if (window.DM && DM.locale) return DM.locale();
+        return document.documentElement.getAttribute('data-dm-locale') || 'sw';
+    }
+
+    function trustPanelEl(id) { return document.querySelector('[data-trust-panel="' + id + '"]'); }
+
+    function toggleTrust(id, btn) {
+        var panel = trustPanelEl(id);
+        if (!panel) return;
+        if (panel.style.display === 'block') { panel.style.display = 'none'; return; }
+
+        panel.style.display = 'block';
+        if (trustCache[id] && trustLocale === dmLocale()) { renderTrust(panel, trustCache[id]); return; }
+
+        btn.disabled = true;
+        panel.innerHTML = '<p class="dm-muted">' + esc(t('site_businesses.trust_loading')) + '</p>';
+        fetch('/api/ai/trust/summary?business_id=' + encodeURIComponent(id) + '&locale=' + dmLocale(), { headers: { 'Accept': 'application/json' } })
+            .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+            .then(function (res) {
+                btn.disabled = false;
+                if (!res.ok || !res.d || res.d.success !== true) {
+                    panel.innerHTML = '<p class="dm-muted">' + esc((res.d && res.d.error) || t('site_common.error_generic')) + '</p>';
+                    return;
+                }
+                trustCache[id] = res.d;
+                trustLocale = dmLocale();
+                renderTrust(panel, res.d);
+            })
+            .catch(function () {
+                btn.disabled = false;
+                panel.innerHTML = '<p class="dm-muted">' + esc(t('site_common.error_generic')) + '</p>';
+            });
+    }
+
+    function trustStars(rating) {
+        var s = '';
+        var n = parseInt(rating, 10);
+        for (var i = 0; i < n && i < 5; i++) s += '\u2605';
+        return s;
+    }
+
+    function renderTrust(panel, d) {
+        var rev = d.reviews || {};
+        var html = '<div class="trust-answer">' + esc((d.summary && d.summary.text) || '') + '</div>';
+
+        if ((d.facts || []).length) {
+            html += '<div class="trust-block"><span class="trust-lbl">' + esc(t('site_businesses.trust_facts')) + '</span>';
+            d.facts.forEach(function (line) { html += '<div class="trust-line">' + esc(line) + '</div>'; });
+            html += '</div>';
+        }
+
+        if ((d.opinions || []).length) {
+            html += '<div class="trust-block"><span class="trust-lbl">' + esc(t('site_businesses.trust_opinions')) + '</span>';
+            d.opinions.forEach(function (line) { html += '<div class="trust-line">' + esc(line) + '</div>'; });
+            html += '</div>';
+        }
+
+        if ((rev.items || []).length) {
+            html += '<div class="trust-block"><span class="trust-lbl">' + esc(t('site_businesses.trust_reviews_label')) + '</span>';
+            rev.items.forEach(function (r) {
+                html += '<div class="trust-review">' +
+                    '<div class="trust-review-head"><b>' + esc(r.display_name || t('site_businesses.trust_anonymous')) + '</b>' +
+                    '<span class="trust-stars">' + esc(trustStars(r.rating)) + '</span>' +
+                    '<span class="dm-muted">' + esc(String(r.published_at || '').slice(0, 10)) + '</span></div>' +
+                    '<div class="dm-wrap-anywhere">' + esc(r.body || '') + '</div></div>';
+            });
+            html += '<a class="trust-link" href="/#reviews">' + esc(t('site_businesses.trust_view_all')) + '</a></div>';
+        }
+
+        if ((d.limitations || []).length) {
+            html += '<div class="trust-limits">';
+            d.limitations.forEach(function (line) { html += '<div>' + esc(line) + '</div>'; });
+            html += '</div>';
+        }
+
+        panel.innerHTML = html;
     }
 
     function emptyHtml() {
@@ -126,6 +223,9 @@
         }
         if (!list.length) { bEl.innerHTML = noMatchHtml(); return; }
         bEl.innerHTML = list.map(card).join('');
+        Array.prototype.forEach.call(bEl.querySelectorAll('.trust-btn'), function (btn) {
+            btn.addEventListener('click', function () { toggleTrust(btn.getAttribute('data-trust') || '', btn); });
+        });
     }
 
     function load() {

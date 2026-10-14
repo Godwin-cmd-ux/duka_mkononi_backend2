@@ -1,4 +1,5 @@
 @include('partials.dm-locale')
+<link rel="stylesheet" href="/css/smartcart-loader.css">
 @verbatim
 <head>
     <meta charset="UTF-8">
@@ -603,6 +604,15 @@
                     </div>
                     <span class="nav-label" data-i18n="mteja_profaili.nav_profile">Profaili</span>
                 </a>
+                <a href="nyingine" class="nav-item">
+                    <div class="nav-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <path d="M12 3L13.8 8.2L19 10L13.8 11.8L12 17L10.2 11.8L5 10L10.2 8.2L12 3Z" stroke-linejoin="round"/>
+                            <path d="M18.5 15.5L19.3 17.7L21.5 18.5L19.3 19.3L18.5 21.5L17.7 19.3L15.5 18.5L17.7 17.7L18.5 15.5Z" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <span class="nav-label" data-i18n="mteja_nyingine.nav_label">Nyingine</span>
+                </a>
             </div>
 
             <div class="sidebar-footer">
@@ -626,7 +636,7 @@
         <main class="main-content">
             <div class="page-container" id="profileContent">
                 <div class="loading-container">
-                    <div class="loading-spinner"></div>
+                    <div class="loading-spinner dm-sc"></div>
                     <div class="loading-text" data-i18n="mteja_profaili.loading">Inapakua wasifu...</div>
                 </div>
             </div>
@@ -1125,7 +1135,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             const cameraBadge = document.getElementById('cameraBadge');
             if (progressEl) progressEl.textContent = t('msg_uploading_photo');
             if (cameraBadge) {
-                cameraBadge.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="font-size:12px;color:white;" aria-hidden="true"></i>';
+                cameraBadge.innerHTML = '<span class="dm-sc dm-sc--light" style="width:13px;height:13px;display:inline-block;vertical-align:-2px" aria-hidden="true"></span>';
                 cameraBadge.style.pointerEvents = 'none';
             }
 
@@ -1198,7 +1208,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             if (loading) {
                 container.innerHTML = `
                     <div class="loading-container">
-                        <div class="loading-spinner"></div>
+                        <div class="loading-spinner dm-sc"></div>
                         <div class="loading-text">${t('loading')}</div>
                     </div>
                 `;
@@ -1302,7 +1312,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                             </button>
                             ${editing ? `
                                 <button class="btn btn-save" id="saveBtn" ${saving ? 'disabled' : ''}>
-                                    ${saving ? ic('spinner', 13, 'fa-spin') + ' ' + t('btn_saving') : t('btn_save')}
+                                    ${saving ? '<span class="dm-sc dm-sc--light" style="width:13px;height:13px;display:inline-block;vertical-align:-2px"></span>' + ' ' + t('btn_saving') : t('btn_save')}
                                 </button>
                             ` : ''}
                         </div>

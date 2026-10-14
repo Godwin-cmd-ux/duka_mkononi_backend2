@@ -2,7 +2,6 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
     Alert,
     FlatList,
     Modal,
@@ -13,6 +12,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import SmartCartLoader from '../../components/SmartCartLoader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLang } from '../../context/LanguageContext';
 import LogoutButton from '../../components/logout-button';
@@ -71,6 +71,9 @@ export default function OrdersScreen() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [note, setNote] = useState('');
+  const [replyTone, setReplyTone] = useState<'formal' | 'casual'>('casual');
+  const [drafting, setDrafting] = useState(false);
+  const [replyFlags, setReplyFlags] = useState<{ text: string }[]>([]);
 
   const formatCurrency = (amount: number) =>
     `TZS ${(Number(amount) || 0).toLocaleString('en-TZ', {
@@ -165,6 +168,7 @@ export default function OrdersScreen() {
     setSelectedOrder(order);
     setHistory([]);
     setNote('');
+    setReplyFlags([]);
     setDetailVisible(true);
     setDetailLoading(true);
     try {
@@ -236,7 +240,62 @@ export default function OrdersScreen() {
     }
   };
 
-  const saveNote = async () => {
+  const normalizeNote = (s?: string) =>
+    String(s || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').replace(/\s+/g, ' ').trim();
+
+  // Capability #9 - draft a reply to the customer's question. Read-only: the
+  // draft only fills the note box; it reaches the customer when the seller
+  // presses Save Note like any hand-written note.
+  const draftReply = async () => {
+    if (!selectedOrder || drafting) return;
+    if (!(await requireNetwork())) return;
+    setDrafting(true);
+    setReplyFlags([]);
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) {
+        Alert.alert(t('app.error'), t('orders.error_auth'));
+        return;
+      }
+      const res = await fetchWithTimeout(`${API_BASE_URL}/api/ai/replies/draft`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+        },
+        body: JSON.stringify({ order_id: selectedOrder.id, tone: replyTone, locale: lang }),
+      });
+      const data = await res.json().catch(() => ({} as any));
+      if (!res.ok) {
+        setReplyFlags([{ text: (data && data.error) || t('orders.draft_failed') }]);
+        return;
+      }
+      const lines: { text: string }[] = [];
+      (data.flags || []).forEach((f: any) => lines.push({ text: f.message }));
+      (data.missing || []).forEach((m: any) => lines.push({ text: m.message }));
+      if (data.recent_reply && data.recent_reply.note) {
+        lines.push({
+          text: `${t('orders.recent_reply')} ${data.recent_reply.at ? formatDate(data.recent_reply.at) : ''}`.trim(),
+        });
+      }
+      if (!data.draft) {
+        lines.push({ text: (data.ai && data.ai.reason) || t('orders.draft_failed') });
+        setReplyFlags(lines);
+        return;
+      }
+      setNote(String(data.draft));
+      setReplyFlags(lines);
+    } catch (error) {
+      console.error('❌ Error drafting reply:', error);
+      setReplyFlags([{ text: t('orders.draft_failed') }]);
+    } finally {
+      setDrafting(false);
+    }
+  };
+
+  const sendNote = async () => {
     if (!selectedOrder || !note.trim()) return;
     try {
       if (!(await requireNetwork())) return;
@@ -271,6 +330,20 @@ export default function OrdersScreen() {
     } finally {
       setUpdating(false);
     }
+  };
+
+  // Duplicate-send guard: sending the exact same note twice is usually a
+  // mistake, so it takes an explicit confirmation.
+  const saveNote = () => {
+    if (!selectedOrder || !note.trim()) return;
+    if (normalizeNote(note.trim()) === normalizeNote(selectedOrder.customer_visible_note || '')) {
+      Alert.alert(t('orders.dup_confirm_title'), t('orders.dup_confirm'), [
+        { text: t('orders.dup_cancel'), style: 'cancel' },
+        { text: t('orders.dup_send'), onPress: () => { void sendNote(); } },
+      ]);
+      return;
+    }
+    void sendNote();
   };
 
   const filtered = orders.filter((o) => {
@@ -320,7 +393,7 @@ export default function OrdersScreen() {
     return (
       <SafeAreaView style={styles.screenSafe} edges={['top']}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#2ecc71" />
+          <SmartCartLoader size="large" color="#2ecc71" />
           <Text style={styles.loadingText}>{t('orders.loading')}</Text>
         </View>
       </SafeAreaView>
@@ -426,7 +499,7 @@ export default function OrdersScreen() {
 
               {detailLoading ? (
                 <View style={styles.modalLoading}>
-                  <ActivityIndicator size="large" color="#2ecc71" />
+                  <SmartCartLoader size="standard" color="#2ecc71" />
                 </View>
               ) : (
                 <ScrollView style={styles.modalBody} keyboardShouldPersistTaps="handled">
@@ -459,6 +532,50 @@ export default function OrdersScreen() {
                           <Text style={styles.noteBoxText}>{selectedOrder.customer_note}</Text>
                         </View>
                       ) : null}
+
+                      {/* CAPABILITY #9 - AI REPLY DRAFT (fills the note box only) */}
+                      <View style={styles.draftCard}>
+                        <View style={styles.toneRow}>
+                          <TouchableOpacity
+                            style={[styles.toneButton, replyTone === 'casual' && styles.toneButtonActive]}
+                            onPress={() => setReplyTone('casual')}
+                            activeOpacity={0.8}
+                          >
+                            <Text style={[styles.toneButtonText, replyTone === 'casual' && styles.toneButtonTextActive]}>
+                              {t('orders.tone_casual')}
+                            </Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={[styles.toneButton, replyTone === 'formal' && styles.toneButtonActive]}
+                            onPress={() => setReplyTone('formal')}
+                            activeOpacity={0.8}
+                          >
+                            <Text style={[styles.toneButtonText, replyTone === 'formal' && styles.toneButtonTextActive]}>
+                              {t('orders.tone_formal')}
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                        <TouchableOpacity
+                          style={[styles.draftButton, drafting && styles.buttonDisabled]}
+                          onPress={draftReply}
+                          disabled={drafting}
+                          activeOpacity={0.85}
+                        >
+                          {drafting ? (
+                            <SmartCartLoader size="compact" color="#ffffff" />
+                          ) : (
+                            <Ionicons name="sparkles" size={16} color="#fff" />
+                          )}
+                          <Text style={styles.draftButtonText}>
+                            {drafting ? t('orders.draft_loading') : t('orders.draft_reply')}
+                          </Text>
+                        </TouchableOpacity>
+                        {replyFlags.map((f, i) => (
+                          <View key={i} style={styles.flagBox}>
+                            <Text style={styles.flagText}>{f.text}</Text>
+                          </View>
+                        ))}
+                      </View>
 
                       {/* ITEMS */}
                       <Text style={styles.sectionTitle}>{t('orders.items')}</Text>
@@ -523,7 +640,7 @@ export default function OrdersScreen() {
                         activeOpacity={0.85}
                       >
                         {updating ? (
-                          <ActivityIndicator size="small" color="white" />
+                          <SmartCartLoader size="compact" color="#ffffff" />
                         ) : (
                           <Text style={styles.saveNoteButtonText}>{t('orders.save_note')}</Text>
                         )}
@@ -750,4 +867,30 @@ const styles = StyleSheet.create({
   historyStatus: { fontSize: 14, fontWeight: '600', color: '#2c3e50' },
   historyDate: { fontSize: 12, color: '#95a5a6', marginTop: 2 },
   historyNote: { fontSize: 13, color: '#7f8c8d', marginTop: 4, fontStyle: 'italic' },
+
+  draftCard: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  toneRow: { flexDirection: 'row', marginBottom: 10 },
+  toneButton: { paddingVertical: 6, paddingHorizontal: 14, borderRadius: 8, backgroundColor: '#eef2f7', marginRight: 8 },
+  toneButtonActive: { backgroundColor: '#2ecc71' },
+  toneButtonText: { fontSize: 12, color: '#475569', fontWeight: '600' },
+  toneButtonTextActive: { color: '#ffffff' },
+  draftButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#2c3e50',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+  },
+  draftButtonText: { color: '#fff', fontSize: 13, fontWeight: '700', marginLeft: 6 },
+  flagBox: { backgroundColor: '#fffbeb', borderRadius: 8, padding: 8, marginTop: 8 },
+  flagText: { color: '#92400e', fontSize: 12 },
 });

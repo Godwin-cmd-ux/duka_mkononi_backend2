@@ -2,7 +2,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ResizeMode, Video } from 'expo-av';
 import React, { useEffect, useRef, useState } from 'react';
 import {
-    ActivityIndicator,
     Alert,
     Dimensions,
     FlatList,
@@ -15,6 +14,7 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
+import SmartCartLoader from '../../components/SmartCartLoader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLang } from '../../context/LanguageContext';
 import LogoutButton from '../../components/logout-button';
@@ -768,7 +768,7 @@ export default function MatangazoScreen() {
     return (
       <SafeAreaView style={styles.screenSafe} edges={['top']}>
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#007AFF" />
+          <SmartCartLoader size="large" color="#007AFF" />
           <Text style={styles.loadingText}>{t('customer_dashboard.loading_adverts')}</Text>
         </View>
       </SafeAreaView>

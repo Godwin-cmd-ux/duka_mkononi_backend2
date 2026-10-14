@@ -1,4 +1,5 @@
 @include('partials.dm-locale')
+<link rel="stylesheet" href="/css/smartcart-loader.css">
 @verbatim
 <head>
     <meta charset="UTF-8">
@@ -568,6 +569,10 @@
                 <a href="tangaza" class="nav-item">
                     <div class="nav-icon"><i class="fa-solid fa-bullhorn"></i></div>
                     <span class="nav-label" data-i18n="msimamizi_index.nav_advertise">Tangaza</span>
+                </a>
+                <a href="nyingine" class="nav-item">
+                    <div class="nav-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                    <span class="nav-label" data-i18n="msimamizi_nyingine.nav_label">Nyingine</span>
                 </a>
             </div>
             <div class="sidebar-footer">
@@ -1321,25 +1326,25 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                         <div class="seller-actions">
                             ${seller.status === 'pending' ? `
                                 <button class="action-btn btn-approve" onclick="window.approveSeller('${seller.id}')" ${isUpdating ? 'disabled' : ''}>
-                                    ${isUpdating ? '<div class="loading-spinner"></div>' : t('msimamizi_index.btn_verify')}
+                                    ${isUpdating ? '<div class="loading-spinner dm-sc dm-sc--light"></div>' : t('msimamizi_index.btn_verify')}
                                 </button>
                                 <button class="action-btn btn-delete" onclick="window.deleteSeller('${seller.id}', '${escapeHtml(seller.full_name || seller.email)}')" ${isUpdating ? 'disabled' : ''}>
                                     ${ic('trash', 13)} ${t('msimamizi_index.btn_remove')}
                                 </button>
                             ` : seller.status === 'approved' ? `
                                 <button class="action-btn btn-reject" onclick="window.rejectSeller('${seller.id}')" ${isUpdating ? 'disabled' : ''}>
-                                    ${isUpdating ? '<div class="loading-spinner"></div>' : t('msimamizi_index.btn_reject')}
+                                    ${isUpdating ? '<div class="loading-spinner dm-sc dm-sc--light"></div>' : t('msimamizi_index.btn_reject')}
                                 </button>
                             ` : seller.status === 'rejected' ? `
                                 <button class="action-btn btn-approve" onclick="window.approveSeller('${seller.id}')" ${isUpdating ? 'disabled' : ''}>
-                                    ${isUpdating ? '<div class="loading-spinner"></div>' : t('msimamizi_index.btn_restore')}
+                                    ${isUpdating ? '<div class="loading-spinner dm-sc dm-sc--light"></div>' : t('msimamizi_index.btn_restore')}
                                 </button>
                                 <button class="action-btn btn-permanent" onclick="window.deletePermanent('${seller.id}', '${escapeHtml(seller.full_name || seller.email)}')" ${isDeleting ? 'disabled' : ''}>
-                                    ${isDeleting ? '<div class="loading-spinner"></div>' : ic('trash', 13) + ' ' + t('msimamizi_index.btn_delete_forever')}
+                                    ${isDeleting ? '<div class="loading-spinner dm-sc dm-sc--light"></div>' : ic('trash', 13) + ' ' + t('msimamizi_index.btn_delete_forever')}
                                 </button>
                             ` : seller.status === 'inactive' ? `
                                 <button class="action-btn btn-permanent" onclick="window.deletePermanent('${seller.id}', '${escapeHtml(seller.full_name || seller.email)}')" ${isDeleting ? 'disabled' : ''}>
-                                    ${isDeleting ? '<div class="loading-spinner"></div>' : ic('trash', 13) + ' ' + t('msimamizi_index.btn_delete_forever')}
+                                    ${isDeleting ? '<div class="loading-spinner dm-sc dm-sc--light"></div>' : ic('trash', 13) + ' ' + t('msimamizi_index.btn_delete_forever')}
                                 </button>
                             ` : ''}
                         </div>
@@ -1355,7 +1360,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                         ${isSystemAdmin ? `<div class="system-admin-btn" id="systemAdminBtn">${ic('settings', 12)} ${t('msimamizi_index.system_management')}</div>` : ''}
                     </div>
                     <div class="header-right">
-                        <div class="icon-btn" id="refreshBtn">${refreshing ? '<div class="loading-spinner"></div>' : ic('refresh', 16)}</div>
+                        <div class="icon-btn" id="refreshBtn">${refreshing ? '<div class="loading-spinner dm-sc dm-sc--light"></div>' : ic('refresh', 16)}</div>
                         <div class="icon-btn" id="editProfileBtn">${ic('edit', 16)}</div>
                         <div class="logout-area" id="logoutArea">
                             <div>${ic('user', 18)}</div>

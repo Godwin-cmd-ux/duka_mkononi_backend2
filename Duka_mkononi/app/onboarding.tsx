@@ -4,7 +4,6 @@ import * as Location from 'expo-location';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Dimensions,
   Image,
@@ -16,6 +15,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import SmartCartLoader from '../components/SmartCartLoader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLang } from '../context/LanguageContext';
 import { API_BASE_URL } from '../constants/api';
@@ -341,7 +341,7 @@ export default function OnboardingScreen() {
               )}
               {uploading && (
                 <View style={styles.avatarOverlay}>
-                  <ActivityIndicator size="large" color="#ffffff" />
+                  <SmartCartLoader size="large" color="#ffffff" />
                 </View>
               )}
               {photoSaved && !uploading && (
@@ -360,7 +360,7 @@ export default function OnboardingScreen() {
             >
               {uploading ? (
                 <>
-                  <ActivityIndicator size="small" color="white" />
+                  <SmartCartLoader size="compact" color="#ffffff" />
                   <Text style={styles.primaryButtonText}>{t('onboarding.photo_uploading')}</Text>
                 </>
               ) : (
@@ -412,7 +412,7 @@ export default function OnboardingScreen() {
               >
                 {locating ? (
                   <>
-                    <ActivityIndicator size="small" color="white" />
+                    <SmartCartLoader size="compact" color="#ffffff" />
                     <Text style={styles.primaryButtonText}>{t('onboarding.location_saving')}</Text>
                   </>
                 ) : locationSaved ? (

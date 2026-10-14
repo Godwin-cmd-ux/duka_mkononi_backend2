@@ -4,8 +4,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
+      Alert,
     Modal,
     ScrollView,
     StyleSheet,
@@ -15,6 +14,7 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
+import SmartCartLoader from '../../components/SmartCartLoader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ZoomableImage from '../../components/zoomable-image';
 import { useLang } from '../../context/LanguageContext';
@@ -440,7 +440,7 @@ export default function ProfailiScreen() {
     return (
       <SafeAreaView style={styles.screenSafe} edges={['top']}>
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#007AFF" />
+          <SmartCartLoader size="large" color="#007AFF" />
           <Text style={styles.loadingText}>{t('app.loading')}</Text>
         </View>
       </SafeAreaView>
@@ -475,7 +475,7 @@ export default function ProfailiScreen() {
             activeOpacity={0.8}
           >
             {photoUploading ? (
-              <ActivityIndicator size="small" color="white" />
+              <SmartCartLoader size="compact" color="#ffffff" />
             ) : (
               <Ionicons name="camera" size={18} color="white" />
             )}
@@ -625,7 +625,7 @@ export default function ProfailiScreen() {
                 disabled={saving}
               >
                 {saving ? (
-                  <ActivityIndicator size="small" color="#fff" />
+                  <SmartCartLoader size="compact" color="#ffffff" />
                 ) : (
                   <Text style={styles.buttonText}>{t('profile.save')}</Text>
                 )}
@@ -704,7 +704,7 @@ export default function ProfailiScreen() {
                 disabled={changingPassword || !passwordForm.current || !passwordForm.newPass || !passwordForm.confirm}
               >
                 {changingPassword ? (
-                  <ActivityIndicator size="small" color="#fff" />
+                  <SmartCartLoader size="compact" color="#ffffff" />
                 ) : (
                   <Text style={styles.buttonText}>{t('profile.change_password_save')}</Text>
                 )}

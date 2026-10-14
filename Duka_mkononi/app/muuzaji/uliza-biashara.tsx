@@ -2,7 +2,6 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useCallback, useState } from 'react';
 import {
-  ActivityIndicator,
   Keyboard,
   ScrollView,
   StyleSheet,
@@ -11,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import SmartCartLoader from '../../components/SmartCartLoader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLang } from '../../context/LanguageContext';
 import { fetchWithTimeout } from '../../lib/network';
@@ -323,7 +323,7 @@ export default function UlizaBiasharaScreen() {
         />
         <TouchableOpacity style={styles.askBtn} onPress={() => ask()} disabled={loading}>
           {loading ? (
-            <ActivityIndicator size="small" color="#ffffff" />
+            <SmartCartLoader size="compact" color="#ffffff" />
           ) : (
             <Ionicons name="send" size={18} color="#ffffff" />
           )}
@@ -333,7 +333,7 @@ export default function UlizaBiasharaScreen() {
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         {loading && (
           <View style={styles.center}>
-            <ActivityIndicator size="large" color="#2ecc71" />
+            <SmartCartLoader size="standard" color="#2ecc71" />
             <Text style={styles.centerText}>{t('business_report.loading')}</Text>
           </View>
         )}

@@ -5,7 +5,6 @@ import * as Notifications from 'expo-notifications';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
     Alert,
     FlatList,
     KeyboardAvoidingView,
@@ -21,6 +20,7 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
+import SmartCartLoader from '../../components/SmartCartLoader';
 import { ALL_LANGUAGES, LANGUAGE_FLAGS, LANGUAGE_NAMES, useLang, type Lang } from '../../context/LanguageContext';
 import { useSession } from '../../context/SessionContext';
 
@@ -854,7 +854,7 @@ export default function NotifyScreen() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#3498db" />
+        <SmartCartLoader size="large" color="#3498db" />
         <Text style={styles.loadingText}>{t('notify.loading')}</Text>
       </View>
     );
@@ -1109,7 +1109,7 @@ export default function NotifyScreen() {
               disabled={sending}
             >
               {sending ? (
-                <ActivityIndicator size="small" color="white" />
+                <SmartCartLoader size="compact" color="#ffffff" />
               ) : (
                 <>
                   <Ionicons name="send" size={20} color="white" />

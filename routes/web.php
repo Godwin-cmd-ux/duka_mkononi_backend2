@@ -51,11 +51,15 @@ Route::view('/msimamizi/bidhaa-mpya', 'msimamizi.bidhaa-mpya');
 Route::view('/msimamizi/ripoti', 'msimamizi.ripoti');
 Route::view('/msimamizi/preview', 'msimamizi.preview');
 Route::view('/msimamizi/tangaza', 'msimamizi.tangaza');
+// Nyingine: the manager's AI capabilities hub (capability #6 anomaly review).
+Route::view('/msimamizi/nyingine', 'msimamizi.nyingine');
 
 Route::view('/mteja', 'mteja.biashara');
 Route::view('/mteja/biashara', 'mteja.biashara');
 Route::view('/mteja/matangazo', 'mteja.matangazo');
 Route::view('/mteja/profaili', 'mteja.profaili');
+// Nyingine: the customer's AI capabilities hub (capability #13 order Q&A).
+Route::view('/mteja/nyingine', 'mteja.nyingine');
 
 Route::view('/muuzaji', 'muuzaji.profaili');
 Route::view('/muuzaji/profaili', 'muuzaji.profaili');
@@ -68,6 +72,8 @@ Route::view('/muuzaji/ushauri-bei', 'muuzaji.ushauri-bei');
 Route::view('/muuzaji/mpango-stock', 'muuzaji.mpango-stock');
 Route::view('/muuzaji/uliza-biashara', 'muuzaji.uliza-biashara');
 Route::view('/muuzaji/afya-biashara', 'muuzaji.afya-biashara');
+Route::view('/muuzaji/msaidizi', 'muuzaji.msaidizi');
+Route::view('/muuzaji/tangaza', 'muuzaji.tangaza');
 
 Route::view('/system_admin', 'system_admin.index');
 Route::view('/system_admin/index', 'system_admin.index');
@@ -89,4 +95,6 @@ Route::redirect('/ushauri-bei', '/muuzaji/ushauri-bei');
 Route::redirect('/mpango-stock', '/muuzaji/mpango-stock');
 Route::redirect('/uliza-biashara', '/muuzaji/uliza-biashara');
 Route::redirect('/afya-biashara', '/muuzaji/afya-biashara');
+Route::redirect('/msaidizi', '/muuzaji/msaidizi');
+Route::redirect('/tangaza', '/muuzaji/tangaza');
 Route::redirect('/profaili', '/muuzaji/profaili');

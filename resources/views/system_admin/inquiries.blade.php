@@ -1,4 +1,5 @@
 @include('partials.dm-locale')
+<link rel="stylesheet" href="/css/smartcart-loader.css">
 @verbatim
 <head>
     <meta charset="UTF-8">
@@ -209,7 +210,7 @@
     function appendRows(list) { var tb = document.getElementById('dmInqBody'); list.forEach(function (i) { var tr = document.createElement('tr'); tr.innerHTML = rowHtml(i); tb.appendChild(tr); }); }
 
     function openDetail(id) {
-        document.getElementById('dmInqDetail').innerHTML = '<div class="empty"><i class="fa-solid fa-spinner fa-spin"></i></div>';
+        document.getElementById('dmInqDetail').innerHTML = '<div class="empty" role="status"><div class="dm-sc" style="width:44px;height:44px;margin:0 auto 12px"></div></div>';
         document.getElementById('dmInqOverlay').classList.add('open');
         fetch('/api/system-admin/inquiries/' + encodeURIComponent(id), { headers: auth() }).then(function (r) { return r.json(); }).then(function (d) {
             if (!d || !d.inquiry) { document.getElementById('dmInqDetail').innerHTML = '<div class="alert alert-err">' + esc(t('system_admin_inquiries.err_generic')) + '</div>'; return; }

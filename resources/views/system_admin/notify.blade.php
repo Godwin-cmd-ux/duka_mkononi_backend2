@@ -1,4 +1,5 @@
 @include('partials.dm-locale')
+<link rel="stylesheet" href="/css/smartcart-loader.css">
 @verbatim
 <head>
     <meta charset="UTF-8">
@@ -160,7 +161,7 @@
 @include('partials.photo-viewer')
 @verbatim
     <div class="page-content" id="notifyContent">
-        <div class="loading-spinner"></div>
+        <div class="loading-spinner dm-sc"></div>
         <div style="text-align: center; color: #7f8c8d;" data-i18n="system_admin_notify.loading">Inapakia...</div>
     </div>
 
@@ -551,7 +552,7 @@
         function render() {
             const container = document.getElementById('notifyContent');
             if (loading) {
-                container.innerHTML = `<div class="loading-spinner"></div><div style="text-align:center;">${t('loading')}</div>`;
+                container.innerHTML = `<div class="loading-spinner dm-sc"></div><div style="text-align:center;">${t('loading')}</div>`;
                 return;
             }
             

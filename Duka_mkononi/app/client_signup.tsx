@@ -2,7 +2,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-    ActivityIndicator,
     Alert,
     KeyboardAvoidingView,
     Platform,
@@ -13,6 +12,7 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
+import SmartCartLoader from '../components/SmartCartLoader';
 import { useLang } from '../context/LanguageContext';
 import OtpVerificationModal from '../components/otp-verification-modal';
 
@@ -334,7 +334,7 @@ export default function ClientSignup() {
                             activeOpacity={0.8}
                         >
                             {loading ? (
-                                <ActivityIndicator color="white" size="small" />
+                                <SmartCartLoader size="compact" color="#ffffff" />
                             ) : (
                                 <Text style={styles.signupButtonText}>{t('client_signup.signup_button')}</Text>
                             )}

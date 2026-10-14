@@ -1,4 +1,5 @@
 @include('partials.dm-locale')
+<link rel="stylesheet" href="/css/smartcart-loader.css">
 @verbatim
 <head>
     <meta charset="UTF-8">
@@ -177,6 +178,16 @@
         @keyframes spin { to { transform: rotate(360deg); } }
         
         .hidden { display: none; }
+
+        /* AI report summary (capability #15) */
+        .ai-summary-card { border-left: 4px solid #667eea; }
+        .ai-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+        .ai-chip { padding: 6px 14px; border-radius: 20px; background: #f4f6f7; color: #5d6d7e; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid #ecf0f1; user-select: none; }
+        .ai-chip.active { background: #667eea; color: white; border-color: #667eea; }
+        .ai-metric { flex: 1; min-width: 90px; background: #f8f9fa; border-radius: 12px; padding: 10px; text-align: center; }
+        .ai-metric-value { font-size: 14px; font-weight: 700; color: #2c3e50; word-break: break-word; }
+        .ai-metric-label { font-size: 10.5px; color: #7f8c8d; margin-top: 2px; }
+        .ai-retry { display: inline-block; margin-top: 8px; padding: 7px 18px; border-radius: 20px; background: #667eea; color: white; font-size: 12px; font-weight: 600; cursor: pointer; }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
 </head>
@@ -197,13 +208,14 @@
                 <a href="preview" class="nav-item"><div class="nav-icon"><i class="fa-solid fa-calendar-days"></i></div><span class="nav-label" data-i18n="msimamizi_ripoti.nav_review">Rejea</span></a>
                 <a href="bidhaa-mpya" class="nav-item"><div class="nav-icon"><i class="fa-solid fa-circle-plus"></i></div><span class="nav-label" data-i18n="msimamizi_ripoti.nav_new_product">Bidhaa Mpya</span></a>
                 <a href="tangaza" class="nav-item"><div class="nav-icon"><i class="fa-solid fa-bullhorn"></i></div><span class="nav-label" data-i18n="msimamizi_ripoti.nav_advertise">Tangaza</span></a>
+                <a href="nyingine" class="nav-item"><div class="nav-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div><span class="nav-label" data-i18n="msimamizi_nyingine.nav_label">Nyingine</span></a>
             </div>
             <div class="sidebar-footer">
                 <div class="user-info"><div class="user-avatar" id="userAvatar">M</div><div class="user-details"><div class="user-name" id="userName" data-i18n="msimamizi_ripoti.user_admin">Msimamizi</div><div class="user-role" data-i18n="msimamizi_ripoti.user_admin">Msimamizi</div></div></div>
                 <div class="logout-btn" id="logoutBtn"><i class="fa-solid fa-arrow-right-from-bracket"></i> <span data-i18n="msimamizi_ripoti.logout">Ondoka</span></div>
             </div>
         </aside>
-        <main class="main-content" id="mainContent"><div style="text-align:center;padding:60px;"><div class="loading-spinner"></div><div data-i18n="msimamizi_ripoti.loading">Inapakua ripoti...</div></div></main>
+        <main class="main-content" id="mainContent"><div style="text-align:center;padding:60px;"><div class="loading-spinner dm-sc"></div><div data-i18n="msimamizi_ripoti.loading">Inapakua ripoti...</div></div></main>
     </div>
 
     <script>
@@ -326,6 +338,25 @@
             print_popup_permission: "Tafadhali ruhusu popups ili kuchapisha",
             today_sales_label: "Mauzo ya Leo",
             today_profit_label: "Faida ya Leo",
+            ai_summary_title: "Muhtasari wa AI",
+            ai_summary_subtitle: "Muhtasari uliothibitishwa kutoka ripoti yako",
+            ai_period_7: "Siku 7",
+            ai_period_30: "Siku 30",
+            ai_period_90: "Siku 90",
+            ai_loading: "Inatengeneza muhtasari...",
+            ai_error: "Imeshindwa kupata muhtasari. Jaribu tena.",
+            ai_retry: "Jaribu Tena",
+            ai_dir_up: "Mapato yameongezeka",
+            ai_dir_down: "Mapato yamepungua",
+            ai_dir_flat: "Hayajabadilika sana",
+            ai_dir_from_zero: "Ongezeko kutoka kipindi bila mauzo",
+            ai_metric_revenue: "Mapato",
+            ai_metric_profit: "Faida ghafi",
+            ai_metric_expenses: "Matumizi",
+            ai_contributors_title: "Wachangiazi wakuu",
+            ai_limitations_title: "Maelezo ya ziada",
+            ai_verified_note: "Takwimu zimethibitishwa kutoka kwenye ripoti yako.",
+            ai_reword_note: "Maandishi yaliyoandikwa upya na AI kutoka takwimu zilezile.",
         };
         function t(key, params) {
             const full = key.indexOf('msimamizi_ripoti.') === 0 ? key : 'msimamizi_ripoti.' + key;
@@ -486,7 +517,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     dataSource = 'seller';
                 }
             } catch(e) { console.error(e); showAlert(t('msimamizi_ripoti.alert_error_title'), t('msimamizi_ripoti.report_load_failed')); }
-            finally { loading = false; render(); }
+            finally { loading = false; render(); if (!aiSummary.data && !aiSummary.loading && userToken) window.loadAiSummary(); }
         }
 
         async function fetchBusinessData(headers) {
@@ -657,6 +688,111 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             sellers = [{ id: userData.id, full_name: userData.businessName, email: userData.email }];
         }
 
+        // ========================= AI REPORT SUMMARY =======================
+        // Capability #15. The server builds this from the SAME report rows this
+        // page shows (the same report queries), so the prose can never disagree
+        // with the tables. The model may only REWORD the verified figures; when
+        // it cannot, the deterministic narrative is shown instead.
+        let aiSummary = { period: 'last_7_days', data: null, loading: false, error: false };
+
+        function aiCurrentLocale() {
+            return document.documentElement.getAttribute('data-dm-locale') || 'sw';
+        }
+
+        function aiMoney(currency, value) {
+            const n = Number(value || 0);
+            return (currency || 'TZS') + ' ' + (Number.isFinite(n) ? n : 0).toLocaleString(undefined, { maximumFractionDigits: 0 });
+        }
+
+        function aiDirLabel(direction) {
+            const key = { up: 'ai_dir_up', down: 'ai_dir_down', up_from_zero: 'ai_dir_from_zero' }[direction] || 'ai_dir_flat';
+            return t('msimamizi_ripoti.' + key);
+        }
+
+        function aiDirColor(direction) {
+            return direction === 'up' ? '#27ae60' : direction === 'down' ? '#e74c3c' : direction === 'up_from_zero' ? '#3498db' : '#7f8c8d';
+        }
+
+        window.loadAiSummary = async function () {
+            if (!userToken || aiSummary.loading) return;
+            aiSummary.loading = true; aiSummary.error = false;
+            renderReportContent();
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/ai/reports/summary`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
+                    body: JSON.stringify({ period: aiSummary.period, locale: aiCurrentLocale() })
+                });
+                if (!res.ok) throw new Error('summary failed');
+                const json = await res.json();
+                if (!json || !json.success) throw new Error('summary failed');
+                aiSummary.data = json;
+                aiSummary.error = false;
+            } catch (e) {
+                aiSummary.data = null;
+                aiSummary.error = true;
+            } finally {
+                aiSummary.loading = false;
+                renderReportContent();
+            }
+        };
+
+        window.setAiPeriod = function (period) {
+            if (aiSummary.period === period) return;
+            aiSummary.period = period;
+            renderReportContent();
+            window.loadAiSummary();
+        };
+
+        function renderAiSummary() {
+            const d = aiSummary.data;
+            const chips = [
+                { key: 'last_7_days', label: t('msimamizi_ripoti.ai_period_7') },
+                { key: 'last_30_days', label: t('msimamizi_ripoti.ai_period_30') },
+                { key: 'last_90_days', label: t('msimamizi_ripoti.ai_period_90') }
+            ].map(p => `<div class="ai-chip ${aiSummary.period === p.key ? 'active' : ''}" onclick="setAiPeriod('${p.key}')">${escapeHtml(p.label)}</div>`).join('');
+
+            let body;
+            if (aiSummary.loading) {
+                body = `<div style="text-align:center;padding:18px;color:#7f8c8d;">${ic('refresh', 15)} ${t('msimamizi_ripoti.ai_loading')}</div>`;
+            } else if (aiSummary.error || !d) {
+                body = `<div style="text-align:center;padding:14px;">
+                    <div style="color:#e74c3c;font-size:13px;">${escapeHtml(t('msimamizi_ripoti.ai_error'))}</div>
+                    <div class="ai-retry" onclick="loadAiSummary()">${ic('refresh', 12)} ${t('msimamizi_ripoti.ai_retry')}</div>
+                </div>`;
+            } else {
+                // The AI paragraph when it passed the number gate; otherwise the
+                // deterministic lines. Either way: only figures from the payload.
+                const prose = (d.ai && !d.ai.degraded && d.summary_text) ? d.summary_text : (d.narrative || []).join(' ');
+                const direction = (d.comparison && d.comparison.direction) || 'flat';
+                const m = d.metrics || {};
+                const margin = m.margin_pct == null ? '' : ' (' + Number(m.margin_pct).toFixed(0) + '%)';
+                body = `
+                    <div style="font-size:13px;line-height:1.55;color:#2c3e50;background:#f8f9fa;border-radius:12px;padding:12px 14px;">${escapeHtml(prose)}</div>
+                    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+                        <div class="ai-metric"><div class="ai-metric-value">${escapeHtml(aiMoney(d.currency, m.revenue))}</div><div class="ai-metric-label">${t('msimamizi_ripoti.ai_metric_revenue')}</div></div>
+                        <div class="ai-metric"><div class="ai-metric-value" style="color:#27ae60;">${escapeHtml(aiMoney(d.currency, m.gross_profit))}</div><div class="ai-metric-label">${t('msimamizi_ripoti.ai_metric_profit')}${margin}</div></div>
+                        <div class="ai-metric"><div class="ai-metric-value" style="color:#e67e22;">${escapeHtml(aiMoney(d.currency, m.expenses_total))}</div><div class="ai-metric-label">${t('msimamizi_ripoti.ai_metric_expenses')}</div></div>
+                    </div>
+                    <div style="margin-top:10px;"><span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:${aiDirColor(direction)};">${ic(direction === 'down' ? 'warning' : 'chart', 12)} ${escapeHtml(aiDirLabel(direction))}</span></div>
+                    ${(d.contributors || []).length ? `<div style="margin-top:10px;font-size:12px;"><strong>${escapeHtml(t('msimamizi_ripoti.ai_contributors_title'))}</strong>
+                        ${d.contributors.map(c => {
+                            const change = Number(c.change) || 0;
+                            return `<div style="display:flex;justify-content:space-between;gap:10px;padding:3px 0;color:#5d6d7e;"><span>${escapeHtml(c.name)}</span><span style="font-weight:600;color:${change >= 0 ? '#27ae60' : '#e74c3c'};">${change >= 0 ? '+' : '-'}${escapeHtml(aiMoney(d.currency, Math.abs(change)))}</span></div>`;
+                        }).join('')}</div>` : ''}
+                    ${(d.limitations || []).length ? `<div style="margin-top:10px;font-size:11.5px;color:#7f8c8d;"><strong>${escapeHtml(t('msimamizi_ripoti.ai_limitations_title'))}</strong>
+                        ${(d.limitations || []).map(l => `<div style="margin-top:3px;">&bull; ${escapeHtml(l)}</div>`).join('')}</div>` : ''}
+                    <div style="margin-top:10px;font-size:10.5px;color:#95a5a6;">${ic('shield', 10)} ${escapeHtml(t('msimamizi_ripoti.ai_verified_note'))}${(d.ai && !d.ai.degraded) ? ' ' + escapeHtml(t('msimamizi_ripoti.ai_reword_note')) : ''}</div>
+                `;
+            }
+
+            return `<div class="section ai-summary-card"><div class="section-title">${ic('ai', 15)} ${t('msimamizi_ripoti.ai_summary_title')}</div>
+                <div style="font-size:11.5px;color:#7f8c8d;margin:-6px 0 10px;">${escapeHtml(t('msimamizi_ripoti.ai_summary_subtitle'))}</div>
+                <div class="ai-chips">${chips}</div>
+                <div style="margin-top:10px;">${body}</div>
+            </div>`;
+        }
+
         function refreshData() { fetchAllReports(); }
 
         function renderOverview() {
@@ -668,6 +804,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     <div style="font-size:12px;color:#3498db;margin-top:6px;">${t('msimamizi_ripoti.report_typed_date', { type: t(isAdmin ? 'msimamizi_ripoti.report_business' : 'msimamizi_ripoti.report_personal'), date: new Date().toLocaleDateString('sw-TZ') })}</div>
                     ${isAdmin ? `<div style="font-size:11px;color:#7f8c8d;margin-top:4px;">${ic('users', 12)} ${t('msimamizi_ripoti.sellers_registered', { count: sellers.length })}</div>` : ''}
                 </div>
+                ${renderAiSummary()}
                 ${businessStats ? `
                 <div class="stats-grid">
                     <div class="stat-card"><div class="stat-icon" style="background:#3498db20;color:#3498db;">${ic('money', 22)}</div><div class="stat-number">${formatCurrency(businessStats.totalSales)}</div><div class="stat-label">${t('msimamizi_ripoti.total_sales')}</div></div>
@@ -845,7 +982,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             else if (activeReport === 'customers') reportContent.innerHTML = renderCustomersReport();
         }
 
-        function renderLoading() { document.getElementById('mainContent').innerHTML = '<div style="text-align:center;padding:60px;"><div class="loading-spinner"></div><div>' + t('msimamizi_ripoti.loading') + '</div></div>'; }
+        function renderLoading() { document.getElementById('mainContent').innerHTML = '<div style="text-align:center;padding:60px;"><div class="loading-spinner dm-sc"></div><div>' + t('msimamizi_ripoti.loading') + '</div></div>'; }
 
         // ============================== EXPORTS ==============================
         // Builds a standalone HTML document (title + table) for the report tab
@@ -981,7 +1118,15 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             else renderLoading();
         }
         if (window.DM && typeof window.DM.onChange === 'function') {
-            window.DM.onChange(() => { if (!loading) render(); });
+            window.DM.onChange(() => {
+                if (loading) return;
+                render();
+                // The summary was requested in the previous language - refetch
+                // so the narrative follows the switch like everything else.
+                if (activeReport === 'overview' && !aiSummary.loading && aiSummary.data && aiSummary.data.locale !== aiCurrentLocale()) {
+                    window.loadAiSummary();
+                }
+            });
         }
 
         init();

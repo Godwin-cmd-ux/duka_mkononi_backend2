@@ -59,12 +59,14 @@ export default function MuuzajiLayout() {
           tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>🧩</Text>,
         })}
       />
-      {/* The four AI capabilities are opened from the "Other Services" hub,
+      {/* The AI capabilities are opened from the "Other Services" hub,
           so they stay reachable as routes but are hidden from the tab bar. */}
       <Tabs.Screen name="ushauri-bei" options={{ href: null }} />
       <Tabs.Screen name="mpango-stock" options={{ href: null }} />
       <Tabs.Screen name="uliza-biashara" options={{ href: null }} />
+      <Tabs.Screen name="msaidizi" options={{ href: null }} />
       <Tabs.Screen name="afya-biashara" options={{ href: null }} />
+      <Tabs.Screen name="tangaza" options={{ href: null }} />
     </Tabs>
     </TabSwipe>
   );

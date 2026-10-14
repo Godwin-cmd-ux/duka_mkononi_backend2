@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\CustomerReview;
 use App\Models\Inquiry;
+use App\Services\Ai\TrustSummary;
 use App\Services\PhoneNumber;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -218,6 +219,9 @@ class InquiryController extends BaseController
             'updated_at' => $now,
         ]);
 
+        // Capability #12: a published review changes every trust summary.
+        TrustSummary::invalidateReviews();
+
         $this->log($this->userId($request), 'INQUIRY_PUBLISH', '/api/system-admin/inquiries/' . $id, [], $this->ip($request), 'success');
 
         return $this->json(['message' => 'Swali limechapishwa kama rejea ya mteja.']);
@@ -243,6 +247,9 @@ class InquiryController extends BaseController
             'status' => 'reviewed',
             'updated_at' => $now,
         ]);
+
+        // Capability #12: an unpublished review must leave the summaries too.
+        TrustSummary::invalidateReviews();
 
         return $this->json(['message' => 'Rejea imeondolewa kwenye ukurasa wa mwanzo.']);
     }

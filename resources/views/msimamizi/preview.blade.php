@@ -1,4 +1,5 @@
 @include('partials.dm-locale')
+<link rel="stylesheet" href="/css/smartcart-loader.css">
 @verbatim
 <head>
     <meta charset="UTF-8">
@@ -470,6 +471,10 @@
                 <a href="tangaza" class="nav-item">
                     <div class="nav-icon"><i class="fa-solid fa-bullhorn"></i></div>
                     <span class="nav-label" data-i18n="msimamizi_preview.nav_advertise">Tangaza</span>
+                </a>
+                <a href="nyingine" class="nav-item">
+                    <div class="nav-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                    <span class="nav-label" data-i18n="msimamizi_nyingine.nav_label">Nyingine</span>
                 </a>
             </div>
             <div class="sidebar-footer">
@@ -1168,7 +1173,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                             <span class="stat-badge">${ic('report', 12)} ${t('msimamizi_preview.stat_net', { amount: formatCurrency(businessStats.totalNetProfit) })}</span>
                         </div>
                     </div>
-                    <div class="refresh-btn" id="refreshBtn">${refreshing ? '<div class=\"loading-spinner\"></div>' : ic('check', 16)}</div>
+                    <div class="refresh-btn" id="refreshBtn">${refreshing ? '<div class=\"loading-spinner dm-sc\"></div>' : ic('check', 16)}</div>
                 </div>
                 <div class="info-card">
                     <div style="font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:6px;">${ic('doc', 14)} ${t('msimamizi_preview.business_summary')}</div>
@@ -1201,7 +1206,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             filterStart = start;
             filterEnd = end;
             const container = document.getElementById('previewContainer');
-            container.innerHTML = '<div style="text-align:center;padding:60px;"><div class="loading-spinner"></div><div>' + t('msimamizi_preview.loading_period') + '</div></div>';
+            container.innerHTML = '<div style="text-align:center;padding:60px;"><div class="loading-spinner dm-sc"></div><div>' + t('msimamizi_preview.loading_period') + '</div></div>';
             const token = localStorage.getItem('userToken');
             await fetchData(token);
             render();
@@ -1211,7 +1216,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             filterStart = '';
             filterEnd = '';
             const container = document.getElementById('previewContainer');
-            container.innerHTML = '<div style="text-align:center;padding:60px;"><div class="loading-spinner"></div><div>' + t('msimamizi_preview.loading_all') + '</div></div>';
+            container.innerHTML = '<div style="text-align:center;padding:60px;"><div class="loading-spinner dm-sc"></div><div>' + t('msimamizi_preview.loading_all') + '</div></div>';
             const token = localStorage.getItem('userToken');
             await fetchData(token);
             render();

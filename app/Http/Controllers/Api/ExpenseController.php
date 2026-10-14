@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Models\OfficeExpense;
 use App\Models\User;
 use App\Services\BusinessResolver;
+use App\Services\ExpenseCategories;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -314,24 +315,11 @@ class ExpenseController extends BaseController
 
     public function categories(Request $request)
     {
-        $categories = [
-            'Kodisho za Nguvu',
-            'Maji',
-            'Mawasiliano',
-            'Usafiri',
-            'Chakula cha Mchana',
-            'Vifaa vya Ofisi',
-            'Matengenezo',
-            'Ushuru',
-            'Ada za Benki',
-            'Malighafi',
-            'Ufungashaji',
-            'Mengineyo',
-        ];
-
+        // Single source of truth: the capability #7 parser allow-lists the
+        // exact same list (App\Services\ExpenseCategories).
         return $this->json([
             'success' => true,
-            'categories' => $categories,
+            'categories' => ExpenseCategories::all(),
         ]);
     }
 

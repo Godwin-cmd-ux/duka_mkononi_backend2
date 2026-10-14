@@ -1,4 +1,5 @@
 @include('partials.dm-locale')
+<link rel="stylesheet" href="/css/smartcart-loader.css">
 @verbatim
 <head>
     <meta charset="UTF-8">
@@ -608,6 +609,15 @@
                     </div>
                     <span class="nav-label" data-i18n="mteja_biashara.nav_profile">Profaili</span>
                 </a>
+                <a href="nyingine" class="nav-item">
+                    <div class="nav-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <path d="M12 3L13.8 8.2L19 10L13.8 11.8L12 17L10.2 11.8L5 10L10.2 8.2L12 3Z" stroke-linejoin="round"/>
+                            <path d="M18.5 15.5L19.3 17.7L21.5 18.5L19.3 19.3L18.5 21.5L17.7 19.3L15.5 18.5L17.7 17.7L18.5 15.5Z" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <span class="nav-label" data-i18n="mteja_nyingine.nav_label">Nyingine</span>
+                </a>
             </div>
 
             <div class="sidebar-footer">
@@ -631,7 +641,7 @@
         <main class="main-content">
             <div class="page-container" id="biasharaContent">
                 <div class="loading-container">
-                    <div class="loading-spinner"></div>
+                    <div class="loading-spinner dm-sc"></div>
                     <div class="loading-text" data-i18n="mteja_biashara.loading">Inapakua orodha ya biashara...</div>
                 </div>
             </div>
@@ -888,7 +898,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
 
             const original = btn.innerHTML;
             twendeBusy = true;
-            btn.innerHTML = ic('spinner', 14, 'fa-spin') + ' ' + t('btn_finding_route');
+            btn.innerHTML = '<span class="dm-sc dm-sc--light" style="width:14px;height:14px;display:inline-block;vertical-align:-2px"></span>' + ' ' + t('btn_finding_route');
             btn.style.opacity = '0.75';
             btn.style.pointerEvents = 'none';
 
@@ -1110,7 +1120,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             if (loading) {
                 container.innerHTML = `
                     <div class="loading-container">
-                        <div class="loading-spinner"></div>
+                        <div class="loading-spinner dm-sc"></div>
                         <div class="loading-text">${t('loading')}</div>
                     </div>
                 `;

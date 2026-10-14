@@ -1,4 +1,5 @@
 @include('partials.dm-locale')
+<link rel="stylesheet" href="/css/smartcart-loader.css">
 @verbatim
 <head>
     <meta charset="UTF-8">
@@ -746,7 +747,7 @@
         
         loading = true;
         const originalBtnHtml = loginBtn.innerHTML;
-        loginBtn.innerHTML = '<div class="loader"></div>';
+        loginBtn.innerHTML = '<div class="loader dm-sc dm-sc--light"></div>';
         loginBtn.classList.add('disabled');
         
         try {

@@ -36,7 +36,7 @@ FRONTEND (seller app + website, in all 8 languages)
   resources/views/muuzaji/ushauri-bei.blade.php        <- website page
   routes/web.php                             <- /muuzaji/ushauri-bei
   locales.json                               <- muuzaji_ushauri_bei strings
-  resources/views/muuzaji/*.blade.php        <- "Ushauri wa Bei" nav link added
+  resources/views/muuzaji/*.blade.php        <- shared sidebar (Huduma Nyingine entry)
 
 
 STEP 0 — PREREQUISITES
@@ -191,7 +191,8 @@ STEP 8 — AUTOMATED TESTS
 ------------------------
 php artisan test --filter "PricingAdvisor|AiPricingRoute|AiGeminiClient"
 
-EXPECTED: 23 passed. (Full suite: `php artisan test` => 34 passed.)
+EXPECTED: 23 passed. (The full suite grows with every added capability -
+ just make sure every filtered suite passes.)
 
 Mobile typecheck:  cd Duka_mkononi && npx tsc --noEmit   (expect no output)
 
@@ -232,16 +233,17 @@ STEP 10 — WEBSITE (Blade)
 2. Open  http://127.0.0.1:8000/muuzaji/ushauri-bei  (log in as a seller first).
 
 WHAT TO CHECK
-  [ ] the page renders with the seller sidebar; "Ushauri wa Bei" is active
+  [ ] the page renders with the seller sidebar; "Huduma Nyingine" is active
   [ ] the same summary, product cards, AI notes and limitation lists as mobile
   [ ] the refresh button reloads; the status badge colours match the data
   [ ] if there are no products, the empty state is shown
   [ ] switch the language with the floating language button: the page reloads
       the advice in that language (the request is re-sent with the new locale)
 
-NAV LINK
-  [ ] every muuzaji page (profaili / mauzo / matumizi / uza / orders) now shows
-      a "Ushauri wa Bei" item in the sidebar that opens the new page
+NAVIGATION (current design)
+  [ ] the sidebar's "Huduma Nyingine" item opens the hub, whose "Ushauri wa
+      Bei" card opens this page (the AI pages are reached through the hub,
+      not as individual sidebar items)
 
 
 QUICK SANITY (design guarantees)
@@ -391,7 +393,7 @@ STEP 8 — AUTOMATED TESTS
 ------------------------
 php artisan test --filter "RestockPlanner|AiRestockRoute"
 
-EXPECTED: 17 passed. (Full suite: `php artisan test` => 51 passed.)
+EXPECTED: 17 passed. (The full suite grows with every added capability.)
 
 Mobile typecheck:  cd Duka_mkononi && npx tsc --noEmit   (expect no output)
 
@@ -418,10 +420,10 @@ STEP 10 — WEBSITE (Blade)
 1. php artisan serve
 2. Open  http://127.0.0.1:8000/muuzaji/mpango-stock  (log in as a seller).
 
-  [ ] the page renders with the sidebar; "Mpango wa Kuagiza" is active
+  [ ] the page renders with the sidebar; "Huduma Nyingine" is active
   [ ] same summary, product cards, order boxes and AI notes as mobile
   [ ] the language button reloads the plan in the chosen language
-  [ ] every muuzaji page now shows the "Mpango wa Kuagiza" sidebar item
+  [ ] the "Mpango wa Kuagiza" card in the Huduma Nyingine hub opens this page
 
 
 ==============================================================================
@@ -551,7 +553,7 @@ STEP 8 — AUTOMATED TESTS
 ------------------------
 php artisan test --filter "ReportIntentParser|BusinessReporter|AiReportRoute"
 
-EXPECTED: 21 passed. (Full suite: `php artisan test` => 72 passed.)
+EXPECTED: 21 passed. (The full suite grows with every added capability.)
 Mobile typecheck:  cd Duka_mkononi && npx tsc --noEmit   (expect no output)
 
 
@@ -576,7 +578,7 @@ STEP 10 — WEBSITE (Blade)
   [ ] type a question (or click an example chip) and press Uliza/Ask
   [ ] the same answer, chart, table and AI insight render as on mobile
   [ ] the language button switches the question language and the page labels
-  [ ] every muuzaji page now shows the "Uliza Biashara" sidebar item
+  [ ] the "Uliza Biashara" card in the Huduma Nyingine hub opens this page
 
 
 ==============================================================================
@@ -621,7 +623,7 @@ FRONTEND (seller app + website, in all 8 languages)
   resources/views/muuzaji/afya-biashara.blade.php      <- website page
   routes/web.php                               <- /muuzaji/afya-biashara
   locales.json                                 <- muuzaji_afya strings
-  resources/views/muuzaji/*.blade.php          <- "Afya ya Biashara" nav link added
+  resources/views/muuzaji/*.blade.php          <- shared sidebar (Huduma Nyingine entry)
 
 
 STEP 0 — FIRST, CREATE THE STORAGE TABLE (once)
@@ -750,7 +752,7 @@ STEP 10 — AUTOMATED TESTS
 -------------------------
 php artisan test --filter "BusinessHealthScore|AiHealthRoute"
 
-EXPECTED: 21 passed. (Full suite: `php artisan test` => 93 passed.)
+EXPECTED: 21 passed. (The full suite grows with every added capability.)
 Mobile typecheck:  cd Duka_mkononi && npx tsc --noEmit   (expect no output)
 
 
@@ -777,10 +779,2082 @@ STEP 12 — WEBSITE (Blade)
   [ ] the same score ring, components, changes, actions and history render
   [ ] "Sasisha" regenerates the digest; the store warning shows if unstored
   [ ] the language button switches the page labels
-  [ ] every seller page now shows the "Afya ya Biashara" sidebar item
+  [ ] the "Afya ya Biashara" card in the Huduma Nyingine hub opens this page
 
 
-WHEN YOU'RE DONE
-----------------
-Reply "next" and I'll implement the next capability (#6 — Anomaly and Leak
-Detection) on top of this same shared AI layer.
+==============================================================================
+ TEST FLOW — CAPABILITY #6: ANOMALY & LEAK DETECTION
+ Duka Mkononi  (Gemini-Powered Expert System)
+==============================================================================
+
+WHAT WAS BUILT
+--------------
+A review screen for the MANAGER portal (Msimamizi) that watches the business's
+own sales, expense and stock rows with FIVE deterministic rules and shows the
+alerts that still need a human look:
+
+  BELOW_COST_SALE   a sale recorded below the product's buying price
+  MARGIN_DROP       recent margin far below the earlier window
+  DUPLICATE_SALES   near-identical sale rows recorded twice
+  EXPENSE_SPIKE     spending far above the earlier window
+  STOCK_MISMATCH    recorded stock disagrees with what sales imply
+
+Two adjacent windows are compared (config ai.anomalies.compare_days, default
+14 days each). Every alert has a STABLE key (RULE:subject-slug:12-hex) so the
+same evidence always yields the same key; dismissing records an audited
+"reviewed - not a problem" decision and never deletes data. Gemini only
+drafts an optional summary text — the rules never depend on it.
+
+Endpoints (logged-in manager/admin)
+  GET  /api/ai/anomalies?locale=sw     scan: open alerts + history + summary
+  POST /api/ai/anomalies/dismiss       record an audited dismissal
+
+Files added/changed
+  config/ai.php                                    <- anomalies flag + thresholds
+  app/Services/Ai/AnomalyDetector.php              <- the 5 rules + 8-locale texts
+                                                      + stable key() + limitations
+  app/Http/Controllers/Api/AiAnomalyController.php
+  routes/api.php
+  tests/Unit/AnomalyDetectorTest.php
+  tests/Feature/AiAnomalyRouteTest.php
+
+FRONTEND (manager portal + phone, in all 8 languages)
+  resources/views/msimamizi/nyingine.blade.php     <- "Nyingine" page
+  routes/web.php                                   <- /msimamizi/nyingine
+  Duka_mkononi/app/msimamizi/nyingine.tsx          <- mobile screen
+  Duka_mkononi/app/msimamizi/_layout.tsx           <- tab registration
+  locales.json                                     <- msimamizi_nyingine strings
+  Duka_mkononi/locales/{sw,en,fr,hi,es,ur,de,zh}.json
+
+
+STEP 0 — PREREQUISITES
+----------------------
+1. A manager/admin account whose business has real data. Helpful (not required):
+     - a sale recorded below a product's buying price,
+     - two near-identical sales rows,
+     - a large expense in the recent window.
+   Without such data the scan still runs and simply returns zero alerts.
+2. GEMINI_API_KEY only affects the optional summary text — the rules run
+   with or without it.
+3. php artisan serve   (base URL http://127.0.0.1:8000)
+
+
+STEP 1 — GET A TOKEN (manager/admin)
+------------------------------------
+curl -s -X POST http://127.0.0.1:8000/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"ADMIN_EMAIL","password":"ADMIN_PASSWORD","role":"admin"}'
+
+
+STEP 2 — HAPPY PATH (scan)
+--------------------------
+curl -s "http://127.0.0.1:8000/api/ai/anomalies?locale=sw" \
+  -H "Authorization: Bearer PASTE_TOKEN_HERE"
+
+EXPECTED (HTTP 200)
+  {
+    "success": true,
+    "capability": "anomaly",
+    "locale": "sw",
+    "currency": "TZS",
+    "windows": { ...the two compared date ranges... },
+    "detected_count": <n>,
+    "open_count": <n>,
+    "dismissed_count": <n>,
+    "alerts": [
+      {
+        "key": "BELOW_COST_SALE:<slug>:<12 hex>",
+        "rule": "BELOW_COST_SALE",
+        "severity": "high|medium|low",
+        "subject": "<product or subject name>",
+        "title": "...", "detail": "...", "verify_steps": "...",
+        "figures": { "units": n, "unit_price": n, "cost": n, ... },
+        "evidence": [ ... ],
+        "detected_at": "..."
+      },
+      ...
+    ],
+    "history": [ { "key": "...", "rule": "...", "subject": "...",
+                   "reason": "...", "at": "...", "by": "<user id>" } ],
+    "summary": "...",
+    "ai": { "available": true|false, "degraded": ..., "code": ...,
+            "reason": ..., "meta": ... },
+    "limitations": [ "...", ... ],
+    "generated_at": "..."
+  }
+
+WHAT TO CHECK
+  [ ] title/detail/verify_steps are in the requested locale (sw), with the
+      REAL figures from your rows in `figures` (never round numbers the data
+      does not hold)
+  [ ] the same data scanned twice yields the SAME alert key (stable key)
+  [ ] open_count = detected_count - dismissed_count
+  [ ] alerts fire even when the AI summary is unavailable (rules are code)
+  [ ] history contains previously dismissed alerts, newest first (max 20)
+
+
+STEP 3 — DISMISSAL (audited, reversible only by data change)
+------------------------------------------------------------
+Take a "key" from alerts[] and:
+
+curl -s -X POST http://127.0.0.1:8000/api/ai/anomalies/dismiss \
+  -H "Authorization: Bearer PASTE_TOKEN_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{"key":"BELOW_COST_SALE:<slug>:<12 hex>","reason":"iko sawa","locale":"sw"}'
+
+EXPECTED (HTTP 200): { "success": true, "key": "...", "dismissed_at": "..." }
+
+  [ ] a re-scan moves that alert from alerts[] to history[] (open_count -1)
+  [ ] missing key -> HTTP 422 "KEY_REQUIRED"; malformed key -> 422 "KEY_INVALID"
+      (a key must look like RULE:slug:12-hex, max 120 chars)
+  [ ] the reason is optional and is capped at 200 characters
+
+
+STEP 4 — AUTHORISATION (must fail)
+----------------------------------
+  [ ] no token -> HTTP 401 on both endpoints
+
+
+STEP 5 — FEATURE FLAG (must fail)
+---------------------------------
+Set AI_FEATURE_ANOMALIES=false and php artisan config:clear.
+  [ ] GET and POST both return HTTP 403 with code "FEATURE_DISABLED"
+Restore the flag and re-run config:clear.
+
+
+STEP 6 — DETERMINISTIC RULES (AI down changes nothing)
+-------------------------------------------------------
+1. Set GEMINI_API_KEY= then php artisan config:clear.
+2. Re-run STEP 2.
+
+  [ ] alerts[] is byte-for-byte the same rule output as with the key set
+  [ ] ai.available = false, ai.degraded = true, ai.code = "AI_NOT_CONFIGURED"
+      with a clear localized reason — only the summary text is affected
+3. Restore the key and re-run php artisan config:clear.
+
+
+STEP 7 — AUDIT TRAIL
+--------------------
+  SELECT action, endpoint, status, details, created_at
+  FROM user_logs
+  WHERE action IN ('AI_REQUEST','AI_ANOMALY_SCAN','AI_ANOMALY_DISMISS')
+  ORDER BY created_at DESC LIMIT 20;
+
+  [ ] one AI_ANOMALY_SCAN row per scan (counts, ai_status, duration_ms)
+  [ ] one AI_ANOMALY_DISMISS row per dismissal (key, rule, subject, reason)
+  [ ] an AI_REQUEST row per summary call (capability "anomaly")
+  [ ] no API key, password or raw prompt/response text is stored
+
+
+STEP 8 — AUTOMATED TESTS
+------------------------
+php artisan test --filter "AnomalyDetector|AiAnomalyRoute"
+
+EXPECTED: every test in these two files passes (they pin the five rules, the
+placeholder/text invariants for all 8 locales, stable keys, and the route's
+auth.jwt middleware).
+Mobile typecheck:  cd Duka_mkononi && npx tsc --noEmit   (expect no output)
+
+
+STEP 9 — MANAGER PHONE APP
+---------------------------
+1. cd Duka_mkononi && npx expo start, log in as the MANAGER (msimamizi).
+2. Open the "Nyingine" tab.
+
+  [ ] the page loads ("Inapakua dalili...") and lists alerts with severity
+      badges, a plain-language detail and numbered verify steps
+  [ ] each alert offers Dismiss; after dismissing, the alert moves to the
+      history section and a re-scan keeps it away
+  [ ] pull-to-refresh re-runs the scan
+  [ ] switching the app language translates titles, details and steps
+
+
+STEP 10 — WEBSITE (Blade)
+-------------------------
+1. php artisan serve
+2. Open  http://127.0.0.1:8000/msimamizi/nyingine  (log in as the manager).
+
+  [ ] same alert cards, history and summary as the phone app
+  [ ] the language button re-requests the scan in that locale
+  [ ] the page only ever shows THIS business's alerts
+
+
+QUICK SANITY (design guarantees)
+--------------------------------
+  * The five rules are deterministic PHP — the model cannot add, remove or
+    reword an alert (it only drafts the optional summary).
+  * Alert keys are stable: unchanged evidence keeps the same key.
+  * Dismissal is an audited decision, not a data deletion.
+  * All alert copy exists in all 8 locales with matching placeholder order.
+  * Nothing in the scan writes to sales, expenses or stock.
+
+
+==============================================================================
+ TEST FLOW — CAPABILITY #13: ORDER & DELIVERY Q&A
+ Duka Mkononi  (Gemini-Powered Expert System)
+==============================================================================
+
+WHAT WAS BUILT
+--------------
+A customer-facing (Mteja) answer box: ask about your own order in ordinary
+language and get an answer built ONLY from what the system actually recorded
+for that order. Statuses come from order_status_history, notes are the
+customer-visible notes only (internal notes are never read), and money comes
+from the stored order rows. A DM-YYYYMMDD-XXXXXX reference in the question
+picks the order; otherwise the most recent one is used.
+
+Endpoint:  POST /api/ai/orders/ask     {"question": "...", "locale": "sw"}
+           (requires a logged-in customer whose profile has a phone number)
+
+Files added/changed
+  app/Services/Ai/OrderQaService.php      <- reference extraction, focus order,
+                                             status labels, fallback answers,
+                                             8-locale limitations
+  app/Http/Controllers/Api/AiOrderQaController.php
+  routes/api.php
+  tests/Unit/OrderQaServiceTest.php
+  tests/Feature/AiOrderQaRouteTest.php
+
+FRONTEND (customer portal + phone, in all 8 languages)
+  resources/views/mteja/nyingine.blade.php       <- "Maswali ya Oda" page
+  routes/web.php                                 <- /mteja/nyingine
+  Duka_mkononi/app/mteja/nyingine.tsx            <- mobile screen
+  Duka_mkononi/app/mteja/_layout.tsx             <- tab registration
+  locales.json                                   <- mteja_nyingine strings
+  Duka_mkononi/locales/{sw,en,fr,hi,es,ur,de,zh}.json
+
+
+STEP 0 — PREREQUISITES
+----------------------
+1. A customer (mteja) account WITH a phone number on the profile and at
+   least one order. (No phone => honest NO_ACCOUNT_PHONE block; no orders =>
+   honest NO_ORDERS block — both are valid things to test.)
+2. GEMINI_API_KEY optional: without it the answer is still built from the
+   recorded facts by the deterministic fallback.
+3. php artisan serve   (base URL http://127.0.0.1:8000)
+
+
+STEP 1 — GET A TOKEN (customer)
+-------------------------------
+curl -s -X POST http://127.0.0.1:8000/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"CUSTOMER_EMAIL","password":"CUSTOMER_PASSWORD","role":"customer"}'
+
+
+STEP 2 — HAPPY PATH
+-------------------
+curl -s -X POST http://127.0.0.1:8000/api/ai/orders/ask \
+  -H "Authorization: Bearer PASTE_TOKEN_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{"question":"Ninatarajhi lini oda yangu?","locale":"sw"}'
+
+EXPECTED (HTTP 200)
+  {
+    "success": true,
+    "capability": "order_qa",
+    "locale": "sw",
+    "question": "Ninatarajhi lini oda yangu?",
+    "orders": [ { "order_reference": "DM-YYYYMMDD-XXXXXX", "status": "...",
+                  ... recorded dates, totals and items ... }, ... ],
+    "focused_reference": "DM-YYYYMMDD-XXXXXX",
+    "answer": { "text": "...", "available": true, "degraded": false,
+                "code": null, "reason": null, "meta": { ... } },
+    "status_guide": [ { "status": "...", "label": "..." }, ... ],
+    "limitations": [ "...", ... ],
+    "generated_at": "..."
+  }
+
+WHAT TO CHECK
+  [ ] answer.text is in the requested locale and quotes ONLY figures that
+      appear in your own order rows
+  [ ] orders[] contains only this customer's orders; focused_reference shows
+      which order the answer is about
+  [ ] status_guide lists the platform's real statuses with localized labels
+  [ ] the answer never promises a dispatch/delivery date that is not recorded
+
+
+STEP 3 — REFERENCE MATCHING
+---------------------------
+A. Include a real reference in the question, e.g.
+   '{"question":"Oda DM-20261001-ABC123 iko wapi?","locale":"sw"}'
+   [ ] focused_reference equals that order (reference wins over recency)
+B. Use a well-formed but unknown reference:
+   [ ] success = true, answer.code = "REFERENCE_NOT_FOUND" with an honest
+       "not found" message — no invented order details
+
+
+STEP 4 — HONEST EDGE CASES
+---------------------------
+  [ ] a customer with NO orders  -> answer.code = "NO_ORDERS"
+  [ ] a profile with NO phone     -> answer.code = "NO_ACCOUNT_PHONE"
+  [ ] all three blocks carry a localized text (never an empty string)
+
+
+STEP 5 — AUTHORISATION + ISOLATION
+----------------------------------
+  [ ] no token -> HTTP 401
+  [ ] a second customer's answer only ever references their own orders
+  [ ] internal/merchant notes never appear in answer.text or orders[]
+
+
+STEP 6 — DEGRADATION (facts still real)
+----------------------------------------
+Set GEMINI_API_KEY= then php artisan config:clear, ask STEP 2 again.
+  [ ] success = true and answer.text is STILL built from the recorded order
+      facts by the deterministic fallback
+  [ ] answer.available = false, answer.degraded = true, answer.code =
+      "AI_NOT_CONFIGURED" (or "AI_DISABLED"), with a clear localized reason
+Restore the key and re-run php artisan config:clear.
+
+
+STEP 7 — AUDIT
+--------------
+  SELECT action, status, details, created_at FROM user_logs
+  WHERE action IN ('AI_ORDER_QA','AI_REQUEST','AI_ORDER_QA_NO_ORDERS',
+                   'AI_ORDER_QA_REFERENCE_MISS')
+  ORDER BY created_at DESC LIMIT 20;
+
+  [ ] orders_found, focused_reference, ai_status and duration_ms logged
+  [ ] no API key, password or raw prompt/response text is stored
+
+
+STEP 8 — AUTOMATED TESTS
+------------------------
+php artisan test --filter "OrderQaService|AiOrderQaRoute"
+
+EXPECTED: every test in these two files passes (reference extraction, focus
+selection, deterministic fallback texts in 8 locales, and the route's
+auth.jwt middleware).
+Mobile typecheck:  cd Duka_mkononi && npx tsc --noEmit   (expect no output)
+
+
+STEP 9 — CUSTOMER PHONE APP
+----------------------------
+1. cd Duka_mkononi && npx expo start, log in as the CUSTOMER (mteja).
+2. Open the "Nyingine" tab ("Maswali ya Oda").
+
+  [ ] type a question (or use an example like "Oda yangu iko wapi?") and get
+      an answer card with the order reference and status
+  [ ] the status guide explains the states in your language
+  [ ] limitations[] is shown at the bottom
+  [ ] an unknown reference shows the honest "not found" message
+  [ ] switching the app language re-asks in that language
+
+
+STEP 10 — WEBSITE (Blade)
+-------------------------
+1. php artisan serve
+2. Open  http://127.0.0.1:8000/mteja/nyingine  (log in as the customer).
+
+  [ ] the same ask box, answer, status guide and limitations render
+  [ ] the language button re-sends the question in the chosen locale
+  [ ] another customer's orders never appear
+
+
+QUICK SANITY (design guarantees)
+--------------------------------
+  * Only recorded fields are ever used: status history, visible notes, stored
+    money — never an invented status, date or promise.
+  * A reference not found says so; it never fabricates the order.
+  * Business scope always comes from the JWT, never from the question text.
+  * The deterministic answer path works with the AI switched off.
+
+
+==============================================================================
+ TEST FLOW — CAPABILITY #7: SMART EXPENSE CATEGORISATION
+ Duka Mkononi  (Gemini-Powered Expert System)
+==============================================================================
+
+WHAT WAS BUILT
+--------------
+A seller types (or dictates) one short expense note in ordinary language and
+gets an editable preview: description, amount, currency, date and category.
+Amounts and dates are extracted from the seller's OWN words by trusted code —
+the model may never introduce a number the text does not contain. The category
+comes from the fixed allow-list (the same 12 categories GET
+/api/office-expenses/categories serves), first via keywords, only then via
+the model. Ambiguity is FLAGGED for correction, never silently guessed.
+
+Endpoint:  POST /api/ai/expenses/parse   {"text": "...", "locale": "sw"}
+           (requires a logged-in seller; READ-ONLY — nothing is saved)
+
+Saving still goes through the pre-existing workflow:
+  POST /api/office-expenses   (unchanged validation, ownership and audit)
+
+Files added/changed
+  app/Services/ExpenseCategories.php         <- single source for the 12 categories
+  app/Http/Controllers/Api/ExpenseController.php  <- categories() now shares it
+  app/Services/Ai/ExpenseParser.php          <- extraction + flags + 8-locale copy
+  app/Http/Controllers/Api/AiExpenseParseController.php
+  config/ai.php                              <- expense_parse flag + limits
+  routes/api.php
+  tests/Unit/ExpenseParserTest.php
+  tests/Feature/AiExpenseParseRouteTest.php
+
+FRONTEND (seller app + website, in all 8 languages)
+  resources/views/muuzaji/matumizi.blade.php       <- AI box inside the
+                                                      add-expense modal
+  Duka_mkononi/app/muuzaji/matumizi.tsx            <- same flow on mobile
+  locales.json                                     <- muuzaji_matumizi ai_* keys
+  Duka_mkononi/locales/{...}.json                  <- expense_parser section
+
+
+STEP 0 — PREREQUISITES
+----------------------
+1. A seller account with the normal expense page working.
+2. GEMINI_API_KEY optional — keyword categories work without it; the model is
+   only consulted when the keyword table has no confident match.
+3. php artisan serve   (base URL http://127.0.0.1:8000)
+
+
+STEP 1 — GET A TOKEN (seller)
+-----------------------------
+Use the login from capability #2 (role seller).
+
+
+STEP 2 — HAPPY PATH (keyword category, no model call)
+-----------------------------------------------------
+curl -s -X POST http://127.0.0.1:8000/api/ai/expenses/parse \
+  -H "Authorization: Bearer PASTE_TOKEN_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{"text":"Nauli ya usafiri 5000","locale":"sw"}'
+
+EXPECTED (HTTP 200)
+  {
+    "success": true,
+    "capability": "expense_parse",
+    "locale": "sw",
+    "generated_at": "...",
+    "preview": {
+      "description": "...the cleaned note...",
+      "amount": 5000,
+      "currency": "TZS",
+      "expense_date": null,
+      "category": "Usafiri"
+    },
+    "flags": [ { "code": "...", "message": "..." } ],   // empty here
+    "missing_required": [],
+    "categories": [ "Kodisho za Nguvu", "Maji", "Mawasiliano", "Usafiri", ... ],
+    "possible_duplicate": null,
+    "ai": { "available": false, "degraded": false,
+            "code": "KEYWORD_MATCH", "reason": null, "meta": null },
+    "limitations": [ "...", ... ]
+  }
+
+WHAT TO CHECK
+  [ ] amount = 5000 (a number the TEXT contained — nothing invented)
+  [ ] category = "Usafiri" from the allow-list (keyword hit, ai.code =
+      KEYWORD_MATCH: no model call was needed)
+  [ ] expense_date = null here (the note named no date) — no date is guessed
+  [ ] the page still works with zero AI involvement (pure extraction)
+
+
+STEP 3 — AMBIGUITY IS FLAGGED, NOT GUESSED
+------------------------------------------
+A. Two candidate amounts:
+   '{"text":"Lipa 5000 au 7000 kwa mkataba","locale":"sw"}'
+   [ ] preview.amount = 5000 (first candidate proposed for editing)
+   [ ] flags contains amount_ambiguous with a localized "please check" message
+B. No amount at all:
+   '{"text":"Nauli ya usafiri jana","locale":"sw"}'
+   [ ] preview.amount = null and missing_required includes "amount"
+   [ ] flags contains amount_missing telling the seller to type it in
+C. Slash date (deliberately unresolved, dd/mm vs mm/dd):
+   '{"text":"Maji 3000 tarehe 05/10","locale":"sw"}'
+   [ ] flags contains date_ambiguous — the app does not pick a day for you
+D. A year is never mistaken for an amount:
+   '{"text":"Mkataba wa 2026 ni 5000 TZS","locale":"sw"}'
+   [ ] preview.amount = 5000 (the 2026 candidate is dropped)
+
+
+STEP 4 — MODEL-ASSESSED CATEGORY (unknown wording)
+--------------------------------------------------
+With the key set, send an amount but no category keyword, e.g.
+   '{"text":"Bado sijalipa kikodi cha duka 120000","locale":"sw"}'
+  [ ] the model is consulted and may only choose from the 12 categories
+  [ ] ai.available = true with meta (model, tokens) when it answered
+  [ ] if it cannot decide, category stays null and flags contains
+      category_uncertain ("pick one from the list") — never an invented name
+  [ ] ai.code = "KEYWORD_MATCH" must NOT appear here (a model call happened)
+
+
+STEP 5 — DUPLICATE WARNING (warns, never blocks)
+------------------------------------------------
+Send the exact same body twice within the duplicate window
+(config ai.expense_parse.duplicate_window_days, default 2 days):
+  [ ] the second response carries possible_duplicate with the earlier row's
+      id / amount / description / category / expense_date
+  [ ] it is a WARNING only — saving is still allowed and unchanged
+
+
+STEP 6 — LENGTH + VALIDATION
+-----------------------------
+  [ ] text longer than ai.expense_parse.max_text (600) is truncated, not 422
+  [ ] empty text -> HTTP 422 "TEXT_REQUIRED"
+  [ ] feature off (AI_FEATURE_EXPENSE_PARSE=false + config:clear) -> 403
+      "FEATURE_DISABLED"
+  [ ] no token -> 401
+
+
+STEP 7 — DEGRADATION (honest, still useful)
+-------------------------------------------
+Set GEMINI_API_KEY= then php artisan config:clear, repeat STEP 4.
+  [ ] keyword extraction (STEP 2) is completely unaffected
+  [ ] ai.code = "AI_DISABLED" with a localized reason and the category comes
+      back flagged category_uncertain instead of invented
+Restore the key and re-run php artisan config:clear.
+
+
+STEP 8 — THE SAVE PATH IS UNCHANGED
+------------------------------------
+Take any preview, fix it in the normal expense form, and save:
+
+  POST /api/office-expenses   {"amount":..., "description":..., "category":...}
+
+  [ ] the response is exactly the pre-AI contract (success/message/expense)
+  [ ] expense reporting / profit numbers are unchanged by this feature
+  [ ] the parse endpoint itself NEVER wrote a row (scan user_logs: only
+      AI_EXPENSE_PARSE rows, no ADD_EXPENSE from parsing)
+
+
+STEP 9 — AUDIT
+--------------
+  SELECT action, status, details, created_at FROM user_logs
+  WHERE action IN ('AI_EXPENSE_PARSE','AI_REQUEST')
+  ORDER BY created_at DESC LIMIT 20;
+
+  [ ] amount_found, category, flags, missing_required, duplicate_found,
+      ai_status and duration_ms logged; no keys, prompts or note text stored
+
+
+STEP 10 — AUTOMATED TESTS
+-------------------------
+php artisan test --filter "ExpenseParser|AiExpenseParse"
+
+EXPECTED: every test in these two files passes (grounding invariant: no
+invented amount; locale tables in 8 languages; placeholder integrity; the
+route's auth.jwt middleware).
+Mobile typecheck:  cd Duka_mkononi && npx tsc --noEmit   (expect no output)
+
+
+STEP 11 — MOBILE APP (seller)
+-----------------------------
+1. cd Duka_mkononi && npx expo start, log in as a seller.
+2. Open "Matumizi" -> add-expense modal -> the box "Andika matumizi kwa
+   maneno" (example: "Nauli ya usafiri 5000 jana").
+3. Tap "Chambua kwa AI".
+
+  [ ] status "Inachambua maelezo..." then the toast "Taarifa zimewekwa kwenye
+      fomu - hakikisha kabla ya kuhifadhi."
+  [ ] amount, description and category chips are pre-filled and EDITABLE
+  [ ] flags (ambiguous amount, uncertain category...) appear as warning lines
+  [ ] a duplicate warning names the earlier expense with its amount
+  [ ] pressing the normal Save stores it via the existing flow
+  [ ] switching the app language translates the labels and the flag messages
+
+
+STEP 12 — WEBSITE (Blade)
+-------------------------
+1. Open  http://127.0.0.1:8000/muuzaji/matumizi  (log in as a seller).
+2. Add expense -> "Andika matumizi kwa maneno" -> "Chambua kwa AI".
+
+  [ ] same pre-filled form, flags, duplicate warning and limitations as mobile
+  [ ] the language button switches the label/flag language
+  [ ] saving goes through the page's existing Save button (unchanged)
+
+
+QUICK SANITY (design guarantees)
+--------------------------------
+  * A missing amount is reported as missing — never invented, never guessed
+    from an unrelated number (years are not amounts).
+  * Slash dates are flagged ambiguous, not silently resolved.
+  * Categories only ever come from the fixed 12-name allow-list.
+  * The parse endpoint is read-only; accounting behaviour is untouched.
+  * All flags and limitations exist in all 8 locales.
+
+
+==============================================================================
+ TEST FLOW — CAPABILITY #8: ADVERTISEMENT & PRODUCT-COPY STUDIO
+ Duka Mkononi  (Gemini-Powered Expert System)
+==============================================================================
+
+WHAT WAS BUILT
+--------------
+An AI marketing-content studio for sellers. Pick one of YOUR products, choose
+controls (content type, tone, length, language, audience, objective), and get
+a drafted headline/body grounded in that product's REAL price, stock and
+description. The draft is validated before you ever see it: every number must
+exist in your own facts (no fabricated prices or discounts), guarantee/refund
+language must already be in your own product text, the product name must
+survive verbatim, and length caps are enforced. It is READ-ONLY: nothing is
+published until you approve it through the existing authorised ad workflow.
+
+Endpoint:  POST /api/ai/ads/generate   (requires a logged-in seller)
+  body: { "locale": "sw", "product_id": "...",
+          "content_type": "headline|description|product_description|promo",
+          "tone": "friendly|professional|urgent|playful",
+          "length": "short|medium|long",
+          "audience": "...", "objective": "..." }
+
+Publishing (on the seller's explicit tap only, through the EXISTING workflow):
+  POST /api/matangazo            { description, media_url, media_type,
+                                   thumbnail_url, payment_status: "pending" }
+  POST /api/payments/pesapal/initiate  { amount: 3000, description,
+                                   matangazo_id, phone, email, name }
+  -> redirect_url (the seller pays; the ad goes live only after payment)
+
+Files added/changed
+  app/Services/Ai/AdCopyService.php         <- prompt contract + sanitizer
+                                              (number grounding, claim guard,
+                                              brand check, length caps, flags,
+                                              8-locale copy)
+  app/Http/Controllers/Api/AiAdCopyController.php
+  config/ai.php                             <- ad_copy flag + length caps
+  routes/api.php, routes/web.php            <- /muuzaji/tangaza
+  tests/Unit/AdCopyServiceTest.php
+  tests/Feature/AiAdCopyRouteTest.php
+
+FRONTEND (seller app + website, in all 8 languages)
+  resources/views/muuzaji/tangaza.blade.php      <- "Studio ya Matangazo"
+  resources/views/muuzaji/huduma-nyingine.blade.php  <- "Tangaza Bidhaa" card
+  Duka_mkononi/app/muuzaji/tangaza.tsx           <- mobile studio
+  Duka_mkononi/app/muuzaji/huduma-nyingine.tsx   <- hub card
+  Duka_mkononi/app/muuzaji/_layout.tsx           <- hidden tab registration
+  locales.json                                   <- muuzaji_tangaza (69 keys) +
+                                                    muuzaji_huduma.svc_ad_*
+  Duka_mkononi/locales/{...}.json                <- ad_studio + ads_* keys
+
+
+STEP 0 — PREREQUISITES
+----------------------
+1. A seller account with at least ONE active product; ideally one with a
+   photo (required to publish), a real price and some stock.
+2. GEMINI_API_KEY for generation (without it the endpoint degrades honestly —
+   see STEP 6).
+3. php artisan serve   (base URL http://127.0.0.1:8000)
+4. GET /api/products/my to grab a product id:
+
+   curl -s http://127.0.0.1:8000/api/products/my \
+     -H "Authorization: Bearer PASTE_TOKEN_HERE"
+
+
+STEP 1 — GET A TOKEN (seller)
+-----------------------------
+Use the login from capability #2 (role seller).
+
+
+STEP 2 — HAPPY PATH
+-------------------
+curl -s -X POST http://127.0.0.1:8000/api/ai/ads/generate \
+  -H "Authorization: Bearer PASTE_TOKEN_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{"locale":"sw","product_id":"PASTE_PRODUCT_ID","content_type":"description","tone":"friendly","length":"medium","audience":"familia","objective":"mauzo ya mwezi"}'
+
+EXPECTED (HTTP 200)
+  {
+    "success": true,
+    "capability": "ad_copy",
+    "locale": "sw",
+    "generated_at": "...",
+    "product": { "id": "...", "name": "...", "category": "...",
+                 "price": <n>, "stock": <n>, "image_url": "..." },
+    "controls": { "content_type": "description", "tone": "friendly",
+                  "length": "medium", "audience": "familia",
+                  "objective": "mauzo ya mwezi" },
+    "limits": { "headline": 90, "body": 480 },
+    "copy": { "headline": "...", "body": "..." },
+    "flags": [ { "code": "truncated|brand_missing|out_of_stock",
+                 "message": "..." } ],
+    "ai": { "available": true, "degraded": false, "code": null,
+            "reason": null, "meta": { ... } },
+    "limitations": [ "...", ... ]
+  }
+
+WHAT TO CHECK
+  [ ] copy.body is in Swahili, honours the medium length band and fits
+      limits.body (over-limit output arrives clipped + a "truncated" flag)
+  [ ] the product name appears VERBATIM in the copy (otherwise a
+      brand_missing flag tells you to add it)
+  [ ] every price/number in the copy exists in your product data or your own
+      objective text
+  [ ] a product with stock 0 raises the out_of_stock flag ("do not claim
+      availability")
+  [ ] response echoes controls + limits so the UI can show counters
+
+
+STEP 3 — THE FOUR CONTENT TYPES + CONTROLS
+------------------------------------------
+Repeat STEP 2 with content_type = headline / product_description / promo:
+  [ ] headline -> only copy.headline is returned (body dropped)
+  [ ] product_description -> only copy.body (headline dropped)
+  [ ] promo -> short body within the 240-char cap
+  [ ] locale "en" + tone "professional" -> English, professional copy
+  [ ] invalid enums (content_type "meme", tone "shouty", length "huge") ->
+      HTTP 422 INVALID_CONTENT_TYPE / INVALID_TONE / INVALID_LENGTH
+
+
+STEP 4 — GROUNDING REJECTIONS (fake numbers never reach the preview)
+---------------------------------------------------------------------
+A. Invent a discount not in the objective:
+   objective: "mauzo ya mwezi" and then look for any "N%" in the copy —
+   the sanitizer rejects drafts containing percentages your objective/
+   product description does not contain (ai.code = UNFACTUAL, copy = {},
+   localized reason).
+B. A price not in your data (e.g. copy containing 8,999 when your price is
+   5,000) -> the draft is rejected the same way; regenerate.
+C. Guarantee language you never wrote:
+   objective/product description without "dhamana"/"guarantee"/"warranty"
+   -> a draft promising one is rejected (ai.code = UNSUPPORTED_CLAIM).
+   If YOUR product description already contains the word, the copy may use it.
+  [ ] each rejection returns success = true with copy = {} and an honest
+      localized ai.reason — never sanitized-looking fake text
+
+
+STEP 5 — VALIDATION + OWNERSHIP (must fail safely)
+--------------------------------------------------
+  [ ] missing product_id       -> 422 "PRODUCT_REQUIRED"
+  [ ] a product id that is NOT yours (or inactive) -> 404 "PRODUCT_NOT_FOUND"
+  [ ] no token -> 401
+  [ ] feature off (AI_FEATURE_AD_COPY=false + config:clear) -> 403
+      "FEATURE_DISABLED"
+  [ ] ONLY POST api/ai/ads/generate exists under api/ai/ads — there is no
+      hidden write path (AiAdCopyRouteTest pins this)
+
+
+STEP 6 — HONEST DEGRADATION
+---------------------------
+Set GEMINI_API_KEY= then php artisan config:clear, repeat STEP 2.
+  [ ] success = true, copy = {}, ai.available = false, ai.degraded = true,
+      ai.code = "AI_DISABLED" (or "AI_NOT_CONFIGURED") with a localized reason
+Restore the key and re-run php artisan config:clear.
+
+
+STEP 7 — PUBLISHING (only on explicit approval)
+-----------------------------------------------
+The studio never posts anything by itself. On the seller's tap:
+
+  1. POST /api/matangazo with payment_status "pending"
+     -> 201, data.id; the ad is created INACTIVE (is_active = false)
+  2. POST /api/payments/pesapal/initiate (amount 3000 = config
+     pesapal.matangazo_price) -> redirect_url; the seller completes payment
+  3. only after payment does the ad become active/visible
+
+  [ ] copy WITHOUT an image_url on the product -> publish blocked with an
+      honest "add a photo first" message, no request is sent
+  [ ] a pending ad appears in GET /api/matangazo/my with payment_status
+      "pending" and is NOT shown in the public feed
+  [ ] cancelling at PesaPal leaves an inactive pending ad — never a live one
+
+
+STEP 8 — AUDIT
+--------------
+  SELECT action, status, details, created_at FROM user_logs
+  WHERE action IN ('AI_AD_COPY_GENERATE','AI_REQUEST','MATANGAZO_CREATE')
+  ORDER BY created_at DESC LIMIT 20;
+
+  [ ] AI_AD_COPY_GENERATE logs content_type/tone/length, flag codes, copy_ok,
+      ai_code, duration — but NEVER the raw copy or prompt
+  [ ] MATANGAZO_CREATE only appears after an explicit publish tap
+
+
+STEP 9 — AUTOMATED TESTS
+------------------------
+php artisan test --filter "AdCopy|AiAdCopy"
+
+EXPECTED: every test in these two files passes (grounding: ungrounded price /
+invented percent / unsourced guarantee rejected; seller-declared discount
+allowed; brand + stock flags; sentence-boundary clipping; all 8 locales;
+auth.jwt route + no ad-write path).
+Mobile typecheck:  cd Duka_mkononi && npx tsc --noEmit   (expect no output)
+
+
+STEP 10 — MOBILE APP (seller)
+-----------------------------
+1. cd Duka_mkononi && npx expo start, log in as a seller.
+2. Hub tab "🧩 Huduma Nyingine" -> card "Tangaza Bidhaa".
+
+  [ ] pick a product (price + stock shown; out-of-stock pill when 0)
+  [ ] choose content type / tone / length / language, add audience + objective
+  [ ] "Tengeneza nakala" -> preview with editable headline/body and live
+      char counters against the caps
+  [ ] flags (truncated / brand missing / out of stock) show as amber lines;
+      a rejected draft shows the honest reason instead of text
+  [ ] "Hifadhi rasimu" stores a draft under "Rasimu zilizohifadhiwa";
+      "Fungua" reloads it, "Futa" deletes it (drafts live on the device)
+  [ ] "Chapisha..." asks for confirmation, then creates the pending ad and
+      opens PesaPal — the ad is NOT live until payment completes
+
+
+STEP 11 — WEBSITE (Blade)
+-------------------------
+1. Open  http://127.0.0.1:8000/muuzaji/tangaza  (log in as a seller), or
+   reach it from "Huduma Nyingine" -> "Tangaza Bidhaa".
+
+  [ ] same picker, controls, preview, flags, drafts and publish flow
+  [ ] with no products: the honest "Hakuna bidhaa" state with a "Nenda Kuuza"
+      shortcut to the Uza page
+  [ ] the language switcher changes the page labels; generation uses the
+      selected language
+
+
+QUICK SANITY (design guarantees)
+--------------------------------
+  * The endpoint is READ-ONLY — it cannot create, update or activate an ad;
+    only the existing POST /api/matangazo (audited) can.
+  * Numbers outside the seller's facts and unsourced guarantee/refund claims
+    are rejected before the preview (UNFACTUAL / UNSUPPORTED_CLAIM).
+  * The product name must survive verbatim, or the copy is flagged.
+  * Length caps come from config and are validated after generation.
+  * Nothing publishes without the seller's explicit approval + payment.
+
+
+==============================================================================
+ TEST FLOW — CAPABILITY #9: CUSTOMER-REPLY DRAFTING
+------------------------------------------------------------------------------
+WHAT IT IS
+  An assistant that drafts the seller's reply to a customer's order question
+  (the customer_note on an order). It is READ-ONLY: it only fills the
+  existing note box. The reply reaches the customer only when the seller
+  presses the normal Save button, through the pre-existing seller order
+  workflow (PUT /api/seller/orders/{id}/status or
+  POST /api/seller/orders/{id}/notes). Internal (private) notes are never
+  read and never sent to the model.
+
+STEP 1 — WEBSITE (Blade): draft a reply
+-------------------------
+1. php artisan serve; open  http://127.0.0.1:8000/muuzaji/orders (seller).
+2. Make sure some order carries a customer question in its note, e.g.
+   "Oda yangu iko wapi? Na lini itafika?" (place one as a customer, or edit).
+3. Open the order (View). Under the customer's question you get a tone
+   selector — "Rafiki" / "Rasmi" — and the button "Tengeneza jibu (AI)".
+4. Press it. Expect: a short reply in the customer's language to fill the
+   customer-note box (dmStatusNote), editable like any hand-typed note.
+5. Read any amber lines shown under the button — they come from the server:
+   promise/discount removal, duplicate warning, missing-information lines.
+6. Edit the draft, then use the normal Save buttons; status updates and
+   plain notes must keep working exactly as before.
+
+STEP 2 — WEBSITE: duplicate-send guard
+-------------------------
+1. Save a note. Generate the same reply again (same tone) or type the exact
+   same text, and press Save again.
+  [ ] a native confirm asks before sending a note identical to the last one
+      ("Ujumbe huu unafanana na ule tayari uliotumwa..."); Cancel sends
+      nothing.
+
+STEP 3 — API (curl, seller token)
+-------------------------
+order_id = UUID of an order of YOUR business (GET /api/seller/orders).
+
+curl -s -X POST http://127.0.0.1:8000/api/ai/replies/draft \
+  -H "Authorization: Bearer PASTE_TOKEN_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{"order_id":"PASTE_ORDER_ID","tone":"casual","locale":"sw"}' | jq
+
+EXPECTED (HTTP 200):
+{
+  "success": true, "capability": "reply_draft", "locale": "sw", "tone": "casual",
+  "order": { "id": "...", "order_reference": "DM-YYYYMMDD-XXXXXX", "status": "...", "payment_status": "..." },
+  "customer_question": "...",
+  "draft": "...",
+  "flags": [ { "code": "promise_removed|discount_removed|truncated|duplicate_reply", "message": "..." } ],
+  "missing": [ { "code": "no_delivery_timing|payment_not_recorded", "message": "..." } ],
+  "recent_reply": null | { "note": "...", "at": "..." },
+  "limits": { "max_chars": 600 },
+  "ai": { "available": true, "degraded": false, "code": null, "reason": null, "meta": { ... } },
+  "limitations": [ ... four localized lines ... ]
+}
+
+Negative cases:
+  [ ] no Authorization header            -> 401
+  [ ] tone: "angry"                      -> 422 INVALID_TONE
+  [ ] order_id: "not-a-uuid"             -> 422 INVALID_ORDER_ID
+  [ ] an order id from another business  -> 404 ORDER_NOT_FOUND
+  [ ] GET on the same path               -> 405 (only POST exists)
+
+STEP 4 — GROUNDING CHECKS (server-side)
+-------------------------
+  [ ] a draft with an amount that is not on this order is rejected:
+      UNFACTUAL_AMOUNT + honest localized reason (check the audit log)
+  [ ] delivery-time words (kesho / tomorrow / ...) in a draft are STRIPPED
+      and flagged promise_removed — unless a customer-visible note on this
+      order already contains that promise
+  [ ] discount/refund words (punguzo / discount / ...) are STRIPPED and
+      flagged discount_removed — unless the seller already recorded them
+  [ ] quoting DM-YYYYMMDD-XXXXXX or a bare date is never treated as an amount
+  [ ] missing[] lists no_delivery_timing until delivered/completed, and
+      payment_not_recorded until payment is paid/completed
+  [ ] a near-identical repeat of the last sent note flags duplicate_reply
+      and returns recent_reply { note, at }
+  [ ] AI disabled / not configured  ->  success:true, ai.degraded:true with
+      the localized reason and an empty draft (no crash, no invented text)
+  [ ] audit entry AI_REPLY_DRAFT exists with flag codes + duration_ms
+
+STEP 5 — AUTOMATED TESTS
+-------------------------
+php artisan test --filter "ReplyDrafter|AiReply"
+
+EXPECTED: every test in these two files passes (amounts/reference/date/percent
+grounding; promise + claim guards with seller-unlock; duplicate detection;
+missing-info determinism; sentence-boundary clipping; all 8 locales; prompt
+facts without internal notes; auth.jwt route + no AI reply write path).
+Mobile typecheck:  cd Duka_mkononi && npx tsc --noEmit   (expect no output)
+
+STEP 6 — MOBILE APP (seller)
+-----------------------------
+1. cd Duka_mkononi && npx expo start, log in as a seller.
+2. Bottom tab "Oda" -> open the order that carries the customer's question.
+
+  [ ] tone chips (Rafiki / Rasmi) + "Tengeneza jibu (AI)" under the question
+  [ ] the draft lands in the note box; amber flag lines under the button
+  [ ] Save Note sends it exactly like before; sending the identical note
+      again pops the confirm (Ghairi / Tuma) — Cancel sends nothing
+  [ ] opening a different order clears the flags
+
+
+QUICK SANITY (design guarantees)
+--------------------------------
+  * The endpoint is READ-ONLY — it cannot send anything to the customer;
+    only the existing seller order status/notes endpoints (audited) can.
+  * Money-scale numbers and percentages must exist on this order (percent
+    claims only when the seller's own visible note already contains them).
+  * Delivery times, discounts and refunds are never promised beyond what the
+    seller already put into a customer-visible note.
+  * Internal notes never enter the prompt; the route is business-scoped.
+  * The length cap comes from config and is validated after generation.
+  * Nothing is sent without the seller editing and pressing Save themselves.
+
+
+==============================================================================
+ TEST FLOW — CAPABILITY #10: SELLER COPILOT Q&A
+------------------------------------------------------------------------------
+WHAT IT IS
+  A conversational assistant ("Msaidizi wa Biashara") for the seller: ask in
+  normal language — in any of the 8 languages — about sales, profit, stock,
+  spending, anomalies or the health of the business, and it answers using the
+  business's own rows. It is multi-turn: a follow-up ("na ya mwezi jana?")
+  reuses the previous tool and changes only the period. It is READ-ONLY:
+  every tool is one of the existing read-only analyzers (report / restock /
+  health / anomalies / expense_parse) plus a help tool; it never writes a
+  product, sale, price, expense, order or customer record. The expense tool
+  only drafts a preview and links the seller to the existing confirmation
+  workflow.
+
+Endpoints (all in the auth.jwt group, business+user scoped):
+  POST   /api/ai/copilot/chat                - one conversational turn
+  GET    /api/ai/copilot/conversations       - the caller's recent conversations
+  GET    /api/ai/copilot/conversations/{id}  - one conversation's messages
+  DELETE /api/ai/copilot/conversations/{id}  - delete one conversation
+  DELETE /api/ai/copilot/conversations       - delete every conversation
+
+Routing is deterministic first (keyword tables that match the question's own
+language), then a bounded model classifier into the SAME tool allow-list, and
+finally an honest "Sikuelewa" answer — the model can never introduce a new
+tool or any write access, and it never supplies a number (every figure comes
+from the trusted PHP tools).
+
+Files added/changed
+  app/Services/Ai/SellerCopilot.php          <- router + tools + narration
+  app/Http/Controllers/Api/AiCopilotController.php
+  routes/api.php                             <- 5 copilot routes
+  routes/web.php                             <- /muuzaji/msaidizi page
+  config/ai.php                              <- copilot flag + bounds
+  resources/views/muuzaji/msaidizi.blade.php <- website chat page (new)
+  resources/views/muuzaji/huduma-nyingine.blade.php <- hub card
+  locales.json                               <- muuzaji_msaidizi (8 langs) +
+                                                 muuzaji_huduma card strings
+  Duka_mkononi/app/muuzaji/msaidizi.tsx      <- mobile chat screen (new)
+  Duka_mkononi/app/muuzaji/_layout.tsx       <- hidden tab registration
+  Duka_mkononi/app/muuzaji/huduma-nyingine.tsx <- hub card
+  Duka_mkononi/locales/{sw,en,fr,hi,es,ur,de,zh}.json
+  tests/Unit/SellerCopilotTest.php
+  tests/Feature/AiCopilotRouteTest.php
+
+STEP 0 — PREREQUISITES
+----------------------
+Same as the other AI flows: GEMINI_API_KEY in .env; php artisan serve;
+a seller account with some products, sales and expenses.
+
+STEP 1 — WEBSITE (Blade): have a conversation
+-------------------------
+1. Open  http://127.0.0.1:8000/muuzaji/msaidizi  (or "Huduma Nyingine" ->
+   the card "Msaidizi wa Biashara").
+2. Tap an example chip under "Jaribu kuuliza", e.g. "Niliuza mangapi wiki
+   hii?" — expect a tool badge (Mauzo), a grounded answer with your real
+   figures, a "Vyanzo" line and "Hatua zinazofuata" follow-up buttons.
+3. Ask a follow-up with only a period: "Na ya mwezi jana?" — the router
+   source becomes history, the period changes, the topic stays on sales.
+4. Ask "Niko na bidhaa gani zinakaribia kuisha?" -> restock tool + table.
+5. Ask "Biashara yangu iko aje?" -> health tool + score parts.
+6. Ask something off-topic ("Nani ni rais wa Tanzania?") -> an honest
+   localized not-understood answer with example questions; the response has
+   router.unmatched = true.
+7. Left sidebar "Mazungumzo yako": reopen an older conversation; delete one
+   (Ghairi/Futa confirm); the list refreshes.
+
+STEP 2 — API (curl, seller token)
+-------------------------
+curl -s -X POST http://127.0.0.1:8000/api/ai/copilot/chat \
+  -H "Authorization: Bearer PASTE_TOKEN_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{"question":"Niliuza mangapi wiki hii?","locale":"sw"}' | jq
+
+EXPECTED (HTTP 200) — abbreviated:
+{
+  "success": true, "capability": "seller_copilot", "locale": "sw", "currency": "TZS",
+  "conversation": { "id": "uuid", "title": "...", "stored": true, "message_count": 2 },
+  "question": "Niliuza mangapi wiki hii?",
+  "message": { "role": "assistant", "content": "...", "tool": "report", "tool_label": "...", "at": "..." },
+  "next_steps": [ ... ],
+  "tool_result": { "tool": "report", "period": "...", "data": { ... }, "table": null | { "columns": [...], "rows": [...] },
+                   "chart": null | { ... }, "highlights": [ ... ], "sources": [ ... ],
+                   "limitations": [ ... ], "summary_text": "..." },
+  "quick_actions": [ ... ],
+  "router": { "tool": "report", "source": "deterministic|history|ai|none", "confidence": "high|medium|low", "unmatched": false },
+  "ai": { "available": true, "degraded": false, "code": null, "reason": null, "meta": { ... } }
+}
+
+Conversation continuation (same conversation id):
+  -d '{"question":"Na ya mwezi jana?","conversation_id":"PASTE_UUID","locale":"sw"}'
+
+History + deletion:
+  curl -s  http://127.0.0.1:8000/api/ai/copilot/conversations \
+    -H "Authorization: Bearer PASTE_TOKEN_HERE" | jq
+  curl -s -X DELETE http://127.0.0.1:8000/api/ai/copilot/conversations/PASTE_UUID \
+    -H "Authorization: Bearer PASTE_TOKEN_HERE" | jq
+  curl -s -X DELETE http://127.0.0.1:8000/api/ai/copilot/conversations \
+    -H "Authorization: Bearer PASTE_TOKEN_HERE" | jq   -> { "deleted": N }
+
+Negative cases:
+  [ ] no Authorization header                       -> 401
+  [ ] question: ""                                  -> 422 QUESTION_REQUIRED
+  [ ] account without a business                   -> 400 NO_BUSINESS
+  [ ] AI_FEATURE_COPILOT=false in .env              -> 403 FEATURE_DISABLED
+  [ ] GET on /api/ai/copilot/chat                   -> 405 (only POST exists)
+  [ ] GET/DELETE a conversation id that is not a    -> 404 CONVERSATION_NOT_FOUND
+      UUID, or one belonging to another business
+  [ ] a question longer than the cap (config)       -> truncated, never a 500
+
+STEP 3 — ROUTING & GROUNDING (server-side)
+-------------------------
+  [ ] keyword questions route deterministic/high: sales -> report, low
+      stock -> restock, health -> health, "unusual"/"missing" -> anomalies,
+      an expense note -> expense_parse, greetings/unknown -> help
+  [ ] a follow-up that only changes the period routes via history (medium)
+  [ ] an off-topic question -> unmatched:true + the localized not-understood
+      answer; never a hallucinated number or topic
+  [ ] every tool_result carries sources[] + limitations[]; the narration
+      repeats only figures present in the tool result (grounding)
+  [ ] the model classifier's pick is validated against SellerCopilot::TOOLS;
+      anything outside the allow-list falls back to help
+  [ ] history is bounded (store_messages) and conversations are keyed AND
+      queried by business_id AND user_id (no tenant or staff leakage)
+  [ ] audit entry AI_COPILOT_CHAT records tool, router source/confidence,
+      ai status, stored flag and duration_ms (warning level when unmatched)
+  [ ] AI disabled/unconfigured -> success:true, ai.degraded:true with the
+      localized reason and the deterministic summary — no invented text
+
+STEP 4 — AUTOMATED TESTS
+-------------------------
+php artisan test --filter "SellerCopilot|AiCopilot"
+
+EXPECTED: every test in these two files passes (routing tables + language
+variants, history follow-ups, allow-list enforcement, not-understood
+determinism, message trimming and history-snippet bounds, UUID checks, tool
+labels + help text in all 8 locales, messagesComplete() parity, auth.jwt
+route registration for all 5 routes, read-only guarantees).
+Mobile typecheck:  cd Duka_mkononi && npx tsc --noEmit   (expect no output)
+
+STEP 5 — MOBILE APP (seller)
+-----------------------------
+1. cd Duka_mkononi && npx expo start, log in as a seller.
+2. Bottom tab "🧩" (Nyingine) -> "Msaidizi wa Biashara".
+
+  [ ] example chips + chat input; answers show the tool badge, the sources
+      line and follow-up chips, exactly like the website
+  [ ] the conversation survives leaving the screen and coming back (it is
+      stored server-side, business+user scoped)
+  [ ] deleting a conversation from the list works with the Ghairi/Futa
+      confirm
+  [ ] switch the app language and ask again — the answer follows the language
+
+
+QUICK SANITY (design guarantees)
+--------------------------------
+  * The copilot is READ-ONLY — no tool can create, update or delete a
+    product, sale, price, expense, order or customer record; the expense
+    tool only drafts a preview and links the existing workflow.
+  * The model only picks from the tool allow-list and never supplies a
+    number — every figure comes from the trusted PHP analyzers.
+  * Chat history is bounded, tenant-scoped (business + user) and fully
+    deletable by the seller (single + delete-all endpoints).
+  * Off-topic or unanswerable questions get an honest localized refusal,
+    not a guess.
+  * The question length is capped from config; prompts and history snippets
+    are clipped; store_messages bounds what is kept.
+  * Every turn is audited (AI_COPILOT_CHAT) with router + duration data.
+
+
+==============================================================================
+ TEST FLOW — CAPABILITY #11: CONVERSATIONAL SHOPPING ASSISTANT
+ Duka Mkononi  (Gemini-Powered Expert System)
+==============================================================================
+
+WHAT WAS BUILT
+--------------
+A shopper types what they want in ordinary language (Swahili, English or
+mixed - "Natafuta breki za Toyota Harrier") and gets REAL products from the
+public catalogue plus the public businesses that sell them: price, stock,
+image, location and certification straight from PublicCatalog. Parsing is
+deterministic first (terms, phrase, category, price range, in-stock,
+location, sort); the model is only asked to re-read the sentence into the
+SAME allow-listed shape when the plain parser found nothing usable or when
+strict search returned zero rows. Relaxed rows are tagged "closest", never
+presented as exact, and a total miss stays honestly empty.
+
+Endpoints (PUBLIC + throttled - any shopper, login optional):
+  POST /api/ai/shopping/ask     {"query":"Natafuta breki za Toyota Harrier",
+                                 "locale":"sw","sort":"relevance",
+                                 "category":"...","business_id":"..."}   <- the last two are the tapped clarification/refinement chips
+  GET  /api/ai/shopping/suggestions?q=br   <- type-ahead; a short q returns
+                                 the localized sample questions instead
+
+Files added/changed
+  app/Services/Ai/ShoppingAssistant.php     <- parser, rank, relax,
+                                               clarification gate, business
+                                               matching, 8-locale messages +
+                                               samples, model-parse sanitize
+  app/Http/Controllers/Api/AiShopAssistantController.php
+  routes/api.php                            <- the two public throttled routes
+  config/ai.php                             <- ai.features.shopping_assistant,
+                                               assistant limits, memory TTL
+  tests/Unit/ShoppingAssistantTest.php
+  tests/Feature/ShoppingAssistantRouteTest.php
+
+FRONTEND (shop page + phone, in all 8 languages)
+  resources/views/shop.blade.php            <- assistant panel: answer, "Umeelewa
+                                               kama" chips, clarification +
+                                               category chips, sort select,
+                                               result cards with "Order now"
+                                               wired to the existing cart,
+                                               matched shops filter the grid
+  Duka_mkononi/app/mteja/tafuta.tsx          <- mobile screen
+  Duka_mkononi/app/mteja/_layout.tsx         <- "Tafuta" tab registration
+  locales.json                               <- site_shop.ai_* strings
+  Duka_mkononi/locales/{sw,en,fr,hi,es,ur,de,zh}.json
+                                               <- mteja_tafuta + tabs_mteja.tafuta
+
+
+STEP 0 — PREREQUISITES
+----------------------
+1. No login required: both routes are public on purpose (any shopper).
+   A signed-in customer only gains the bounded 30-minute follow-up memory.
+2. The shop needs public businesses with active products that carry a
+   selling price - i.e. the same rows GET /api/shop/products already shows.
+3. GEMINI_API_KEY optional: without it the deterministic parser still
+   answers; only the "one model re-read" fallback stays unused.
+4. php artisan serve   (base URL http://127.0.0.1:8000)
+
+
+STEP 1 — SAMPLES (type-ahead)
+-----------------------------
+curl -s "http://127.0.0.1:8000/api/ai/shopping/suggestions?q=&locale=sw"
+
+EXPECTED (HTTP 200)
+  { "success": true, "capability": "shopping_assistant", "prefix": "",
+    "suggestions": [],
+    "samples": [ "Natafuta breki za Toyota Harrier", ... ] }
+
+
+STEP 2 — HAPPY PATH (exact match)
+---------------------------------
+curl -s -X POST http://127.0.0.1:8000/api/ai/shopping/ask \
+  -H "Content-Type: application/json" \
+  -d '{"query":"Natafuta breki za Toyota Harrier","locale":"sw"}'
+
+EXPECTED (HTTP 200)
+  {
+    "success": true,
+    "capability": "shopping_assistant",
+    "locale": "sw",
+    "currency": "TZS",
+    "query": "Natafuta breki za Toyota Harrier",
+    "interpreted": { "terms": ["breki","toyota","harrier"], "phrase": null,
+                     "category": null, "location": null,
+                     "price_min": null, "price_max": null, "in_stock": null,
+                     "sort": "relevance", "source": "deterministic",
+                     "merged_with_previous": false, "business_id": null },
+    "answer": { "role": "assistant",
+                "kind": "results|relaxed|clarify|businesses|none",
+                "text": "<localized summary built from the real count>" },
+    "products": [ { "id": "...", "name": "...", "category": "...",
+                    "selling_price": 12345.0, "currency": "TZS",
+                    "image": "...", "available": true,
+                    "business": { "id": "...", "name": "...",
+                                  "location": "...", "certified": false },
+                    "match": { "score": n, "reason": "...",
+                               "type": "strict" } }, ... ],
+    "businesses": [],
+    "clarification": null,
+    "categories": [ { "category": "...", "count": n }, ... ],
+    "limitations": [ "<price note>", "<stock note>", "<public note>" ],
+    "notes": [ "<deterministic-fallback note when the model was not used>" ],
+    "ai": { "available": false, "degraded": true, "code": null, ... },
+    "session": { "remembered": false, "memory_minutes": 30 }
+  }
+
+WHAT TO CHECK
+  [ ] interpreted.terms holds the significant words only - no Swahili or
+      English filler (natafuta / za / the / for) left behind
+  [ ] every products[] row also exists on GET /api/shop/products: the
+      assistant never invents a listing
+  [ ] price, stock and business identity match the catalogue exactly
+  [ ] answer.text is in the requested locale and its count equals
+      count(products)
+
+
+STEP 3 — REFINE, COMPARE, OPEN (website)
+----------------------------------------
+1. Open /shop and use the "✨ Msaidizi wa Manunuzi" panel at the top.
+2. Ask a word that spans several categories (e.g. "sneakers").
+3. EXPECTED: an answer plus either results or a "Chagua moja" chip row
+   built from REAL categories/businesses of the matched rows.
+4. Tap a chip -> the same question is re-asked with that refinement and
+   the "Umeelewa kama" chips show the active filters.
+5. Switch "Panga" to "Bei ndogo kwanza" -> same question, results re-ordered.
+6. Press "Weka oda" on a result -> the existing cart modal opens with that
+   product (business id and selling price intact).
+7. When no product matched, matched public businesses appear; press
+   "Onyesha" on one -> the sidebar business filter switches to it and the
+   main grid reloads.
+
+WHAT TO CHECK
+  [ ] clarification/refine options are only categories or businesses that
+      really exist in the data - never invented alternatives
+  [ ] strict results carry the "Sahihi" badge, relaxed ones "Karibu zaidi"
+  [ ] cart total equals selling_price x quantity shown on the card
+
+
+STEP 4 — HONEST EMPTY / RELAXED PATHS
+-------------------------------------
+curl -s -X POST http://127.0.0.1:8000/api/ai/shopping/ask \
+  -H "Content-Type: application/json" \
+  -d '{"query":"qwertyuiop farasi wa anga","locale":"sw"}'
+
+EXPECTED (HTTP 200)
+  answer.kind = "none" (or "businesses" when a public business matched),
+  products = [], and the text says NO products match - no invented rows.
+
+Also try a near-miss (a word that appears in only some names):
+  [ ] kind = "relaxed" (or "clarify" across 2+ categories) and every row
+      is a real catalogue row, worded as closest - never as an exact hit
+
+
+STEP 5 — FOLLOW-UP MEMORY (signed-in customer only)
+---------------------------------------------------
+1. Login: POST /api/login {"email":"CUST","password":"...","role":"customer"}
+2. With Authorization: Bearer <token>:
+   {"query":"Natafuta sneakers","locale":"sw"}  -> session.remembered = true
+   {"query":"chini ya 30000","locale":"sw"}     -> interpreted.merged_with_previous
+                                                     = true, previous topic kept,
+                                                     price_max = 30000
+3. The same follow-up WITHOUT the token starts fresh.
+
+WHAT TO CHECK
+  [ ] session.memory_minutes reflects config('ai.assistant.memory_minutes')
+  [ ] no shopper query is written to any database table (cache entry only,
+      30-minute TTL, one bounded parse per user)
+
+
+STEP 6 — VISIBILITY + LIMITS
+----------------------------
+1. Set a business is_public = false -> its products vanish from answers.
+2. Set a product is_active = false or clear its selling price -> it never
+   appears (same rules as the shop endpoints, applied in PublicCatalog).
+3. POST with an empty query -> HTTP 422 QUERY_REQUIRED + localized samples.
+4. POST with locale "xx" -> falls back to the default locale (sw).
+5. 21 rapid posts -> HTTP 429 (throttle:20,1).
+6. config ai.features.shopping_assistant = false -> HTTP 403 FEATURE_DISABLED.
+
+
+STEP 7 — AUTOMATED TESTS
+------------------------
+php artisan test --filter=ShoppingAssistantTest
+php artisan test --filter=ShoppingAssistantRouteTest
+
+EXPECTED
+  unit    : filler stripping, price/stock/location filters, strict AND vs
+            relaxed OR, sort orders, clarification gate (2+ categories),
+            refinement options only from real rows, business matching,
+            merge of the remembered turn, 8-locale message/sample parity.
+  feature : public route reachable without a token, query validation,
+            refinement params, payload guard, audit entry AI_SHOP_ASK.
+
+
+STEP 8 — MOBILE APP (customer)
+------------------------------
+1. Customer login -> the "🔎 Tafuta" tab (between Matangazo and Profaili).
+2. Tap an example chip -> answer card plus product cards with image,
+   price, stock badge, exact/closest badge, shop name/location and the
+   certified badge.
+3. Tap a product to expand its description; tap a clarification or
+   category chip to refine; switch the sort chips (Umuhimu / Bei ndogo
+   kwanza / Bei kubwa kwanza).
+4. Change the app language and ask again -> answer, badges, notes and the
+   example chips all follow the language.
+
+
+QUICK SANITY (design guarantees)
+--------------------------------
+  * Public, READ-ONLY surface: the assistant never places an order, adds a
+    like or contacts a shop itself - consequential steps stay inside the
+    existing cart/order workflows the shopper confirms manually.
+  * Only PublicCatalog rows are searchable: is_public businesses, is_active
+    products with a selling price. Price shown is always the selling price.
+  * Deterministic parser first; the model may only propose the same
+    allow-listed parse (sanitizeModelParse drops every other field) and is
+    called only when the plain parser found nothing or strict search missed.
+  * Relaxed rows are tagged match.type="relaxed" and worded as "closest";
+    an empty result says empty - no hidden guessing, no invented listing.
+  * Clarification options come only from categories/businesses that
+    actually matched.
+  * Shopper memory is one bounded cache entry per user (30-minute TTL);
+    answers carry localized limitations about price, stock and public
+    visibility, and both routes are throttled (20/min ask, 60/min
+    suggestions). Every turn is audited (AI_SHOP_ASK).
+
+
+==============================================================================
+ TEST FLOW — CAPABILITY #12: BUSINESS AND REVIEW SUMMARISATION
+ Duka Mkononi  (Gemini-Powered Expert System)
+==============================================================================
+
+WHAT WAS BUILT
+--------------
+A customer-facing trust summary that separates what the PLATFORM KNOWS from
+what CUSTOMERS SAY, so a shopper can judge a business without being misled:
+
+  * facts[]     : verified platform records only — certification state and
+                  date, live product count, order aggregates (counts + one
+                  date, never customer rows).
+  * opinions[]  : statistics and themes from the PUBLISHED review corpus
+                  only — every line carries its sample size, rating
+                  coverage, date period or theme count.
+  * reviews[]   : recurring themes extracted mechanically (document
+                  frequency, rating-derived polarity: positive / negative /
+                  mixed / unrated) plus the original review rows, labelled
+                  scope="platform" because this platform's reviews are
+                  platform-level testimonials (they carry no business_id).
+
+The summary paragraph is deterministic first. When Gemini is available it
+may only REWORD the same figures: the reply is discarded unless every
+number in it already appears in the data we supplied (no invented ratings,
+reviews or certifications can ever surface). Cached per locale with
+version-key invalidation: publish/unpublish a review or (un)certify a
+business and every affected summary refreshes immediately.
+
+Endpoint (PUBLIC + throttled - any customer, login optional):
+  GET  /api/ai/trust/summary?business_id=<uuid>&locale=sw
+       business_id optional: omit it for the platform-level review summary,
+       provide a PUBLIC business id for the full business card summary.
+
+Files added/changed
+  app/Services/Ai/TrustSummary.php           <- reviewStats, themes
+                                               (DF + polarity), facts,
+                                               opinions, deterministic
+                                               summary, model rewording
+                                               gate, versioned cache, 8-
+                                               locale messages
+  app/Http/Controllers/Api/AiTrustSummaryController.php
+  routes/api.php                             <- the public throttled route
+  config/ai.php                              <- ai.features.business_summary,
+                                               ai.trust.* limits
+  app/Http/Controllers/Api/InquiryController.php      <- cache bump on
+                                               publish / unpublish
+  app/Http/Controllers/Api/SystemAdminController.php  <- cache bump on
+                                               certify / uncertify
+  tests/Unit/TrustSummaryTest.php
+  tests/Feature/TrustSummaryRouteTest.php
+
+FRONTEND (businesses page + phone, in all 8 languages)
+  resources/views/businesses.blade.php       <- "✨ Trust summary" button per
+                                               business card: summary, Facts
+                                               vs Opinions blocks, original
+                                               reviews, "see all" link to
+                                               the homepage reviews, limits
+  Duka_mkononi/app/mteja/biashara.tsx         <- expandable trust panel on
+                                               each business card (mobile)
+  locales.json                                <- site_businesses.trust_* strings
+  Duka_mkononi/locales/{sw,en,fr,hi,es,ur,de,zh}.json
+                                               <- mteja_trust section
+
+
+STEP 0 — PREREQUISITES
+----------------------
+1. No login required: the route is public on purpose (any shopper).
+2. At least one PUBLIC business (is_public) so a business_id exists. With
+   zero published reviews the summary still works and says so honestly -
+   that is a valid state to test.
+3. Published reviews come from the existing super-admin flow: publish a
+   customer inquiry (PUT .../inquiries/{id}/publish with a rating) so
+   customer_reviews has is_published = true rows.
+4. GEMINI_API_KEY optional: without it summary.source stays
+   "deterministic" and the text is the trusted base wording.
+5. php artisan serve   (base URL http://127.0.0.1:8000)
+
+
+STEP 1 — PLATFORM-LEVEL SUMMARY (no business_id)
+------------------------------------------------
+curl -s "http://127.0.0.1:8000/api/ai/trust/summary?locale=sw"
+
+EXPECTED (HTTP 200)
+  {
+    "success": true,
+    "capability": "business_summary",
+    "locale": "sw",
+    "generated_at": "...",
+    "cached": false,
+    "cache_minutes": 15,
+    "business": null,
+    "reviews": {
+      "scope": "platform",
+      "originals_endpoint": "/api/shop/reviews",
+      "sample_size": 2, "rated_count": 2,
+      "rating_average": 4.5,
+      "rating_distribution": { "1": 0, "2": 0, "3": 0, "4": 1, "5": 1 },
+      "period": { "from": "2026-01-05", "to": "2026-02-01" },
+      "divided": false,
+      "themes": [ { "label": "huduma", "count": 2, "polarity": "positive" } ],
+      "items": [ { "id": "...", "title": "...", "body": "...",
+                   "truncated": false, "rating": 5,
+                   "display_name": "...", "published_at": "..." } ]
+    },
+    "summary": { "text": "...", "source": "deterministic|ai" },
+    "facts": [],
+    "opinions": [ "Maoni 2 yaliyochapishwa; ...", "Yamechapishwa kati ya ...",
+                  "Maoni 2 yanataja huduma (chanya)." ],
+    "sources": [ "Maoni yaliyochapishwa", "Rekodi za biashara na bidhaa",
+                 "Jumla za oda (hakuna taarifa binafsi)" ],
+    "limitations": [ "...", "...", "...", "...", "..." ],
+    "ai": { "available": false, "degraded": true, "code": "AI_DISABLED", ... }
+  }
+
+WHAT TO CHECK
+  [ ] reviews.scope is "platform" - no client may present these reviews as
+      one seller's reviews (they carry no business_id)
+  [ ] every number in summary.text and opinions[] also appears in
+      sample_size / rating_average / themes[] / period - nothing invented
+  [ ] sample_size equals the rows from GET /api/shop/reviews (published only)
+  [ ] with no published reviews: sample_size 0, opinions = ["Hakuna maoni
+      yaliyochapishwa bado."], summary says so plainly
+
+
+STEP 2 — BUSINESS SUMMARY (facts vs opinions)
+---------------------------------------------
+curl -s "http://127.0.0.1:8000/api/ai/trust/summary?business_id=BUSINESS_UUID&locale=en"
+
+EXPECTED (HTTP 200) - additions vs step 1:
+  {
+    "business": {
+      "id": "...", "name": "...", "location": "...",
+      "certified": true,
+      "certified_at": "2025-06-01T10:00:00+03:00",
+      "product_count": 12,
+      "activity": { "total": 30, "completed": 20, "open": 8,
+                    "cancelled": 2, "last_order_at": "2026-02-03" }
+    },
+    "facts": [ "Certified by the platform since 2025-06-01.",
+               "12 products on sale right now.",
+               "30 orders received; 20 completed and 8 still in progress.",
+               "Most recent order received on 2026-02-03." ]
+  }
+
+WHAT TO CHECK
+  [ ] facts[] only restate platform records: certification date, product
+      count, order AGGREGATES - never a customer name, phone or order note
+  [ ] uncertified business says "Not yet certified by the platform."
+      (honest absence, not a positive claim)
+  [ ] opinions[] and reviews[] still carry the same platform-scoped review
+      statistics as step 1 (sample size visible on every opinion line)
+
+
+STEP 3 — WEBSITE (businesses page)
+----------------------------------
+1. Open /businesses. Each business card now has a "✨ Trust summary"
+   button under "Onyesha bidhaa".
+2. Click it -> panel opens with: the summary paragraph, a "Verified facts"
+   block, a "Customer opinions" block, the original reviews (name, stars,
+   date, body) with a "See all reviews" link to the homepage reviews
+   section, and the limitations list (including the real cache minutes).
+3. Click the same button again -> panel collapses. Open it again -> served
+   from the client cache instantly (server also answers cached:true).
+4. Change the language -> ask again; summary, labels and limitations follow
+   the language (labels come from locales.json, the paragraph from the
+   endpoint's locale).
+
+WHAT TO CHECK
+  [ ] the FACTS block and the OPINIONS block are visually separate and
+      their labels come from the verified/opinion split - an opinion never
+      appears inside facts
+  [ ] limitations render in full (opinions are unverified statements,
+      figures come from platform records, reviews are platform-wide, no
+      private data, cache TTL)
+
+
+STEP 4 — CACHING + INVALIDATION
+-------------------------------
+1. Call the endpoint twice with the same parameters:
+   first -> "cached": false, second -> "cached": true.
+2. Super-admin: publish one more inquiry as a review (or unpublish an
+   existing one) -> call again -> "cached": false (reviews version bumped)
+   and the new sample_size appears.
+3. Super-admin: certify / uncertify that business -> its summary shows the
+   new certification fact immediately; ANOTHER business keeps its cached
+   payload (version key is per business).
+4. Switch locale -> a separate cache entry (summaries are per locale).
+
+WHAT TO CHECK
+  [ ] no stale summary survives a publish/unpublish or a certify change
+  [ ] the cache note in limitations states the real configured TTL
+      (ai.trust.cache_minutes, default 15)
+
+
+STEP 5 — VISIBILITY + LIMITS
+----------------------------
+1. Set a business is_public = false -> GET with its id -> HTTP 404
+   BUSINESS_NOT_FOUND (the public shop listing is the visibility gate).
+2. business_id that is not a UUID -> HTTP 422 INVALID_BUSINESS.
+3. Unpublish a review -> it disappears from sample_size, themes and items.
+4. Add an inquiry with e-mail/phone that is NOT published -> neither field
+   ever appears anywhere in the payload; certification_note (moderation
+   note) is never read.
+5. config ai.features.business_summary = false -> HTTP 403 FEATURE_DISABLED.
+6. 31 rapid requests -> HTTP 429 (throttle:30,1).
+7. Long review bodies -> items[].truncated = true, body clipped (~280
+   chars); only the 3 most recent originals ship with the summary.
+
+
+STEP 6 — AUTOMATED TESTS
+------------------------
+php artisan test --filter=TrustSummaryTest
+php artisan test --filter=TrustSummaryRouteTest
+
+EXPECTED
+  unit    : rating stats/distribution/period, the fair "divided" signal
+            (both ends + >=3 rated), theme document-frequency floor,
+            stopwords/digit tokens excluded, polarity (positive / negative /
+            mixed / unrated), facts/opinions wording, deterministic summary
+            numbers, bounded original rows (no private fields), version-key
+            cache invalidation (review bump expires all; business bump
+            expires one), 8-locale message parity.
+  feature : exactly one public GET route, no auth.jwt, throttle present,
+            feature flag + sane ai.trust defaults.
+
+
+STEP 7 — MOBILE APP (customer)
+------------------------------
+1. Customer login -> "Biashara" tab -> each card has the "✨ Hali ya
+   Kuaminika" (Trust summary) button.
+2. Tap it -> summary + Verified facts + Customer opinions + original
+   reviews + limitations; tap again to collapse. Only one panel opens at
+   a time.
+3. No network -> honest localized error text; data unchanged (read-only).
+
+
+QUICK SANITY (design guarantees)
+--------------------------------
+  * READ-ONLY: the summariser never creates, edits or publishes a review
+    or a business record; publishing stays in the super-admin flow.
+  * Only is_published reviews are read; inquiry e-mail/phone and the
+    moderation note (certification_note) are never loaded at all.
+  * Reviews are labelled scope="platform": they carry no business_id and
+    no UI may attribute them to one seller.
+  * Order data is aggregate-only (counts + one date) - never customer rows
+    or notes.
+  * The model may only reword figures we supplied: sanitizeModelSummary
+    rejects any reply containing a number absent from the data, falls back
+    to the deterministic summary and reports the localised AI reason.
+  * Facts and opinions are separate payload arrays so a client cannot
+    present an opinion as a verified fact; every opinion line carries a
+    sample size, count or period.
+  * Cached per locale with version keys (review publish/unpublish, business
+    certify/uncertify); TTL from ai.trust.cache_minutes; route throttled
+    30/min; every call audited (AI_TRUST_SUMMARY).
+
+
+==============================================================================
+ TEST FLOW — CAPABILITY #14: PERSONALISED RECOMMENDATIONS
+ Duka Mkononi  (Gemini-Powered Expert System)
+==============================================================================
+
+WHAT WAS BUILT
+--------------
+A "Mapendekezo kwako" (Recommended for you) feed of real catalogue rows,
+ranked by pure deterministic code - no model is consulted, so every
+suggestion can always be explained by a signal that actually exists:
+
+  * candidates are PUBLIC catalogue rows only (PublicCatalog has already
+    applied is_public / visibility before we see a row) and the hard
+    gates run first: available && stock > 0, and the caller's own
+    dismissals - a dismissed id can never reappear;
+  * personal signals are ONLY the caller's own rows: their recent order
+    lines (matched server-side through their account phone), their own
+    ad likes and their own profile location. Popularity inputs are
+    aggregate counts over a bounded recent window (counts only, never
+    customer rows), so no customer's behaviour is ever exposed to
+    another;
+  * each row carries a reason code + localized text built from the signal
+    that actually pushed it up (bought_before / bought_from / similar /
+    same_shop / liked_ad / near_you / popular / certified / stocked);
+    with no history the engine honestly falls back to popularity and
+    certification ("cold start") and says so in meta.note;
+  * ordering is fully deterministic: score desc, then name, then id;
+  * dismissals are per-account cache with a TTL and a cap, and the
+    👍/👎 feedback feeds aggregate relevance counters (measurable
+    feedback, counts only).
+
+Catalog rows are normalised through normalizeCatalogRow before ranking:
+the catalogue emits stock / business_is_certified / image_url while the
+gates read stock_quantity / is_certified and the cards show image - one
+mapping keeps production rows and unit fixtures on the same contract.
+
+Endpoints:
+  GET  /api/ai/recommendations           PUBLIC + throttled (30/min):
+                                         identity is OPTIONAL - a valid
+                                         bearer token personalises the
+                                         feed, a guest gets the honest
+                                         cold-start feed (never an error).
+  POST /api/ai/recommendations/dismiss   auth.jwt  {"type":"product"|
+                                         "business","id":"<uuid>"}
+  POST /api/ai/recommendations/feedback  auth.jwt  {"rating":"helpful"|
+                                         "not_helpful","item_id":"<uuid>"}
+                                         (item_id optional)
+
+Files added/changed
+  app/Services/Ai/RecommendationEngine.php  <- normalizeCatalogRow, signals,
+                                               documented weights, hard
+                                               gates, reason codes, 8-locale
+                                               messages
+  app/Http/Controllers/Api/AiRecommendationController.php
+  routes/api.php                            <- 1 public throttled read +
+                                               2 authenticated writes
+  config/ai.php                             <- ai.features.recommendations,
+                                               ai.recommendations.* limits
+  tests/Unit/RecommendationEngineTest.php
+  tests/Feature/RecommendationRouteTest.php
+
+FRONTEND (shop page + phone, in all 8 languages)
+  resources/views/shop.blade.php       <- "✨ Mapendekezo kwako" panel at the
+                                          top of the Shop page: "Bidhaa"
+                                          product cards with price + reason
+                                          pill, "Biashara" chips, hide (✕)
+                                          and 👍/👎 for signed-in visitors,
+                                          privacy note, honest empty state
+  Duka_mkononi/app/mteja/tafuta.tsx     <- "Mapendekezo kwako" card at the
+                                          top of the Tafuta tab (same panel
+                                          on the phone)
+  locales.json                         <- site_reco.* strings
+  Duka_mkononi/locales/{sw,en,fr,hi,es,ur,de,zh}.json
+                                         <- mteja_reco section
+
+
+STEP 0 — PREREQUISITES
+----------------------
+1. Public catalogue rows: at least one PUBLIC business with an active
+   product that carries a selling price and stock > 0 - the same rows
+   GET /api/shop/products returns. (An empty catalogue honestly returns
+   an empty feed.)
+2. For the personalised path: a CUSTOMER account with at least one order
+   (profile phone matching the order) and/or some liked ads; profile
+   business_location is optional (it enables the "near you" reason).
+3. No GEMINI_API_KEY needed: the ranking is pure code by design.
+4. php artisan serve   (base URL http://127.0.0.1:8000)
+
+
+STEP 1 — GUEST FEED (no token)
+-------------------------------
+curl -s "http://127.0.0.1:8000/api/ai/recommendations?locale=sw"
+
+EXPECTED (HTTP 200)
+  {
+    "success": true,
+    "products": [ { "id": "<uuid>", "name": "...", "category": "...",
+                    "selling_price": 25000.0, "currency": "TZS",
+                    "stock": 5, "available": true, "image": "...",
+                    "business_id": "<uuid>", "business_name": "...",
+                    "score": 2.789,
+                    "reason": { "code": "popular|certified|no_signal",
+                                "text": "Imeuzwa 7 mara kwenye jukwaa." } } ],
+    "businesses": [ { "id": "<uuid>", "business_name": "...",
+                      "score": n, "reason": { "code": "popular|stocked|
+                                              certified|no_signal",
+                                              "text": "..." } } ],
+    "meta": { "personalized": false, "locale": "sw",
+              "signals": { "history_lines": 0, "likes": 0,
+                           "location": false },
+              "privacy": "Mapendekezo yanatumia historia yako pekee ...",
+              "note": "Hakuna historia ya kutosha bado - tunaonyesha
+                      maarufu na vilivyothibitishwa.",
+              "metrics": { "helpful": 0, "not_helpful": 0,
+                           "updated_at": null } }
+  }
+
+WHAT TO CHECK
+  [ ] every product id / price / stock shown here also exists on
+      GET /api/shop/products - nothing is invented
+  [ ] no out-of-stock or available=false row appears anywhere
+  [ ] meta.personalized = false and meta.note honestly says it is showing
+      popular + certified items instead of pretending to know you
+  [ ] locale=en returns English reasons; an unknown locale falls back to
+      the default (sw)
+
+
+STEP 2 — PERSONALISED FEED (signed-in customer)
+------------------------------------------------
+Log in as the customer (same call as capability #13, STEP 1), then:
+
+curl -s "http://127.0.0.1:8000/api/ai/recommendations?locale=sw" \
+  -H "Authorization: Bearer PASTE_TOKEN_HERE"
+
+EXPECTED (HTTP 200): same shape with meta.personalized = true,
+meta.note = null, and meta.signals.history_lines / likes reflecting THIS
+account's own rows.
+
+WHAT TO CHECK
+  [ ] a product the customer actually bought ranks first with
+      reason.code = "bought_before"
+  [ ] another product from a shop they bought from explains
+      "Kutoka duka <name> ulilonunua hapo awahi."
+  [ ] reasons only ever reference the CALLER's own history - a second
+      customer's token shows THEIR rows, never the first customer's
+  [ ] two identical calls return the identical ordering (deterministic)
+
+
+STEP 3 — DISMISS (an irrelevant item never returns)
+----------------------------------------------------
+curl -s -X POST http://127.0.0.1:8000/api/ai/recommendations/dismiss \
+  -H "Authorization: Bearer PASTE_TOKEN_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{"type":"product","id":"<PRODUCT_UUID>"}'
+
+EXPECTED (HTTP 200)
+  { "success": true, "dismissed": true, "total": 1,
+    "message": "Mapendekezo hayo yamefichwa." }
+
+WHAT TO CHECK
+  [ ] the next GET (same token) no longer contains that id at all
+  [ ] a DIFFERENT customer still receives it (per-account dismissals)
+  [ ] without a token -> HTTP 401 {"error": "Token inahitajika"}
+  [ ] "type":"person" -> HTTP 422 TYPE_INVALID; a non-uuid id -> 422
+      ID_INVALID; both messages are localized
+  [ ] beyond dismiss_max (100) only the newest 100 are kept, and they
+      expire after dismiss_ttl_days (90) by design
+
+
+STEP 4 — FEEDBACK (measurable relevance)
+-----------------------------------------
+curl -s -X POST http://127.0.0.1:8000/api/ai/recommendations/feedback \
+  -H "Authorization: Bearer PASTE_TOKEN_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{"rating":"helpful","item_id":"<PRODUCT_UUID>"}'
+
+EXPECTED (HTTP 200)
+  { "success": true, "message": "Asante kwa maoni yako.",
+    "metrics": { "helpful": 1, "not_helpful": 0 } }
+
+WHAT TO CHECK
+  [ ] the counters grow and are also visible in meta.metrics of the
+      public GET - plain totals only, no per-user rows are stored
+  [ ] "rating":"meh" -> HTTP 422 RATING_INVALID; a non-uuid item_id ->
+      422 ID_INVALID
+  [ ] audit rows exist: AI_RECO_VIEW / AI_RECO_DISMISSED /
+      AI_RECO_FEEDBACK
+
+
+STEP 5 — VALIDATION, PERMISSIONS AND LIMITS
+--------------------------------------------
+1. Feature off: config ai.features.recommendations = false  ->
+   HTTP 403 {"code":"FEATURE_DISABLED"} on ALL THREE routes.
+2. 31 rapid GETs -> HTTP 429 (throttle:30,1).
+3. Writes behind auth.jwt: missing / invalid / expired token -> 401
+   ("Token inahitajika" / "Token si sahihi au imekwisha").
+4. The READ stays public: an invalid token on the GET does NOT 401 - it
+   degrades to the same cold-start feed (never an error).
+
+WHAT TO CHECK
+  [ ] the surface is exactly GET ai/recommendations (public + throttled)
+      plus POST dismiss and POST feedback (auth.jwt) - the feature test
+      fails loudly if any of these change
+
+
+STEP 6 — AUTOMATED TESTS
+-------------------------
+php artisan test --filter=RecommendationEngineTest
+php artisan test --filter=RecommendationRouteTest
+
+EXPECTED
+  unit    : hard gates (available + in stock + dismissed) applied BEFORE
+            ranking; real PublicCatalog row keys (stock /
+            business_is_certified / image_url) pass the gates after
+            normalizeCatalogRow, which never overwrites engine-shaped
+            keys; the documented weights and reason priority; cold-start
+            fallback and the honest no_signal text; deterministic order
+            (score desc, name asc, id asc); buildSignals counts;
+            8-locale message parity and reason rendering.
+  feature : exactly three routes with the right middleware, the feature
+            flag on by default, and sane ranking / retention defaults.
+
+
+STEP 7 — WEBSITE (Blade)
+------------------------
+1. Open "Duka" (Shop) from the website menu - no login needed.
+2. At the top, above the search toolbar, the "✨ Mapendekezo kwako" panel
+   appears: "Bidhaa" product cards (photo, price, shop, reason pill) and
+   "Biashara" chips, with the privacy note underneath.
+3. Sign in as the customer and reload: each product card gains an ✕ and
+   👍/👎 buttons; each shop chip gains an ✕.
+4. Press ✕ -> the card disappears immediately AND stays gone after a
+   reload (the server-side dismissal is durable).
+5. Press 👍 -> the thank-you message ("Asante kwa maoni yako.") appears
+   in the status line under the panel heading.
+6. Change the language with the DM widget -> the panel reloads
+   localized.
+7. Sign out -> the cold-start feed returns with no action buttons.
+
+
+STEP 8 — MOBILE APP (customer)
+-------------------------------
+1. Customer login -> "🔎 Tafuta" tab -> the "Mapendekezo kwako" card sits
+   at the top, above the ask box.
+2. Every item shows its reason text; 👍/👎/✕ appear only when signed in.
+3. Tap ✕ -> the card vanishes instantly and stays gone on the next load;
+   tap 👍 -> that item keeps its thanked state.
+4. A guest sees the same cold-start feed as the website, and the search
+   box below stays fully usable even if the feed fails to load.
+
+
+QUICK SANITY (design guarantees)
+--------------------------------
+  * READ-ONLY for shared data: the feed never writes orders, stock or
+    profiles; the only state it keeps is THIS account's dismissals
+    (cache, TTL 90 days, capped at 100) and aggregate helpful /
+    not-helpful totals.
+  * Personal signals come only from the caller's own rows (orders matched
+    via their account phone, their own likes, their own location); no
+    customer's history can surface for another customer, and popularity
+    is aggregate counts over a bounded window - never customer rows.
+  * Hard gates run BEFORE ranking: public + available + in stock, and a
+    dismissed id can never reappear; zero-score rows get an honest
+    localized reason instead of a fabricated one.
+  * The ranking is deterministic pure code (no model): score desc, name
+    asc, id asc - identical inputs always produce the identical feed.
+  * normalizeCatalogRow keeps the catalogue's real keys
+    (stock / business_is_certified / image_url) in sync with the gates
+    (stock_quantity / is_certified) and the cards (image) - pinned by
+    unit tests on the REAL row shape.
+  * Public read throttled 30/min; writes behind auth.jwt; feature flag
+    ai.features.recommendations; every call audited (AI_RECO_*).
+
+
+
+==============================================================================
+ TEST FLOW — CAPABILITY #15: AI REPORT SUMMARIES
+------------------------------------------------------------------------------
+STEP 1 — SERVER CONTRACT (curl, no UI)
+------------------------------
+1. POST /api/ai/reports/summary with an admin/seller JWT and
+   {"period":"last_30_days","locale":"en"}.
+2. 200 with: periods (current window truncated to COMPLETE days + the
+   equal-length previous window), narrative[] (deterministic sentences),
+   summary_text (the gated reword), metrics, previous_metrics,
+   comparison (direction / revenue_change / revenue_change_pct, plus
+   margin_pct ONLY when both windows carry a buying price for every sold
+   line), contributors[], table, chart, sources[], limitations[].
+3. No token -> 401 (auth.jwt). A customer JWT -> 403 FORBIDDEN_ROLE.
+   period "bogus" -> 422 INVALID_PERIOD; window over ai.report_summary
+   .max_days -> 422 RANGE_TOO_LONG. Feature flag
+   ai.features.report_summary off -> 403 FEATURE_DISABLED.
+
+STEP 2 — UNIT + FEATURE TESTS
+---------------------------
+php vendor/bin/phpunit tests/Unit/ReportSummaryTest.php \
+  tests/Feature/AiReportSummaryRouteTest.php
+  unit     : window truncation, equal-length previous window, invalid /
+             reversed ranges; the EXACT deterministic narrative built
+             from fixtures (every figure traceable to a row);
+             up / down / flat / up_from_zero directions; unknown-COGS
+             and empty-period disclosures; contributors ranking (absolute
+             movement desc, zero-movement dropped, honest name fallback,
+             limit); 8-locale message parity AND placeholder equality;
+             the reword number gate - only a bounded paragraph whose
+             every number already exists in the payload is accepted.
+  feature  : POST api/ai/reports/summary registered behind auth.jwt.
+
+STEP 3 — WEBSITE (Blade)
+------------------------
+1. Msimamizi (or Muuzaji) login -> "Ripoti" -> the "✨ Muhtasari wa AI"
+   card sits at the top of "Mapitio", above the stats grid.
+2. The card shows the verified paragraph (the AI reword when it passed
+   the number gate, otherwise the deterministic lines), three metrics
+   (Mapato / Faida ghafi / Matumizi), a direction chip, the top
+   contributors with signed amounts, and the "Maelezo ya ziada"
+   limitations - plus the "figures verified" footnote.
+3. Siku 7 / 30 / 90 chips refetch for that period; the numbers must
+   agree with the tables below the card.
+4. Switching the DM language refetches the summary in that language;
+   a failed call shows the in-card error + "Jaribu Tena" (retry).
+
+STEP 4 — MOBILE APP (Msimamizi)
+-------------------------------
+1. Msimamizi login -> "Ripoti" tab -> the same card sits under the shop
+   header on "Mapitio"; the 7/30/90-day chips switch the period;
+   loading and error states are confined to the card.
+
+STEP 5 — GROUNDING SPOT CHECKS
+------------------------------
+1. Sum the "Mauzo" tab for the period and compare with metrics.revenue -
+   both come from the same rows and must agree.
+2. Ask for a period with no sales: limitations include "Hakuna mauzo
+   yaliyorekodiwa..." and the narrative claims no figure.
+3. A product with no buying price: gross profit is NOT compared between
+   the windows and the limitation says why.
+4. The reword: any number the model would add that we never supplied is
+   discarded (AI_UNSAFE_OUTPUT) and the deterministic text is shown.
+
+QUICK SANITY (design guarantees)
+--------------------------------
+  * Deterministic core: ReportSummary::summarize() is pure PHP over the
+    rows BusinessDataProvider already returns for the report screens -
+    the summary can never disagree with the tables above it.
+  * Periods: the current window is truncated to COMPLETE days; the
+    previous window is always the same length immediately before it.
+  * Comparability: gross profit / margin compare only when BOTH windows
+    carry a buying price for every sold line - otherwise the difference
+    is disclosed instead of guessed.
+  * Contributors are recorded revenue MOVEMENT between the windows,
+    ranked by absolute change - described as movement, never as cause.
+  * The model may only REWORD the same figures: every number in the
+    reply must already exist in the data we supplied, bounded length,
+    single paragraph - else the reply is discarded.
+  * Scope: the caller's own business (member ids resolved server-side),
+    admin/seller only; feature flag ai.features.report_summary; cached
+    15 min per business + period + locale; every call audited
+    (AI_REPORT_SUMMARY / AI_REPORT_SUMMARY_ERROR).
+
+==============================================================================
+ TEST FLOW — CAPABILITY #16: ADVERTISEMENT AND CONTENT REVIEW ASSISTANT
+------------------------------------------------------------------------------
+STEP 1 — SERVER CONTRACT (curl, no UI)
+------------------------------
+1. POST /api/ai/reviews/check with an admin/seller JWT and
+   {"target":"all","locale":"en"}.
+2. 200 with: success, capability (review_assistant), policy (the values
+   actually enforced), stats {items_checked, ads, products, violations,
+   concerns, clean} and items[] scoped to the caller's own business -
+   each {type: ad|product, id, title, subtitle, is_active, findings[],
+   violations, concerns}. Every finding carries category, severity
+   (violation | concern), message and the EXACT excerpt that triggered
+   it; flagged claims may additionally carry an advisory "ai"
+   {verdict: supported|unsupported|uncertain, reason} attached NEXT TO
+   (never in place of) a deterministic finding.
+3. target accepts all|ads|products (anything else falls back to all).
+4. No token -> 401 (auth.jwt). A customer JWT -> 403 FORBIDDEN_ROLE.
+   Feature flag ai.features.reviews off -> 403 FEATURE_DISABLED.
+   No business -> 400 NO_BUSINESS.
+5. POST /api/ai/reviews/decision with
+   {"target_type":"ad","target_id":"...","decision":"approve",
+   "note":"","reviewed":true}.
+   - decision must be approve|reject|request_edit, else 422
+     INVALID_INPUT. reviewed=false -> 422 REVIEW_CONFIRM_REQUIRED.
+     Rejecting an item that HAS definite violations with an empty note
+     -> 422 REVIEW_NOTE_REQUIRED. Unknown or foreign target -> 404
+     UNKNOWN_TARGET (scope: the caller's member ids).
+   - approve -> is_active true, reject -> is_active false,
+     request_edit -> state unchanged. 200 returns
+     {success, decision, target:{type,id,is_active}, violations,
+     concerns, note_saved, recorded_at} and writes the
+     AI_REVIEW_DECISION audit row (counts + note presence, never the
+     note body).
+
+STEP 2 — UNIT + FEATURE TESTS
+---------------------------
+php vendor/bin/phpunit tests/Unit/ReviewAssistantTest.php \
+  tests/Feature/AiReviewRouteTest.php
+  unit     : the deterministic rules (missing mandatory fields, claim /
+             price / contact / prohibited-term patterns, configurable
+             marketplace policy), definite violations vs uncertain
+             concerns, excerpts bound to the exact matched text, bounded
+             reasons, the advisory verdict enum + figure gate (the model
+             can never introduce a number), decision re-derivation and
+             complete 8-locale message parity.
+  feature  : POST api/ai/reviews/check + api/ai/reviews/decision
+             registered behind auth.jwt.
+
+STEP 3 — WEBSITE (Blade)
+------------------------
+1. Msimamizi login -> "Tangaza" -> "Matangazo yangu" tab: the
+   "✨ Ukaguzi wa Maudhui" card sits above the posts list. Muuzaji
+   login -> "Tangaza": the card sits under the page header and runs its
+   first check automatically.
+2. "Kagua Sasa" shows the four counts and the Matangazo / Bidhaa tabs;
+   every item card lists its findings (severity chip, message, excerpt,
+   optional AI verdict pill) or the green check when clean.
+3. Choose Idhini / Kataa / Omba Marekebisho, tick "Nimesoma mabao
+   yote", add a reason, submit: the toast reports the recorded decision
+   and the active badge flips (approve -> active, reject -> inactive,
+   request edits -> unchanged).
+4. The server guards are visible from the UI: no decision chosen ->
+   "Uamuzi wako" toast; reject with no reason on a violation ->
+   err_note_required; unchecked reviewed box -> err_review_required.
+   The DM language switch changes every string of the card.
+
+STEP 4 — MOBILE APP (Msimamizi + Muuzaji)
+------------------------------------------
+1. Msimamizi login -> "Tangaza" -> "Matangazo yangu": the same card
+   sits above the posts. Muuzaji login -> "Tangaza": it sits at the top
+   of the Ad Studio.
+2. "Kagua Sasa" loads counts + tabs; each item shows findings, the
+   three decision chips, the note field, the reviewed checkbox and the
+   submit button; success shows the "Uamuzi umerekodiwa." dialog and
+   the item's active state updates in place.
+
+STEP 5 — GROUNDING SPOT CHECKS
+------------------------------
+1. Open the exact ad/product behind a finding: the excerpt must be a
+   real substring of its title or description - never a paraphrase.
+2. Fix the triggering text (lengthen a too-short description, remove a
+   prohibited term), re-check: that finding disappears - findings never
+   exist without matching rows.
+3. Reject a violating item with no reason -> refused; add a reason ->
+   accepted, and a refresh shows the item inactive.
+4. With the AI classification off (ai.reviews.ai_classify = false or no
+   model key): findings and counts are identical, only the optional
+   verdict pills are missing.
+
+QUICK SANITY (design guarantees)
+--------------------------------
+  * Deterministic first: severity comes from fixed rules run by trusted
+    PHP (ReviewAssistant::reviewAd / reviewProduct). The AI only attaches
+    an advisory verdict to a finding that ALREADY exists - it can never
+    create, remove or re-grade a finding, its reasons are bounded and
+    figure-free, and verdicts are accepted only from the allowed enum.
+  * The decision endpoint RE-DERIVES the findings server-side, so a
+    client cannot hide a violation to sneak an approve through, and it
+    requires both the "I read the findings" confirmation and a written
+    reason when rejecting definite violations.
+  * approve -> published, reject -> unpublished, request edits ->
+    unchanged; every decision is recorded (AI_REVIEW_DECISION) with the
+    reviewer, the counts and the applied state.
+  * Scope: the caller's own business (member ids resolved server-side),
+    admin/seller only; feature flag ai.features.reviews; policy table
+    configurable via config/ai.php (ai.reviews.*); results cached
+    ai.reviews.cache_minutes (default 5) per business + target + locale;
+    bounded to ai.reviews.max_items (default 200) items per check.
+
+
+==============================================================================
+ WHEN YOU'RE DONE
+-----------------
+Capabilities #2-#16 are now implemented on the shared AI layer.
+Reply "next" and I'll implement the next capability (#17 — Team Activity
+Digest) on top of this same shared AI layer.

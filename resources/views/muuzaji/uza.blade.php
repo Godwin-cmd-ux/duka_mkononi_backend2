@@ -1,4 +1,5 @@
 @include('partials.dm-locale')
+<link rel="stylesheet" href="/css/smartcart-loader.css">
 @verbatim
 <head>
     <meta charset="UTF-8">
@@ -766,7 +767,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     <div class="section-header"><span class="label">${t('label_select_product')}</span><button class="refresh-btn" style="font-size:14px;" onclick="loadProducts()">${ic('refresh', 13)} ${t('btn_refresh')}</button></div>
                     <div class="search-box">${ic('search', 15)}<input type="text" id="searchInput" class="search-input" placeholder="${t('search_placeholder')}" value="${escapeHtml(searchQuery)}"></div>
                     
-                    ${loadingProducts ? `<div class="loading-spinner"></div>` : productsError ? `
+                    ${loadingProducts ? `<div class="loading-spinner dm-sc"></div>` : productsError ? `
                         <div style="text-align:center;padding:30px;">
                             <div style="color:#f39c12;">${ic('warning', 32)}</div>
                             <div style="margin:8px 0;font-weight:600;">${t('err_load_products')}</div>
@@ -835,7 +836,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                             <span style="margin-left:auto;font-size:12px;opacity:.8;">${t('cart_link')}</span>
                         </div>
                         <button class="dock-checkout ${cart.length === 0 || loading ? 'disabled' : ''}" ${cart.length === 0 || loading ? 'disabled' : ''} onclick="handleSale()">
-                            ${loading ? '<div class="loading-spinner" style="width:18px;height:18px;margin:0 auto;"></div>' : t('btn_complete')}
+                            ${loading ? '<div class="loading-spinner dm-sc dm-sc--light" style="width:18px;height:18px;margin:0 auto;"></div>' : t('btn_complete')}
                         </button>
                     </div>
                 </div>

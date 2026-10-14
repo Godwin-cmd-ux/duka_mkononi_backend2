@@ -1,7 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Modal,
   StyleSheet,
@@ -10,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import SmartCartLoader from './SmartCartLoader';
 import { useLang } from '../context/LanguageContext';
 import { API_BASE_URL } from '../constants/api';
 import { requireNetwork, fetchWithTimeout } from '../lib/network';
@@ -304,7 +304,7 @@ export default function OtpVerificationModal({
           >
             {verifying || creatingAccount ? (
               <>
-                <ActivityIndicator color="white" size="small" />
+                <SmartCartLoader size="compact" color="#ffffff" />
                 <Text style={styles.verifyButtonText}>
                   {creatingAccount ? t('otp.creating_account') : t('otp.verifying')}
                 </Text>
@@ -325,7 +325,7 @@ export default function OtpVerificationModal({
             {canResend ? (
               <TouchableOpacity onPress={resendOtp} disabled={resending}>
                 {resending ? (
-                  <ActivityIndicator size="small" color={accentColor} />
+                  <SmartCartLoader size="compact" color={accentColor} />
                 ) : (
                   <Text style={[styles.resendLink, { color: accentColor }]}>
                     {t('otp.resend')}

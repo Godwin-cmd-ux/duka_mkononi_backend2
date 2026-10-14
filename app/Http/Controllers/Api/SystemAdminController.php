@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Business;
+use App\Services\Ai\TrustSummary;
 use Illuminate\Http\Request;
 
 /**
@@ -57,6 +58,10 @@ class SystemAdminController extends BaseController
             'certification_note' => $request->input('note'),
             'updated_at' => $now,
         ]);
+
+        // Capability #12: certification is a summarized trust fact, so the
+        // cached summary for this business must refresh immediately.
+        TrustSummary::invalidateBusiness($id);
 
         $this->log($this->userId($request), $certified ? 'BUSINESS_CERTIFY' : 'BUSINESS_UNCERTIFY', '/api/system-admin/businesses/' . $id, [], $this->ip($request), 'success');
 

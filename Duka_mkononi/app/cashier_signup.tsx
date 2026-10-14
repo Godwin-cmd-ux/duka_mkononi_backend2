@@ -2,7 +2,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-    ActivityIndicator,
     Alert,
     KeyboardAvoidingView,
     Platform,
@@ -13,6 +12,7 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
+import SmartCartLoader from '../components/SmartCartLoader';
 import { useLang } from '../context/LanguageContext';
 import OtpVerificationModal from '../components/otp-verification-modal';
 
@@ -358,7 +358,7 @@ export default function CashierSignup() {
                         disabled={loading}
                     >
                         {loading ? (
-                            <ActivityIndicator color="white" />
+                            <SmartCartLoader size="compact" color="#ffffff" />
                         ) : (
                             <Text style={styles.signupButtonText}>{t('seller_signup.signup_button')}</Text>
                         )}

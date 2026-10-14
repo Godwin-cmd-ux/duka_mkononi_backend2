@@ -1,8 +1,7 @@
-﻿import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
     Alert,
     Modal,
     RefreshControl,
@@ -12,6 +11,7 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
+import SmartCartLoader from '../../components/SmartCartLoader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLang } from '../../context/LanguageContext';
 import LogoutButton from '../../components/logout-button';
@@ -1076,7 +1076,7 @@ export default function PreviewScreen() {
       
       {eventsLoading ? (
         <View style={styles.eventsLoading}>
-          <ActivityIndicator size="large" color="#3498db" />
+          <SmartCartLoader size="large" color="#3498db" />
           <Text style={styles.eventsLoadingText}>{t('preview.events_loading')}</Text>
         </View>
       ) : businessEvents.length > 0 ? (
@@ -1191,7 +1191,7 @@ export default function PreviewScreen() {
     return (
       <SafeAreaView style={styles.screenSafe} edges={['top']}>
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#3498db" />
+          <SmartCartLoader size="large" color="#3498db" />
           <Text style={styles.loadingText}>{t('preview.loading')}</Text>
         </View>
       </SafeAreaView>

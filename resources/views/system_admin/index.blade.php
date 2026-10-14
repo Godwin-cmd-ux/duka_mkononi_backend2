@@ -1,4 +1,5 @@
 @include('partials.dm-locale')
+<link rel="stylesheet" href="/css/smartcart-loader.css">
 @verbatim
 <head>
     <meta charset="UTF-8">
@@ -115,7 +116,7 @@
         <div class="title" data-i18n="system_admin_index.brand">DukaMkononi</div>
         <div class="subtitle" data-i18n="system_admin_index.portal_label">System Admin Portal</div>
         
-        <div class="loading-spinner"></div>
+        <div class="loading-spinner dm-sc"></div>
         
         <div class="message" id="message" data-i18n="system_admin_index.redirecting_dashboard">Inaelekeza kwenye dashbodi...</div>
         

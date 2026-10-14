@@ -3,7 +3,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
     Alert,
     FlatList,
     KeyboardAvoidingView,
@@ -17,6 +16,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import SmartCartLoader from '../../components/SmartCartLoader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLang } from '../../context/LanguageContext';
 import { useSession } from '../../context/SessionContext';
@@ -1057,7 +1057,7 @@ export default function UzaScreen() {
     return (
       <SafeAreaView style={styles.screenSafe} edges={['top']}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#2ecc71" />
+          <SmartCartLoader size="large" color="#2ecc71" />
           <Text style={styles.loadingText}>{t('profile.loading')}</Text>
           <Text style={styles.loadingSubtext}>
             {!userData ? t('profile.loading') : t('profile.business') + '...'}
@@ -1140,7 +1140,7 @@ export default function UzaScreen() {
             
             {loadingProducts ? (
               <View style={styles.loadingProducts}>
-                <ActivityIndicator size="small" color="#3498db" />
+                <SmartCartLoader size="compact" color="#3498db" />
                 <Text style={styles.loadingProductsText}>
                   {userData.role === 'admin' 
                     ? t('seller_sell.loading_own') 
@@ -1454,7 +1454,7 @@ export default function UzaScreen() {
               disabled={loading || cart.length === 0}
             >
               {loading ? (
-                <ActivityIndicator color="white" size="small" />
+                <SmartCartLoader size="compact" color="#ffffff" />
               ) : (
                 <>
                   <Ionicons name="checkmark-circle" size={18} color="white" />

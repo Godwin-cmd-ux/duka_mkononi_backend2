@@ -39,6 +39,36 @@
     .summary-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14.5px; }
     .summary-row.total { font-weight: 800; font-size: 17px; color: var(--dm-navy); border-top: 1px solid var(--dm-line); margin-top: 6px; padding-top: 12px; }
     .shop-title-row { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+    /* Capability #11 - conversational shopping assistant panel */
+    .shop-ai { background: #fff; border: 1px solid var(--dm-line); border-radius: var(--dm-radius); padding: 16px; margin-bottom: 18px; box-shadow: var(--dm-shadow-sm); }
+    .shop-ai-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+    .shop-ai-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; letter-spacing: .04em; color: #4338ca; background: #eef2ff; border: 1px solid #e0e7ff; border-radius: 999px; padding: 4px 10px; }
+    .shop-ai-sub { font-size: 13px; color: var(--dm-muted); }
+    .shop-ai-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .shop-ai-row .dm-input { flex: 1 1 240px; }
+    .shop-ai-sortwrap { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--dm-muted); }
+    .shop-ai-sortwrap select { border: 1px solid var(--dm-line); border-radius: 10px; padding: 10px 12px; font-size: 13.5px; background: #fff; color: var(--dm-ink); font-family: inherit; }
+    .shop-ai-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+    .shop-ai-chip { border: 1px solid var(--dm-line); background: #f8fafc; color: var(--dm-ink); border-radius: 999px; font-size: 12.5px; padding: 6px 12px; cursor: pointer; font-family: inherit; }
+    .shop-ai-chip:hover { background: #eef2ff; border-color: #c7d2fe; color: #4338ca; }
+    .shop-ai-chip.ask { font-weight: 700; }
+    .shop-ai-status { font-size: 13px; color: var(--dm-muted); margin-top: 10px; }
+    .shop-ai-filters { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 12px; }
+    .shop-ai-filters .lbl { font-size: 10.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--dm-muted); margin-right: 2px; }
+    .shop-ai-filter { font-size: 11.5px; font-weight: 700; background: #eef2ff; color: #4338ca; border-radius: 999px; padding: 3px 9px; }
+    .shop-ai-answer { background: #f8fafc; border: 1px solid var(--dm-line); border-radius: 12px; padding: 12px 14px; margin-top: 12px; font-size: 14.5px; line-height: 1.55; color: var(--dm-ink); }
+    .shop-ai-answer .kind { display: block; font-size: 10.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #4338ca; margin-bottom: 5px; }
+    .shop-ai-label { font-size: 10.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--dm-muted); margin: 14px 0 8px; }
+    .shop-ai-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; }
+    .shop-ai-biz { display: flex; align-items: center; gap: 10px; border: 1px solid var(--dm-line); border-radius: 12px; padding: 10px 12px; background: #fff; margin-bottom: 8px; }
+    .shop-ai-biz .avatar { width: 40px; height: 40px; border-radius: 10px; background: #f1f5f9; display: grid; place-items: center; color: #94a3b8; overflow: hidden; flex: 0 0 auto; }
+    .shop-ai-biz .avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .shop-ai-biz .who { flex: 1; min-width: 0; }
+    .shop-ai-notes { margin-top: 14px; font-size: 12px; color: var(--dm-muted); line-height: 1.6; }
+    .shop-ai-notes .note { font-style: italic; }
+    .shop-ai-notes b { display: block; font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; margin: 8px 0 3px; color: var(--dm-muted); }
+    .shop-ai-actions { display: flex; justify-content: flex-end; margin-top: 12px; }
+    @media (max-width: 640px) { .shop-ai-row .dm-input { flex-basis: 100%; } }
     @media (max-width: 860px) {
         .shop-layout { grid-template-columns: 1fr; }
         .shop-sidebar { position: static; }
@@ -75,6 +105,40 @@
             </aside>
 
             <section>
+                <!-- Capability #11 - conversational shopping assistant -->
+                <div class="shop-ai" id="dmShopAi">
+                    <div class="shop-ai-head">
+                        <span class="shop-ai-badge">&#10024; <span data-i18n="site_shop.ai_title">Shopping assistant</span></span>
+                        <span class="shop-ai-sub" data-i18n="site_shop.ai_sub">Ask in your own words and get real products from public businesses.</span>
+                    </div>
+                    <div class="shop-ai-row">
+                        <input class="dm-input" type="search" id="dmAiQuery" maxlength="240" data-i18n="site_shop.ai_placeholder" data-i18n-attr="placeholder" placeholder="E.g. brake pads for Toyota Harrier">
+                        <span class="shop-ai-sortwrap">
+                            <label for="dmAiSort" data-i18n="site_shop.ai_sort_label">Sort</label>
+                            <select id="dmAiSort">
+                                <option value="relevance" data-i18n="site_shop.ai_sort_relevance">Relevance</option>
+                                <option value="price_asc" data-i18n="site_shop.ai_sort_low">Price: low first</option>
+                                <option value="price_desc" data-i18n="site_shop.ai_sort_high">Price: high first</option>
+                            </select>
+                        </span>
+                        <button type="button" class="dm-btn dm-btn--primary" id="dmAiAsk" data-i18n="site_shop.ai_ask">Search</button>
+                    </div>
+                    <div class="shop-ai-label" data-i18n="site_shop.ai_examples" style="margin-top:12px">Try:</div>
+                    <div class="shop-ai-chips" id="dmAiChips"></div>
+                    <div class="shop-ai-status" id="dmAiStatus" role="status" aria-live="polite"></div>
+                    <div id="dmAiBody"></div>
+                </div>
+
+                <!-- Capability #14 - personalised recommendations -->
+                <div class="shop-ai" id="dmReco" hidden>
+                    <div class="shop-ai-head">
+                        <span class="shop-ai-badge">&#10024; <span data-i18n="site_reco.title">Recommended for you</span></span>
+                        <span class="shop-ai-sub" data-i18n="site_reco.sub">Real suggestions from the catalogue, each with the reason it was picked.</span>
+                    </div>
+                    <div class="shop-ai-status" id="dmRecoStatus" role="status" aria-live="polite"></div>
+                    <div id="dmRecoBody"></div>
+                </div>
+
                 <div class="shop-toolbar">
                     <input class="dm-input" type="search" id="dmShopSearch" data-i18n="site_shop.search_placeholder" data-i18n-attr="placeholder" placeholder="Search products...">
                     <span class="dm-muted" id="dmResultCount"></span>
@@ -369,6 +433,385 @@
         if (e.target.classList.contains('modal-overlay')) e.target.classList.remove('open');
     });
 
+    /* ---------------- AI shopping assistant (capability #11) ---------------- */
+    var aiState = { query: '', refine: {}, busy: false, answered: false };
+
+    function aiLocale() {
+        if (window.DM && DM.locale) return DM.locale();
+        return document.documentElement.getAttribute('data-dm-locale') || 'sw';
+    }
+
+    function aiSortValue() {
+        var el = document.getElementById('dmAiSort');
+        var v = el ? el.value : 'relevance';
+        return v === 'price_asc' || v === 'price_desc' ? v : 'relevance';
+    }
+
+    function aiPost(path, body) {
+        return fetch(API + path, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify(body)
+        }).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); });
+    }
+
+    /* refine = {category} or {business_id} when a chip was tapped; a fresh
+       typed question always starts from an empty refinement. */
+    function askAi(query, refine) {
+        query = String(query == null ? '' : query).trim();
+        if (!query || aiState.busy) return;
+        aiState.busy = true;
+        aiState.query = query;
+        aiState.refine = refine || {};
+
+        var status = document.getElementById('dmAiStatus');
+        var btn = document.getElementById('dmAiAsk');
+        if (status) status.textContent = t('site_shop.ai_loading');
+        if (btn) btn.disabled = true;
+
+        var body = { query: query, locale: aiLocale(), sort: aiSortValue() };
+        Object.keys(aiState.refine).forEach(function (k) {
+            if (aiState.refine[k] != null && aiState.refine[k] !== '') body[k] = aiState.refine[k];
+        });
+
+        aiPost('/ai/shopping/ask', body).then(function (res) {
+            aiState.busy = false;
+            if (btn) btn.disabled = false;
+            if (!res.ok || !res.d || !res.d.success) {
+                if (status) status.textContent = (res.d && res.d.error) || t('site_shop.ai_error');
+                var bodyBox = document.getElementById('dmAiBody');
+                if (bodyBox) bodyBox.innerHTML = '';
+                return;
+            }
+            aiState.answered = true;
+            if (status) status.textContent = '';
+            renderAi(res.d);
+        }).catch(function () {
+            aiState.busy = false;
+            if (btn) btn.disabled = false;
+            if (status) status.textContent = t('site_shop.ai_error');
+        });
+    }
+
+    function aiFilterChips(d) {
+        var it = d.interpreted || {};
+        var chips = [];
+        if (it.price_min != null && it.price_max != null) {
+            chips.push(t('site_shop.ai_price_between', { min: money(it.price_min), max: money(it.price_max) }));
+        } else if (it.price_max != null) {
+            chips.push(t('site_shop.ai_price_max_only', { max: money(it.price_max) }));
+        } else if (it.price_min != null) {
+            chips.push(t('site_shop.ai_price_min_only', { min: money(it.price_min) }));
+        }
+        if (it.in_stock) chips.push(t('site_shop.ai_stock_only'));
+        if (it.location) chips.push(it.location);
+        return chips;
+    }
+
+    function renderAi(d) {
+        var box = document.getElementById('dmAiBody');
+        if (!box) return;
+        var html = '';
+
+        var kindLabels = {
+            results: 'site_shop.ai_exact',
+            relaxed: 'site_shop.ai_closest',
+            businesses: 'site_shop.ai_businesses_label',
+            clarify: 'site_shop.ai_clarify_label',
+            none: 'site_shop.ai_results_label'
+        };
+        var it = d.interpreted || {};
+        var terms = (it.terms || []).slice();
+        if (it.phrase) terms.push('"' + it.phrase + '"');
+        if (it.category) terms.push(it.category);
+        var filters = aiFilterChips(d);
+        if (terms.length || filters.length) {
+            html += '<div class="shop-ai-filters"><span class="lbl">' + esc(t('site_shop.ai_interpreted')) + '</span>';
+            terms.forEach(function (x) { html += '<span class="shop-ai-filter">' + esc(x) + '</span>'; });
+            filters.forEach(function (x) { html += '<span class="shop-ai-filter">' + esc(x) + '</span>'; });
+            html += '</div>';
+        }
+
+        if (d.answer && d.answer.text) {
+            html += '<div class="shop-ai-answer"><span class="kind">' + esc(t(kindLabels[d.answer.kind] || 'site_shop.ai_results_label')) + '</span>' + esc(d.answer.text) + '</div>';
+        }
+
+        if (d.clarification && d.clarification.options && d.clarification.options.length) {
+            html += '<div class="shop-ai-label">' + esc(t('site_shop.ai_clarify_label')) + '</div><div class="shop-ai-chips">';
+            d.clarification.options.forEach(function (o, i) {
+                html += '<button type="button" class="shop-ai-chip ask" data-clarify="' + i + '">' + esc(o.label) + (o.count ? ' (' + o.count + ')' : '') + '</button>';
+            });
+            html += '</div>';
+        } else if (d.categories && d.categories.length) {
+            html += '<div class="shop-ai-label">' + esc(t('site_shop.ai_refine_label')) + '</div><div class="shop-ai-chips">';
+            d.categories.forEach(function (c, i) {
+                html += '<button type="button" class="shop-ai-chip" data-cat="' + i + '">' + esc(c.category) + ' (' + c.count + ')</button>';
+            });
+            html += '</div>';
+        }
+
+        if (d.products && d.products.length) {
+            html += '<div class="shop-ai-label">' + esc(t('site_shop.ai_results_label')) + ' (' + d.products.length + ')</div>';
+            html += '<div class="shop-ai-grid">';
+            d.products.forEach(function (p, i) {
+                var biz = p.business || {};
+                var media = p.image
+                    ? '<img src="' + esc(p.image) + '" alt="' + esc(p.name) + '" loading="lazy">'
+                    : '<div class="ph"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>';
+                var stock = p.available
+                    ? '<span class="dm-badge dm-badge--ok">' + esc(t('site_shop.in_stock')) + '</span>'
+                    : '<span class="dm-badge dm-badge--danger">' + esc(t('site_common.out_of_stock')) + '</span>';
+                var match = p.match && p.match.type === 'relaxed'
+                    ? '<span class="dm-badge">' + esc(t('site_shop.ai_closest')) + '</span>'
+                    : '<span class="dm-badge dm-badge--ok">' + esc(t('site_shop.ai_exact')) + '</span>';
+                var cert = biz.certified ? ' <span class="dm-badge dm-badge--ok">' + esc(t('site_shop.ai_certified')) + '</span>' : '';
+                html += '<article class="dm-card product-card">' +
+                    '<div class="product-media">' + media + '</div>' +
+                    '<div class="product-body">' +
+                        '<span class="product-biz dm-wrap-anywhere">' + esc(biz.name || '') + cert + '</span>' +
+                        (biz.location ? '<span class="product-biz dm-wrap-anywhere">' + esc(biz.location) + '</span>' : '') +
+                        '<h3 class="product-name dm-wrap-anywhere">' + esc(p.name) + '</h3>' +
+                        '<div style="display:flex;gap:8px;flex-wrap:wrap">' + stock + match + '</div>' +
+                        '<div class="product-price">' + money(p.selling_price) + '</div>' +
+                        (p.available
+                            ? '<button type="button" class="dm-btn dm-btn--primary dm-btn--sm dm-btn--block" data-aicart="' + i + '">' + esc(t('site_common.order_now')) + '</button>'
+                            : '') +
+                    '</div></article>';
+            });
+            html += '</div>';
+        }
+
+        if (d.businesses && d.businesses.length) {
+            html += '<div class="shop-ai-label">' + esc(t('site_shop.ai_businesses_label')) + '</div>';
+            d.businesses.forEach(function (b) {
+                var avatar = b.avatar
+                    ? '<span class="avatar"><img src="' + esc(b.avatar) + '" alt=""></span>'
+                    : '<span class="avatar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 9l1.5-5h15L21 9"/><path d="M4 9v11h16V9"/><path d="M9 20v-6h6v6"/></svg></span>';
+                var cert = b.certified ? ' <span class="dm-badge dm-badge--ok">' + esc(t('site_shop.ai_certified')) + '</span>' : '';
+                var meta = [];
+                if (b.location) meta.push(b.location);
+                meta.push((b.product_count || 0) + ' ' + t('site_common.products'));
+                html += '<div class="shop-ai-biz">' + avatar +
+                    '<div class="who"><div class="dm-wrap-anywhere" style="font-weight:700">' + esc(b.name) + cert + '</div>' +
+                    '<div class="dm-muted dm-wrap-anywhere" style="font-size:12.5px">' + esc(meta.join(' · ')) + '</div></div>' +
+                    '<button type="button" class="dm-btn dm-btn--ghost dm-btn--sm" data-aibiz="' + esc(b.id) + '">' + esc(t('site_shop.ai_view_business')) + '</button></div>';
+            });
+        }
+
+        var notes = d.notes || [];
+        var limits = d.limitations || [];
+        if (notes.length || limits.length) {
+            html += '<div class="shop-ai-notes">';
+            notes.forEach(function (n) { html += '<div class="note">' + esc(n) + '</div>'; });
+            if (limits.length) {
+                html += '<b>' + esc(t('site_shop.ai_limitations_title')) + '</b>';
+                limits.forEach(function (n) { html += '<div>' + esc(n) + '</div>'; });
+            }
+            html += '</div>';
+        }
+
+        html += '<div class="shop-ai-actions"><button type="button" class="dm-btn dm-btn--ghost dm-btn--sm" id="dmAiClear">' + esc(t('site_shop.ai_clear')) + '</button></div>';
+
+        box.innerHTML = html;
+
+        Array.prototype.forEach.call(box.querySelectorAll('[data-clarify]'), function (btn) {
+            btn.addEventListener('click', function () {
+                var o = (d.clarification.options || [])[+btn.getAttribute('data-clarify')];
+                if (!o) return;
+                askAi(aiState.query, o.type === 'business' ? { business_id: o.business_id } : { category: o.category });
+            });
+        });
+        Array.prototype.forEach.call(box.querySelectorAll('[data-cat]'), function (btn) {
+            btn.addEventListener('click', function () {
+                var c = (d.categories || [])[+btn.getAttribute('data-cat')];
+                if (!c) return;
+                askAi(aiState.query, { category: c.category });
+            });
+        });
+        Array.prototype.forEach.call(box.querySelectorAll('[data-aicart]'), function (btn) {
+            btn.addEventListener('click', function () {
+                var p = (d.products || [])[+btn.getAttribute('data-aicart')];
+                if (!p) return;
+                var biz = p.business || {};
+                addToCart({
+                    id: p.id,
+                    name: p.name,
+                    business_id: biz.id,
+                    business_name: biz.name,
+                    selling_price: p.selling_price
+                }, 1);
+                openCart();
+            });
+        });
+        Array.prototype.forEach.call(box.querySelectorAll('[data-aibiz]'), function (btn) {
+            btn.addEventListener('click', function () {
+                var target = document.querySelector('.biz-btn[data-biz="' + btn.getAttribute('data-aibiz') + '"]');
+                if (target) {
+                    target.click();
+                    target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            });
+        });
+        var clearBtn = document.getElementById('dmAiClear');
+        if (clearBtn) clearBtn.addEventListener('click', resetAi);
+    }
+
+    function resetAi() {
+        aiState.query = '';
+        aiState.refine = {};
+        aiState.answered = false;
+        var box = document.getElementById('dmAiBody');
+        if (box) box.innerHTML = '';
+        var status = document.getElementById('dmAiStatus');
+        if (status) status.textContent = '';
+        loadAiSamples();
+    }
+
+    function loadAiSamples() {
+        var chips = document.getElementById('dmAiChips');
+        if (!chips) return;
+        fetch(API + '/ai/shopping/suggestions?q=', { headers: { 'Accept': 'application/json' } })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                var samples = (d && d.samples) || [];
+                chips.innerHTML = samples.map(function (s) {
+                    return '<button type="button" class="shop-ai-chip" data-sample="' + esc(s) + '">' + esc(s) + '</button>';
+                }).join('');
+                Array.prototype.forEach.call(chips.querySelectorAll('[data-sample]'), function (btn) {
+                    btn.addEventListener('click', function () {
+                        var input = document.getElementById('dmAiQuery');
+                        if (input) input.value = btn.getAttribute('data-sample') || '';
+                        askAi(btn.getAttribute('data-sample'), {});
+                    });
+                });
+            })
+            .catch(function () { /* samples are a nicety, never an error state */ });
+    }
+
+    /* ---------------- capability #14 - recommendations ---------------- */
+    // Session-local mirror of this visitor's dismissals; the durable,
+    // account-scoped list lives on the server (POST dismiss).
+    var recoDismissed = {};
+
+    function recoHeaders() {
+        var token = '';
+        try { token = localStorage.getItem('userToken') || ''; } catch (e) { token = ''; }
+        var headers = { 'Accept': 'application/json' };
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+        return headers;
+    }
+
+    function recoLocale() {
+        if (window.DM && DM.locale) return DM.locale();
+        return document.documentElement.getAttribute('data-dm-locale') || 'sw';
+    }
+
+    function loadRecommendations() {
+        var box = document.getElementById('dmReco');
+        if (!box) return;
+        fetch(API + '/ai/recommendations?locale=' + recoLocale(), { headers: recoHeaders() })
+            .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+            .then(function (res) {
+                if (!res.ok || !res.d || res.d.success !== true) { box.hidden = true; return; }
+                renderRecommendations(res.d);
+            })
+            .catch(function () { box.hidden = true; });
+    }
+
+    function renderRecommendations(d) {
+        var box = document.getElementById('dmReco');
+        var body = document.getElementById('dmRecoBody');
+        if (!box || !body) return;
+
+        var products = (d.products || []).filter(function (p) { return !recoDismissed[p.id]; });
+        var businesses = (d.businesses || []).filter(function (b) { return !recoDismissed[b.id]; });
+        var signedIn = !!recoHeaders()['Authorization'];
+
+        if (!products.length && !businesses.length) { box.hidden = true; return; }
+
+        var html = '';
+        var meta = d.meta || {};
+        if (meta.note) html += '<p class="dm-muted" style="margin:0 0 8px">' + esc(meta.note) + '</p>';
+
+        if (products.length) {
+            html += '<div class="shop-ai-label">' + esc(t('site_reco.products_title')) + '</div>';
+            html += '<div class="dm-grid dm-grid--products">';
+            products.forEach(function (p) {
+                html += '<div class="dm-card" data-reco-card="' + esc(p.id) + '" style="position:relative">';
+                if (signedIn) {
+                    html += '<button type="button" data-reco-dismiss="product:' + esc(p.id) + '" title="' + esc(t('site_reco.dismiss')) + '" aria-label="' + esc(t('site_reco.dismiss')) + '" style="position:absolute;top:6px;right:6px;border:0;background:rgba(255,255,255,.85);border-radius:999px;width:24px;height:24px;cursor:pointer">&#10005;</button>';
+                }
+                if (p.image) html += '<img src="' + esc(p.image) + '" alt="" style="width:100%;height:96px;object-fit:cover;border-radius:8px;margin-bottom:8px">';
+                html += '<b>' + esc(p.name || '') + '</b>';
+                html += '<div class="dm-muted">' + esc(p.business_name || '') + '</div>';
+                html += '<div>' + esc(money(p.selling_price)) + (p.unit ? ' / ' + esc(p.unit) : '') + '</div>';
+                html += '<div class="shop-ai-chip" style="margin-top:6px;display:inline-block">' + esc((p.reason && p.reason.text) || '') + '</div>';
+                if (signedIn) {
+                    html += '<div style="margin-top:6px;display:flex;gap:6px">';
+                    html += '<button type="button" data-reco-fb="helpful:' + esc(p.id) + '" title="' + esc(t('site_reco.helpful')) + '" style="border:0;background:none;cursor:pointer">&#128077;</button>';
+                    html += '<button type="button" data-reco-fb="not_helpful:' + esc(p.id) + '" title="' + esc(t('site_reco.not_helpful')) + '" style="border:0;background:none;cursor:pointer">&#128078;</button>';
+                    html += '</div>';
+                }
+                html += '</div>';
+            });
+            html += '</div>';
+        }
+
+        if (businesses.length) {
+            html += '<div class="shop-ai-label">' + esc(t('site_reco.businesses_title')) + '</div><div class="shop-ai-chips">';
+            businesses.forEach(function (b) {
+                html += '<span class="shop-ai-chip" data-reco-card="' + esc(b.id) + '">' + esc(b.business_name || '') + ' &middot; ' + esc((b.reason && b.reason.text) || '');
+                if (signedIn) {
+                    html += ' <button type="button" data-reco-dismiss="business:' + esc(b.id) + '" title="' + esc(t('site_reco.dismiss')) + '" aria-label="' + esc(t('site_reco.dismiss')) + '" style="border:0;background:none;cursor:pointer">&#10005;</button>';
+                }
+                html += '</span>';
+            });
+            html += '</div>';
+        }
+
+        if (meta.privacy) html += '<p class="dm-muted" style="margin:10px 0 0;font-size:12px">' + esc(meta.privacy) + '</p>';
+
+        body.innerHTML = html;
+        box.hidden = false;
+
+        Array.prototype.forEach.call(body.querySelectorAll('[data-reco-dismiss]'), function (btn) {
+            btn.addEventListener('click', function () {
+                var parts = (btn.getAttribute('data-reco-dismiss') || '').split(':');
+                dismissRecommendation(parts[0], parts[1]);
+            });
+        });
+        Array.prototype.forEach.call(body.querySelectorAll('[data-reco-fb]'), function (btn) {
+            btn.addEventListener('click', function () {
+                var parts = (btn.getAttribute('data-reco-fb') || '').split(':');
+                sendRecoFeedback(parts[0], parts[1]);
+            });
+        });
+    }
+
+    function dismissRecommendation(type, id) {
+        if (!id) return;
+        recoDismissed[id] = true;
+        var el = document.querySelector('[data-reco-card="' + id + '"]');
+        if (el && el.parentNode) el.parentNode.removeChild(el);
+        fetch(API + '/ai/recommendations/dismiss', {
+            method: 'POST',
+            headers: (function () { var h = recoHeaders(); h['Content-Type'] = 'application/json'; return h; })(),
+            body: JSON.stringify({ type: type, id: id })
+        }).catch(function () { /* durable list is a nicety; the card stays hidden locally */ });
+    }
+
+    function sendRecoFeedback(rating, id) {
+        var status = document.getElementById('dmRecoStatus');
+        fetch(API + '/ai/recommendations/feedback', {
+            method: 'POST',
+            headers: (function () { var h = recoHeaders(); h['Content-Type'] = 'application/json'; return h; })(),
+            body: JSON.stringify({ rating: rating, item_id: id || null })
+        })
+            .then(function (r) { return r.json(); })
+            .then(function (d) { if (status) status.textContent = (d && d.message) || ''; })
+            .catch(function () { /* feedback is best-effort */ });
+    }
+
     /* ---------------- init ---------------- */
     document.addEventListener('DOMContentLoaded', function () {
         state.businessId = param('business_id');
@@ -380,6 +823,25 @@
         paintCart();
         loadBusinesses();
         loadProducts(true);
+
+        // Capability #11 - assistant wiring.
+        loadAiSamples();
+        var aiInput = document.getElementById('dmAiQuery');
+        var aiAskBtn = document.getElementById('dmAiAsk');
+        if (aiAskBtn) aiAskBtn.addEventListener('click', function () { askAi(aiInput ? aiInput.value : '', {}); });
+        if (aiInput) aiInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); askAi(aiInput.value, {}); }
+        });
+        var aiSort = document.getElementById('dmAiSort');
+        if (aiSort) aiSort.addEventListener('change', function () {
+            if (aiState.answered && aiState.query) askAi(aiState.query, aiState.refine);
+        });
+        if (window.DM && DM.onChange) DM.onChange(function () { if (!aiState.answered) loadAiSamples(); });
+
+        // Capability #14 - recommendations (public read; personalised when
+        // this visitor has a token, cold-start otherwise).
+        loadRecommendations();
+        if (window.DM && DM.onChange) DM.onChange(function () { loadRecommendations(); });
     });
     function debounce(fn, ms) { var h; return function () { clearTimeout(h); h = setTimeout(fn, ms); }; }
 })();

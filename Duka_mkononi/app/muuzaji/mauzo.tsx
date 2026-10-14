@@ -5,7 +5,6 @@ import { useRouter } from 'expo-router';
 import { shareAsync } from 'expo-sharing';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
     Alert,
     FlatList,
     Modal,
@@ -16,6 +15,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import SmartCartLoader from '../../components/SmartCartLoader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLang } from '../../context/LanguageContext';
 import { useSession } from '../../context/SessionContext';
@@ -845,7 +845,7 @@ export default function MauzoScreen() {
     return (
       <SafeAreaView style={styles.screenSafe} edges={['top']}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#2196F3" />
+          <SmartCartLoader size="large" color="#2196F3" />
           <Text style={styles.loadingText}>{t('seller_dashboard.loading_sales')}</Text>
         </View>
       </SafeAreaView>
@@ -1086,7 +1086,7 @@ export default function MauzoScreen() {
                 disabled={savingSale}
               >
                 {savingSale ? (
-                  <ActivityIndicator size="small" color="white" />
+                  <SmartCartLoader size="compact" color="#ffffff" />
                 ) : null}
                 <Text style={styles.saveButtonText}>{t('seller_dashboard.save')}</Text>
               </TouchableOpacity>

@@ -1,4 +1,5 @@
 @include('partials.dm-locale')
+<link rel="stylesheet" href="/css/smartcart-loader.css">
 @verbatim
 <head>
     <meta charset="UTF-8">
@@ -646,6 +647,15 @@
                     </div>
                     <span class="nav-label" data-i18n="mteja_matangazo.nav_profile">Profaili</span>
                 </a>
+                <a href="nyingine" class="nav-item">
+                    <div class="nav-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <path d="M12 3L13.8 8.2L19 10L13.8 11.8L12 17L10.2 11.8L5 10L10.2 8.2L12 3Z" stroke-linejoin="round"/>
+                            <path d="M18.5 15.5L19.3 17.7L21.5 18.5L19.3 19.3L18.5 21.5L17.7 19.3L15.5 18.5L17.7 17.7L18.5 15.5Z" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <span class="nav-label" data-i18n="mteja_nyingine.nav_label">Nyingine</span>
+                </a>
             </div>
 
             <div class="sidebar-footer">
@@ -669,7 +679,7 @@
         <main class="main-content">
             <div class="page-container" id="matangazoContent">
                 <div class="loading-container">
-                    <div class="loading-spinner"></div>
+                    <div class="loading-spinner dm-sc"></div>
                     <div class="loading-text" data-i18n="mteja_matangazo.loading">Inapakua matangazo...</div>
                 </div>
             </div>
@@ -1195,7 +1205,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             if (loading) {
                 container.innerHTML = `
                     <div class="loading-container">
-                        <div class="loading-spinner"></div>
+                        <div class="loading-spinner dm-sc"></div>
                         <div class="loading-text">${t('loading')}</div>
                     </div>
                 `;

@@ -5,7 +5,6 @@ import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-    ActivityIndicator,
     Alert,
     Image,
     Keyboard,
@@ -20,6 +19,7 @@ import {
     TouchableWithoutFeedback,
     View,
 } from 'react-native';
+import SmartCartLoader from '../../components/SmartCartLoader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLang } from '../../context/LanguageContext';
 import LogoutButton from '../../components/logout-button';
@@ -1461,7 +1461,7 @@ export default function BidhaaMpyaScreen() {
 
               {loadingProducts ? (
                 <View style={styles.modalLoadingContainer}>
-                  <ActivityIndicator size="large" color="#2ecc71" />
+                  <SmartCartLoader size="large" color="#2ecc71" />
                   <Text style={styles.modalLoadingText}>{t('products.modal_loading')}</Text>
                 </View>
               ) : (
@@ -1496,7 +1496,7 @@ export default function BidhaaMpyaScreen() {
     return (
       <SafeAreaView style={styles.screenSafe} edges={['top']}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#2ecc71" />
+          <SmartCartLoader size="large" color="#2ecc71" />
           <Text style={styles.loadingText}>{t('products.modal_loading')}</Text>
         </View>
       </SafeAreaView>
@@ -1650,7 +1650,7 @@ export default function BidhaaMpyaScreen() {
                     activeOpacity={0.85}
                   >
                     {bizSaving ? (
-                      <ActivityIndicator size="small" color="#ffffff" />
+                      <SmartCartLoader size="compact" color="#ffffff" />
                     ) : (
                       <>
                         <Ionicons name="save-outline" size={16} color="#ffffff" />
@@ -1726,7 +1726,7 @@ export default function BidhaaMpyaScreen() {
                   activeOpacity={0.8}
                 >
                   {processingAI ? (
-                    <ActivityIndicator color="white" />
+                    <SmartCartLoader size="compact" color="#ffffff" />
                   ) : (
                     <View style={styles.submitButtonContent}>
                       <Ionicons name="sparkles" size={24} color="white" />
@@ -1871,7 +1871,7 @@ export default function BidhaaMpyaScreen() {
                         activeOpacity={0.8}
                       >
                         {verifyingId === item.id ? (
-                          <ActivityIndicator color="white" />
+                          <SmartCartLoader size="compact" color="#ffffff" />
                         ) : (
                           <View style={styles.submitButtonContent}>
                             <Ionicons
@@ -1940,7 +1940,7 @@ export default function BidhaaMpyaScreen() {
                     activeOpacity={0.8}
                   >
                     {uploadingPhoto ? (
-                      <ActivityIndicator size="small" color="#2ecc71" />
+                      <SmartCartLoader size="compact" color="#2ecc71" />
                     ) : (
                       <Ionicons name="camera-outline" size={18} color="#2ecc71" />
                     )}
@@ -2140,7 +2140,7 @@ export default function BidhaaMpyaScreen() {
               activeOpacity={0.8}
             >
               {loading ? (
-                <ActivityIndicator color="white" />
+                <SmartCartLoader size="compact" color="#ffffff" />
               ) : (
                 <View style={styles.submitButtonContent}>
                   <Ionicons 

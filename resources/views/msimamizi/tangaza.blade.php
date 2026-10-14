@@ -1,4 +1,5 @@
 @include('partials.dm-locale')
+<link rel="stylesheet" href="/css/smartcart-loader.css">
 @verbatim
 <head>
     <meta charset="UTF-8">
@@ -188,13 +189,14 @@
                 <a href="preview" class="nav-item"><div class="nav-icon"><i class="fa-solid fa-calendar-days"></i></div><span class="nav-label" data-i18n="msimamizi_tangaza.nav_review">Rejea</span></a>
                 <a href="bidhaa-mpya" class="nav-item"><div class="nav-icon"><i class="fa-solid fa-circle-plus"></i></div><span class="nav-label" data-i18n="msimamizi_tangaza.nav_new_product">Bidhaa Mpya</span></a>
                 <a href="tangaza" class="nav-item active"><div class="nav-icon"><i class="fa-solid fa-bullhorn"></i></div><span class="nav-label" data-i18n="msimamizi_tangaza.nav_advertise">Tangaza</span></a>
+                <a href="nyingine" class="nav-item"><div class="nav-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div><span class="nav-label" data-i18n="msimamizi_nyingine.nav_label">Nyingine</span></a>
             </div>
             <div class="sidebar-footer">
                 <div class="user-info"><div class="user-avatar" id="userAvatar">M</div><div class="user-details"><div class="user-name" id="userName" data-i18n="msimamizi_tangaza.user_admin">Msimamizi</div><div class="user-role" data-i18n="msimamizi_tangaza.user_admin">Msimamizi</div></div></div>
                 <div class="logout-btn" id="logoutBtn"><i class="fa-solid fa-arrow-right-from-bracket"></i> <span data-i18n="msimamizi_tangaza.logout">Ondoka</span></div>
             </div>
         </aside>
-        <main class="main-content" id="mainContent"><div style="text-align:center;padding:60px;"><div class="loading-spinner"></div><div data-i18n="msimamizi_tangaza.loading_initial">Inapakia...</div></div></main>
+        <main class="main-content" id="mainContent"><div style="text-align:center;padding:60px;"><div class="loading-spinner dm-sc"></div><div data-i18n="msimamizi_tangaza.loading_initial">Inapakia...</div></div></main>
     </div>
 
     <script>
@@ -520,7 +522,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             if (busy) {
                 btn.dataset.originalHtml = btn.innerHTML;
                 btn.classList.add('btn-busy');
-                btn.innerHTML = '<span class="btn-spinner"></span>' + (label || t('saving'));
+                btn.innerHTML = '<span class="btn-spinner dm-sc dm-sc--light"></span>' + (label || t('saving'));
             } else {
                 btn.classList.remove('btn-busy');
                 if (btn.dataset.originalHtml) btn.innerHTML = btn.dataset.originalHtml;
@@ -665,7 +667,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 </div>
                 
                 <button class="upload-btn ${(uploading || !isOnline) ? 'disabled' : ''}" onclick="handleUpload()" ${(uploading || !isOnline) ? 'disabled' : ''}>
-                    ${uploading ? '<div class="loading-spinner" style="width:20px;height:20px;display:inline-block;margin-right:8px;"></div> ' + t('uploading') : ic('megaphone', 17) + ' ' + t('submit_ad')}
+                    ${uploading ? '<div class="loading-spinner dm-sc dm-sc--light" style="width:20px;height:20px;display:inline-block;margin-right:8px;"></div> ' + t('uploading') : ic('megaphone', 17) + ' ' + t('submit_ad')}
                 </button>
                 
                 <div class="instructions">
@@ -680,7 +682,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
 
         function renderMyPosts() {
             if (loadingAds) {
-                return `<div style="text-align:center;padding:60px;"><div class="loading-spinner"></div><div>${t('loading_ads')}</div></div>`;
+                return `<div style="text-align:center;padding:60px;"><div class="loading-spinner dm-sc"></div><div>${t('loading_ads')}</div></div>`;
             }
             
             if (myAdvertisements.length === 0) {
@@ -729,6 +731,219 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             }).join('');
         }
 
+        // ===================== CONTENT REVIEW (capability #16) =============
+        // A moderation AID, not an authority: the findings come from the
+        // server's deterministic checks (with an optional advisory AI note on
+        // flagged claims), and every approve / reject / request-edits press is
+        // a HUMAN decision that the server re-verifies and records.
+        const CR = {
+            title: 'Ukaguzi wa Maudhui',
+            subtitle: 'Hakiki matangazo na bidhaa zako kabla ya kuchapisha',
+            btn_check: 'Kagua Sasa',
+            checking: 'Inakagua...',
+            err_check: 'Imeshindwa kukagua. Jaribu tena.',
+            stat_checked: 'Vilivyokaguliwa',
+            stat_violations: 'Kukiukwa',
+            stat_concerns: 'Mambo ya kuangalia',
+            stat_clean: 'Safi',
+            sev_violation: 'Kukiukwa',
+            sev_concern: 'Hakiki',
+            tab_ads: 'Matangazo ({count})',
+            tab_products: 'Bidhaa ({count})',
+            verdict_label: 'Maoni ya AI',
+            verdict_supported: 'Imeungwa mkono na maandishi',
+            verdict_unsupported: 'Haiungwi mkono',
+            verdict_uncertain: 'Haijajulikana',
+            no_items: 'Hakuna matangazo wala bidhaa za kukagua.',
+            no_findings: 'Hakuna tatizo lolote lilolopatikana.',
+            dec_pick: 'Chagua uamuzi: Idhini, Kataa au Omba Marekebisho.',
+            dec_approve: 'Idhini',
+            dec_reject: 'Kataa',
+            dec_edit: 'Omba Marekebisho',
+            dec_note_placeholder: 'Sababu (inahitajika kukataa)',
+            dec_done: 'Uamuzi umerekodiwa.',
+            reviewed_confirm: 'Nimesoma mabao yote',
+            active_label: 'Inaonyeshwa',
+            inactive_label: 'Imefichwa',
+            advisory_note: 'AI ni msaada tu; kila uamuzi ni wako na umerekodiwa.'
+        };
+
+        function tc(key, params) {
+            if (window.DM && typeof window.DM.t === 'function') {
+                const full = 'content_review.' + key;
+                const hit = window.DM.t(full, params);
+                if (hit !== full) return hit;
+            }
+            let value = CR[key] !== undefined ? CR[key] : key;
+            if (params) {
+                for (const k in params) value = String(value).split('{' + k + '}').join(String(params[k]));
+            }
+            return value;
+        }
+
+        function reviewToast(message) {
+            const el = document.createElement('div');
+            el.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#2c3e50;color:white;padding:11px 20px;border-radius:24px;font-size:13px;font-weight:600;z-index:3000;max-width:86%;text-align:center;box-shadow:0 6px 20px rgba(0,0,0,0.2);';
+            el.textContent = message;
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 3200);
+        }
+
+        let reviewState = { data: null, loading: false, error: false, tab: 'ads', decisions: {}, notes: {}, reviewed: {} };
+
+        function reviewLocale() {
+            if (window.DM && typeof window.DM.locale === 'function') return window.DM.locale();
+            return document.documentElement.getAttribute('data-dm-locale') || 'sw';
+        }
+
+        async function runReviewCheck() {
+            if (!userToken || reviewState.loading) return;
+            reviewState.loading = true;
+            reviewState.error = false;
+            fillReviewPanel();
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/ai/reviews/check`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
+                    body: JSON.stringify({ target: 'all', locale: reviewLocale() })
+                });
+                if (!res.ok) throw new Error('review failed');
+                const json = await res.json();
+                if (!json || !json.success) throw new Error('review failed');
+                reviewState.data = json;
+            } catch (e) {
+                reviewState.data = null;
+                reviewState.error = true;
+            } finally {
+                reviewState.loading = false;
+                fillReviewPanel();
+            }
+        }
+
+        async function submitReviewDecision(type, id) {
+            const decision = reviewState.decisions[id];
+            if (!decision) { reviewToast(tc('dec_pick')); return; }
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/ai/reviews/decision`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
+                    body: JSON.stringify({
+                        target_type: type,
+                        target_id: id,
+                        decision: decision,
+                        note: (reviewState.notes[id] || '').trim(),
+                        reviewed: !!reviewState.reviewed[id]
+                    })
+                });
+                const json = await res.json().catch(() => null);
+                if (!res.ok) { reviewToast((json && json.error) || tc('err_check')); return; }
+                const item = ((reviewState.data && reviewState.data.items) || []).find(i => i.id === id);
+                if (item && json.target) item.is_active = json.target.is_active;
+                reviewState.decisions[id] = '';
+                reviewToast(tc('dec_done'));
+                fillReviewPanel();
+            } catch (e) {
+                reviewToast(tc('err_check'));
+            }
+        }
+
+        function reviewItemCard(item) {
+            const activeBadge = item.is_active
+                ? `<span style="background:#27ae6018;color:#27ae60;padding:2px 9px;border-radius:10px;font-size:10.5px;font-weight:700;">${tc('active_label')}</span>`
+                : `<span style="background:#95a5a622;color:#7f8c8d;padding:2px 9px;border-radius:10px;font-size:10.5px;font-weight:700;">${tc('inactive_label')}</span>`;
+
+            const findings = (item.findings || []).map(f => {
+                const violation = f.severity === 'violation';
+                const sevChip = `<span style="background:${violation ? '#e74c3c18' : '#f39c1218'};color:${violation ? '#e74c3c' : '#b9770e'};padding:2px 9px;border-radius:10px;font-size:10.5px;font-weight:700;">${violation ? tc('sev_violation') : tc('sev_concern')}</span>`;
+                const excerpt = f.excerpt ? `<div style="margin-top:4px;font-size:11px;color:#7f8c8d;background:#f8f9fa;border-left:3px solid #dfe6e9;padding:4px 8px;border-radius:0 8px 8px 0;">${escapeHtml(f.excerpt)}</div>` : '';
+                const aiPill = f.ai ? `<div style="margin-top:4px;font-size:11px;color:#667eea;">${tc('verdict_label')}: ${tc('verdict_' + f.ai.verdict)}${f.ai.reason ? ' — ' + escapeHtml(f.ai.reason) : ''}</div>` : '';
+                return `<div style="padding:8px 0;border-top:1px dashed #ecf0f1;">
+                    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">${sevChip}<span style="font-size:12.5px;color:#2c3e50;">${escapeHtml(f.message)}</span></div>
+                    ${excerpt}${aiPill}</div>`;
+            }).join('');
+
+            const decision = reviewState.decisions[item.id] || '';
+            const chip = (val, label, color) => `<div onclick="setReviewDecision('${item.id}','${val}')" style="flex:1;text-align:center;padding:8px 4px;border-radius:10px;border:1.5px solid ${decision === val ? color : '#ecf0f1'};background:${decision === val ? color + '14' : 'white'};color:${decision === val ? color : '#7f8c8d'};font-size:11.5px;font-weight:700;cursor:pointer;">${label}</div>`;
+            const submitLabel = decision ? tc({ approve: 'dec_approve', reject: 'dec_reject', request_edit: 'dec_edit' }[decision]) : tc('dec_title');
+
+            return `<div style="background:white;border-radius:14px;padding:14px;margin-bottom:10px;border:1px solid #f1f3f4;">
+                <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;">
+                    <div style="font-weight:700;font-size:14px;color:#2c3e50;">${escapeHtml(item.title || '-')}</div>
+                    ${activeBadge}
+                </div>
+                ${item.subtitle ? `<div style="font-size:11.5px;color:#7f8c8d;margin-top:2px;">${escapeHtml(item.subtitle)}</div>` : ''}
+                <div style="display:flex;gap:6px;margin-top:6px;">
+                    <span style="background:#e74c3c12;color:#e74c3c;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;">${tc('stat_violations')}: ${item.violations}</span>
+                    <span style="background:#f39c1215;color:#b9770e;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;">${tc('stat_concerns')}: ${item.concerns}</span>
+                </div>
+                ${findings || `<div style="margin-top:8px;font-size:12px;color:#27ae60;">✓ ${tc('no_findings')}</div>`}
+                <div style="margin-top:10px;display:flex;gap:8px;">
+                    ${chip('approve', tc('dec_approve'), '#27ae60')}
+                    ${chip('reject', tc('dec_reject'), '#e74c3c')}
+                    ${chip('request_edit', tc('dec_edit'), '#f39c12')}
+                </div>
+                <input type="text" maxlength="300" placeholder="${escapeHtml(tc('dec_note_placeholder'))}" value="${escapeHtml(reviewState.notes[item.id] || '')}" oninput="setReviewNote('${item.id}', this.value)" style="width:100%;margin-top:8px;padding:9px 12px;border:1px solid #ecf0f1;border-radius:10px;font-size:12.5px;box-sizing:border-box;">
+                <label style="display:flex;gap:8px;align-items:center;margin-top:8px;font-size:12px;color:#5d6d7e;cursor:pointer;">
+                    <input type="checkbox" ${reviewState.reviewed[item.id] ? 'checked' : ''} onchange="setReviewReviewed('${item.id}', this.checked)">
+                    ${tc('reviewed_confirm')}
+                </label>
+                <div onclick="submitReviewDecision('${item.type}','${item.id}')" style="margin-top:10px;text-align:center;padding:10px;border-radius:12px;background:#667eea;color:white;font-weight:700;font-size:13px;cursor:pointer;">${submitLabel}</div>
+            </div>`;
+        }
+
+        function fillReviewPanel() {
+            const host = document.getElementById('reviewPanel');
+            if (!host) return;
+            const d = reviewState.data;
+            const ads = d ? (d.items || []).filter(i => i.type === 'ad') : [];
+            const products = d ? (d.items || []).filter(i => i.type === 'product') : [];
+            const items = reviewState.tab === 'ads' ? ads : products;
+
+            const tab = (val, label) => `<div onclick="setReviewTab('${val}')" style="padding:7px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;background:${reviewState.tab === val ? '#667eea' : '#f4f6f7'};color:${reviewState.tab === val ? 'white' : '#5d6d7e'};">${label}</div>`;
+
+            let body;
+            if (reviewState.loading) {
+                body = `<div style="text-align:center;padding:16px;color:#7f8c8d;">${tc('checking')}</div>`;
+            } else if (reviewState.error || !d) {
+                body = `<div style="text-align:center;padding:14px;">
+                    <div style="color:#e74c3c;font-size:13px;">${escapeHtml(tc('err_check'))}</div>
+                    <div onclick="runReviewCheck()" style="display:inline-block;margin-top:8px;padding:7px 18px;border-radius:20px;background:#667eea;color:white;font-size:12px;font-weight:600;cursor:pointer;">${tc('btn_check')}</div>
+                </div>`;
+            } else if ((d.items || []).length === 0) {
+                body = `<div style="text-align:center;padding:16px;color:#7f8c8d;">${tc('no_items')}</div>`;
+            } else {
+                const s = d.stats || {};
+                const stat = (value, label, color) => `<div style="flex:1;min-width:76px;background:#f8f9fa;border-radius:12px;padding:8px;text-align:center;"><div style="font-weight:800;color:${color};">${value}</div><div style="font-size:10px;color:#7f8c8d;">${label}</div></div>`;
+                body = `
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        ${stat(s.items_checked || 0, tc('stat_checked'), '#2c3e50')}
+                        ${stat(s.violations || 0, tc('stat_violations'), '#e74c3c')}
+                        ${stat(s.concerns || 0, tc('stat_concerns'), '#b9770e')}
+                        ${stat(s.clean || 0, tc('stat_clean'), '#27ae60')}
+                    </div>
+                    <div style="display:flex;gap:8px;margin-top:10px;">${tab('ads', tc('tab_ads', { count: ads.length }))}${tab('products', tc('tab_products', { count: products.length }))}</div>
+                    <div style="margin-top:10px;">${items.length ? items.map(reviewItemCard).join('') : `<div style="text-align:center;padding:14px;color:#7f8c8d;">${tc('no_items')}</div>`}</div>
+                    <div style="margin-top:8px;font-size:10.5px;color:#95a5a6;">${tc('advisory_note')}</div>`;
+            }
+
+            host.innerHTML = `
+                <div style="background:white;border-radius:16px;padding:16px;margin-bottom:16px;border-left:4px solid #667eea;box-shadow:0 2px 10px rgba(0,0,0,0.04);">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        ${ic('ai', 16)}<div style="font-weight:800;font-size:15px;color:#2c3e50;">${tc('title')}</div>
+                        <div onclick="runReviewCheck()" style="margin-left:auto;padding:7px 16px;border-radius:20px;background:#667eea;color:white;font-size:12px;font-weight:700;cursor:pointer;user-select:none;">${reviewState.loading ? tc('checking') : tc('btn_check')}</div>
+                    </div>
+                    <div style="font-size:11.5px;color:#7f8c8d;margin-top:2px;">${escapeHtml(tc('subtitle'))}</div>
+                    <div style="margin-top:10px;">${body}</div>
+                </div>`;
+        }
+
+        window.runReviewCheck = runReviewCheck;
+        window.submitReviewDecision = submitReviewDecision;
+        window.setReviewTab = (tab) => { reviewState.tab = tab; fillReviewPanel(); };
+        window.setReviewDecision = (id, decision) => { reviewState.decisions[id] = decision; fillReviewPanel(); };
+        window.setReviewNote = (id, value) => { reviewState.notes[id] = value; };
+        window.setReviewReviewed = (id, checked) => { reviewState.reviewed[id] = !!checked; fillReviewPanel(); };
+
         function render() {
             const container = document.getElementById('mainContent');
             container.innerHTML = `
@@ -738,6 +953,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                         <div class="tab ${activeTab === 'myPosts' ? 'active' : ''}" onclick="setTab('myPosts')">${ic('doc', 15)} ${t('tab_my_ads', { count: myAdvertisements.length })}</div>
                     </div>
                     ${activeTab === 'post' ? renderPostNew() : `
+                        <div id="reviewPanel"></div>
                         <div class="posts-header">
                             <div class="section-title">${t('my_ads_title')}</div>
                             <div class="refresh-btn" onclick="refreshAds()">${ic('refresh', 13)} ${t('refresh')}</div>
@@ -747,12 +963,16 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 </div>
             `;
             if (activeTab === 'post') setupDescriptionListener();
+            else fillReviewPanel();
         }
 
         window.setTab = (tab) => {
             activeTab = tab;
-            if (tab === 'myPosts') loadMyAdvertisements();
-            else render();
+            if (tab === 'myPosts') {
+                loadMyAdvertisements();
+                // First visit to the list: run the content review once.
+                if (!reviewState.data && !reviewState.loading) runReviewCheck();
+            } else render();
         };
         
         window.refreshAds = () => { loadMyAdvertisements(); };

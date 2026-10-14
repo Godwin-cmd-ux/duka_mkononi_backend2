@@ -2,7 +2,6 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -10,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import SmartCartLoader from '../../components/SmartCartLoader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLang } from '../../context/LanguageContext';
 import { getCache, setCache } from '../../db/cache';
@@ -400,7 +400,7 @@ export default function MpangoStockScreen() {
     if (loading) {
       return (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#2ecc71" />
+          <SmartCartLoader size="large" color="#2ecc71" />
           <Text style={styles.centerText}>{t('restock_planner.loading')}</Text>
         </View>
       );
@@ -450,7 +450,7 @@ export default function MpangoStockScreen() {
         <Text style={styles.title}>{t('restock_planner.title')}</Text>
         <TouchableOpacity style={styles.refreshBtn} onPress={() => load(true)} disabled={refreshing}>
           {refreshing ? (
-            <ActivityIndicator size="small" color="#2ecc71" />
+            <SmartCartLoader size="compact" color="#2ecc71" />
           ) : (
             <Ionicons name="refresh" size={20} color="#2ecc71" />
           )}

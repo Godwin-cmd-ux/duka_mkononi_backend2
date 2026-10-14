@@ -13,7 +13,7 @@ import { useLang } from '../../context/LanguageContext';
 /**
  * "Other Services" hub (seller mobile screen).
  *
- * Groups the four AI capabilities behind a single tab so the tab bar stays
+ * Groups the AI capabilities behind a single tab so the tab bar stays
  * tidy. Each card is a distinct emoji + colour so the four services are easier
  * to tell apart, and routes to its existing dedicated screen.
  */
@@ -27,10 +27,12 @@ interface ServiceCard {
 }
 
 const SERVICES: ServiceCard[] = [
+  { key: 'copilot', icon: '🧭', route: '/muuzaji/msaidizi', color: '#3f51b5', tint: '#eef0fb' },
   { key: 'price', icon: '💹', route: '/muuzaji/ushauri-bei', color: '#2980b9', tint: '#eaf4fc' },
   { key: 'restock', icon: '📦', route: '/muuzaji/mpango-stock', color: '#e67e22', tint: '#fdf1e3' },
   { key: 'ask', icon: '💬', route: '/muuzaji/uliza-biashara', color: '#8e44ad', tint: '#f5ecfa' },
   { key: 'health', icon: '🩺', route: '/muuzaji/afya-biashara', color: '#16a085', tint: '#e6f7f3' },
+  { key: 'ads', icon: '📣', route: '/muuzaji/tangaza', color: '#c0392b', tint: '#fdecea' },
 ];
 
 export default function HudumaNyingine() {

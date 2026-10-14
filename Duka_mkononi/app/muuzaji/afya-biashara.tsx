@@ -3,7 +3,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
-  ActivityIndicator,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -11,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import SmartCartLoader from '../../components/SmartCartLoader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLang } from '../../context/LanguageContext';
 import { fetchWithTimeout } from '../../lib/network';
@@ -335,7 +335,7 @@ export default function AfyaBiasharaScreen() {
           onPress={() => load(true)}
           disabled={loading || generating}>
           {generating ? (
-            <ActivityIndicator size="small" color="#ffffff" />
+            <SmartCartLoader size="compact" color="#ffffff" />
           ) : (
             <Text style={styles.refreshBtnText}>{t('health_digest.btn_refresh')}</Text>
           )}
@@ -349,7 +349,7 @@ export default function AfyaBiasharaScreen() {
         }>
         {loading && (
           <View style={styles.center}>
-            <ActivityIndicator size="large" color="#2ecc71" />
+            <SmartCartLoader size="standard" color="#2ecc71" />
             <Text style={styles.centerText}>{t('health_digest.loading')}</Text>
           </View>
         )}

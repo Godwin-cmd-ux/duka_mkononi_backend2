@@ -1,4 +1,5 @@
 @include('partials.dm-locale')
+<link rel="stylesheet" href="/css/smartcart-loader.css">
 @verbatim
 <head>
     <meta charset="UTF-8">
@@ -338,7 +339,7 @@
             <div class="page-container" id="pageContainer">
                 <!-- Dynamic content loads here -->
                 <div style="text-align: center; padding: 60px 20px;">
-                    <div class="spinner" style="border-top-color: #2ecc71;"></div>
+                    <div class="spinner dm-sc"></div>
                     <p style="margin-top: 20px; color: #7f8c8d;" data-i18n="muuzaji_sidebar.loading">Loading...</p>
                 </div>
             </div>
@@ -347,7 +348,7 @@
 
     <!-- Loading overlay -->
     <div class="loading-overlay" id="loadingOverlay">
-        <div class="spinner"></div>
+        <div class="spinner dm-sc dm-sc--light"></div>
     </div>
 
     <script>

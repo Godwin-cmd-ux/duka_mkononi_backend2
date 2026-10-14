@@ -3,7 +3,7 @@ import { ResizeMode, Video } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import * as WebBrowser from 'expo-web-browser';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -16,6 +16,7 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
+import SmartCartLoader from '../../components/SmartCartLoader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLang } from '../../context/LanguageContext';
 import { useSession } from '../../context/SessionContext';
@@ -637,7 +638,7 @@ export default function TangazaScreen() {
     if (loadingUser) {
       return (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#FF6B35" />
+          <SmartCartLoader size="large" color="#FF6B35" />
           <Text style={styles.loadingText}>{t('adverts.loading_refresh')}</Text>
         </View>
       );
@@ -729,7 +730,7 @@ export default function TangazaScreen() {
         >
           {uploading ? (
             <View style={styles.uploadingContainer}>
-              <ActivityIndicator color="white" size="small" />
+              <SmartCartLoader size="compact" color="#ffffff" />
               <Text style={styles.uploadingText}>
                 {processPhase === 'uploading' && t('adverts.uploading_phase')}
                 {processPhase === 'redirecting' && t('adverts.payment_redirect_phase')}
@@ -772,7 +773,7 @@ export default function TangazaScreen() {
 
         {loadingAds ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#FF6B35" />
+            <SmartCartLoader size="large" color="#FF6B35" />
             <Text style={styles.loadingText}>{t('adverts.loading_refresh')}</Text>
           </View>
         ) : myAdvertisements.length > 0 ? (
@@ -894,7 +895,7 @@ export default function TangazaScreen() {
     return (
       <SafeAreaView style={styles.screenSafe} edges={['top']}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#FF6B35" />
+          <SmartCartLoader size="large" color="#FF6B35" />
           <Text style={styles.loadingText}>{t('adverts.loading_refresh')}</Text>
         </View>
       </SafeAreaView>
@@ -924,12 +925,18 @@ export default function TangazaScreen() {
         </TouchableOpacity>
       </View>
 
-      {activeTab === 'post' ? renderPostNew() : renderMyPosts()}
+      {activeTab === 'post' ? renderPostNew() : (
+        <>
+          {/* Capability #16 - content review: findings + a recorded human decision */}
+          <ContentReviewCard />
+          {renderMyPosts()}
+        </>
+      )}
 
       {processPhase !== 'idle' && (
         <View style={styles.processingOverlay}>
           <View style={styles.processingCard}>
-            <ActivityIndicator size="large" color="#FF6B35" />
+            <SmartCartLoader size="large" color="#FF6B35" />
             <Text style={styles.processingTitle}>
               {processPhase === 'uploading' && t('adverts.uploading_phase')}
               {processPhase === 'redirecting' && t('adverts.payment_redirect_phase')}
@@ -1435,4 +1442,327 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
   },
+});
+
+// ===================== CONTENT REVIEW (capability #16) =====================
+// A moderation AID, not an authority: the findings come from the server's
+// deterministic checks (with an optional advisory AI note on flagged claims),
+// and every approve / reject / request-edits press is a HUMAN decision that
+// the server re-verifies and records.
+type ReviewFinding = {
+  category: string;
+  severity: string;
+  message: string;
+  excerpt?: string;
+  ai?: { verdict: string; reason: string };
+};
+
+type ReviewItem = {
+  type: 'ad' | 'product';
+  id: string;
+  title: string;
+  subtitle: string;
+  is_active: boolean;
+  findings: ReviewFinding[];
+  violations: number;
+  concerns: number;
+};
+
+function ContentReviewCard() {
+  const { t, lang } = useLang();
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [tab, setTab] = useState<'ads' | 'products'>('ads');
+  const [decisions, setDecisions] = useState<Record<string, string>>({});
+  const [notes, setNotes] = useState<Record<string, string>>({});
+  const [reviewed, setReviewed] = useState<Record<string, boolean>>({});
+  const [submitting, setSubmitting] = useState(false);
+
+  const runCheck = useCallback(async () => {
+    const token = await AsyncStorage.getItem('userToken');
+    if (!token) return;
+    setLoading(true);
+    try {
+      const res = await fetchWithTimeout(
+        `${API_BASE_URL}/api/ai/reviews/check`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            'ngrok-skip-browser-warning': 'true'
+          },
+          body: JSON.stringify({ target: 'all', locale: lang })
+        },
+        25000
+      );
+      if (!res.ok) throw new Error('review failed');
+      const json = await res.json();
+      if (!json || !json.success) throw new Error('review failed');
+      setData(json);
+    } catch {
+      setData(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [lang]);
+
+  useEffect(() => {
+    runCheck();
+    // First open only - the check button re-runs it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const submitDecision = async (item: ReviewItem) => {
+    const decision = decisions[item.id];
+    if (!decision) {
+      Alert.alert(t('content_review.alert'), t('content_review.dec_pick'));
+      return;
+    }
+    const token = await AsyncStorage.getItem('userToken');
+    if (!token) return;
+    setSubmitting(true);
+    try {
+      const res = await fetchWithTimeout(
+        `${API_BASE_URL}/api/ai/reviews/decision`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            'ngrok-skip-browser-warning': 'true'
+          },
+          body: JSON.stringify({
+            target_type: item.type,
+            target_id: item.id,
+            decision,
+            note: (notes[item.id] || '').trim(),
+            reviewed: !!reviewed[item.id]
+          })
+        },
+        20000
+      );
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        Alert.alert(t('content_review.alert'), (json && json.error) || t('content_review.err_check'));
+        return;
+      }
+      setData((prev: any) => prev ? {
+        ...prev,
+        items: (prev.items || []).map((i: ReviewItem) =>
+          i.id === item.id && json.target ? { ...i, is_active: json.target.is_active } : i)
+      } : prev);
+      setDecisions((prev) => ({ ...prev, [item.id]: '' }));
+      Alert.alert(t('content_review.alert'), t('content_review.dec_done'));
+    } catch {
+      Alert.alert(t('content_review.alert'), t('content_review.err_check'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const ads = ((data && data.items) || []).filter((i: ReviewItem) => i.type === 'ad');
+  const products = ((data && data.items) || []).filter((i: ReviewItem) => i.type === 'product');
+  const items = tab === 'ads' ? ads : products;
+
+  const renderFinding = (f: ReviewFinding, index: number) => {
+    const violation = f.severity === 'violation';
+    return (
+      <View key={index} style={revStyles.findingBox}>
+        <View style={revStyles.findingHead}>
+          <View style={[revStyles.sevChip, { backgroundColor: violation ? '#e74c3c18' : '#f39c1218' }]}>
+            <Text style={[revStyles.sevText, { color: violation ? '#e74c3c' : '#b9770e' }]}>
+              {violation ? t('content_review.sev_violation') : t('content_review.sev_concern')}
+            </Text>
+          </View>
+          <Text style={revStyles.findingMsg}>{f.message}</Text>
+        </View>
+        {!!f.excerpt && <Text style={revStyles.excerpt}>\u201c{f.excerpt}\u201d</Text>}
+        {!!f.ai && (
+          <Text style={revStyles.aiNote}>
+            {t('content_review.verdict_label')}: {t(`content_review.verdict_${f.ai.verdict}`)}{f.ai.reason ? ` \u2014 ${f.ai.reason}` : ''}
+          </Text>
+        )}
+      </View>
+    );
+  };
+
+  const renderDecisionItem = (item: ReviewItem) => {
+    const decision = decisions[item.id] || '';
+    const choice = (val: string, label: string, color: string) => (
+      <TouchableOpacity
+        key={val}
+        style={[revStyles.choiceChip, decision === val && { borderColor: color, backgroundColor: color + '18' }]}
+        disabled={submitting}
+        onPress={() => setDecisions((prev) => ({ ...prev, [item.id]: val }))}
+      >
+        <Text style={[revStyles.choiceText, decision === val && { color }]}>{label}</Text>
+      </TouchableOpacity>
+    );
+    const submitLabel = decision === 'approve'
+      ? t('content_review.dec_approve')
+      : decision === 'reject'
+        ? t('content_review.dec_reject')
+        : decision === 'request_edit'
+          ? t('content_review.dec_edit')
+          : t('content_review.dec_title');
+
+    return (
+      <View key={item.id} style={revStyles.itemCard}>
+        <View style={revStyles.itemHead}>
+          <Text style={revStyles.itemTitle} numberOfLines={1}>{item.title || '-'}</Text>
+          <View style={[revStyles.stateChip, { backgroundColor: item.is_active ? '#27ae6018' : '#95a5a622' }]}>
+            <Text style={[revStyles.stateText, { color: item.is_active ? '#27ae60' : '#7f8c8d' }]}>
+              {item.is_active ? t('content_review.active_label') : t('content_review.inactive_label')}
+            </Text>
+          </View>
+        </View>
+        {!!item.subtitle && <Text style={revStyles.itemSub}>{item.subtitle}</Text>}
+        <View style={revStyles.countRow}>
+          <Text style={[revStyles.countBadge, { backgroundColor: '#e74c3c12', color: '#e74c3c' }]}>
+            {t('content_review.stat_violations')}: {item.violations}
+          </Text>
+          <Text style={[revStyles.countBadge, { backgroundColor: '#f39c1215', color: '#b9770e' }]}>
+            {t('content_review.stat_concerns')}: {item.concerns}
+          </Text>
+        </View>
+
+        {item.findings.length > 0
+          ? item.findings.map(renderFinding)
+          : <Text style={revStyles.noFindings}>\u2713 {t('content_review.no_findings')}</Text>}
+
+        <View style={revStyles.choiceRow}>
+          {choice('approve', t('content_review.dec_approve'), '#27ae60')}
+          {choice('reject', t('content_review.dec_reject'), '#e74c3c')}
+          {choice('request_edit', t('content_review.dec_edit'), '#f39c12')}
+        </View>
+        <TextInput
+          style={revStyles.noteInput}
+          value={notes[item.id] || ''}
+          onChangeText={(v) => setNotes((prev) => ({ ...prev, [item.id]: v }))}
+          placeholder={t('content_review.dec_note_placeholder')}
+          placeholderTextColor="#95a5a6"
+          maxLength={300}
+        />
+        <TouchableOpacity
+          style={revStyles.checkRow}
+          onPress={() => setReviewed((prev) => ({ ...prev, [item.id]: !prev[item.id] }))}
+        >
+          <View style={[revStyles.checkbox, reviewed[item.id] && revStyles.checkboxOn]}>
+            {reviewed[item.id] ? <Text style={revStyles.checkMark}>\u2713</Text> : null}
+          </View>
+          <Text style={revStyles.checkLabel}>{t('content_review.reviewed_confirm')}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={revStyles.submitBtn} disabled={submitting} onPress={() => submitDecision(item)}>
+          <Text style={revStyles.submitText}>{submitLabel}</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  return (
+    <View style={revStyles.card}>
+      <View style={revStyles.headerRow}>
+        <Text style={revStyles.sparkle}>✨</Text>
+        <Text style={revStyles.title}>{t('content_review.title')}</Text>
+        <TouchableOpacity style={revStyles.checkBtn} disabled={loading} onPress={runCheck}>
+          <Text style={revStyles.checkBtnText}>{loading ? t('content_review.checking') : t('content_review.btn_check')}</Text>
+        </TouchableOpacity>
+      </View>
+      <Text style={revStyles.subtitle}>{t('content_review.subtitle')}</Text>
+
+      {loading ? (
+        <View style={revStyles.centerBox}>
+          <ActivityIndicator size="small" color="#667eea" />
+          <Text style={revStyles.muted}>{t('content_review.checking')}</Text>
+        </View>
+      ) : !data ? (
+        <View style={revStyles.centerBox}>
+          <Text style={revStyles.errorText}>{t('content_review.err_check')}</Text>
+        </View>
+      ) : ((data.items || []).length === 0) ? (
+        <Text style={revStyles.muted}>{t('content_review.no_items')}</Text>
+      ) : (
+        <>
+          <View style={revStyles.statsRow}>
+            {([
+              [data.stats?.items_checked ?? 0, t('content_review.stat_checked'), '#2c3e50'],
+              [data.stats?.violations ?? 0, t('content_review.stat_violations'), '#e74c3c'],
+              [data.stats?.concerns ?? 0, t('content_review.stat_concerns'), '#b9770e'],
+              [data.stats?.clean ?? 0, t('content_review.stat_clean'), '#27ae60']
+            ] as [number, string, string][]).map(([value, label, color]) => (
+              <View key={label} style={revStyles.statBox}>
+                <Text style={[revStyles.statValue, { color }]}>{String(value)}</Text>
+                <Text style={revStyles.statLabel}>{label}</Text>
+              </View>
+            ))}
+          </View>
+
+          <View style={revStyles.tabRow}>
+            {([
+              ['ads', t('content_review.tab_ads', { count: ads.length })],
+              ['products', t('content_review.tab_products', { count: products.length })]
+            ] as [string, string][]).map(([key, label]) => (
+              <TouchableOpacity key={key} style={[revStyles.tabChip, tab === key && revStyles.tabChipActive]} onPress={() => setTab(key as 'ads' | 'products')}>
+                <Text style={[revStyles.tabText, tab === key && revStyles.tabTextActive]}>{label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {items.length > 0 ? items.map(renderDecisionItem) : <Text style={revStyles.muted}>{t('content_review.no_items')}</Text>}
+          <Text style={revStyles.footnote}>{t('content_review.advisory_note')}</Text>
+        </>
+      )}
+    </View>
+  );
+}
+
+const revStyles = StyleSheet.create({
+  card: { backgroundColor: 'white', borderRadius: 16, padding: 16, marginBottom: 16, borderLeftWidth: 4, borderLeftColor: '#667eea' },
+  headerRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  sparkle: { fontSize: 15 },
+  title: { flex: 1, fontSize: 15.5, fontWeight: '800', color: '#2c3e50' },
+  checkBtn: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, backgroundColor: '#667eea' },
+  checkBtnText: { color: 'white', fontSize: 12, fontWeight: '700' },
+  subtitle: { fontSize: 11.5, color: '#7f8c8d', marginTop: 2 },
+  centerBox: { alignItems: 'center', paddingVertical: 16, gap: 6 },
+  muted: { fontSize: 12.5, color: '#7f8c8d', textAlign: 'center' },
+  errorText: { fontSize: 13, color: '#e74c3c', textAlign: 'center' },
+  statsRow: { flexDirection: 'row', gap: 8, marginTop: 12, flexWrap: 'wrap' },
+  statBox: { flexGrow: 1, minWidth: 70, backgroundColor: '#f8f9fa', borderRadius: 12, paddingVertical: 8, paddingHorizontal: 6, alignItems: 'center' },
+  statValue: { fontSize: 15, fontWeight: '800' },
+  statLabel: { fontSize: 9.5, color: '#7f8c8d', marginTop: 1 },
+  tabRow: { flexDirection: 'row', gap: 8, marginTop: 12 },
+  tabChip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, backgroundColor: '#f4f6f7' },
+  tabChipActive: { backgroundColor: '#667eea' },
+  tabText: { fontSize: 12, fontWeight: '700', color: '#5d6d7e' },
+  tabTextActive: { color: 'white' },
+  itemCard: { backgroundColor: '#fafbfc', borderRadius: 14, padding: 12, marginTop: 10, borderWidth: 1, borderColor: '#f1f3f4' },
+  itemHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  itemTitle: { flex: 1, fontSize: 13.5, fontWeight: '700', color: '#2c3e50' },
+  stateChip: { paddingHorizontal: 9, paddingVertical: 3, borderRadius: 10 },
+  stateText: { fontSize: 10.5, fontWeight: '700' },
+  itemSub: { fontSize: 11.5, color: '#7f8c8d', marginTop: 2 },
+  countRow: { flexDirection: 'row', gap: 6, marginTop: 6 },
+  countBadge: { fontSize: 11, fontWeight: '700', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, overflow: 'hidden' },
+  findingBox: { borderTopWidth: 1, borderTopColor: '#ecf0f1', borderStyle: 'dashed', marginTop: 8, paddingTop: 8 },
+  findingHead: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
+  sevChip: { paddingHorizontal: 9, paddingVertical: 3, borderRadius: 10 },
+  sevText: { fontSize: 10.5, fontWeight: '700' },
+  findingMsg: { flex: 1, fontSize: 12.5, color: '#2c3e50' },
+  excerpt: { fontSize: 11, color: '#7f8c8d', backgroundColor: '#f8f9fa', borderLeftWidth: 3, borderLeftColor: '#dfe6e9', marginTop: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
+  aiNote: { fontSize: 11, color: '#667eea', marginTop: 4 },
+  noFindings: { fontSize: 12, color: '#27ae60', marginTop: 8 },
+  choiceRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
+  choiceChip: { flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 10, borderWidth: 1.5, borderColor: '#ecf0f1', backgroundColor: 'white' },
+  choiceText: { fontSize: 11.5, fontWeight: '700', color: '#7f8c8d', textAlign: 'center' },
+  noteInput: { marginTop: 8, borderWidth: 1, borderColor: '#ecf0f1', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9, fontSize: 12.5, color: '#2c3e50', backgroundColor: 'white' },
+  checkRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 },
+  checkbox: { width: 18, height: 18, borderRadius: 5, borderWidth: 1.5, borderColor: '#bdc3c7', alignItems: 'center', justifyContent: 'center', backgroundColor: 'white' },
+  checkboxOn: { backgroundColor: '#667eea', borderColor: '#667eea' },
+  checkMark: { color: 'white', fontSize: 12, fontWeight: '800' },
+  checkLabel: { flex: 1, fontSize: 12, color: '#5d6d7e' },
+  submitBtn: { marginTop: 10, borderRadius: 12, backgroundColor: '#667eea', paddingVertical: 11, alignItems: 'center' },
+  submitText: { color: 'white', fontSize: 13, fontWeight: '700' },
+  footnote: { fontSize: 10, color: '#95a5a6', marginTop: 10 }
 });

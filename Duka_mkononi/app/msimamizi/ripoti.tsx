@@ -1,12 +1,12 @@
-﻿import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { File, Paths } from 'expo-file-system';
 import * as Print from 'expo-print';
 import { shareAsync } from 'expo-sharing';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
     Alert,
+    ActivityIndicator,
     RefreshControl,
     ScrollView,
     StyleSheet,
@@ -15,6 +15,7 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
+import SmartCartLoader from '../../components/SmartCartLoader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLang } from '../../context/LanguageContext';
 import LogoutButton from '../../components/logout-button';
@@ -992,6 +993,9 @@ export default function RipotiScreen() {
           )}
         </View>
 
+        {/* Capability #15 - grounded AI summary over the same rows above */}
+        <AiReportSummaryCard token={userToken} />
+
         {businessStats && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>
@@ -1529,7 +1533,7 @@ export default function RipotiScreen() {
     return (
       <SafeAreaView style={styles.screenSafe} edges={['top']}>
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#3498db" />
+          <SmartCartLoader size="large" color="#3498db" />
           <Text style={styles.loadingText}>
             {t('reports.loading_full')}
           </Text>
@@ -2353,4 +2357,196 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     fontWeight: '500',
   },
+});
+
+// ===================== AI REPORT SUMMARY (capability #15) ===================
+// The server builds this summary from the SAME report rows this screen
+// renders (the same report queries), so the prose can never disagree with
+// the tables below it. The model may only REWORD the verified figures; when
+// it cannot, the deterministic narrative is shown instead. Read-only.
+type AiSummaryPeriod = 'last_7_days' | 'last_30_days' | 'last_90_days';
+
+function AiReportSummaryCard({ token }: { token: string | null }) {
+  const { t, lang } = useLang();
+  const [period, setPeriod] = useState<AiSummaryPeriod>('last_7_days');
+  const [data, setData] = useState<any>(null);
+  const [loadingSummary, setLoadingSummary] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      if (!token) return;
+      setLoadingSummary(true);
+      setFailed(false);
+      try {
+        const res = await fetchWithTimeout(
+          `${API_BASE_URL}/api/ai/reports/summary`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+              'ngrok-skip-browser-warning': 'true'
+            },
+            body: JSON.stringify({ period, locale: lang })
+          },
+          20000
+        );
+        if (!res.ok) throw new Error('summary failed');
+        const json = await res.json();
+        if (!json || !json.success) throw new Error('summary failed');
+        if (!cancelled) setData(json);
+      } catch {
+        if (!cancelled) { setData(null); setFailed(true); }
+      } finally {
+        if (!cancelled) setLoadingSummary(false);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [token, period, lang]);
+
+  const money = (value: number | null | undefined) => {
+    const currency = data?.currency || 'TZS';
+    const n = Number(value) || 0;
+    return `${currency} ${n.toLocaleString()}`;
+  };
+
+  const direction = data?.comparison?.direction || 'flat';
+  const dirColor = direction === 'up' ? '#27ae60' : direction === 'down' ? '#e74c3c' : direction === 'up_from_zero' ? '#3498db' : '#7f8c8d';
+  const dirLabel = direction === 'up'
+    ? t('report_summary.dir_up')
+    : direction === 'down'
+      ? t('report_summary.dir_down')
+      : direction === 'up_from_zero'
+        ? t('report_summary.dir_from_zero')
+        : t('report_summary.dir_flat');
+  // The AI paragraph when it passed the number gate; otherwise the
+  // deterministic lines. Either way: only figures from the payload.
+  const prose = data
+    ? ((data.ai && !data.ai.degraded && data.summary_text) ? data.summary_text : (data.narrative || []).join(' '))
+    : '';
+  const margin = data?.metrics?.margin_pct == null ? '' : ` (${Number(data.metrics.margin_pct).toFixed(0)}%)`;
+
+  return (
+    <View style={aiStyles.card}>
+      <View style={aiStyles.headerRow}>
+        <Ionicons name="sparkles" size={16} color="#667eea" />
+        <Text style={aiStyles.title}>{t('report_summary.title')}</Text>
+      </View>
+      <Text style={aiStyles.subtitle}>{t('report_summary.subtitle')}</Text>
+
+      <View style={aiStyles.chipRow}>
+        {([
+          ['last_7_days', t('report_summary.period_7')],
+          ['last_30_days', t('report_summary.period_30')],
+          ['last_90_days', t('report_summary.period_90')]
+        ] as [AiSummaryPeriod, string][]).map(([key, label]) => (
+          <TouchableOpacity
+            key={key}
+            style={[aiStyles.chip, period === key && aiStyles.chipActive]}
+            disabled={loadingSummary}
+            onPress={() => setPeriod(key)}
+          >
+            <Text style={[aiStyles.chipText, period === key && aiStyles.chipTextActive]}>{label}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {loadingSummary ? (
+        <View style={aiStyles.loadingBox}>
+          <ActivityIndicator size="small" color="#667eea" />
+          <Text style={aiStyles.loadingText}>{t('report_summary.loading')}</Text>
+        </View>
+      ) : failed || !data ? (
+        <View style={aiStyles.loadingBox}>
+          <Text style={aiStyles.errorText}>{t('report_summary.error')}</Text>
+        </View>
+      ) : (
+        <>
+          <Text style={aiStyles.prose}>{prose}</Text>
+
+          <View style={aiStyles.metricsRow}>
+            <View style={aiStyles.metricBox}>
+              <Text style={aiStyles.metricValue} numberOfLines={1}>{money(data.metrics?.revenue)}</Text>
+              <Text style={aiStyles.metricLabel}>{t('report_summary.metric_revenue')}</Text>
+            </View>
+            <View style={aiStyles.metricBox}>
+              <Text style={[aiStyles.metricValue, { color: '#27ae60' }]} numberOfLines={1}>{money(data.metrics?.gross_profit)}</Text>
+              <Text style={aiStyles.metricLabel}>{t('report_summary.metric_profit')}{margin}</Text>
+            </View>
+            <View style={aiStyles.metricBox}>
+              <Text style={[aiStyles.metricValue, { color: '#e67e22' }]} numberOfLines={1}>{money(data.metrics?.expenses_total)}</Text>
+              <Text style={aiStyles.metricLabel}>{t('report_summary.metric_expenses')}</Text>
+            </View>
+          </View>
+
+          <View style={[aiStyles.dirPill, { backgroundColor: `${dirColor}18` }]}>
+            <Ionicons name={direction === 'down' ? 'trending-down' : direction === 'flat' ? 'remove' : 'trending-up'} size={13} color={dirColor} />
+            <Text style={[aiStyles.dirText, { color: dirColor }]}>{dirLabel}</Text>
+          </View>
+
+          {(data.contributors || []).length > 0 && (
+            <View style={aiStyles.block}>
+              <Text style={aiStyles.blockTitle}>{t('report_summary.contributors_title')}</Text>
+              {(data.contributors || []).map((c: any) => {
+                const change = Number(c.change) || 0;
+                return (
+                  <View key={String(c.product_id)} style={aiStyles.contributorRow}>
+                    <Text style={aiStyles.contributorName} numberOfLines={1}>{c.name}</Text>
+                    <Text style={[aiStyles.contributorChange, { color: change >= 0 ? '#27ae60' : '#e74c3c' }]}>
+                      {change >= 0 ? '+' : '-'}{money(Math.abs(change))}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+          )}
+
+          {(data.limitations || []).length > 0 && (
+            <View style={aiStyles.block}>
+              <Text style={aiStyles.blockTitle}>{t('report_summary.limitations_title')}</Text>
+              {(data.limitations || []).map((l: string, i: number) => (
+                <Text key={i} style={aiStyles.limitationText}>&bull; {l}</Text>
+              ))}
+            </View>
+          )}
+
+          <Text style={aiStyles.footnote}>
+            {t('report_summary.verified_note')}{data.ai && !data.ai.degraded ? ` ${t('report_summary.ai_reword_note')}` : ''}
+          </Text>
+        </>
+      )}
+    </View>
+  );
+}
+
+const aiStyles = StyleSheet.create({
+  card: { backgroundColor: 'white', borderRadius: 16, padding: 16, marginTop: 16, borderLeftWidth: 4, borderLeftColor: '#667eea' },
+  headerRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  title: { fontSize: 16, fontWeight: '800', color: '#2c3e50' },
+  subtitle: { fontSize: 11.5, color: '#7f8c8d', marginTop: 2, marginBottom: 10 },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, backgroundColor: '#f4f6f7', borderWidth: 1, borderColor: '#ecf0f1' },
+  chipActive: { backgroundColor: '#667eea', borderColor: '#667eea' },
+  chipText: { fontSize: 12, fontWeight: '600', color: '#5d6d7e' },
+  chipTextActive: { color: 'white' },
+  loadingBox: { alignItems: 'center', paddingVertical: 18 },
+  loadingText: { marginTop: 8, fontSize: 12.5, color: '#7f8c8d' },
+  errorText: { fontSize: 13, color: '#e74c3c', textAlign: 'center' },
+  prose: { fontSize: 13, lineHeight: 20, color: '#2c3e50', backgroundColor: '#f8f9fa', borderRadius: 12, padding: 12, marginTop: 10 },
+  metricsRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
+  metricBox: { flex: 1, backgroundColor: '#f8f9fa', borderRadius: 12, padding: 10, alignItems: 'center' },
+  metricValue: { fontSize: 13, fontWeight: '700', color: '#2c3e50' },
+  metricLabel: { fontSize: 10, color: '#7f8c8d', marginTop: 2, textAlign: 'center' },
+  dirPill: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, marginTop: 10 },
+  dirText: { fontSize: 12, fontWeight: '700' },
+  block: { marginTop: 10 },
+  blockTitle: { fontSize: 12.5, fontWeight: '700', color: '#2c3e50', marginBottom: 4 },
+  contributorRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 10, paddingVertical: 3 },
+  contributorName: { flex: 1, fontSize: 12.5, color: '#5d6d7e' },
+  contributorChange: { fontSize: 12.5, fontWeight: '600' },
+  limitationText: { fontSize: 11.5, color: '#7f8c8d', marginTop: 3 },
+  footnote: { fontSize: 10, color: '#95a5a6', marginTop: 10 }
 });

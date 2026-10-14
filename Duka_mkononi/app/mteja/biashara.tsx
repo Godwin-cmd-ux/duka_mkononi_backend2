@@ -1,8 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
     Alert,
     Linking,
     Platform,
@@ -13,6 +12,7 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
+import SmartCartLoader from '../../components/SmartCartLoader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLang } from '../../context/LanguageContext';
 import LogoutButton from '../../components/logout-button';
@@ -40,11 +40,89 @@ interface Business {
   status: string;
 }
 
+/**
+ * Capability #12 - trust summary payload (public GET /api/ai/trust/summary).
+ * Everything shown here is either a verified platform record (facts) or a
+ * published-review statistic/opinion (opinions) - the split mirrors the
+ * server contract so the UI can never present an opinion as a fact.
+ */
+interface TrustReview {
+  body: string;
+  rating: number | null;
+  display_name: string | null;
+  published_at: string | null;
+}
+
+interface TrustSummaryPayload {
+  success: boolean;
+  summary: { text: string; source: string };
+  facts: string[];
+  opinions: string[];
+  sources: string[];
+  limitations: string[];
+  ai: { available: boolean; degraded: boolean; reason?: string | null };
+  reviews: {
+    scope: string;
+    sample_size: number;
+    rating_average: number | null;
+    items: TrustReview[];
+  };
+}
+
 export default function BiasharaScreen() {
   const { t, lang } = useLang();
   const [searchQuery, setSearchQuery] = useState('');
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Capability #12 - one open trust panel at a time, per-business cache.
+  const [trustOpen, setTrustOpen] = useState<string | null>(null);
+  const [trustData, setTrustData] = useState<Record<string, TrustSummaryPayload>>({});
+  const [trustLoading, setTrustLoading] = useState<string | null>(null);
+  const [trustError, setTrustError] = useState<string | null>(null);
+
+  const toggleTrust = useCallback(
+    async (business: Business) => {
+      const id = business.id;
+      if (trustOpen === id) {
+        setTrustOpen(null);
+        return;
+      }
+      setTrustOpen(id);
+      setTrustError(null);
+      if (trustData[id]) return; // already fetched; cached payload is version-bumped server-side
+
+      setTrustLoading(id);
+      try {
+        const res = await fetchWithTimeout(
+          `${API_BASE_URL}/api/ai/trust/summary?business_id=${encodeURIComponent(id)}&locale=${lang}`
+        );
+        let json: (TrustSummaryPayload & { error?: string }) | null = null;
+        try {
+          json = (await res.json()) as TrustSummaryPayload & { error?: string };
+        } catch {
+          json = null;
+        }
+        if (!res.ok || !json || json.success !== true) {
+          setTrustError(json?.error || t('mteja_trust.error_text'));
+          setTrustOpen(null);
+          return;
+        }
+        setTrustData((prev) => ({ ...prev, [id]: json as TrustSummaryPayload }));
+      } catch {
+        setTrustError(t('mteja_trust.error_text'));
+        setTrustOpen(null);
+      } finally {
+        setTrustLoading(null);
+      }
+    },
+    [lang, t, trustData, trustOpen]
+  );
+
+  const stars = (rating: number | null): string => {
+    if (!rating || rating < 1) return '';
+    return '★'.repeat(Math.min(5, Math.round(rating)));
+  };
 
   useEffect(() => {
     fetchBusinesses();
@@ -293,12 +371,89 @@ export default function BiasharaScreen() {
     return (
       <SafeAreaView style={styles.screenSafe} edges={['top']}>
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#3498db" />
+          <SmartCartLoader size="large" color="#3498db" />
           <Text style={styles.loadingText}>{t('customer_dashboard.loading_businesses')}</Text>
         </View>
       </SafeAreaView>
     );
   }
+
+  const renderTrust = (businessId: string) => {
+    if (trustLoading === businessId) {
+      return (
+        <View style={styles.trustPanel}>
+          <SmartCartLoader size="compact" color="#667eea" label={t('mteja_trust.loading')} />
+          <Text style={styles.trustMuted}>{t('mteja_trust.loading')}</Text>
+        </View>
+      );
+    }
+
+    if (trustError) {
+      return (
+        <View style={styles.trustPanel}>
+          <Text style={styles.trustError}>{trustError}</Text>
+        </View>
+      );
+    }
+
+    const data = trustData[businessId];
+    if (!data) return null;
+
+    return (
+      <View style={styles.trustPanel}>
+        <Text style={styles.trustAnswer}>{data.summary?.text || ''}</Text>
+        {data.ai?.degraded && data.ai?.reason ? (
+          <Text style={styles.trustMuted}>{data.ai.reason}</Text>
+        ) : null}
+
+        {data.facts?.length ? (
+          <View style={styles.trustBlock}>
+            <Text style={styles.trustLabel}>{t('mteja_trust.facts_label')}</Text>
+            {data.facts.map((line, index) => (
+              <Text key={`f${index}`} style={styles.trustLine}>• {line}</Text>
+            ))}
+          </View>
+        ) : null}
+
+        {data.opinions?.length ? (
+          <View style={styles.trustBlock}>
+            <Text style={styles.trustLabel}>{t('mteja_trust.opinions_label')}</Text>
+            {data.opinions.map((line, index) => (
+              <Text key={`o${index}`} style={styles.trustLine}>• {line}</Text>
+            ))}
+          </View>
+        ) : null}
+
+        {data.reviews?.items?.length ? (
+          <View style={styles.trustBlock}>
+            <Text style={styles.trustLabel}>
+              {t('mteja_trust.reviews_label')} ({data.reviews.sample_size})
+            </Text>
+            {data.reviews.items.map((review, index) => (
+              <View key={`r${index}`} style={styles.trustReview}>
+                <View style={styles.trustReviewHead}>
+                  <Text style={styles.trustReviewer}>
+                    {review.display_name || t('mteja_trust.anonymous')}
+                  </Text>
+                  <Text style={styles.trustStars}>{stars(review.rating)}</Text>
+                  <Text style={styles.trustDate}>
+                    {String(review.published_at || '').slice(0, 10)}
+                  </Text>
+                </View>
+                <Text style={styles.trustBody}>{review.body}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
+
+        <View style={styles.trustBlock}>
+          {(data.limitations || []).map((line, index) => (
+            <Text key={`l${index}`} style={styles.trustLimit}>{line}</Text>
+          ))}
+        </View>
+      </View>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.screenSafe} edges={['top']}>
@@ -421,6 +576,18 @@ export default function BiasharaScreen() {
                   </Text>
                 </View>
               </View>
+
+              {/* Capability #12 - trust summary (verified facts vs customer opinions) */}
+              <TouchableOpacity
+                style={styles.trustBtn}
+                onPress={() => toggleTrust(business)}
+                activeOpacity={0.85}
+                disabled={trustLoading === business.id}
+              >
+                <Ionicons name="sparkles" size={15} color="#667eea" />
+                <Text style={styles.trustBtnText}>{t('mteja_trust.btn_trust')}</Text>
+              </TouchableOpacity>
+              {trustOpen === business.id ? renderTrust(business.id) : null}
             </View>
           ))
         )}
@@ -586,6 +753,66 @@ const styles = StyleSheet.create({
     color: '#27ae60',
     fontWeight: 'bold',
   },
+  trustBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    marginTop: 12,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: '#eef1ff',
+    borderWidth: 1,
+    borderColor: '#d6ddff',
+  },
+  trustBtnText: {
+    color: '#5566d4',
+    fontWeight: '800',
+    fontSize: 13.5,
+  },
+  trustPanel: {
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#f1f3f8',
+  },
+  trustAnswer: {
+    fontSize: 14,
+    color: '#34495e',
+    lineHeight: 20,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 10,
+    padding: 11,
+    borderWidth: 1,
+    borderColor: '#ecf0f1',
+    marginBottom: 4,
+  },
+  trustBlock: { marginTop: 10 },
+  trustLabel: {
+    fontSize: 10.5,
+    fontWeight: '800',
+    color: '#95a5a6',
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    marginBottom: 5,
+  },
+  trustLine: { fontSize: 13, color: '#34495e', lineHeight: 19, marginBottom: 2 },
+  trustMuted: { fontSize: 12.5, color: '#95a5a6', marginTop: 6, textAlign: 'center' },
+  trustError: { fontSize: 13, color: '#e74c3c', textAlign: 'center' },
+  trustReview: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 9,
+    padding: 9,
+    marginBottom: 6,
+    borderWidth: 1,
+    borderColor: '#ecf0f1',
+  },
+  trustReviewHead: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
+  trustReviewer: { fontSize: 13, fontWeight: '800', color: '#2c3e50' },
+  trustStars: { fontSize: 12, color: '#f39c12' },
+  trustDate: { fontSize: 11.5, color: '#95a5a6' },
+  trustBody: { fontSize: 13, color: '#5d6d7e', lineHeight: 18, marginTop: 3 },
+  trustLimit: { fontSize: 11.5, color: '#aeb6bf', lineHeight: 16, marginTop: 2 },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',

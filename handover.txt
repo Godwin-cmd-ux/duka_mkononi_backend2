@@ -1,0 +1,345 @@
+================================================================================
+HANDOVER — DUKA MKONONI AI CAPABILITIES (for the next agent)
+================================================================================
+Written: 2026-10-14, after completing capability #16. Read this first, then
+`instruction3.txt` (the master spec) and `HANDOFF.md` (architecture + an
+earlier, still-relevant handoff for the commerce/orders/inquiries work).
+
+Repo: github.com/Godwin-cmd-ux/duka_mkononi_backend2 (branch `main`)
+Stack: Laravel API (authoritative backend) + Laravel Blade website +
+       Expo/React Native app (`Duka_mkononi/`) + Supabase/PostgreSQL +
+       Google Gemini + 8 locales (sw, en, fr, hi, es, ur, de, zh).
+
+
+--------------------------------------------------------------------------------
+1. THE TASK
+--------------------------------------------------------------------------------
+`instruction3.txt` is the master prompt: implement a real, production-quality,
+multilingual Gemini-powered "expert system" on top of the existing Duka Mkononi
+platform — capabilities #2 through #25 (24 NEW capabilities) while preserving
+and safely extending the existing capability #1 (Photo Inventory & Sales
+Capture). It is a real implementation task: backend + auth + validation +
+UI (Blade AND Expo) + tests + docs for every capability — explicitly NOT plans,
+mocks, hardcoded answers, buttons that do nothing, or route-only stubs.
+
+Work is organised in phases (instruction3.txt §12):
+  Phase 0  audit + shared AI infrastructure          (DONE in earlier sessions)
+  Phase 1  seller capabilities #2–#10                DONE
+  Phase 2  customer capabilities #11–#14             DONE
+  Phase 3  management/admin #15–#21                  #15 #16 DONE, #17–#21 open
+  Phase 4  cross-cutting #22–#25                     OPEN
+  Phase 5  hardening, 8-language verification,
+           capability matrix + final report          OPEN (final deliverable)
+
+
+--------------------------------------------------------------------------------
+2. WHAT IS COVERED SO FAR (capabilities #2–#16 = 15 of 24)
+--------------------------------------------------------------------------------
+Every capability below is a full vertical slice: service + controller +
+routes behind `auth.jwt` + feature/unit tests + Blade surface + Expo screen +
+strings in all 8 app locales AND root `locales.json` + a section in `test.txt`
+(dev test flow) and a numbered TEST section in `text.txt` (manual guide).
+
+ #2  Pricing & Margin Advisor        app/Services/Ai/PricingAdvisor.php
+ #3  Restock & Stock-Out Prediction   RestockPlanner.php
+ #4  NL Business Reporting            BusinessReporter.php (+ ReportRunner,
+                                       ReportNarrator, ReportIntentParser)
+ #5  Business Health Score & Coaching BusinessHealthScore, HealthDigestService,
+                                       HealthNarrator
+ #6  Anomaly & Leak Detection         AnomalyDetector + AiAnomalyController
+ #7  Smart Expense Categorisation     ExpenseParser + ExpenseCategories
+ #8  Ad & Product-Copy Studio         AdCopyService (Expo: muuzaji/tangaza.tsx)
+ #9  Customer-Reply Drafting          ReplyDrafter
+ #10 Seller Copilot Q&A               SellerCopilot (+ AiCopilotConversation
+                                       model, migration, help/expense-preview
+                                       tools)
+ #11 Conversational Shopping Assistant ShoppingAssistant (public/shop surfaces)
+ #12 Business & Review Summarisation  TrustSummary
+ #13 Order & Delivery Q&A             OrderQaService
+ #14 Personalised Recommendations     RecommendationEngine
+ #15 AI Report Summaries              ReportSummary + AiReportSummaryController
+ #16 Content Review Assistant         ReviewAssistant + AiReviewController
+                                       (just finished — see §5 gotchas)
+
+Shared infrastructure already in place (do not rebuild):
+- `app/Services/Ai/GeminiClient.php` — provider adapter (timeouts, bounded
+  retries, structured JSON, error normalisation via `AiException`/`AiResult`).
+- `config/ai.php` — per-capability config + feature flags under
+  `ai.features.*` (e.g. `ai.features.reviews`) and per-capability tunables
+  under e.g. `ai.reviews.*`. NEW capabilities MUST follow this pattern.
+- `routes/api.php` — all `api/ai/*` routes live together inside the
+  `auth.jwt` group (~159 Route:: entries).
+- `app/Http/Controllers/Api/BaseController.php` — helpers: `user()`,
+  `userId()`, `role()`, `businessId()` (STABLE business identity — never take
+  it from client input), `businessName()`, `ip()`, `log()` (AuditLogger),
+  `json()`, `error()`, `dbError()`, `take()`.
+- `app/Http/Middleware/AuthenticateJwt.php` + `app/Services/JwtToken.php` —
+  JWT auth; payload lands in request attributes (`jwt_user_id`, `jwt_role`,
+  `jwt_business_id`, ...). Roles seen in AI code: `admin` (Msimamizi),
+  `seller` (Muuzaji), `customer`/`mteja`, `system_admin`.
+- `app/Services/AuditLogger.php` — every AI call/decision is audited with
+  `AI_*` action names (e.g. AI_REVIEW_CHECK, AI_REVIEW_DECISION,
+  AI_REPORT_SUMMARY + `_ERROR` variants).
+- `app/Services/Supabase.php` / `SupabaseModel` — DB access layer (PostgREST;
+  no cross-table transactions — use compensating operations like
+  OrderController does).
+
+Verification state as of this handover (actually run, exit status captured):
+  * `php vendor/bin/phpunit`            -> OK (316 tests, 3548 assertions)
+  * `node_modules/.bin/tsc --noEmit`
+    (cwd = `Duka_mkononi/`)             -> exit 0
+  * Locale parity: 31 `content_review` keys identical across all 8 app
+    locales + root `locales.json`, `{count}` placeholders present;
+    same key-parity checks were done per capability as they landed.
+  * `php -l` on edited blades -> clean; blades' <script> blocks extracted
+    and `node --check`ed -> clean.
+
+Docs completed through capability #16:
+  * `test.txt`  — "TEST FLOW — CAPABILITY #N" sections (dev/contract tests).
+    Ends with a "WHEN YOU'RE DONE" footer: currently says
+    "Capabilities #2-#16 are now implemented... Reply 'next' and I'll
+    implement the next capability (#17 — Team Activity Digest)".
+    UPDATE THIS FOOTER after each capability.
+  * `text.txt`  — numbered manual "TEST n — ..." sections + the SUMMARY
+    SHEET checklist (currently TEST 1..15) + the shared EXTRA CHECKS and
+    "IF SOMETHING GOES WRONG" sections (keep their feature lists updated).
+
+
+--------------------------------------------------------------------------------
+3. WHAT REMAINS
+--------------------------------------------------------------------------------
+Open capabilities (exact specs in instruction3.txt, lines ~499–661):
+  #17 Team Activity Digest              (spec line 499)
+  #18 Inquiry Triage & Auto-Draft Replies (515)
+  #19 Certification & Onboarding Assistant (535)
+  #20 NL Admin Analytics                (550)
+  #21 Public AI Concierge               (572)
+  #22 Truly Multilingual Assistant      (592)
+  #23 Voice Input & Voice Answers       (622)
+  #24 Semantic & Typo-Tolerant Search   (642)  — server-side embeddings only;
+                                                must degrade to lexical
+  #25 Schema-Free NL Data Entry         (661)
+
+Suggested order: finish Phase 3 (#17–#21), then Phase 4 (#22–#25), then
+Phase 5 hardening. For each capability, follow the established pattern:
+service in `app/Services/Ai/` -> controller in `app/Http/Controllers/Api/` ->
+route in `routes/api.php` (auth.jwt) -> feature route test + unit test ->
+Blade surface -> Expo screen -> locale section in BOTH `Duka_mkononi/locales/
+*.json` (8 files) AND root `locales.json` -> `test.txt` flow + `text.txt` TEST
+section + summary-sheet line + update the test.txt footer.
+
+Phase 5 / final deliverables still owed (instruction3.txt §13): capability
+matrix #1–#25, new/modified file list, migration instructions, endpoint +
+auth docs, config/env-var documentation (no secret values), infra
+requirements (queues/scheduler/embeddings/speech), full test results,
+security findings, manual-verification steps, deploy/rollback notes,
+incomplete-capability blockers, and an honest statement of what was tested
+against real services vs mocks. Capability #1 also still needs its
+"safely extend" review (inspect what exists before touching it).
+
+Data/infra work for remaining capabilities may need Supabase migrations —
+`supabase/migrations/` files are idempotent and applied in filename order;
+`20261012110000_create_ai_copilot_conversations.sql` is the newest one
+(added for #10).
+
+
+--------------------------------------------------------------------------------
+4. THE RULES OF THIS TASK (from instruction3.txt — non-negotiable)
+--------------------------------------------------------------------------------
+Section 2 — working rules:
+  2.1 Inspect before editing. Inventory routes, controllers, middleware,
+      services, Supabase schema/RLS, the existing Gemini integration (Laravel
+      + legacy Node `ai/`), Expo nav/API client/language context, all relevant
+      Blade pages, tests and config. Don't duplicate features that already
+      exist in another file.
+  2.2 One authoritative backend: Laravel owns the APIs/business logic. Do NOT
+      add a second conflicting implementation to the legacy Node/Express
+      server. Preserve WebSocket presence + email functionality.
+  2.3 Production data safety: reversible migrations where possible, no
+      destructive schema changes, never reset the live DB, never modify
+      production records to make tests pass, don't change product IDs /
+      business identities / order statuses / payment flows / roles without a
+      verified requirement.
+  2.4 No fake functionality: real integrations or an honest report of the
+      missing prerequisite. No sample arrays, no hardcoded AI answers, no
+      buttons that do nothing, no TODO placeholders.
+  2.5 Maintain the existing app: keep routes/response formats compatible,
+      keep language switching, auth, role dashboards and existing AI imports
+      working; use feature flags for rollout/rollback.
+
+Section 3 — shared AI architecture (already largely built; extend it):
+  3.1 One Gemini adapter: model selection per capability, timeouts, bounded
+      retries w/ exponential backoff + jitter, 429/503 handling, size limits,
+      structured JSON validated before use, correlation IDs, safe logging.
+      API keys server-side ONLY — never in JS, Expo, Blade, API responses.
+      Config in `config/ai.php` (env-driven).
+  3.2 Allow-listed, server-executed tools only. The model may REQUEST a tool
+      call; only trusted PHP executes it. Never let Gemini run SQL, touch the
+      DB directly, or pick another tenant's ID. Every tool enforces auth,
+      business ownership, date-range and result limits.
+  3.3 Explicit contracts per capability: input validation, output schema,
+      error contract, permissions. Validate model output before returning or
+      mutating anything; bounded repair attempts; never silently promote AI
+      output to business data.
+  3.4 Grounding: financial/inventory math happens in trusted code or
+      PostgreSQL, never the model; missing info reported as missing; show date
+      ranges/sources/limitations; never invent records; treat DB/docs/reviews/
+      prompts as untrusted input; never leak another business's data through
+      prompts, logs, caches or history.
+  3.5 Human confirmation + idempotency for consequential actions:
+      Retrieve -> Propose -> Validate -> Preview -> Confirm -> Authorize ->
+      Commit -> Audit. Server-generated single-use tokens / payload-hash
+      binding; repeats must not duplicate transactions. Read-only answers
+      should NOT require confirmation.
+  3.6 Audit everything (AI_* audit actions): request id, capability, user,
+      business, status, duration, retries, validation failures, whether a
+      human confirmed/edited/rejected. Never log keys, passwords, OTPs,
+      payment credentials or unnecessary personal data.
+
+Section 12/14: vertical slice per capability, test before moving on, staged
+rollout via feature flags, and NEVER claim a test passed / migration applied /
+integration connected unless it actually did.
+
+Additional repo conventions this session followed (keep them):
+  * Tests: `tests/Unit/*Test.php` = pure-function contract tests (no DB/HTTP/
+    Laravel helpers where possible); `tests/Feature/<Name>RouteTest.php` =
+    route registered + `auth.jwt` middleware assertion.
+  * Locales: every server-side/UI string exists in all 8 languages, in BOTH
+    `Duka_mkononi/locales/{lang}.json` and root `locales.json` (same key
+    sets). The app's `t(key, params)` supports `{param}` substitution
+    (`context/LanguageContext.tsx`).
+  * Expo calls: `API_BASE_URL` from `constants/api`, `AsyncStorage
+    .getItem('userToken')` for the bearer token, shared
+    `lib/network.fetchWithTimeout(url, opts, ms)` (retries the alternate API
+    host), `'ngrok-skip-browser-warning': 'true'` header on POSTs, `useLang()`
+    for translations, `t('section.key')`.
+  * Blade surfaces get their strings through the `tc('key')`/`content_review.`
+    prefix helpers from the DM locale widget partial
+    (`partials/dm-lang-widget.blade.php`, `partials/dm-locale.blade.php`).
+  * Amounts/scales: format money in trusted code; keep TZS integer amounts.
+  * The response style of AI endpoints: `{'success': true, 'capability': ...,
+    ...}` payloads and `$this->json()/error()` with `code` strings
+    (e.g. FORBIDDEN_ROLE, FEATURE_DISABLED, INVALID_INPUT).
+
+
+--------------------------------------------------------------------------------
+5. GOTCHAS ALREADY HIT (do not repeat)
+--------------------------------------------------------------------------------
+* Decision/API enums must match EXACTLY across layers: capability #16's
+  decision endpoint accepts `approve|reject|request_edit` — all four UI
+  surfaces initially sent `edit` and would have 422'd. After any endpoint
+  change, grep every surface (2 blades + 2 Expo screens) for the payload.
+* PHP array keys: `'1'` silently coerces to int `1` — when indexing by
+  string ids/keys, cast carefully (this bit an earlier capability too).
+* `rtrim($str, '0')` ate the significant zero of "20" — use exact-match
+  sanitising, not character-class trims, on user/model text.
+* Check the mount point you think you edited actually exists: `muuzaji/
+  tangaza.tsx` (Expo) is the Ad Copy Studio, NOT a "my ads" list — verify
+  structure with grep before inserting JSX.
+* `tsc` tuple casts: `as [['a'|'b', string]]` is a 1-TUPLE, not an array —
+  use `as [string, string][]` and narrow at use sites.
+* Locale parity must be checked in BOTH `Duka_mkononi/locales/*.json` AND
+  root `locales.json` — they are separate catalogs and drift silently.
+
+
+--------------------------------------------------------------------------------
+6. CLOUD ENVIRONMENT LIMITATIONS (Freebuff workspace) — IMPORTANT
+--------------------------------------------------------------------------------
+* TERMINAL: synchronous only, hard timeout (default 30s, max 180s). No
+  background processes (`&`, `nohup`), no long-running servers. Commands run
+  from the project root; chain with `&&`/`;` but keep jobs bounded.
+* DEV SERVERS: NEVER start them yourself (`php artisan serve`, `npm run dev`,
+  `vite`, ...). Freebuff owns preview lifecycle via the separate
+  `freebuff-preview` command (set-install / set / set-build, `start`,
+  `restart`, `status`, `logs`) — run it as its own command, never chained.
+  This project's preview wiring (Laravel + Expo) may not be configured; if
+  `freebuff-preview status` shows nothing, don't improvise — say so.
+* FILE EDITS: use the file tools (`write_file`, `str_replace`), never `sed`,
+  shell redirection or ad-hoc scripts to modify source — those can fail to
+  persist through the synced build state. Terminal is for inspection, installs
+  and checks only.
+* ENV FILES: do not edit `.env` / `.env.local`, do not read or print them or
+  any secret. `freebuff-env list` shows key NAMES only. Missing secrets ->
+  name the required env-var keys and ask the user to add them in
+  Settings/Environment. Gemini key: config via `config/ai.php` env names only
+  (e.g. whatever `AI_*` vars it reads) — document names, never values.
+* `code_search` (ripgrep tool) was UNRELIABLE in this workspace — it returned
+  unrelated file dumps (locales.json/package-lock) regardless of pattern/cwd.
+  Use `grep -n`/`rg` through `run_terminal_command`, or `read_files` with
+  offsets, instead. Re-test it before trusting results.
+* NO BROWSER/DEVICE VERIFICATION available here: the Blade flows need a
+  running Laravel + live Supabase + a logged-in staff account, and the Expo
+  screens need a device/emulator. Verification was therefore: phpunit,
+  `php -l`, tsc, extracted-`<script>` `node --check`, locale-parity scripts,
+  and line-by-line API contract review. A visual pass remains outstanding —
+  list it under "manual verification steps" in the final report.
+* PHP IS AVAILABLE (`php`, `php vendor/bin/phpunit` works; live Supabase is
+  reachable from tests — the suite runs against it, so treat DB writes in
+  tests carefully and clean up scratch rows like earlier sessions did).
+  Node 22 is available. `Duka_mkononi/node_modules` is installed
+  (npm-style); run tsc as `node_modules/.bin/tsc --noEmit` from that folder.
+  A scratch `.php-lint.js` (bracket-balance linter from a session that
+  thought PHP was missing) sits at the repo root — disposable, may be deleted
+  or just committed as-is.
+* HOSTED TERMINAL/GIT: this is a Freebuff Cloud GitHub-connected repo.
+  Credentials are injected per-command; never ask the user for a PAT/SSH and
+  never rewrite the remote. Commits/pushes are normally owned by Freebuff's
+  Changes panel — only run git delivery commands when the user explicitly
+  asks (as they did for this handover). Stage only task-related files; never
+  `git reset --clean`/history rewrites.
+* Platform checks: the "Freebuff Vite/Convex" template rules do NOT apply to
+  this Laravel+Expo repo (no Convex, no `bun tsc -b`). The checks that matter
+  here are phpunit + `Duka_mkononi` tsc + locale parity.
+* `.locale-check.js` referenced in older notes does NOT exist and was never
+  git-tracked — parity is verified with an inline python script instead
+  (pattern in §2 of this doc / §5 gotchas).
+
+
+--------------------------------------------------------------------------------
+7. CHEAT SHEET — VERIFICATION COMMANDS
+--------------------------------------------------------------------------------
+  # full backend suite (runs against live Supabase; clean up scratch data)
+  php vendor/bin/phpunit
+
+  # single capability
+  php vendor/bin/phpunit tests/Unit/<X>Test.php tests/Feature/<X>RouteTest.php
+
+  # mobile/web TypeScript (cwd = Duka_mkononi)
+  cd Duka_mkononi && node_modules/.bin/tsc --noEmit
+
+  # blade PHP syntax
+  php -l resources/views/<area>/<page>.blade.php
+
+  # blade JS syntax (extracts <script> blocks, neutralises {{ }})
+  # — see the python one-liner pattern used this session, then node --check
+
+  # locale parity: compare key sets of your new section across
+  #   Duka_mkononi/locales/{sw,en,fr,hi,es,ur,de,zh}.json  AND
+  #   locales.json -> translations.<lang>.<section>
+  #   (python3 -c "import json; ..." — assert identical key sets, check
+  #    {count}-style placeholders too)
+
+  # route wiring sanity
+  grep -n "ai/<your-endpoint>" routes/api.php
+
+
+--------------------------------------------------------------------------------
+8. WHERE THE BODY OF EVIDENCE LIVES
+--------------------------------------------------------------------------------
+  * Master spec .......... instruction3.txt (capability catalogue lines
+                            210–661; rules 44–209; workflow/deliverables
+                            985–1082)
+  * Architecture handoff . HANDOFF.md (orders/inquiries/shop/Blade redesign;
+                            Supabase migration list; Super Admin authz caveat)
+  * Dev test flows ....... test.txt  (per-capability, ends w/ next-capability
+                            footer)
+  * Manual test guide .... text.txt  (TEST 1..15 + summary sheet)
+  * Prior session notes ... README.md (if present), git log on `main`
+
+Start by: (1) reading instruction3.txt §12 Phase 3+ for #17's spec,
+(2) `git log --oneline -15` and `git status` to see the latest state,
+(3) running the cheat-sheet checks to confirm the baseline is still green,
+then implement #17 following the §2 pattern. Good luck.
+
+— Buffy (Codebuff), ending handover after capability #16.
+================================================================================

@@ -1,4 +1,5 @@
 @include('partials.dm-locale')
+<link rel="stylesheet" href="/css/smartcart-loader.css">
 @verbatim
 <head>
     <meta charset="UTF-8">
@@ -624,6 +625,27 @@
             margin-top: 6px;
         }
 
+        /* Capability #7 - Smart Expense Categorisation (AI parse) */
+        .ai-parse-group { margin-bottom: 4px; }
+        .ai-parse-btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            margin-top: 8px; padding: 10px 16px; border: none; border-radius: 12px;
+            background: #2563eb; color: #fff; font-weight: 700; font-size: 13.5px; cursor: pointer;
+        }
+        .ai-parse-btn:disabled { opacity: 0.55; cursor: default; }
+        .ai-parse-status { margin-top: 8px; font-size: 13px; color: #2563eb; }
+        .ai-flags { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+        .ai-flag {
+            background: #fff8e8; border: 1px solid #f5dfa8; border-radius: 10px;
+            padding: 8px 10px; font-size: 12.5px; color: #7a5c14;
+        }
+        .ai-dup {
+            margin-top: 8px; background: #fdecec; border: 1px solid #f5c2c2; border-radius: 10px;
+            padding: 8px 10px; font-size: 12.5px; color: #a94442;
+        }
+        .ai-note { margin-top: 8px; font-size: 12px; color: #7f8c8d; }
+        .ai-limits { margin-top: 6px; font-size: 11.5px; color: #95a5a6; line-height: 1.5; }
+
         .preview-box {
             background: #f0f7ff;
             padding: 12px;
@@ -783,7 +805,7 @@
         <main class="main-content">
             <div class="page-container" id="matumiziContent">
                 <div class="loading-container">
-                    <div class="loading-spinner"></div>
+                    <div class="loading-spinner dm-sc"></div>
                     <div class="loading-text" data-i18n="muuzaji_matumizi.loading">Inapakia matumizi...</div>
                 </div>
             </div>
@@ -798,6 +820,22 @@
                 <div class="close-modal" onclick="closeModal()"><i class="fa-solid fa-xmark" style="font-size:20px;" aria-hidden="true"></i></div>
             </div>
             <div class="modal-body">
+                <!-- Capability #7 - Smart Expense Categorisation: natural-language entry.
+                     The fields below stay the editable preview; saving still goes
+                     through the existing POST /api/office-expenses workflow. -->
+                <div class="form-group ai-parse-group">
+                    <label class="form-label"><span data-i18n="muuzaji_matumizi.ai_label">Andika matumizi kwa maneno</span></label>
+                    <textarea id="aiExpenseText" class="form-input" rows="2" data-i18n="muuzaji_matumizi.ai_placeholder" data-i18n-attr="placeholder" placeholder="Mfano: Nauli ya usafiri 5000 jana"></textarea>
+                    <button type="button" id="aiParseBtn" class="ai-parse-btn" onclick="parseWithAi()">
+                        <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
+                        <span data-i18n="muuzaji_matumizi.ai_btn">Chambua kwa AI</span>
+                    </button>
+                    <div id="aiParseStatus" class="ai-parse-status" style="display:none;"></div>
+                    <div id="aiFlags" class="ai-flags" style="display:none;"></div>
+                    <div id="aiDupWarn" class="ai-dup" style="display:none;"></div>
+                    <div id="aiNote" class="ai-note" style="display:none;"></div>
+                    <div id="aiLimits" class="ai-limits" style="display:none;"></div>
+                </div>
                 <div class="form-group">
                     <label class="form-label"><span data-i18n="muuzaji_matumizi.label_amount">Kiasi (TZS)</span> <span class="required-star">*</span></label>
                     <input type="number" id="expenseAmount" class="form-input" placeholder="0">
@@ -912,7 +950,7 @@
             const save = document.getElementById('saveExpenseBtn');
             const cancel = document.getElementById('cancelExpenseBtn');
             if (save) {
-                save.innerHTML = busy ? ic('spinner', 14, 'fa-spin') + ' ' + t('btn_saving') : t('btn_save');
+                save.innerHTML = busy ? '<span class="dm-sc dm-sc--light" style="width:14px;height:14px;display:inline-block;vertical-align:-2px"></span>' + ' ' + t('btn_saving') : t('btn_save');
                 save.style.opacity = busy ? '0.7' : '1';
                 save.style.pointerEvents = busy ? 'none' : 'auto';
             }
@@ -1069,6 +1107,128 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         }
 
         // Add expense
+        // ================= CAPABILITY #7 - AI EXPENSE PARSE =================
+        // Read-only: proposes an editable preview; saving still goes through
+        // the existing addExpense() -> POST /api/office-expenses workflow.
+        let aiParsing = false;
+
+        function currentAiLocale() {
+            if (window.DM && typeof DM.locale === 'function') return DM.locale();
+            return document.documentElement.getAttribute('data-dm-locale') || 'sw';
+        }
+
+        async function parseWithAi() {
+            const textEl = document.getElementById('aiExpenseText');
+            const text = ((textEl && textEl.value) || '').trim();
+            if (!text) { showToast(t('ai_err_empty'), 'warning'); return; }
+            if (aiParsing) return;
+
+            const statusEl = document.getElementById('aiParseStatus');
+            const flagsEl = document.getElementById('aiFlags');
+            const dupEl = document.getElementById('aiDupWarn');
+            const noteEl = document.getElementById('aiNote');
+            const limitsEl = document.getElementById('aiLimits');
+            const btn = document.getElementById('aiParseBtn');
+
+            aiParsing = true;
+            if (btn) btn.disabled = true;
+            if (flagsEl) flagsEl.style.display = 'none';
+            if (dupEl) dupEl.style.display = 'none';
+            if (noteEl) noteEl.style.display = 'none';
+            if (limitsEl) limitsEl.style.display = 'none';
+            if (statusEl) { statusEl.style.display = 'block'; statusEl.textContent = t('ai_loading'); }
+
+            try {
+                const token = localStorage.getItem('userToken');
+                const res = await fetch(API_BASE_URL + '/api/ai/expenses/parse', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ text: text, locale: currentAiLocale() }),
+                });
+                if (res.status === 401) { window.location.href = '/login?role=muuzaji'; return; }
+
+                const data = await res.json().catch(function () { return {}; });
+                if (!res.ok || !data.success) {
+                    showToast((data && data.error) || t('ai_err_failed'), 'error');
+                    return;
+                }
+                applyParsedExpense(data);
+            } catch (error) {
+                showToast(t('ai_err_network'), 'error');
+            } finally {
+                aiParsing = false;
+                if (btn) btn.disabled = false;
+                if (statusEl) statusEl.style.display = 'none';
+            }
+        }
+
+        function applyParsedExpense(data) {
+            const preview = data.preview || {};
+
+            if (preview.amount != null) {
+                document.getElementById('expenseAmount').value = String(preview.amount);
+            }
+            if (preview.description) {
+                document.getElementById('expenseDesc').value = preview.description;
+            }
+            if (preview.category) {
+                selectCategory(preview.category); // sets + re-renders the chips
+            }
+
+            const flags = data.flags || [];
+            const flagsEl = document.getElementById('aiFlags');
+            if (flagsEl) {
+                flagsEl.innerHTML = flags.map(function (f) {
+                    return '<div class="ai-flag">' + escapeHtml(f.message || f.code) + '</div>';
+                }).join('');
+                flagsEl.style.display = flags.length ? 'flex' : 'none';
+            }
+
+            const dupEl = document.getElementById('aiDupWarn');
+            if (dupEl) {
+                if (data.possible_duplicate) {
+                    dupEl.textContent = t('ai_dup_warn', {
+                        amount: formatCurrency(data.possible_duplicate.amount || 0),
+                        desc: data.possible_duplicate.description || '',
+                    });
+                    dupEl.style.display = 'block';
+                } else {
+                    dupEl.style.display = 'none';
+                }
+            }
+
+            const ai = data.ai || {};
+            const noteEl = document.getElementById('aiNote');
+            if (noteEl) {
+                if (ai.degraded && ai.reason) {
+                    noteEl.textContent = ai.reason;
+                    noteEl.style.display = 'block';
+                } else {
+                    noteEl.style.display = 'none';
+                }
+            }
+
+            const limitsEl = document.getElementById('aiLimits');
+            if (limitsEl) {
+                const limits = data.limitations || [];
+                limitsEl.innerHTML = limits.map(function (line) {
+                    return escapeHtml(line);
+                }).join('<br>');
+                limitsEl.style.display = limits.length ? 'block' : 'none';
+            }
+
+            const missing = data.missing_required || [];
+            if (missing.length) {
+                showToast(t('ai_missing_hint'), 'warning');
+            } else {
+                showToast(t('ai_applied'), 'success');
+            }
+        }
+
         async function addExpense() {
             const amount = document.getElementById('expenseAmount')?.value;
             const description = document.getElementById('expenseDesc')?.value;
@@ -1156,6 +1316,12 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             document.getElementById('expenseAmount').value = '';
             document.getElementById('expenseDesc').value = '';
             document.getElementById('expenseNotes').value = '';
+            const aiText = document.getElementById('aiExpenseText');
+            if (aiText) aiText.value = '';
+            ['aiParseStatus', 'aiFlags', 'aiDupWarn', 'aiNote', 'aiLimits'].forEach(function (id) {
+                const el = document.getElementById(id);
+                if (el) { el.style.display = 'none'; el.innerHTML = ''; }
+            });
             if (categories.length > 0) selectedCategory = categories[0];
             renderCategoryChips();
             document.getElementById('expenseModal').style.display = 'flex';
@@ -1214,7 +1380,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             if (loading) {
                 container.innerHTML = `
                     <div class="loading-container">
-                        <div class="loading-spinner"></div>
+                        <div class="loading-spinner dm-sc"></div>
                         <div class="loading-text">${t('loading')}</div>
                     </div>
                 `;

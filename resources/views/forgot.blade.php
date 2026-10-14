@@ -1,4 +1,5 @@
 @include('partials.dm-locale')
+<link rel="stylesheet" href="/css/smartcart-loader.css">
 @verbatim
 <head>
     <meta charset="UTF-8">
@@ -815,7 +816,7 @@
                     <div class="input-icon">📧</div>
                     <input type="email" id="emailInput" class="input-field" placeholder="${t('forgot.label_email')}" autocomplete="email">
                 </div>
-                <button id="requestBtn" class="action-btn" style="background: ${color}">${loading ? '<div class="loader"></div>' : t('forgot.btn_send_code')}</button>
+                <button id="requestBtn" class="action-btn" style="background: ${color}">${loading ? '<div class="loader dm-sc dm-sc--light"></div>' : t('forgot.btn_send_code')}</button>
             `;
             document.getElementById('requestBtn')?.addEventListener('click', handleRequestResetCode);
             const emailField = document.getElementById('emailInput');
@@ -846,7 +847,7 @@
                     <div class="input-icon">🔒</div>
                     <input type="text" id="resetCodeInput" class="input-field" placeholder="${t('forgot.placeholder_code')}" maxlength="6" pattern="[0-9]*" inputmode="numeric">
                 </div>
-                <button id="verifyBtn" class="action-btn" style="background: ${color}">${loading ? '<div class="loader"></div>' : t('forgot.btn_verify_code')}</button>
+                <button id="verifyBtn" class="action-btn" style="background: ${color}">${loading ? '<div class="loader dm-sc dm-sc--light"></div>' : t('forgot.btn_verify_code')}</button>
                 <div class="resend-container">
                     <span class="resend-text">${t('forgot.resend_question')}</span>
                     <span id="resendLink" class="resend-link" style="color: ${color}">${countdown > 0 ? t('forgot.resend_countdown', { mm: Math.floor(countdown / 60), ss: (countdown % 60).toString().padStart(2, '0') }) : t('forgot.resend')}</span>
@@ -880,7 +881,7 @@
                     <div class="input-icon">🔑</div>
                     <input type="password" id="confirmPasswordInput" class="input-field" placeholder="${t('forgot.placeholder_confirm_password')}">
                 </div>
-                <button id="changePasswordBtn" class="action-btn" style="background: ${color}">${loading ? '<div class="loader"></div>' : t('forgot.btn_change_password')}</button>
+                <button id="changePasswordBtn" class="action-btn" style="background: ${color}">${loading ? '<div class="loader dm-sc dm-sc--light"></div>' : t('forgot.btn_change_password')}</button>
             `;
             document.getElementById('changePasswordBtn')?.addEventListener('click', handleSetNewPassword);
         }

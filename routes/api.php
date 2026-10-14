@@ -2,11 +2,22 @@
 
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AdvertisementController;
+use App\Http\Controllers\Api\AiAdCopyController;
+use App\Http\Controllers\Api\AiCopilotController;
 use App\Http\Controllers\Api\AiHealthController;
+use App\Http\Controllers\Api\AiAnomalyController;
+use App\Http\Controllers\Api\AiOrderQaController;
+use App\Http\Controllers\Api\AiExpenseParseController;
 use App\Http\Controllers\Api\AiImportController;
 use App\Http\Controllers\Api\AiPricingController;
+use App\Http\Controllers\Api\AiRecommendationController;
+use App\Http\Controllers\Api\AiReplyController;
 use App\Http\Controllers\Api\AiReportController;
+use App\Http\Controllers\Api\AiReviewController;
+use App\Http\Controllers\Api\AiReportSummaryController;
 use App\Http\Controllers\Api\AiRestockController;
+use App\Http\Controllers\Api\AiShopAssistantController;
+use App\Http\Controllers\Api\AiTrustSummaryController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BackupController;
 use App\Http\Controllers\Api\BusinessController;
@@ -74,6 +85,24 @@ Route::get('shop/products/{id}', [ShopController::class, 'product']);
 Route::get('shop/advertisements', [ShopController::class, 'advertisements']);
 Route::get('shop/reviews', [ShopController::class, 'reviews']);
 
+// Capability #11 - Conversational Shopping Assistant. PUBLIC (any shopper,
+// signed in or not) and rate limited: it only reads the public catalogue.
+// Signed-in shoppers get one remembered turn (cache, short TTL) for follow-ups.
+Route::post('ai/shopping/ask', [AiShopAssistantController::class, 'ask'])->middleware('throttle:20,1');
+Route::get('ai/shopping/suggestions', [AiShopAssistantController::class, 'suggestions'])->middleware('throttle:60,1');
+
+// Capability #12 - Business & Review Summarisation. PUBLIC + throttled: it
+// reads only published reviews, public business rows and order aggregates.
+// Cached per locale; publishing/unpublishing a review or (un)certifying a
+// business bumps a cache version key so summaries refresh immediately.
+Route::get('ai/trust/summary', [AiTrustSummaryController::class, 'summary'])->middleware('throttle:30,1');
+
+// Capability #14 - Personalised Recommendations. PUBLIC + throttled read:
+// identity is optional (a valid token personalises, a guest gets the same
+// cold-start feed of popular/certified items); the dismiss and feedback
+// WRITES live behind auth.jwt below because they are per-account state.
+Route::get('ai/recommendations', [AiRecommendationController::class, 'index'])->middleware('throttle:30,1');
+
 // Public inquiry submission (rate limited against spam)
 Route::post('inquiries', [InquiryController::class, 'store'])->middleware('throttle:10,1');
 
@@ -111,6 +140,43 @@ Route::middleware('auth.jwt')->group(function () {
     Route::get('ai/reports/weekly', [AiHealthController::class, 'latest']);
     Route::get('ai/reports/weekly/history', [AiHealthController::class, 'history']);
     Route::post('ai/health/setup', [AiHealthController::class, 'setup']);
+
+    // Capability #15 - AI Report Summaries (grounded explanations over the
+    // EXISTING manager report queries; business-scoped to the caller).
+    Route::post('ai/reports/summary', [AiReportSummaryController::class, 'summary']);
+
+    // Capability #16 - Advertisement & Content Review Assistant (staff;
+    // deterministic findings + advisory AI classification; the decision is
+    // always a recorded human one).
+    Route::post('ai/reviews/check', [AiReviewController::class, 'check']);
+    Route::post('ai/reviews/decision', [AiReviewController::class, 'decision']);
+
+    // Capability #6 - Anomaly & Leak Detection (deterministic rules + AI narration).
+    Route::get('ai/anomalies', [AiAnomalyController::class, 'index']);
+    Route::post('ai/anomalies/dismiss', [AiAnomalyController::class, 'dismiss']);
+    // Capability #13 - Order & Delivery Q&A (grounded in the caller's own orders).
+    Route::post('ai/orders/ask', [AiOrderQaController::class, 'ask']);
+    // Capability #7 - Smart Expense Categorisation (read-only preview; saves
+    // go through the existing POST office-expenses workflow).
+    Route::post('ai/expenses/parse', [AiExpenseParseController::class, 'parse']);
+    // Capability #8 - Advertisement & Product-Copy Generator (read-only draft;
+    // publishing goes through the existing POST matangazo workflow).
+    Route::post('ai/ads/generate', [AiAdCopyController::class, 'generate']);
+    // Capability #9 - Customer-Reply Drafting (read-only draft; sending goes
+    // through the existing seller order status/notes workflow).
+    Route::post('ai/replies/draft', [AiReplyController::class, 'draft']);
+    // Capability #10 - Seller Copilot Q&A (multi-turn; read-only tools from
+    // capabilities #3-#7; conversation history is business+user scoped).
+    Route::post('ai/copilot/chat', [AiCopilotController::class, 'chat']);
+    Route::get('ai/copilot/conversations', [AiCopilotController::class, 'conversations']);
+    Route::delete('ai/copilot/conversations', [AiCopilotController::class, 'destroyAll']);
+    Route::get('ai/copilot/conversations/{conversationId}', [AiCopilotController::class, 'show']);
+    Route::delete('ai/copilot/conversations/{conversationId}', [AiCopilotController::class, 'destroy']);
+
+    // Capability #14 - recommendation dismissals + relevance feedback
+    // (per-account state with a TTL; never shared between customers).
+    Route::post('ai/recommendations/dismiss', [AiRecommendationController::class, 'dismiss']);
+    Route::post('ai/recommendations/feedback', [AiRecommendationController::class, 'feedback']);
 
     Route::post('inventory/ai-import', [AiImportController::class, 'import']);
     Route::post('inventory/ai-import/verify', [AiImportController::class, 'verify']);

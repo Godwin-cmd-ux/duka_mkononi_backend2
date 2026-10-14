@@ -12,6 +12,7 @@ const MSIMAMIZI_TABS = [
   '/msimamizi/preview',
   '/msimamizi/bidhaa-mpya',
   '/msimamizi/tangaza',
+  '/msimamizi/nyingine',
 ];
 
 export default function MsimamiziLayout() {
@@ -69,6 +70,15 @@ export default function MsimamiziLayout() {
           title: t('tabs.advertise'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="megaphone" size={size} color={color} />
+          ),
+        })}
+      />
+      <Tabs.Screen
+        name="nyingine"
+        options={() => ({
+          title: t('tabs.nyingine'),
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="sparkles" size={size} color={color} />
           ),
         })}
       />

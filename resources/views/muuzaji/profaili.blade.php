@@ -1,4 +1,5 @@
 @include('partials.dm-locale')
+<link rel="stylesheet" href="/css/smartcart-loader.css">
 @verbatim
 <head>
     <meta charset="UTF-8">
@@ -500,7 +501,7 @@
         <main class="main-content">
             <div class="page-container" id="profailiContent">
                 <div class="loading-container">
-                    <div class="loading-spinner"></div>
+                    <div class="loading-spinner dm-sc"></div>
                     <div class="loading-text" data-i18n="muuzaji_profaili.loading">Inapakua taarifa zako...</div>
                 </div>
             </div>
@@ -668,7 +669,7 @@
             const save = document.getElementById('savePasswordBtn');
             const cancel = document.getElementById('cancelPasswordBtn');
             if (save) {
-                save.innerHTML = busy ? ic('spinner', 15, 'fa-spin') + ' ' + t('change_password_save') : t('change_password_save');
+                save.innerHTML = busy ? '<span class="dm-sc dm-sc--light" style="width:15px;height:15px;display:inline-block;vertical-align:-2px"></span>' + ' ' + t('change_password_save') : t('change_password_save');
                 save.style.opacity = busy ? '0.7' : '1';
                 save.style.pointerEvents = busy ? 'none' : 'auto';
             }
@@ -729,7 +730,7 @@
             const save = document.getElementById('saveProfileBtn');
             const cancel = document.getElementById('cancelEditBtn');
             if (save) {
-                save.innerHTML = busy ? ic('spinner', 15, 'fa-spin') + ' ' + t('btn_saving') : t('btn_save');
+                save.innerHTML = busy ? '<span class="dm-sc dm-sc--light" style="width:15px;height:15px;display:inline-block;vertical-align:-2px"></span>' + ' ' + t('btn_saving') : t('btn_save');
                 save.style.opacity = busy ? '0.7' : '1';
                 save.style.pointerEvents = busy ? 'none' : 'auto';
             }
@@ -1033,7 +1034,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             const container = document.getElementById('profailiContent');
             
             if (loading || !userData) {
-                container.innerHTML = `<div class="loading-container"><div class="loading-spinner"></div><div class="loading-text">${t('loading')}</div></div>`;
+                container.innerHTML = `<div class="loading-container"><div class="loading-spinner dm-sc"></div><div class="loading-text">${t('loading')}</div></div>`;
                 return;
             }
             

@@ -1,4 +1,5 @@
 @include('partials.dm-locale')
+<link rel="stylesheet" href="/css/smartcart-loader.css">
 @verbatim
 <head>
     <meta charset="UTF-8">
@@ -376,7 +377,7 @@
 
             <div id="signupBtn" class="signup-btn">
                 <span id="signupBtnText" class="signup-btn-text" data-i18n="admin_signup.btn_register_now">JISAJILI SASA</span>
-                <div id="loaderSpinner" style="display: none;" class="loader"></div>
+                <div id="loaderSpinner" style="display: none;" class="loader dm-sc dm-sc--light"></div>
             </div>
 
             <div id="backBtn" class="back-btn">
@@ -519,10 +520,10 @@
                     </div>
                     <button id="otpVerifyBtn" class="alert-btn" style="width:100%;height:54px;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;cursor:pointer;border:none;font-size:16px;font-weight:bold;color:white;background:#e74c3c;">
                         <span>✓</span> <span id="otpVerifyText">${t('admin_signup.otp_verify')}</span>
-                        <span id="otpVerifyLoader" style="display:none;"><div class="loader" style="width:20px;height:20px;border-width:2px;"></div></span>
+                        <span id="otpVerifyLoader" style="display:none;"><div class="loader dm-sc dm-sc--light" style="width:20px;height:20px;"></div></span>
                     </button>
                     <div id="otpCreatingAccount" style="display:none;text-align:center;margin-bottom:14px;">
-                        <div class="loader" style="margin:0 auto 8px;border-top-color:#e74c3c;"></div>
+                        <div class="loader dm-sc" style="margin:0 auto 8px;"></div>
                         <div class="otp-creating-text" id="otpCreatingText">${t('admin_signup.otp_creating_account')}</div>
                     </div>
                     <div style="text-align:center;margin-bottom:14px;">

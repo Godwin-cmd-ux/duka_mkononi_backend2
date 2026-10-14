@@ -5,7 +5,6 @@ import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
     Alert,
     Modal,
     RefreshControl,
@@ -16,6 +15,7 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
+import SmartCartLoader from '../../components/SmartCartLoader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ZoomableImage from '../../components/zoomable-image';
 import { useLang } from '../../context/LanguageContext';
@@ -916,7 +916,7 @@ export default function MsimamiziHomeScreen() {
     return (
       <SafeAreaView style={styles.screenSafe} edges={['top']}>
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#3498db" />
+          <SmartCartLoader size="large" color="#3498db" />
           <Text style={styles.loadingText}>{t('admin_dashboard.loading')}</Text>
         </View>
       </SafeAreaView>
@@ -996,7 +996,7 @@ export default function MsimamiziHomeScreen() {
           </View>
           <TouchableOpacity style={styles.logoUploadButton} onPress={handleChangeLogo} disabled={logoUploading}>
             {logoUploading ? (
-              <ActivityIndicator size="small" color="#3498db" />
+              <SmartCartLoader size="compact" color="#3498db" />
             ) : (
               <Ionicons name="camera" size={18} color="#3498db" />
             )}
@@ -1024,7 +1024,7 @@ export default function MsimamiziHomeScreen() {
         >
           {locationTracking ? (
             <>
-              <ActivityIndicator size="small" color="white" />
+              <SmartCartLoader size="compact" color="#ffffff" />
               <Text style={styles.trackLocationButtonText}>{t('admin_dashboard.track_location_loading')}</Text>
             </>
           ) : (
@@ -1112,7 +1112,7 @@ export default function MsimamiziHomeScreen() {
                     disabled={updatingSellerStatus === seller.id}
                   >
                     {updatingSellerStatus === seller.id ? (
-                      <ActivityIndicator size="small" color="white" />
+                      <SmartCartLoader size="compact" color="#ffffff" />
                     ) : (
                       <>
                         <Ionicons name="close-circle" size={14} color="white" />
@@ -1128,7 +1128,7 @@ export default function MsimamiziHomeScreen() {
                       disabled={updatingSellerStatus === seller.id}
                     >
                       {updatingSellerStatus === seller.id ? (
-                        <ActivityIndicator size="small" color="white" />
+                        <SmartCartLoader size="compact" color="#ffffff" />
                       ) : (
                         <>
                           <Ionicons name="checkmark-circle" size={14} color="white" />
@@ -1154,7 +1154,7 @@ export default function MsimamiziHomeScreen() {
                       disabled={updatingSellerStatus === seller.id}
                     >
                       {updatingSellerStatus === seller.id ? (
-                        <ActivityIndicator size="small" color="white" />
+                        <SmartCartLoader size="compact" color="#ffffff" />
                       ) : (
                         <>
                           <Ionicons name="refresh-outline" size={14} color="white" />
@@ -1168,7 +1168,7 @@ export default function MsimamiziHomeScreen() {
                       disabled={deletingSellerId === seller.id}
                     >
                       {deletingSellerId === seller.id ? (
-                        <ActivityIndicator size="small" color="white" />
+                        <SmartCartLoader size="compact" color="#ffffff" />
                       ) : (
                         <>
                           <Ionicons name="trash" size={14} color="white" />
@@ -1184,7 +1184,7 @@ export default function MsimamiziHomeScreen() {
                     disabled={deletingSellerId === seller.id}
                   >
                     {deletingSellerId === seller.id ? (
-                      <ActivityIndicator size="small" color="white" />
+                      <SmartCartLoader size="compact" color="#ffffff" />
                     ) : (
                       <>
                         <Ionicons name="trash" size={14} color="white" />
@@ -1339,7 +1339,7 @@ export default function MsimamiziHomeScreen() {
                 disabled={updatingProfile}
               >
                 {updatingProfile ? (
-                  <ActivityIndicator size="small" color="white" />
+                  <SmartCartLoader size="compact" color="#ffffff" />
                 ) : (
                   <Text style={styles.saveButtonText}>{t('admin_dashboard.modal_save')}</Text>
                 )}
@@ -1414,7 +1414,7 @@ export default function MsimamiziHomeScreen() {
                 disabled={changingPassword || !passwordForm.current || !passwordForm.newPass || !passwordForm.confirm}
               >
                 {changingPassword ? (
-                  <ActivityIndicator size="small" color="white" />
+                  <SmartCartLoader size="compact" color="#ffffff" />
                 ) : (
                   <Text style={styles.saveButtonText}>{t('admin_dashboard.change_password_save')}</Text>
                 )}

@@ -6,7 +6,7 @@ import TabSwipe from '../../components/tab-swipe';
 import { useLang } from '../../context/LanguageContext';
 
 // Tab order — used by the swipe gesture to pick the neighbouring page.
-const MTEJA_TABS = ['/mteja/biashara', '/mteja/matangazo', '/mteja/profaili'];
+const MTEJA_TABS = ['/mteja/biashara', '/mteja/matangazo', '/mteja/tafuta', '/mteja/profaili', '/mteja/nyingine'];
 
 export default function MtejaLayout() {
   const { t } = useLang();
@@ -54,12 +54,34 @@ export default function MtejaLayout() {
         })}
       />
       <Tabs.Screen
+        name="tafuta"
+        options={() => ({
+          title: t('tabs_mteja.tafuta'),
+          tabBarIcon: ({ color, focused }) => (
+            <Text style={{ color, fontSize: focused ? 22 : 20 }}>
+              🔎
+            </Text>
+          ),
+        })}
+      />
+      <Tabs.Screen
         name="profaili"
         options={() => ({
           title: t('tabs_mteja.profile'),
           tabBarIcon: ({ color, focused }) => (
             <Text style={{ color, fontSize: focused ? 22 : 20 }}>
               👤
+            </Text>
+          ),
+        })}
+      />
+      <Tabs.Screen
+        name="nyingine"
+        options={() => ({
+          title: t('tabs_mteja.nyingine'),
+          tabBarIcon: ({ color, focused }) => (
+            <Text style={{ color, fontSize: focused ? 22 : 20 }}>
+              ✨
             </Text>
           ),
         })}

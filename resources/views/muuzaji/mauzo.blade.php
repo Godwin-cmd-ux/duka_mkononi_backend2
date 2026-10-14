@@ -1,4 +1,5 @@
 @include('partials.dm-locale')
+<link rel="stylesheet" href="/css/smartcart-loader.css">
 @verbatim
 <head>
     <meta charset="UTF-8">
@@ -788,7 +789,7 @@
         <main class="main-content">
             <div class="page-container" id="mauzoContent">
                 <div class="loading-container">
-                    <div class="loading-spinner"></div>
+                    <div class="loading-spinner dm-sc"></div>
                     <div class="loading-text" data-i18n="muuzaji_mauzo.loading">Inapakua data ya mauzo...</div>
                 </div>
             </div>
@@ -929,7 +930,7 @@
             const save = document.getElementById('saveEditSaleBtn');
             const cancel = document.getElementById('cancelEditSaleBtn');
             if (save) {
-                save.innerHTML = busy ? ic('spinner', 14, 'fa-spin') + ' ' + t('btn_saving') : t('btn_save_changes');
+                save.innerHTML = busy ? '<span class="dm-sc dm-sc--light" style="width:14px;height:14px;display:inline-block;vertical-align:-2px"></span>' + ' ' + t('btn_saving') : t('btn_save_changes');
                 save.style.opacity = busy ? '0.7' : '1';
                 save.style.pointerEvents = busy ? 'none' : 'auto';
             }
@@ -1297,7 +1298,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             const container = document.getElementById('mauzoContent');
             
             if (loading) {
-                container.innerHTML = `<div class="loading-container"><div class="loading-spinner"></div><div class="loading-text">${t('loading')}</div></div>`;
+                container.innerHTML = `<div class="loading-container"><div class="loading-spinner dm-sc"></div><div class="loading-text">${t('loading')}</div></div>`;
                 return;
             }
             

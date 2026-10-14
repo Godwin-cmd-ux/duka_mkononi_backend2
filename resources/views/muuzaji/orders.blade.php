@@ -1,4 +1,5 @@
 @include('partials.dm-locale')
+<link rel="stylesheet" href="/css/smartcart-loader.css">
 @verbatim
 <head>
     <meta charset="UTF-8">
@@ -66,6 +67,7 @@
         .line { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px dashed #eef2f7; font-size: 14px; flex-wrap: wrap; }
         .alert { padding: 11px 14px; border-radius: 10px; font-size: 14px; margin-bottom: 12px; }
         .alert-ok { background: #ecfdf5; color: #065f46; } .alert-err { background: #fef2f2; color: #991b1b; } .alert-info { background: #eff6ff; color: #1e40af; }
+        .alert-warn { background: #fffbeb; color: #92400e; }
         .timeline { list-style: none; border-left: 2px solid #e2e8f0; padding-left: 14px; margin-top: 10px; }
         .timeline li { position: relative; padding-bottom: 10px; font-size: 13px; }
         .timeline li::before { content: ''; position: absolute; left: -20px; top: 4px; width: 8px; height: 8px; border-radius: 50%; background: #2ecc71; }
@@ -248,7 +250,7 @@
 
     var STATUSES = ['pending', 'confirmed', 'processing', 'ready', 'out_for_delivery', 'delivered', 'completed', 'cancelled'];
     function openDetail(id) {
-        document.getElementById('dmOrderDetail').innerHTML = '<div class="empty"><i class="fa-solid fa-spinner fa-spin"></i></div>';
+        document.getElementById('dmOrderDetail').innerHTML = '<div class="empty" role="status"><div class="dm-sc" style="width:44px;height:44px;margin:0 auto 10px"></div></div>';
         document.getElementById('dmOrderOverlay').classList.add('open');
         fetch(API + '/api/seller/orders/' + encodeURIComponent(id), { headers: auth() }).then(function (r) { return r.json(); }).then(function (d) {
             if (!d || !d.order) { document.getElementById('dmOrderDetail').innerHTML = '<div class="alert alert-err">' + esc(t('muuzaji_orders.err_generic')) + '</div>'; return; }
@@ -257,6 +259,7 @@
     }
     function renderDetail(d) {
         var o = d.order, history = d.history || [];
+        currentDetail = o;
         var items = (o.items || []).map(function (it) {
             return '<div class="line"><span class="dm-wrap-anywhere">' + esc(it.product_name) + ' &times; ' + it.quantity + '</span><b>' + money(it.line_total) + '</b></div>';
         }).join('');
@@ -269,6 +272,8 @@
             '<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px"><div><b class="dm-wrap-anywhere">' + esc(o.order_reference) + '</b><div style="color:#7f8c8d;font-size:13px">' + esc(fmtDate(o.placed_at)) + '</div></div><span class="badge ' + statusClass(o.status) + '">' + esc(statusLabel(o.status)) + '</span></div>' +
             '<div class="field"><label>' + esc(t('muuzaji_orders.customer')) + '</label><div>' + esc(o.customer_name || '-') + ' &middot; ' + esc(o.customer_phone || '') + (o.customer_email ? ' &middot; ' + esc(o.customer_email) : '') + '</div></div>' +
             (o.customer_note ? '<div class="alert alert-info">' + esc(o.customer_note) + '</div>' : '') +
+            '<div class="field" style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap"><div style="flex:1;min-width:150px"><label>' + esc(t('muuzaji_orders.draft_tone_label')) + '</label><select id="dmReplyTone"><option value="casual">' + esc(t('muuzaji_orders.tone_casual')) + '</option><option value="formal">' + esc(t('muuzaji_orders.tone_formal')) + '</option></select></div><button class="btn btn-ghost" id="dmDraftReply"><i class="fa-solid fa-wand-magic-sparkles"></i> ' + esc(t('muuzaji_orders.draft_reply')) + '</button></div>' +
+            '<div id="dmReplyFlags"></div>' +
             '<h4 style="margin-bottom:6px">' + esc(t('muuzaji_orders.products')) + '</h4>' + items +
             '<div class="line" style="border:none;font-weight:800;font-size:16px;margin-top:6px"><span>' + esc(t('muuzaji_orders.total')) + '</span><span>' + money(o.total_amount) + '</span></div>' +
             '<hr style="border:none;border-top:1px solid #eef2f7;margin:16px 0">' +
@@ -279,6 +284,31 @@
             (hist ? '<h4 style="margin:18px 0 4px">' + esc(t('muuzaji_orders.history')) + '</h4><ul class="timeline">' + hist + '</ul>' : '');
         document.getElementById('dmSaveStatus').onclick = function () { save(o.id, 'status'); };
         document.getElementById('dmSaveNote').onclick = function () { save(o.id, 'note'); };
+        document.getElementById('dmDraftReply').onclick = function () { draftReply(o, this); };
+    }
+    var currentDetail = null;
+    function normalizeNote(s) { return String(s || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').replace(/\s+/g, ' ').trim(); }
+    function draftReply(o, btn) {
+        var box = document.getElementById('dmReplyFlags');
+        var toneEl = document.getElementById('dmReplyTone');
+        var tone = toneEl ? toneEl.value : 'casual';
+        btn.disabled = true;
+        box.innerHTML = '<div class="alert alert-info" role="status">' + esc(t('muuzaji_orders.draft_loading')) + '</div>';
+        fetch(API + '/api/ai/replies/draft', { method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, auth()), body: JSON.stringify({ order_id: o.id, tone: tone, locale: (window.DM && DM.locale && DM.locale()) || 'sw' }) })
+            .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+            .then(function (res) {
+                btn.disabled = false;
+                if (!res.ok) { box.innerHTML = '<div class="alert alert-err">' + esc((res.d && res.d.error) || t('muuzaji_orders.err_generic')) + '</div>'; return; }
+                var d = res.d || {};
+                var lines = [];
+                (d.flags || []).forEach(function (f) { lines.push('<div class="alert alert-warn">' + esc(f.message) + '</div>'); });
+                (d.missing || []).forEach(function (m) { lines.push('<div class="alert alert-warn">' + esc(m.message) + '</div>'); });
+                if (d.recent_reply && d.recent_reply.note) { lines.push('<div class="alert alert-warn">' + esc(t('muuzaji_orders.recent_reply') + ' ' + (d.recent_reply.at ? fmtDate(d.recent_reply.at) : '')) + '</div>'); }
+                if (!d.draft) { box.innerHTML = lines.join('') + '<div class="alert alert-err">' + esc((d.ai && d.ai.reason) || t('muuzaji_orders.draft_failed')) + '</div>'; return; }
+                var ta = document.getElementById('dmStatusNote');
+                if (ta) { ta.value = d.draft; }
+                box.innerHTML = lines.length ? lines.join('') : '<div class="alert alert-ok">' + esc(t('muuzaji_orders.draft_ready')) + '</div>';
+            }).catch(function () { btn.disabled = false; box.innerHTML = '<div class="alert alert-err">' + esc(t('muuzaji_orders.err_generic')) + '</div>'; });
     }
     function save(id, kind) {
         var box = document.getElementById('dmDetailAlert');
@@ -290,6 +320,10 @@
         } else {
             payload.note = document.getElementById('dmStatusNote').value;
             payload.internal_note = document.getElementById('dmInternalNote').value;
+        }
+        var sent = currentDetail && currentDetail.customer_visible_note;
+        if (payload.note && normalizeNote(payload.note) === normalizeNote(sent || '')) {
+            if (!window.confirm(t('muuzaji_orders.dup_confirm'))) return;
         }
         var url = kind === 'status' ? '/api/seller/orders/' + encodeURIComponent(id) + '/status' : '/api/seller/orders/' + encodeURIComponent(id) + '/notes';
         var method = kind === 'status' ? 'PUT' : 'POST';

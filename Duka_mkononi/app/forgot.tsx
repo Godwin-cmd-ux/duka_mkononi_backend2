@@ -2,7 +2,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
     Alert,
     KeyboardAvoidingView,
     Platform,
@@ -13,6 +12,7 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
+import SmartCartLoader from '../components/SmartCartLoader';
 import { useLang } from '../context/LanguageContext';
 
 import { API_BASE_URL } from '../constants/api';
@@ -397,7 +397,7 @@ export default function ForgotPasswordScreen() {
                             disabled={loading}
                         >
                             {loading ? (
-                                <ActivityIndicator color="white" />
+                                <SmartCartLoader size="compact" color="#ffffff" />
                             ) : (
                                 <>
                                     <Ionicons name="send-outline" size={20} color="white" />
@@ -443,7 +443,7 @@ export default function ForgotPasswordScreen() {
                             disabled={loading}
                         >
                             {loading ? (
-                                <ActivityIndicator color="white" />
+                                <SmartCartLoader size="compact" color="#ffffff" />
                             ) : (
                                 <>
                                     <Ionicons name="checkmark-circle-outline" size={20} color="white" />
@@ -515,7 +515,7 @@ export default function ForgotPasswordScreen() {
                             disabled={loading}
                         >
                             {loading ? (
-                                <ActivityIndicator color="white" />
+                                <SmartCartLoader size="compact" color="#ffffff" />
                             ) : (
                                 <>
                                     <Ionicons name="refresh-outline" size={20} color="white" />

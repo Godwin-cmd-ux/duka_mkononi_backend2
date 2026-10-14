@@ -1,0 +1,197 @@
+/* ==========================================================================
+   DUKA MKONONI — SMARTCART
+   Signature loading animation for the whole website.
+
+   One stylesheet, one visual identity. Every SmartCart on the site is the
+   same element:
+
+       <div class="loading-spinner dm-sc"></div>            (brand navy)
+       <div class="loading-spinner dm-sc dm-sc--light"></div>  (on dark/coloured)
+
+   HOW IT IS BUILT
+   ---------------
+   .dm-sc            a square box. Its own size comes from the page that owns
+                     it (40px, 50px, 20px, 16px …), so the animation is
+                     automatically responsive — compact, standard and
+                     full-page presentations are the same drawing at a
+                     different scale.
+   .dm-sc::after     the CART (trolley outline, drawn as an SVG mask) and the
+                     SMART PULSE (a brighter band of the same gradient sweeping
+                     across the cart shape). Because the pulse is masked with
+                     the cart itself it can never look like a progress bar.
+   .dm-sc::before    the PRODUCT (a small package) that drops into the basket.
+
+   CYCLE (2.15s, loops forever)
+     0–12%   the cart is drawn in
+    13–20%   the product appears above the basket
+    20–40%   the product drops into the basket
+    39–45%   the basket dips and settles under the weight
+    50–70%   the smart pulse travels across the cart
+    74–84%   the cart rolls forward and settles back
+    84–100%  the signature pause
+
+   SAFETY
+   ------
+   * No background is ever painted — the host page keeps its own background,
+     light or dark. The loader only draws strokes on top of it.
+   * Every selector is namespaced under .dm-sc, so nothing here can leak into
+     another component.
+   * The page's own .loading-spinner / .spinner rules are neutralised by
+     selector weight alone (.dm-sc.dm-sc, specificity 0,2,0) — no !important.
+   * prefers-reduced-motion keeps the cart visible and stops all movement.
+   ========================================================================== */
+
+.dm-sc.dm-sc {
+    /* DukaMkononi brand palette — see partials/site-head.blade.php */
+    --dm-sc-color: #1e3a8a;      /* --dm-primary   : the cart                */
+    --dm-sc-bright: #60a5fa;     /* brighter variation : the smart pulse     */
+    --dm-sc-accent: #f59e0b;     /* --dm-accent    : the product             */
+    --dm-sc-accent-hi: #fbbf24;
+    --dm-sc-accent-lo: #b45309;
+    --dm-sc-duration: 2.15s;
+
+    /* Geometry of the trolley (96 x 96 user units). Used twice: as the mask of
+       .dm-sc::after for the cart body, and again — a little larger — for the
+       pulse so the light is clipped to the very same outline. */
+    --dm-sc-cart: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Cg fill='none' stroke='%23000' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 22h8c4.5 0 6.6 2.4 7 5.5L26 34'/%3E%3Cpath d='M26 34h60l-9 24H35z'/%3E%3Cpath d='M42 34l2 24M58 34l2 24M73 34l1 24'/%3E%3Cpath d='M42 58l-2 6M70 58l-2 6'/%3E%3Ccircle cx='40' cy='70' r='5'/%3E%3Ccircle cx='68' cy='70' r='5'/%3E%3C/g%3E%3C/svg%3E");
+    --dm-sc-pulse: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Cg fill='none' stroke='%23000' stroke-width='9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 22h8c4.5 0 6.6 2.4 7 5.5L26 34'/%3E%3Cpath d='M26 34h60l-9 24H35z'/%3E%3Cpath d='M42 34l2 24M58 34l2 24M73 34l1 24'/%3E%3Cpath d='M42 58l-2 6M70 58l-2 6'/%3E%3Ccircle cx='40' cy='70' r='5'/%3E%3Ccircle cx='68' cy='70' r='5'/%3E%3C/g%3E%3C/svg%3E");
+
+    position: relative;
+
+    /* Retire the classic ring the host page may still describe for this node:
+       .dm-sc beats .loading-spinner / .spinner / .btn-spinner on weight. */
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    animation: none;
+}
+
+/* On dark overlays and inside coloured buttons the cart flips to white. */
+.dm-sc.dm-sc--light {
+    --dm-sc-color: #ffffff;
+    --dm-sc-bright: #93c5fd;
+}
+
+/* ---------------------------------------------------------------- cart ---- */
+.dm-sc::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    display: block;
+
+    background-image: linear-gradient(105deg,
+        var(--dm-sc-color) 0 45%,
+        var(--dm-sc-bright) 50%,
+        var(--dm-sc-color) 55% 100%);
+    background-size: 300% 100%;
+    background-position: 100% 0;
+    background-repeat: no-repeat;
+
+    -webkit-mask: var(--dm-sc-cart) center / contain no-repeat;
+    mask: var(--dm-sc-cart) center / contain no-repeat;
+
+    animation: dm-sc-cycle var(--dm-sc-duration) linear infinite;
+}
+
+/* ------------------------------------------------------------- product ---- */
+.dm-sc::before {
+    content: "";
+    position: absolute;
+    display: block;
+
+    left: 42%;
+    top: 3%;
+    width: 20%;
+    height: 16%;
+    border-radius: 18% / 22%;
+    background-image: linear-gradient(180deg,
+        var(--dm-sc-accent-hi) 0 34%,
+        var(--dm-sc-accent) 34% 76%,
+        var(--dm-sc-accent-lo) 76% 100%);
+    box-shadow: 0 1px 0 rgba(15, 23, 42, .10);
+
+    animation: dm-sc-product var(--dm-sc-duration) linear infinite;
+}
+
+/* ------------------------------------------------------------ keyframes ---- */
+@keyframes dm-sc-cycle {
+    0% {
+        opacity: 0;
+        transform: translate(0, 0);
+        background-position: 100% 0;
+    }
+    12% {
+        opacity: 1;
+        transform: translate(0, 0);
+        background-position: 100% 0;
+    }
+    /* the basket takes the weight of the product */
+    39% {
+        opacity: 1;
+        transform: translate(0, 3.6%);
+        background-position: 100% 0;
+    }
+    45% {
+        opacity: 1;
+        transform: translate(0, 0);
+        background-position: 100% 0;
+    }
+    /* the smart pulse travels across the cart */
+    50% {
+        opacity: 1;
+        transform: translate(0, 0);
+        background-position: 100% 0;
+    }
+    70% {
+        opacity: 1;
+        transform: translate(0, 0);
+        background-position: 0 0;
+    }
+    /* both ends of the gradient are the plain cart colour, so snapping back
+       to 100% is invisible */
+    71% {
+        opacity: 1;
+        transform: translate(0, 0);
+        background-position: 100% 0;
+    }
+    /* the cart rolls forward and settles */
+    74% {
+        opacity: 1;
+        transform: translate(4.6%, 0);
+        background-position: 100% 0;
+    }
+    84% {
+        opacity: 1;
+        transform: translate(0, 0);
+        background-position: 100% 0;
+    }
+    100% {
+        opacity: 1;
+        transform: translate(0, 0);
+        background-position: 100% 0;
+    }
+}
+
+@keyframes dm-sc-product {
+    0%   { opacity: 0; transform: translateY(0) scale(.72); }
+    13%  { opacity: 0; transform: translateY(0) scale(.72); }
+    20%  { opacity: 1; transform: translateY(0) scale(1); }
+    40%  { opacity: 1; transform: translateY(245%) scale(1); }
+    45%  { opacity: 0; transform: translateY(258%) scale(.86); }
+    100% { opacity: 0; transform: translateY(258%) scale(.86); }
+}
+
+/* --------------------------------------------------- reduced motion ------- */
+/* The cart stays on screen and keeps meaning "loading", nothing moves. */
+@media (prefers-reduced-motion: reduce) {
+    .dm-sc.dm-sc::after {
+        animation: none;
+        opacity: 1;
+        background-position: 100% 0;
+    }
+    .dm-sc.dm-sc::before {
+        animation: none;
+        opacity: 0;
+    }
+}
