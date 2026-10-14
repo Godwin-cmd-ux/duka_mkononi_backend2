@@ -93,6 +93,58 @@ return [
         // Capability #16 - Advertisement & Content Review Assistant (staff
         // moderation aid; the decision is always a recorded human one).
         'reviews' => env('AI_FEATURE_REVIEWS', true),
+
+        // Capability #17 - Team Activity Digest (manager-facing summary of the
+        // business's own activity log; never a performance assessment).
+        'team_activity' => env('AI_FEATURE_TEAM_ACTIVITY', true),
+
+        // Capability #18 - Inquiry Triage & Auto-Draft Replies (Super Admin
+        // only; classification/routing/draft are composed from the approved
+        // help content below, and nothing is sent without human approval
+        // unless the narrow auto-send policy is explicitly enabled).
+        'inquiries' => env('AI_FEATURE_INQUIRIES', true),
+
+        // Capability #19 - Certification & Onboarding Assistant. The
+        // certification review is an evidence checklist for Super Admins (it
+        // never certifies anything); the onboarding guide walks a signed-in user
+        // through setup with approved content in their own language.
+        'certification' => env('AI_FEATURE_CERTIFICATION', true),
+        'onboarding' => env('AI_FEATURE_ONBOARDING', true),
+
+        // Capability #20 - Natural-Language Admin Analytics (system admins only).
+        // The question selects one allow-listed read-only metric; the model may
+        // only pick from that list and write one acknowledgement sentence. No SQL
+        // is ever generated and the reads are bounded below.
+        'admin_analytics' => env('AI_FEATURE_ADMIN_ANALYTICS', true),
+
+        // Capability #21 - Public AI Concierge. The only PUBLIC AI surface:
+        // it answers from the approved public knowledge base and the public
+        // catalogue only, is throttled per IP per minute AND per hour, and can
+        // never reach private data or the platform's internals.
+        'concierge' => env('AI_FEATURE_CONCIERGE', true),
+
+        // Capability #23 - Voice Input & Voice Answers. Speech runs on the
+        // platform itself (the browser's Web Speech API + SpeechSynthesis, and
+        // the device's own text-to-speech on mobile), so NO provider credential
+        // is required and no audio ever reaches our server. This flag turns the
+        // voice controls off; `ai.speech.*` records which locales have VERIFIED
+        // coverage - the clients must never claim more than that.
+        'voice' => env('AI_FEATURE_VOICE', true),
+
+        // Capability #24 - Semantic & Typo-Tolerant Search. Upgrades the plain
+        // substring match on the public catalogue to a ranked hybrid: exact
+        // phrase, exact token, prefix, synonym/transliteration expansion and a
+        // bounded fuzzy pass, with the existing public-visibility, business and
+        // availability filters still applied. Embeddings are OPTIONAL and off
+        // by default (see ai.search.embeddings) - the lexical path must always
+        // work on its own.
+        'search' => env('AI_FEATURE_SEARCH', true),
+
+        // Capability #25 - Schema-Free Natural-Language Data Entry. One sentence
+        // describes ONE business operation; the preview is read-only and the
+        // confirmed record is written through the existing endpoint for that
+        // type. See ai.entry below for the tunables and the guard rails.
+        'nl_entry' => env('AI_FEATURE_NL_ENTRY', true),
     ],
 
     /*
@@ -352,5 +404,321 @@ return [
         'ai_classify' => (bool) env('AI_REVIEW_AI_CLASSIFY', true),
         'max_items' => (int) env('AI_REVIEW_MAX_ITEMS', 200),
         'cache_minutes' => (int) env('AI_REVIEW_CACHE_MINUTES', 5),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Team Activity Digest (capability #17)
+    |--------------------------------------------------------------------------
+    | Built from the existing activity log (`user_logs`) of the caller's own
+    | business members only. `max_rows` caps how many log rows are analysed per
+    | window - the response states when the cap was hit instead of presenting a
+    | partial window as complete - and `ai_narrate` switches the optional model
+    | reword off entirely (the deterministic narrative always remains).
+    */
+    'team_activity' => [
+        'max_rows' => (int) env('AI_ACTIVITY_MAX_ROWS', 4000),
+        'noteworthy_limit' => (int) env('AI_ACTIVITY_NOTEWORTHY_LIMIT', 12),
+        'history_limit' => (int) env('AI_ACTIVITY_HISTORY_LIMIT', 20),
+        'cache_minutes' => (int) env('AI_ACTIVITY_CACHE_MINUTES', 5),
+        'ai_narrate' => (bool) env('AI_ACTIVITY_NARRATE', true),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Inquiry triage & auto-draft replies (capability #18)
+    |--------------------------------------------------------------------------
+    | Classification, urgency and routing are deterministic (InquiryTriage); the
+    | reply draft is COMPOSED from the approved help content - `help` replaces
+    | the built-in approved answers with your own (JSON: {"en":{"help_reset":
+    | "..."}, ...}) so support can review exactly what customers may be told.
+    | `ai_narrate` only allows the optional acknowledgement sentence and topic
+    | selection (both gated). `auto_send` DEFAULTS TO FALSE: with it off every
+    | reply needs an explicit human approval; with it on, ONLY a general,
+    | low-urgency inquiry that needs no human may be answered automatically.
+    */
+    'inquiry_triage' => [
+        'max_message_chars' => (int) env('AI_INQUIRY_MAX_MESSAGE_CHARS', 4000),
+        'queue_limit' => (int) env('AI_INQUIRY_QUEUE_LIMIT', 100),
+        'cache_minutes' => (int) env('AI_INQUIRY_CACHE_MINUTES', 10),
+        'ai_narrate' => (bool) env('AI_INQUIRY_NARRATE', true),
+        'auto_send' => (bool) env('AI_INQUIRY_AUTO_SEND', false),
+        'help' => env('AI_INQUIRY_HELP_JSON')
+            ? (json_decode((string) env('AI_INQUIRY_HELP_JSON'), true) ?: App\Services\Ai\InquiryTriage::HELP)
+            : App\Services\Ai\InquiryTriage::HELP,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Certification review (capability #19)
+    |--------------------------------------------------------------------------
+    | The checklist is computed in PHP from real rows (`businesses.*`, the
+    | business's own `users` rows, its products); `requirements` lets the
+    | operator replace the documented requirement set with their own (JSON list of
+    | {id, rule, severity, source, min_chars?}) without touching code. A
+    | requirement whose rule or severity is unknown is DROPPED, never guessed.
+    | There is no model in this capability, so there is nothing to tune for text
+    | generation - and no setting can make the review approve anything.
+    */
+    'certification' => [
+        'queue_limit' => (int) env('AI_CERTIFICATION_QUEUE_LIMIT', 100),
+        // Bound for the bulk member/product reads used by the checklist. When the
+        // bound is hit, the affected items are reported as "not read" instead of
+        // being silently under-counted.
+        'max_read_rows' => (int) env('AI_CERTIFICATION_MAX_READ_ROWS', 20000),
+        'requirements' => env('AI_CERTIFICATION_REQUIREMENTS_JSON')
+            ? (json_decode((string) env('AI_CERTIFICATION_REQUIREMENTS_JSON'), true) ?: App\Services\Ai\CertificationReview::REQUIREMENTS)
+            : App\Services\Ai\CertificationReview::REQUIREMENTS,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Onboarding guide (capability #19)
+    |--------------------------------------------------------------------------
+    | The checklist is computed in PHP from the caller's own rows only. `kb`
+    | replaces or corrects individual approved answers (JSON: {"en":
+    | {"kb_password": "..."}, ...}) - the operator reviews exactly what a new
+    | user may be told. `ai_narrate` only allows the optional acknowledgement
+    | sentence and the topic narrowing (both gated); with it off the approved
+    | answers are returned untouched.
+    */
+    'onboarding' => [
+        'max_question_chars' => (int) env('AI_ONBOARDING_MAX_QUESTION_CHARS', 500),
+        'cache_minutes' => (int) env('AI_ONBOARDING_CACHE_MINUTES', 10),
+        'ai_narrate' => (bool) env('AI_ONBOARDING_NARRATE', true),
+        'kb' => env('AI_ONBOARDING_KB_JSON')
+            ? (json_decode((string) env('AI_ONBOARDING_KB_JSON'), true) ?: App\Services\Ai\OnboardingGuide::KB)
+            : App\Services\Ai\OnboardingGuide::KB,
+        'steps' => env('AI_ONBOARDING_STEPS_JSON')
+            ? (json_decode((string) env('AI_ONBOARDING_STEPS_JSON'), true) ?: App\Services\Ai\OnboardingGuide::STEPS)
+            : App\Services\Ai\OnboardingGuide::STEPS,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Natural-language admin analytics (capability #20)
+    |--------------------------------------------------------------------------
+    | Platform-wide, system-admin-only answers over the same trusted sources the
+    | admin dashboard uses. Cost is bounded here: `max_rows` caps every row read
+    | (a hit is REPORTED as `truncated`, never hidden), `max_range_days` clamps a
+    | time range, `max_named_businesses` caps the only named list, and
+    | `ai_narrate` allows only one sanitised acknowledgement sentence plus a
+    | choice from the allow-listed tools. Set AI_FEATURE_ADMIN_ANALYTICS=false to
+    | disable the capability entirely.
+    */
+    'admin_analytics' => [
+        'max_question_chars' => (int) env('AI_ADMIN_ANALYTICS_MAX_QUESTION_CHARS', 300),
+        'max_rows' => (int) env('AI_ADMIN_ANALYTICS_MAX_ROWS', 20000),
+        'max_range_days' => (int) env('AI_ADMIN_ANALYTICS_MAX_RANGE_DAYS', 366),
+        'max_named_businesses' => (int) env('AI_ADMIN_ANALYTICS_MAX_NAMED_BUSINESSES', 5),
+        'presence_window_minutes' => (int) env('AI_ADMIN_ANALYTICS_PRESENCE_WINDOW_MINUTES', 5),
+        'cache_minutes' => (int) env('AI_ADMIN_ANALYTICS_CACHE_MINUTES', 10),
+        'ai_narrate' => (bool) env('AI_ADMIN_ANALYTICS_NARRATE', true),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Public AI Concierge (capability #21)
+    |--------------------------------------------------------------------------
+    | The visitor-facing assistant of the public pages. Every answer comes from
+    | the approved knowledge base in PublicConcierge plus the same public
+    | catalogue the shop pages render; `max_per_hour` is the per-IP budget that
+    | sits on top of the route throttle, and `links` may only override the
+    | already-published external links (the APK, email, phone and WhatsApp URLs
+    | in the website footer/navbar).
+    */
+    'concierge' => [
+        'max_question_chars' => (int) env('AI_CONCIERGE_MAX_QUESTION_CHARS', 300),
+        'max_per_hour' => (int) env('AI_CONCIERGE_MAX_PER_HOUR', 60),
+        'cache_minutes' => (int) env('AI_CONCIERGE_CACHE_MINUTES', 10),
+        'ai_narrate' => (bool) env('AI_CONCIERGE_NARRATE', true),
+        'links' => array_filter([
+            'download_apk' => env('AI_CONCIERGE_DOWNLOAD_URL'),
+            'contact_email' => env('AI_CONCIERGE_CONTACT_EMAIL'),
+            'contact_phone' => env('AI_CONCIERGE_CONTACT_PHONE'),
+            'contact_whatsapp' => env('AI_CONCIERGE_CONTACT_WHATSAPP'),
+        ], static fn ($value): bool => is_string($value) && trim($value) !== ''),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Voice input & voice answers (capability #23)
+    |--------------------------------------------------------------------------
+    | The provider is 'platform': speech recognition and speech synthesis happen
+    | on the visitor's own device (browser Web Speech API / SpeechSynthesis, or
+    | the phone's built-in engine). That means:
+    |   * there is NO speech API key anywhere - server or client;
+    |   * no audio is recorded by us, sent to our server or retained;
+    |   * language coverage is a property of the DEVICE, not of this app.
+    | `*_verified_locales` lists the locales whose coverage the implementation is
+    | actually built and tested for. A locale NOT listed is reported to clients
+    | as `device_dependent` (never as supported), so the UI can degrade honestly
+    | instead of claiming a language the device may not understand. An operator
+    | who has verified more languages on their target devices can add them here.
+    */
+    'speech' => [
+        'enabled' => (bool) env('AI_SPEECH_ENABLED', true),
+        'provider' => env('AI_SPEECH_PROVIDER', 'platform'),
+        'stt_verified_locales' => array_values(array_filter(array_map('trim', explode(',', (string) env('AI_SPEECH_STT_LOCALES', 'sw,en'))))),
+        'tts_verified_locales' => array_values(array_filter(array_map('trim', explode(',', (string) env('AI_SPEECH_TTS_LOCALES', 'sw,en,fr,hi,es,ur,de,zh'))))),
+        // A single spoken utterance is bounded: the client stops listening after
+        // this many seconds, and the text it produces is capped before use.
+        'max_seconds' => (int) env('AI_SPEECH_MAX_SECONDS', 30),
+        'max_chars' => (int) env('AI_SPEECH_MAX_CHARS', 600),
+        // Documented and enforced by design: we never record or keep audio.
+        'retain_audio' => (bool) env('AI_SPEECH_RETAIN_AUDIO', false),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Semantic & typo-tolerant search (capability #24)
+    |--------------------------------------------------------------------------
+    | The catalogue search is a RANKED HYBRID that never leaves trusted code:
+    |
+    |   1. exact phrase (`brake pads`)         strongest
+    |   2. exact token / prefix (`premio`)     strong
+    |   3. synonym + transliteration expansion (mchele <-> rice, breki <-> brake)
+    |   4. bounded fuzzy pass (spelling mistakes, one edit per short token)
+    |
+    | Every match carries the signals that produced it, so a result is always
+    | explainable. Retrieval is bounded by `max_candidates` and results by
+    | `max_results`; `min_score` drops weak noise. Existing filters still apply
+    | on top: public visibility (PublicCatalog), business scope and availability.
+    |
+    | EMBEDDINGS (optional, versioned, OFF by default):
+    |   The actual Supabase/PostgreSQL setup has no `pgvector` extension and no
+    |   embedding column, and this runtime has no local embedding model - so the
+    |   justified default is the lexical hybrid above. When an operator enables
+    |   `embeddings.enabled`, the server may embed the query (key stays
+    |   server-side) and blend cosine similarity with stored vectors from
+    |   `ai_product_embeddings` (see the migration); until then `mode` is
+    |   `lexical` and results are identical. `version` is written with every
+    |   stored vector so a model change can be backfilled without mixing spaces.
+    |   No model is ever downloaded to the mobile app.
+    */
+    'search' => [
+        'enabled' => (bool) env('AI_SEARCH_ENABLED', true),
+        // Bounded retrieval: at most this many candidate rows are scored.
+        'max_candidates' => (int) env('AI_SEARCH_MAX_CANDIDATES', 2000),
+        'max_results' => (int) env('AI_SEARCH_MAX_RESULTS', 24),
+        // Below this score a row is noise rather than a match. Calibrated
+        // against the field weights in ProductSearch: an exact name match scores
+        // 0.55, a category-only or description-only match 0.15/0.12, while a
+        // weak fuzzy hit on one description word lands under this floor and is
+        // dropped. A row that matches nothing scores 0 and never appears.
+        'min_score' => (float) env('AI_SEARCH_MIN_SCORE', 0.12),
+        'fuzzy_enabled' => (bool) env('AI_SEARCH_FUZZY', true),
+        // Edit budget is scaled by word length: one edit up to nine characters,
+        // up to this many beyond that. This is what keeps "rice" from matching
+        // "race" (which would surface ball bearings for a rice search).
+        'fuzzy_max_distance' => (int) env('AI_SEARCH_FUZZY_MAX_DISTANCE', 2),
+        // Words shorter than this never use the fuzzy pass at all.
+        'fuzzy_min_token_length' => (int) env('AI_SEARCH_FUZZY_MIN_TOKEN_LENGTH', 5),
+        // The fuzzy pass is expensive, so it only runs when the cheap exact /
+        // prefix / transliteration pass found fewer matches than this. A normal
+        // query therefore never pays for it; a typo query does.
+        'fuzzy_topup_below' => (int) env('AI_SEARCH_FUZZY_TOPUP_BELOW', 5),
+
+        // Bounded synonym + transliteration expansion. Keys are matched as
+        // phrases against the normalised query and each value is added as an
+        // extra query variant, so "mchele" can find "rice" and vice versa.
+        // Keep this list short and reviewed - it is the only place where
+        // search vocabularies live.
+        'synonyms' => [
+            'mchele' => ['rice'],
+            'rice' => ['mchele'],
+            'unga' => ['flour'],
+            'flour' => ['unga'],
+            'sukari' => ['sugar'],
+            'sugar' => ['sukari'],
+            'mafuta' => ['oil'],
+            'oil' => ['mafuta'],
+            'sabuni' => ['soap'],
+            'soap' => ['sabuni'],
+            'saruji' => ['cement'],
+            'cement' => ['saruji'],
+            'viatu' => ['shoes', 'shoe'],
+            'shoes' => ['viatu'],
+            'shoe' => ['viatu'],
+            'simu' => ['phone', 'mobile phone'],
+            'phone' => ['simu'],
+            'vocha' => ['airtime', 'credit'],
+            'airtime' => ['vocha'],
+            'breki' => ['brake pads', 'brake pad', 'brake'],
+            'brake pads' => ['brake pad', 'brake', 'breki'],
+            'brake pad' => ['brake pads', 'brake', 'breki'],
+            'brake' => ['brake pads', 'brake pad', 'breki'],
+            'premio' => ['toyota premio'],
+            'malipo' => ['payment'],
+            'payment' => ['malipo'],
+            'dawa' => ['medicine'],
+            'medicine' => ['dawa'],
+        ],
+
+        'embeddings' => [
+            'enabled' => (bool) env('AI_SEARCH_EMBEDDINGS', false),
+            'provider' => env('AI_SEARCH_EMBEDDINGS_PROVIDER', 'gemini'),
+            'model' => env('AI_SEARCH_EMBEDDINGS_MODEL', 'text-embedding-004'),
+            'dimensions' => (int) env('AI_SEARCH_EMBEDDINGS_DIMENSIONS', 768),
+            // Written with every stored vector; bump it when the model changes
+            // so a partial backfill can never mix two embedding spaces.
+            'version' => env('AI_SEARCH_EMBEDDINGS_VERSION', 'v1'),
+            'table' => 'ai_product_embeddings',
+            // How much the semantic score may influence the final ranking.
+            'weight' => (float) env('AI_SEARCH_EMBEDDINGS_WEIGHT', 0.35),
+            'timeout' => (int) env('AI_SEARCH_EMBEDDINGS_TIMEOUT', 10),
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Schema-free natural-language data entry (capability #25)
+    |--------------------------------------------------------------------------
+    | ONE sentence in, one strict, editable preview out, and - only after the
+    | user confirms - a record written through the EXISTING endpoint for that
+    | type (POST /api/products, /api/sales, /api/office-expenses,
+    | /api/customers). This capability owns no inventory, sales or expense
+    | logic of its own; it is a front door to the workflows that already exist.
+    |
+    | Guard rails enforced in code, not configuration:
+    |   - the record type is an allow-list (product, sale, expense, customer);
+    |   - the model may only pick one of those and copy a phrase from the text,
+    |     never invent a number, a table, a column or SQL;
+    |   - product references are matched against the CALLER'S OWN catalogue with
+    |     capability #24's ranker, and a near-tie stays `ambiguous` with no id;
+    |   - a commit needs `confirm: true`, a role that may record data, a stable
+    |     `idempotency_key` (recorded in `user_logs`, so a replay returns the
+    |     original record instead of writing twice), and every id the client
+    |     sends back is re-verified against the caller's business.
+    */
+    'entry' => [
+        'enabled' => (bool) env('AI_ENTRY_ENABLED', true),
+        // One sentence is short. Anything longer is truncated to this many
+        // characters before any parsing happens.
+        'max_text' => (int) env('AI_ENTRY_MAX_TEXT', 500),
+        // Bounded catalogue read: the caller's own active products, capped.
+        // Each PostgREST roundtrip costs hundreds of milliseconds here, so this
+        // is deliberately modest - it is the whole catalogue of one business,
+        // and a business larger than this is better served by the dedicated
+        // product screens than by a single sentence.
+        'max_catalogue' => (int) env('AI_ENTRY_MAX_CATALOGUE', 2000),
+        // A ranked candidate below this score is not a match at all, so a
+        // product reference that matches nothing is reported as not_found
+        // rather than being forced onto the nearest product.
+        'match_min_score' => (float) env('AI_ENTRY_MATCH_MIN_SCORE', 0.2),
+        // How close the runner-up may be before the match is called ambiguous.
+        'match_margin' => (float) env('AI_ENTRY_MATCH_MARGIN', 0.85),
+        // How many products a preview may show as candidates for a reference.
+        'max_candidates' => (int) env('AI_ENTRY_MAX_CANDIDATES', 5),
+        // The model is only asked which of the four types a sentence is when the
+        // deterministic classifier is not confident, and it may only answer
+        // with one of them. Measured ~13 s on the live provider, so this can be
+        // switched off: when it is, an unrecognised sentence still gets the
+        // localized explanation and the examples instead of a guess.
+        'model_assist' => (bool) env('AI_ENTRY_MODEL_ASSIST', true),
+        // Note: there is no separate write budget - the commit calls the same
+        // existing endpoints a seller could call directly, so the existing
+        // rules (stock, ownership, duplicate names) are the only limits, and
+        // the per-attempt idempotency key bounds accidental double writes.
     ],
 ];

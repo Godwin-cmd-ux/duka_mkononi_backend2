@@ -44,7 +44,7 @@
         .inq-table th { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: #7f8c8d; }
         .inq-table tr:hover td { background: #fafbff; }
         .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
-        .b-warn { background: #fffbeb; color: #b45309; } .b-info { background: #eff6ff; color: #1d4ed8; } .b-ok { background: #ecfdf5; color: #047857; } .b-muted { background: #f1f5f9; color: #64748b; }
+        .b-warn { background: #fffbeb; color: #b45309; } .b-info { background: #eff6ff; color: #1d4ed8; } .b-ok { background: #ecfdf5; color: #047857; } .b-muted { background: #f1f5f9; color: #64748b; } .b-danger { background: #fef2f2; color: #b91c1c; }
         .inq-cards { display: none; flex-direction: column; gap: 12px; }
         .inq-card { padding: 16px; }
         .inq-card .oc-row { display: flex; justify-content: space-between; gap: 8px; padding: 4px 0; font-size: 13.5px; flex-wrap: wrap; }
@@ -63,6 +63,22 @@
         .msg-box { background: #f8fafc; border: 1px solid #eef2f7; border-radius: 10px; padding: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
         .alert { padding: 11px 14px; border-radius: 10px; font-size: 14px; margin-bottom: 12px; }
         .alert-ok { background: #ecfdf5; color: #065f46; } .alert-err { background: #fef2f2; color: #991b1b; } .alert-info { background: #eff6ff; color: #1e40af; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px; }
+        .stat { background: #fff; border: 1px solid #ecf0f1; border-radius: 14px; padding: 14px 16px; }
+        .stat span { display: block; font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: .04em; }
+        .stat b { font-size: 22px; } .stat b.muted { color: #64748b; }
+        .tri-wrap { border-top: 1px solid #f1f5f9; margin-top: 16px; padding-top: 14px; }
+        .tri-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+        .tri-head h4 { font-size: 15px; font-weight: 700; }
+        .tri-hint { color: #64748b; font-size: 13px; }
+        .tri-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 12px 0; }
+        .tri-cell { background: #f8fafc; border: 1px solid #eef2f7; border-radius: 10px; padding: 10px 12px; }
+        .tri-cell span { display: block; font-size: 12px; color: #64748b; }
+        .tri-cell b { font-size: 14px; }
+        .tri-list { margin: 6px 0 0 18px; font-size: 13px; color: #475569; overflow-wrap: anywhere; }
+        .tri-sec { margin-top: 12px; } .tri-sec > b { font-size: 13px; color: #334155; }
+        .approve { display: flex; align-items: flex-start; gap: 10px; font-size: 13.5px; margin: 10px 0; font-weight: 500; }
+        .approve input[type="checkbox"] { width: 18px; height: 18px; min-height: 0; margin-top: 2px; flex: none; }
         @media (max-width: 900px) {
             .sidebar { transform: translateX(-100%); } .sidebar.open { transform: translateX(0); }
             .main { margin-left: 0; } .hamburger { display: inline-flex; align-items: center; justify-content: center; }
@@ -86,6 +102,8 @@
         <nav class="nav-items">
             <a class="nav-item" href="/system_admin/dashboard"><i class="fa-solid fa-gauge-high"></i><span data-i18n="system_admin_inquiries.nav_dashboard">Dashboard</span></a>
             <a class="nav-item active" href="/system_admin/inquiries"><i class="fa-solid fa-envelope-open-text"></i><span data-i18n="system_admin_inquiries.nav_inquiries">Inquiries</span></a>
+            <a class="nav-item" href="/system_admin/certification"><i class="fa-solid fa-certificate"></i><span data-i18n="certification_ai.nav_certification">Certification</span></a>
+            <a class="nav-item" href="/system_admin/analytics"><i class="fa-solid fa-chart-line"></i><span data-i18n="admin_analytics.nav_analytics">Analytics</span></a>
             <a class="nav-item" href="/system_admin/notify"><i class="fa-solid fa-bullhorn"></i><span data-i18n="system_admin_inquiries.nav_notify">Notifications</span></a>
         </nav>
         <div class="sidebar-footer">
@@ -107,6 +125,7 @@
         </div>
         <div class="content">
             <div id="dmAlert"></div>
+            <div class="stats" id="dmTriageStats" style="display:none"></div>
             <div class="toolbar">
                 <select id="dmStatusFilter">
                     <option value="" data-i18n="system_admin_inquiries.filter_all">All</option>
@@ -228,6 +247,7 @@
             '<div class="detail-row"><b>' + esc(t('system_admin_inquiries.detail_date')) + '</b><span>' + esc(fmtDate(i.created_at)) + '</span></div>' +
             '<div style="margin:14px 0 6px"><b>' + esc(t('system_admin_inquiries.detail_message')) + '</b></div>' +
             '<div class="msg-box">' + esc(i.message) + '</div>' +
+            triBlock() +
             (published ? '<div class="alert alert-info" style="margin-top:14px">' + esc(t('system_admin_inquiries.published_hint')) + '</div>' : '') +
             '<h4 style="margin:16px 0 8px">' + esc(t('system_admin_inquiries.publish_title')) + '</h4>' +
             '<p style="color:#64748b;font-size:13px;margin-bottom:10px">' + esc(t('system_admin_inquiries.publish_subtitle')) + '</p>' +
@@ -245,6 +265,151 @@
         if (pb) pb.onclick = function () { act('/api/system-admin/inquiries/' + encodeURIComponent(i.id) + '/publish', 'POST', { display_name: document.getElementById('dmPubName').value, rating: document.getElementById('dmPubRating').value }, 'published'); };
         var ub = document.getElementById('dmUnpublish');
         if (ub) ub.onclick = function () { act('/api/system-admin/inquiries/' + encodeURIComponent(i.id) + '/unpublish', 'POST', {}, 'unpublished'); };
+        var tb = document.getElementById('dmTriageBtn');
+        if (tb) tb.onclick = function () { runTriage(i.id); };
+    }
+
+    /* ------------------------------------------------------------------
+       Capability #18 - inquiry triage. The panel only DISPLAYS what the API
+       decided (topic, urgency, team, the human requirement) and lets the
+       operator edit and approve the composed reply; nothing here decides a
+       severity or invents an answer.
+       ------------------------------------------------------------------ */
+    function triBlock() {
+        return '<div class="tri-wrap">' +
+            '<div class="tri-head">' +
+                '<h4>' + esc(t('inquiry_triage.title')) + ' <span class="badge b-info">' + esc(t('inquiry_triage.ai_badge')) + '</span></h4>' +
+                '<button class="btn btn-primary btn-sm" id="dmTriageBtn">' + esc(t('inquiry_triage.btn_triage')) + '</button>' +
+            '</div>' +
+            '<p class="tri-hint">' + esc(t('inquiry_triage.subtitle')) + '</p>' +
+            '<div id="dmTriageOut"></div>' +
+        '</div>';
+    }
+    function list(items) {
+        if (!items || !items.length) { return ''; }
+        return '<ul class="tri-list">' + items.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>';
+    }
+    function loadStats() {
+        var box = document.getElementById('dmTriageStats');
+        if (!box) { return; }
+        fetch('/api/ai/inquiries/queue?locale=' + encodeURIComponent((window.DM && DM.locale()) || 'sw'), { headers: auth() })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (d) {
+                if (!d || !d.counts) { return; }
+                var c = d.counts;
+                box.innerHTML = '<div class="stat"><span>' + esc(t('inquiry_triage.stat_total')) + '</span><b>' + esc(String(c.total)) + '</b></div>' +
+                    '<div class="stat"><span>' + esc(t('inquiry_triage.stat_needs_human')) + '</span><b>' + esc(String(c.needs_human)) + '</b></div>' +
+                    '<div class="stat"><span>' + esc(t('inquiry_triage.stat_with_help')) + '</span><b>' + esc(String(c.has_approved_help)) + '</b></div>';
+                if (d.auto_send_policy) {
+                    box.innerHTML += '<div class="alert alert-info" style="grid-column:1/-1;margin:0">' + esc(t('inquiry_triage.auto_sent_note')) + '</div>';
+                }
+                box.style.display = 'grid';
+            })
+            .catch(function () { /* the queue strip is optional; the list still works without it */ });
+    }
+    function runTriage(id) {
+        var out = document.getElementById('dmTriageOut');
+        var btn = document.getElementById('dmTriageBtn');
+        if (!out || !btn) { return; }
+        var original = btn.textContent;
+        btn.disabled = true; btn.textContent = t('inquiry_triage.triaging');
+        out.innerHTML = '<div class="empty" role="status" style="padding:18px"><div class="dm-sc" style="width:36px;height:36px;margin:0 auto 10px"></div></div>';
+        fetch('/api/ai/inquiries/' + encodeURIComponent(id) + '/triage', {
+            method: 'POST',
+            headers: Object.assign({ 'Content-Type': 'application/json' }, auth()),
+            body: JSON.stringify({ locale: (window.DM && DM.locale()) || 'sw' })
+        }).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+            .then(function (res) {
+                btn.disabled = false; btn.textContent = original;
+                if (!res.ok) { out.innerHTML = '<div class="alert alert-err">' + esc((res.d && res.d.error) || t('inquiry_triage.error')) + '</div>'; return; }
+                renderTriage(id, res.d);
+            })
+            .catch(function () {
+                btn.disabled = false; btn.textContent = original;
+                out.innerHTML = '<div class="alert alert-err">' + esc(t('inquiry_triage.error')) + '</div>';
+            });
+    }
+    function renderTriage(id, d) {
+        var tr = d.triage || {}, dr = d.draft || {}, ap = d.approval || {};
+        var uCls = { critical: 'b-danger', high: 'b-warn', normal: 'b-info', low: 'b-muted' };
+        var html = '<div id="dmTriAlert"></div>';
+        if (d.notice) { html += '<div class="alert alert-info">' + esc(d.notice) + '</div>'; }
+        if (d.persisted === false) { html += '<div class="alert alert-info">' + esc(t('inquiry_triage.persisted_no')) + '</div>'; }
+        html += '<div class="tri-grid">' +
+            '<div class="tri-cell"><span>' + esc(t('inquiry_triage.label_category')) + '</span><b>' + esc(tr.category_label || tr.category || '-') + '</b></div>' +
+            '<div class="tri-cell"><span>' + esc(t('inquiry_triage.label_urgency')) + '</span><b><span class="badge ' + (uCls[tr.urgency] || 'b-muted') + '">' + esc(tr.urgency_label || tr.urgency || '-') + '</span></b></div>' +
+            '<div class="tri-cell"><span>' + esc(t('inquiry_triage.label_route')) + '</span><b>' + esc(tr.route_label || tr.route || '-') + '</b></div>' +
+            '<div class="tri-cell"><span>' + esc(t('inquiry_triage.label_escalate')) + '</span><b>' + esc(tr.needs_human ? t('inquiry_triage.needs_human_yes') : t('inquiry_triage.needs_human_no')) + '</b></div>' +
+        '</div>';
+        if (dr.uses_approved_help === false) { html += '<div class="alert alert-err">' + esc(t('inquiry_triage.no_help')) + '</div>'; }
+        var reasons = (tr.needs_human_reasons || []).concat(tr.urgency_reasons || []);
+        if (reasons.length) { html += '<div class="tri-sec"><b>' + esc(t('inquiry_triage.reasons')) + '</b>' + list(reasons) + '</div>'; }
+        var ev = tr.urgency_evidence || [];
+        if (ev.length) { html += '<div class="tri-sec"><b>' + esc(t('inquiry_triage.evidence')) + '</b>' + list(ev) + '</div>'; }
+        var topics = tr.matched_topics || [];
+        if (topics.length) {
+            html += '<div class="tri-sec"><b>' + esc(t('inquiry_triage.sources_title')) + '</b>' +
+                list(topics.map(function (x) { return x.id + ' (' + x.category + ')'; })) + '</div>';
+        }
+        html += '<div class="tri-sec"><b>' + esc(t('inquiry_triage.draft_title')) + '</b>' +
+            '<p class="tri-hint">' + esc(t('inquiry_triage.draft_edited_note')) + '</p>' +
+            '<div class="field"><label>' + esc(t('inquiry_triage.draft_subject')) + '</label><input id="dmReplySubject" value="' + esc(dr.subject || '') + '"></div>' +
+            '<div class="field"><label>' + esc(t('inquiry_triage.draft_title')) + '</label><textarea id="dmReplyBody" style="min-height:180px">' + esc(dr.body || '') + '</textarea></div>' +
+        '</div>';
+        if (ap.required === false) {
+            html += '<div class="alert alert-info">' + esc(t('inquiry_triage.auto_sent_note')) + '</div>';
+            if (d.auto_sent) { html += '<div class="alert alert-ok">' + esc(t('inquiry_triage.sent_ok')) + '</div>'; }
+        } else {
+            html += '<label class="approve"><input type="checkbox" id="dmReplyApprove"><span>' + esc(t('inquiry_triage.approve_confirm')) + '</span></label>' +
+                '<button class="btn btn-ok" id="dmReplySend">' + esc(t('inquiry_triage.btn_reply')) + '</button>';
+        }
+        html += '<p class="tri-hint" style="margin-top:10px">' + esc(t('inquiry_triage.not_resolved')) + '</p>';
+        var src = d.sources || [];
+        if (src.length) { html += '<div class="tri-sec"><b>' + esc(t('inquiry_triage.sources_title')) + '</b>' + list(src) + '</div>'; }
+        var lim = d.limitations || [];
+        if (lim.length) { html += '<div class="tri-sec"><b>' + esc(t('inquiry_triage.limitations_title')) + '</b>' + list(lim) + '</div>'; }
+        document.getElementById('dmTriageOut').innerHTML = html;
+        var send = document.getElementById('dmReplySend');
+        if (send) { send.onclick = function () { sendReply(id); }; }
+    }
+    function sendReply(id) {
+        var box = document.getElementById('dmTriAlert');
+        var chk = document.getElementById('dmReplyApprove');
+        var btn = document.getElementById('dmReplySend');
+        if (chk && !chk.checked) {
+            box.innerHTML = '<div class="alert alert-err">' + esc(t('inquiry_triage.approve_required')) + '</div>';
+            return;
+        }
+        var subjectEl = document.getElementById('dmReplySubject');
+        var bodyEl = document.getElementById('dmReplyBody');
+        if (!bodyEl || !bodyEl.value.trim()) {
+            box.innerHTML = '<div class="alert alert-err">' + esc(t('inquiry_triage.error')) + '</div>';
+            return;
+        }
+        if (btn) { btn.disabled = true; btn.textContent = t('inquiry_triage.sending'); }
+        fetch('/api/ai/inquiries/' + encodeURIComponent(id) + '/reply', {
+            method: 'POST',
+            headers: Object.assign({ 'Content-Type': 'application/json' }, auth()),
+            body: JSON.stringify({
+                approved: true,
+                subject: subjectEl ? subjectEl.value : '',
+                body: bodyEl.value,
+                locale: (window.DM && DM.locale()) || 'sw'
+            })
+        }).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+            .then(function (res) {
+                if (btn) { btn.disabled = false; btn.textContent = t('inquiry_triage.btn_reply'); }
+                if (!res.ok) {
+                    box.innerHTML = '<div class="alert alert-err">' + esc((res.d && res.d.error) || t('inquiry_triage.sent_fail')) + '</div>';
+                    return;
+                }
+                box.innerHTML = '<div class="alert alert-ok">' + esc((res.d && res.d.notice) || t('inquiry_triage.sent_ok')) + '</div>';
+                load(true); loadStats();
+            })
+            .catch(function () {
+                if (btn) { btn.disabled = false; btn.textContent = t('inquiry_triage.btn_reply'); }
+                box.innerHTML = '<div class="alert alert-err">' + esc(t('inquiry_triage.sent_fail')) + '</div>';
+            });
     }
     function act(url, method, body, kind) {
         var box = document.getElementById('dmDetailAlert');
@@ -274,7 +439,8 @@
         var search = document.getElementById('dmSearch'); var h;
         search.oninput = function () { clearTimeout(h); h = setTimeout(function () { state.search = search.value.trim(); load(true); }, 400); };
         load(true);
-        if (window.DM) DM.onChange(function () { load(true); });
+        loadStats();
+        if (window.DM) DM.onChange(function () { load(true); loadStats(); });
     });
 })();
 </script>

@@ -80,6 +80,9 @@ Route::view('/system_admin/index', 'system_admin.index');
 Route::view('/system_admin/dashboard', 'system_admin.dashboard');
 Route::view('/system_admin/notify', 'system_admin.notify');
 Route::view('/system_admin/inquiries', 'system_admin.inquiries');
+Route::view('/system_admin/certification', 'system_admin.certification');
+// Analytics: natural-language platform analytics (capability #20).
+Route::view('/system_admin/analytics', 'system_admin.analytics');
 
 Route::redirect('/bidhaa-mpya', '/msimamizi/bidhaa-mpya');
 Route::redirect('/ripoti', '/msimamizi/ripoti');

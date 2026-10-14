@@ -325,16 +325,4 @@ class AiReportSummaryController extends BaseController
             return $fallback;
         }
     }
-
-    private function resolveLocale(Request $request): string
-    {
-        $supported = (array) config('ai.locales', ['sw']);
-        $candidate = strtolower(trim((string) $request->input('locale', '')));
-
-        if ($candidate === '' || ! in_array($candidate, $supported, true)) {
-            $candidate = (string) config('ai.default_locale', 'sw');
-        }
-
-        return in_array($candidate, $supported, true) ? $candidate : 'sw';
-    }
 }

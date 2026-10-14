@@ -44,7 +44,7 @@ class AiHealthController extends BaseController
             return $scope['error'];
         }
 
-        $locale = $this->resolveLocale($request, $scope['businessId']);
+        $locale = $this->resolveLocaleForBusiness($request, $scope['businessId']);
         $period = $this->resolvePeriod($request);
 
         try {
@@ -108,7 +108,7 @@ class AiHealthController extends BaseController
         if ($latest === null) {
             // No digest stored yet: generate one for the most recent completed
             // week so the seller still sees something useful.
-            $locale = $this->resolveLocale($request, $scope['businessId']);
+            $locale = $this->resolveLocaleForBusiness($request, $scope['businessId']);
             $period = HealthDigestService::periodForWeek();
             $digest = HealthDigestService::generateForBusiness(
                 $scope['memberIds'],
@@ -272,16 +272,13 @@ class AiHealthController extends BaseController
         return strtotime($value) !== false ? $value : $default;
     }
 
-    private function resolveLocale(Request $request, string $businessId): string
+    /**
+     * Capability #22: the shared resolver with this capability's own second
+     * fallback - the business's configured locale (unchanged behaviour).
+     */
+    private function resolveLocaleForBusiness(Request $request, string $businessId): string
     {
-        $supported = (array) config('ai.locales', ['sw']);
-        $candidate = strtolower(trim((string) $request->input('locale', '')));
-
-        if ($candidate === '' || ! in_array($candidate, $supported, true)) {
-            $candidate = HealthDigestService::defaultLocaleForBusiness($businessId);
-        }
-
-        return in_array($candidate, $supported, true) ? $candidate : 'sw';
+        return \App\Services\Ai\Locale::resolve($request, HealthDigestService::defaultLocaleForBusiness($businessId));
     }
 
     /**

@@ -3,13 +3,21 @@
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AdvertisementController;
 use App\Http\Controllers\Api\AiAdCopyController;
+use App\Http\Controllers\Api\AiCertificationController;
 use App\Http\Controllers\Api\AiCopilotController;
 use App\Http\Controllers\Api\AiHealthController;
+use App\Http\Controllers\Api\AiInquiryTriageController;
+use App\Http\Controllers\Api\AiOnboardingController;
+use App\Http\Controllers\Api\AiAdminAnalyticsController;
 use App\Http\Controllers\Api\AiAnomalyController;
 use App\Http\Controllers\Api\AiOrderQaController;
 use App\Http\Controllers\Api\AiExpenseParseController;
 use App\Http\Controllers\Api\AiImportController;
+use App\Http\Controllers\Api\AiNlEntryController;
 use App\Http\Controllers\Api\AiPricingController;
+use App\Http\Controllers\Api\AiPublicConciergeController;
+use App\Http\Controllers\Api\AiSearchController;
+use App\Http\Controllers\Api\AiSpeechController;
 use App\Http\Controllers\Api\AiRecommendationController;
 use App\Http\Controllers\Api\AiReplyController;
 use App\Http\Controllers\Api\AiReportController;
@@ -17,6 +25,7 @@ use App\Http\Controllers\Api\AiReviewController;
 use App\Http\Controllers\Api\AiReportSummaryController;
 use App\Http\Controllers\Api\AiRestockController;
 use App\Http\Controllers\Api\AiShopAssistantController;
+use App\Http\Controllers\Api\AiTeamActivityController;
 use App\Http\Controllers\Api\AiTrustSummaryController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BackupController;
@@ -91,6 +100,31 @@ Route::get('shop/reviews', [ShopController::class, 'reviews']);
 Route::post('ai/shopping/ask', [AiShopAssistantController::class, 'ask'])->middleware('throttle:20,1');
 Route::get('ai/shopping/suggestions', [AiShopAssistantController::class, 'suggestions'])->middleware('throttle:60,1');
 
+// Capability #21 - Public AI Concierge. PUBLIC + throttled (and additionally
+// capped per IP per hour inside the controller): a visitor who has never signed
+// in can ask what the marketplace is, how to buy or sell, or where to download
+// the app. It answers from the approved public knowledge base and the SAME
+// public catalogue the shop endpoints serve, refuses questions about the
+// platform's internals or anyone's private data, and can only ever return links
+// this website already publishes.
+Route::post('ai/concierge/ask', [AiPublicConciergeController::class, 'ask'])->middleware('throttle:20,1');
+Route::get('ai/concierge/help', [AiPublicConciergeController::class, 'help'])->middleware('throttle:60,1');
+
+// Capability #23 - Voice Input & Voice Answers. PUBLIC + throttled: this is the
+// capability contract the voice controls read before showing a microphone
+// button - which locales have VERIFIED speech coverage, the single-utterance
+// limits, the privacy facts (no audio recorded, none sent to this server) and
+// the localized UI strings. Speech itself runs on the visitor's own device, so
+// no audio is ever uploaded and no speech API key exists anywhere.
+Route::get('ai/speech/capabilities', [AiSpeechController::class, 'capabilities'])->middleware('throttle:60,1');
+
+// Capability #24 - Semantic & Typo-Tolerant Search. PUBLIC + throttled: it
+// ranks the SAME public catalogue rows the shop page serves (so public
+// visibility, business scope and stock rules are unchanged) with typo
+// tolerance, prefix, transliteration and configured synonyms. Embeddings are
+// optional and off by default - the lexical path always works on its own.
+Route::get('ai/search/products', [AiSearchController::class, 'products'])->middleware('throttle:60,1');
+
 // Capability #12 - Business & Review Summarisation. PUBLIC + throttled: it
 // reads only published reviews, public business rows and order aggregates.
 // Cached per locale; publishing/unpublishing a review or (un)certifying a
@@ -151,6 +185,12 @@ Route::middleware('auth.jwt')->group(function () {
     Route::post('ai/reviews/check', [AiReviewController::class, 'check']);
     Route::post('ai/reviews/decision', [AiReviewController::class, 'decision']);
 
+    // Capability #17 - Team Activity Digest (manager-facing summary of the
+    // business's OWN activity log rows; counts are computed in PHP, never by
+    // the model, and the digest is never a performance assessment).
+    Route::get('ai/activity/digest', [AiTeamActivityController::class, 'digest']);
+    Route::get('ai/activity/history', [AiTeamActivityController::class, 'history']);
+
     // Capability #6 - Anomaly & Leak Detection (deterministic rules + AI narration).
     Route::get('ai/anomalies', [AiAnomalyController::class, 'index']);
     Route::post('ai/anomalies/dismiss', [AiAnomalyController::class, 'dismiss']);
@@ -177,6 +217,15 @@ Route::middleware('auth.jwt')->group(function () {
     // (per-account state with a TTL; never shared between customers).
     Route::post('ai/recommendations/dismiss', [AiRecommendationController::class, 'dismiss']);
     Route::post('ai/recommendations/feedback', [AiRecommendationController::class, 'feedback']);
+
+    // Capability #25 - Schema-Free Natural-Language Data Entry. One sentence in,
+    // one editable preview out; the commit step routes the CONFIRMED record
+    // through the existing POST products / sales / office-expenses / customers
+    // endpoints (its own controller owns no inventory, sales or expense logic),
+    // requires `confirm: true`, a staff role and a stable idempotency key.
+    Route::get('ai/entry/examples', [AiNlEntryController::class, 'examples']);
+    Route::post('ai/entry/preview', [AiNlEntryController::class, 'preview']);
+    Route::post('ai/entry/commit', [AiNlEntryController::class, 'commit']);
 
     Route::post('inventory/ai-import', [AiImportController::class, 'import']);
     Route::post('inventory/ai-import/verify', [AiImportController::class, 'verify']);
@@ -244,6 +293,33 @@ Route::middleware('auth.jwt')->group(function () {
     Route::put('system-admin/inquiries/{id}/reviewed', [InquiryController::class, 'markReviewed']);
     Route::post('system-admin/inquiries/{id}/publish', [InquiryController::class, 'publish']);
     Route::post('system-admin/inquiries/{id}/unpublish', [InquiryController::class, 'unpublish']);
+    // Capability #18 - Inquiry Triage & Auto-Draft Replies (Super Admin only).
+    // Classification, urgency and routing are computed in PHP; the draft is
+    // composed from approved help content only, and a reply is sent ONLY after
+    // an explicit human approval (or under the narrow opt-in auto-send policy).
+    Route::get('ai/inquiries/queue', [AiInquiryTriageController::class, 'queue']);
+    Route::post('ai/inquiries/{id}/triage', [AiInquiryTriageController::class, 'triage']);
+    Route::post('ai/inquiries/{id}/reply', [AiInquiryTriageController::class, 'reply']);
+
+    // Capability #19 - Certification & Onboarding Assistant.
+    // The certification review is an EVIDENCE checklist for Super Admins: it
+    // reads real business/member/product rows and never certifies anything (the
+    // human decision stays on PUT /api/system-admin/businesses/{id}/certify).
+    // The onboarding guide is for the signed-in user's OWN account and answers
+    // only from the approved onboarding content.
+    Route::get('ai/certification/queue', [AiCertificationController::class, 'queue']);
+    Route::post('ai/certification/{id}/review', [AiCertificationController::class, 'review']);
+    Route::get('ai/onboarding/guide', [AiOnboardingController::class, 'guide']);
+    Route::post('ai/onboarding/ask', [AiOnboardingController::class, 'ask']);
+
+    // Capability #20 - Natural-Language Admin Analytics (STRICT system admin).
+    // The question selects one allow-listed read-only metric computed in PHP
+    // from bounded, time-filtered reads over the platform's own tables; the
+    // model may only pick from that allow-list and write one acknowledgement
+    // sentence. No SQL is ever generated and every answer is platform-wide.
+    Route::post('ai/platform-analytics/ask', [AiAdminAnalyticsController::class, 'ask']);
+    Route::get('ai/platform-analytics/examples', [AiAdminAnalyticsController::class, 'examples']);
+
     Route::get('system-admin/businesses', [SystemAdminController::class, 'businesses']);
     Route::put('system-admin/businesses/{id}/certify', [SystemAdminController::class, 'certify']);
 

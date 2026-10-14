@@ -13,10 +13,15 @@
 --}}
 @php
     $dmLocales = ['sw', 'en', 'fr', 'hi', 'es', 'ur', 'de', 'zh'];
+    // Capability #22: the one right-to-left language in the catalogue. The
+    // `dir` attribute is what browsers use to mirror alignment, forms, modals
+    // and flex rows, so it belongs on <html>, not per-element.
+    $dmRtlLocales = ['ur'];
     $dmLocale = session('locale');
     if (! in_array($dmLocale, $dmLocales, true)) {
         $dmLocale = 'sw';
     }
+    $dmDirection = in_array($dmLocale, $dmRtlLocales, true) ? 'rtl' : 'ltr';
 @endphp
 <!DOCTYPE html>
-<html lang="{{ $dmLocale }}" data-dm-locale="{{ $dmLocale }}">
+<html lang="{{ $dmLocale }}" dir="{{ $dmDirection }}" data-dm-locale="{{ $dmLocale }}">

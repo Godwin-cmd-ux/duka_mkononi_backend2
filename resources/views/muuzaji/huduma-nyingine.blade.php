@@ -104,6 +104,45 @@
         .hub-ads .hub-icon { background: #c0392b; }
         .hub-ads .hub-title, .hub-ads .hub-arrow { color: #922b21; }
 
+        /* Capability #25 - schema-free NL data entry panel. */
+        .dm-entry { background: #fff; border-radius: 18px; padding: 20px; margin-top: 18px; text-align: start; }
+        .dm-entry-title { font-size: 17px; font-weight: 800; color: #2c3e50; }
+        .dm-entry-subtitle { margin-top: 6px; font-size: 13px; color: #7f8c8d; line-height: 1.5; }
+        .dm-entry-text { width: 100%; margin-top: 12px; padding: 12px 14px; font-family: 'Inter', sans-serif; font-size: 15px; border: 1.5px solid #d8dee3; border-radius: 14px; resize: vertical; box-sizing: border-box; }
+        .dm-entry-text:focus { outline: none; border-color: #0f7b57; }
+        .dm-entry-meta { display: flex; justify-content: space-between; font-size: 12px; color: #95a5a6; margin-top: 6px; }
+        .dm-entry-examples { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .dm-entry-chip { text-align: start; background: #f4f6f8; border: 1px solid #e7ebef; border-radius: 12px; padding: 8px 12px; font-size: 12.5px; color: #5d6d7e; cursor: pointer; max-width: 100%; }
+        .dm-entry-chip:hover { background: #e8f8f0; border-color: #2ecc71; }
+        .dm-entry-chip-type { display: inline-block; font-weight: 700; color: #0f7b57; margin-inline-end: 6px; }
+        .dm-entry-btn { margin-top: 14px; padding: 12px 20px; border-radius: 14px; border: 1.5px solid #d8dee3; background: #fff; color: #2c3e50; font-weight: 700; font-size: 14px; cursor: pointer; }
+        .dm-entry-btn-primary { background: #0f7b57; border-color: #0f7b57; color: #fff; }
+        .dm-entry-btn:disabled { opacity: .55; cursor: not-allowed; }
+        .dm-entry-banner { display: none; margin-top: 12px; padding: 11px 14px; border-radius: 12px; font-size: 13px; line-height: 1.5; }
+        .dm-entry-banner.is-visible { display: block; }
+        .dm-entry-banner[data-kind="error"] { background: #fdeaea; color: #c0392b; border-inline-start: 4px solid #e74c3c; }
+        .dm-entry-banner[data-kind="warn"] { background: #fff9e6; color: #b9770e; border-inline-start: 4px solid #f1c40f; }
+        .dm-entry-banner[data-kind="info"] { background: #e8f4fd; color: #2471a3; border-inline-start: 4px solid #3498db; }
+        .dm-entry-banner[data-kind="success"] { background: #f0f8f0; color: #1e8449; border-inline-start: 4px solid #27ae60; }
+        .dm-entry-preview { display: none; margin-top: 16px; border-top: 1px solid #ecf0f1; padding-top: 14px; }
+        .dm-entry-preview.is-visible { display: block; }
+        .dm-entry-preview-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .dm-entry-type { background: #e8f8f0; color: #0f7b57; font-weight: 800; font-size: 12px; padding: 5px 12px; border-radius: 20px; }
+        .dm-entry-status { font-size: 12.5px; color: #7f8c8d; }
+        .dm-entry-match { margin-top: 12px; background: #fbfcfe; border: 1px solid #eceff3; border-radius: 12px; padding: 12px; }
+        .dm-entry-match-line { font-size: 13px; color: #2c3e50; margin-bottom: 8px; }
+        .dm-entry-candidate { display: block; width: 100%; text-align: start; margin-top: 6px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid #d8dee3; background: #fff; font-size: 13px; cursor: pointer; }
+        .dm-entry-candidate.is-selected { border-color: #0f7b57; background: #e8f8f0; font-weight: 700; }
+        .dm-entry-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 14px; }
+        .dm-entry-field { display: flex; flex-direction: column; gap: 5px; }
+        .dm-entry-field-label { font-size: 12px; font-weight: 600; color: #7f8c8d; }
+        .dm-entry-field input, .dm-entry-field select { padding: 10px 12px; border: 1.5px solid #d8dee3; border-radius: 12px; font-family: 'Inter', sans-serif; font-size: 14px; background: #fff; }
+        .dm-entry-field input:focus, .dm-entry-field select:focus { outline: none; border-color: #0f7b57; }
+        .dm-entry-flags { margin: 14px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+        .dm-entry-flags li { font-size: 12.5px; color: #b9770e; background: #fff9e6; border-radius: 10px; padding: 8px 11px; }
+        .dm-entry-missing { margin-top: 12px; font-size: 12.5px; color: #c0392b; }
+        .dm-entry-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
         @media (max-width: 768px) {
             .sidebar { transform: translateX(-100%); }
             .sidebar.open { transform: translateX(0); }
@@ -116,6 +155,7 @@
 <body>
 @endverbatim
 @include('partials.dm-lang-widget', ['dmLangHideButton' => true])
+@include('partials.nl-entry')
 @include('partials.toast')
 @verbatim
     <div class="mobile-menu-toggle" id="mobileMenuToggle">
@@ -214,6 +254,20 @@
                         <div class="hub-arrow">›</div>
                     </a>
                 </div>
+
+                <!-- Capability #25 - write one sentence, check the preview, save. -->
+                <section class="dm-entry" data-dm-entry>
+                    <div class="dm-entry-title" data-i18n="nl_entry.title">Andika, sisi tunarekodi</div>
+                    <div class="dm-entry-subtitle" data-i18n="nl_entry.subtitle">Eleza jambo moja lililotokea na uangalie muhtasari kabla ya kuhifadhi.</div>
+                    <textarea class="dm-entry-text" data-dm-entry-text rows="3" aria-label="Andika, sisi tunarekodi"></textarea>
+                    <div class="dm-entry-meta">
+                        <span class="dm-entry-count" data-dm-entry-count></span>
+                    </div>
+                    <div class="dm-entry-examples" data-dm-entry-examples></div>
+                    <button type="button" class="dm-entry-btn dm-entry-btn-primary" data-dm-entry-analyze data-i18n="nl_entry.analyze">Tengeneza muhtasari</button>
+                    <div class="dm-entry-banner" data-dm-entry-banner role="status" aria-live="polite"></div>
+                    <div class="dm-entry-preview" data-dm-entry-preview></div>
+                </section>
             </div>
         </main>
     </div>

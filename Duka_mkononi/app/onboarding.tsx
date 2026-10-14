@@ -16,6 +16,7 @@ import {
   View,
 } from 'react-native';
 import SmartCartLoader from '../components/SmartCartLoader';
+import OnboardingAssistant from '../components/OnboardingAssistant';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLang } from '../context/LanguageContext';
 import { API_BASE_URL } from '../constants/api';
@@ -75,6 +76,10 @@ export default function OnboardingScreen() {
 
   const scrollRef = useRef<ScrollView>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
+
+  // Capability #19 - the "getting started" assistant: the setup checklist and the
+  // approved answers, both read with THIS account's own token.
+  const [guideOpen, setGuideOpen] = useState(false);
 
   // Photo slide state
   const [photoUri, setPhotoUri] = useState<string | null>(null);
@@ -300,6 +305,16 @@ export default function OnboardingScreen() {
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
+        {/* Getting-started assistant (capability #19) */}
+        <TouchableOpacity
+          style={styles.guideButton}
+          onPress={() => setGuideOpen(true)}
+          activeOpacity={0.85}
+        >
+          <Ionicons name="help-circle-outline" size={16} color={accent} />
+          <Text style={[styles.guideButtonText, { color: accent }]}>{t('onboarding_ai.title')}</Text>
+        </TouchableOpacity>
+
         {/* Progress dots */}
         <View style={styles.dotsRow}>
           {slides.map((_, index) => (
@@ -437,6 +452,12 @@ export default function OnboardingScreen() {
             </View>
           )}
         </ScrollView>
+
+        <OnboardingAssistant
+          visible={guideOpen}
+          onClose={() => setGuideOpen(false)}
+          setupToken={setupToken}
+        />
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -457,6 +478,21 @@ const styles = StyleSheet.create({
     paddingTop: 18,
     paddingBottom: 6,
     gap: 8,
+  },
+  guideButton: {
+    position: 'absolute',
+    top: 8,
+    right: 16,
+    zIndex: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  guideButtonText: {
+    fontSize: 12.5,
+    fontWeight: '700',
   },
   dot: {
     width: 8,

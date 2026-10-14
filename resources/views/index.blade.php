@@ -4,6 +4,7 @@
 <body>
 @endverbatim
 @include('partials.dm-lang-widget')
+@include('partials.dm-voice')
 @include('partials.site-navbar')
 @verbatim
 <style>
@@ -189,6 +190,7 @@
 </main>
 @endverbatim
 @include('partials.site-footer')
+@include('partials.public-concierge')
 @verbatim
 <script>
 (function () {

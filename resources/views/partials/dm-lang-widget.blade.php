@@ -139,6 +139,19 @@
         .dm-lang-item { padding: 8px 12px; }
         .dm-lang-name { font-size: 13px; }
     }
+
+    /* ===== Capability #22 - right-to-left (Urdu) =====
+       The `dir` attribute on <html> is what mirrors alignment, form controls,
+       modals and flex rows for the whole page; these rules only handle the
+       floating selector's own position (it would otherwise sit under the
+       content in RTL) and give directional icons a documented opt-in hook. */
+    [dir="rtl"] .dm-lang-widget { left: auto; right: 18px; }
+    [dir="rtl"] .dm-lang-menu { left: auto; right: 72px; }
+    [dir="rtl"] .dm-flip-icon { transform: scaleX(-1); }
+    @media (max-width: 600px) {
+        [dir="rtl"] .dm-lang-widget { right: 10px; }
+        [dir="rtl"] .dm-lang-menu { right: 60px; }
+    }
 </style>
 @endverbatim
 {{-- Authenticated pages (mteja / muuzaji / msimamizi) hide the floating
@@ -189,6 +202,9 @@
     // remove one.
     var DEFAULT = 'sw';
     var ALLOWED = ['sw', 'en', 'fr', 'hi', 'es', 'ur', 'de', 'zh'];
+    // Capability #22: Urdu is the only RTL language. Keep this list in step
+    // with App\Services\Ai\Locale::RTL and the mobile LanguageContext.
+    var RTL = ['ur'];
     var INITIAL = root.getAttribute('data-dm-locale') || DEFAULT;
 
     // The language a logged-in visitor chose is stored on their account in
@@ -295,6 +311,7 @@
         paintActiveState();
         root.lang = current;
         root.setAttribute('data-dm-locale', current);
+        root.setAttribute('dir', RTL.indexOf(current) > -1 ? 'rtl' : 'ltr');
         notify();
     }
 
@@ -396,6 +413,7 @@
         __booted: true,
         locales: function () { return catalog; },
         locale: function () { return current; },
+        direction: function () { return root.getAttribute('dir') || 'ltr'; },
         languages: function () { return (catalog && catalog.languages) || []; },
         t: t,
         setLocale: setLocale,

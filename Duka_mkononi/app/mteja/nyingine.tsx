@@ -13,6 +13,7 @@ import {
   View,
 } from 'react-native';
 import SmartCartLoader from '../../components/SmartCartLoader';
+import OnboardingAssistant from '../../components/OnboardingAssistant';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLang } from '../../context/LanguageContext';
 import { fetchWithTimeout } from '../../lib/network';
@@ -92,6 +93,8 @@ export default function MtejaNyingineScreen() {
   const [loadError, setLoadError] = useState(false);
   const [data, setData] = useState<QaResponse | null>(null);
   const [askedQuestion, setAskedQuestion] = useState('');
+  // Capability #19 - getting-started checklist + approved onboarding answers.
+  const [guideOpen, setGuideOpen] = useState(false);
 
   const ask = useCallback(
     async (rawQuestion?: string) => {
@@ -323,6 +326,11 @@ export default function MtejaNyingineScreen() {
           </View>
           <Text style={styles.subtitle}>{t('mteja_nyingine.subtitle')}</Text>
 
+          <TouchableOpacity style={styles.guideEntry} onPress={() => setGuideOpen(true)}>
+            <Ionicons name="help-circle-outline" size={16} color="#667eea" />
+            <Text style={styles.guideEntryText}>{t('onboarding_ai.title')}</Text>
+          </TouchableOpacity>
+
           <View style={styles.askCard}>
             <TextInput
               style={styles.input}
@@ -353,6 +361,8 @@ export default function MtejaNyingineScreen() {
 
           {renderAnswer()}
         </ScrollView>
+
+        <OnboardingAssistant visible={guideOpen} onClose={() => setGuideOpen(false)} />
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -364,6 +374,12 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   title: { fontSize: 22, fontWeight: '800', color: '#2c3e50' },
   subtitle: { fontSize: 13, color: '#7f8c8d', marginTop: 3, marginBottom: 14 },
+  guideEntry: {
+    flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#eef1ff',
+    borderColor: '#d6ddff', borderWidth: 1, borderRadius: 12,
+    paddingHorizontal: 14, paddingVertical: 11, marginBottom: 14,
+  },
+  guideEntryText: { flex: 1, fontSize: 13.5, fontWeight: '700', color: '#667eea' },
   aiChip: {
     flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#eef1ff',
     borderColor: '#d6ddff', borderWidth: 1, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3,

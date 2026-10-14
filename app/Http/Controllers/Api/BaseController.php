@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Services\Ai\Locale;
 use App\Services\AuditLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -40,6 +41,20 @@ abstract class BaseController
     protected function ip(Request $request): ?string
     {
         return $request->attributes->get('jwt_ip');
+    }
+
+    /**
+     * Capability #22 - the single locale resolution for every AI endpoint.
+     *
+     * Order (see App\Services\Ai\Locale::resolve): the request's own `locale`
+     * field, then the caller's stored account language surfaced by the JWT
+     * middleware, then the configured application default. Capabilities must
+     * call this instead of carrying their own copy, so the rule can only exist
+     * in one place.
+     */
+    protected function resolveLocale(Request $request): string
+    {
+        return Locale::resolve($request, (string) $request->attributes->get('jwt_language', ''));
     }
 
     protected function isoNow(string $format = 'millis'): string

@@ -132,6 +132,37 @@
         .limitations { margin-top: 22px; font-size: 12.5px; color: #95a5a6; line-height: 1.6; }
         .limitations b { color: #7f8c8d; }
 
+        /* Team Activity Digest (capability #17) */
+        .act-section { border-top: 1px solid #ecf0f1; margin-top: 34px; padding-top: 24px; }
+        .act-chips { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 16px; }
+        .act-chip {
+            font-size: 12px; font-weight: 700; color: #5d6d7e; background: #fff;
+            border: 1px solid #ecf0f1; border-radius: 999px; padding: 6px 13px; cursor: pointer;
+        }
+        .act-chip.active { background: #f3eeff; border-color: #e3d9ff; color: #7c5cbf; }
+        .act-panel {
+            background: #fff; border: 1px solid #ecf0f1; border-radius: 18px;
+            padding: 16px 18px; margin-bottom: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+        }
+        .act-panel-title { font-size: 13px; font-weight: 800; color: #2c3e50; margin-bottom: 10px; }
+        .act-bars { display: flex; align-items: flex-end; gap: 4px; height: 78px; }
+        .act-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; min-width: 0; }
+        .act-bar { width: 100%; max-width: 26px; background: #7c5cbf; border-radius: 5px 5px 0 0; }
+        .act-bar-day { font-size: 9.5px; color: #95a5a6; }
+        .act-list-row { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; color: #5d6d7e; padding: 6px 0; border-top: 1px solid #f4f6f9; }
+        .act-list-row:first-child { border-top: none; }
+        .act-list-name { font-weight: 700; color: #2c3e50; }
+        .act-list-value { font-weight: 700; color: #2c3e50; }
+        .act-event { border-top: 1px solid #f4f6f9; padding: 9px 0; }
+        .act-event:first-child { border-top: none; }
+        .act-event-top { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+        .act-event-action { font-size: 13px; font-weight: 700; color: #2c3e50; }
+        .act-event-meta { font-size: 11.5px; color: #95a5a6; }
+        .act-tag { font-size: 10.5px; font-weight: 800; border-radius: 999px; padding: 3px 9px; background: #fdeaea; color: #e74c3c; }
+        .act-refs { font-size: 11.5px; color: #7f8c8d; margin-top: 4px; }
+        .act-silent { background: #fff8e1; border: 1px solid #ffe9a8; border-radius: 12px; padding: 10px 13px; font-size: 12.5px; color: #8d6e00; margin-top: 10px; }
+        .act-compare { font-size: 12.5px; font-weight: 700; margin-bottom: 10px; }
+
         .mobile-menu-toggle {
             display: none; position: fixed; top: 14px; left: 14px; z-index: 120;
             background: #fff; border: 1px solid #ecf0f1; border-radius: 10px;
@@ -204,6 +235,17 @@
             </div>
 
             <div class="limitations" id="limitations" style="display:none;"></div>
+
+            <section class="act-section" id="activitySection">
+                <div class="page-title" style="font-size:19px;">
+                    <i class="fa-solid fa-users"></i>
+                    <span data-i18n="msimamizi_nyingine.act_title">Shughuli za Timu</span>
+                    <span class="ai-chip"><i class="fa-solid fa-wand-magic-sparkles"></i> <span data-i18n="msimamizi_nyingine.ai_badge">AI</span></span>
+                </div>
+                <div class="page-sub" data-i18n="msimamizi_nyingine.act_subtitle">Matukio yaliyorekodiwa na wanachama wa biashara yako</div>
+                <div class="act-chips" id="actChips"></div>
+                <div id="actBody"></div>
+            </section>
         </main>
     </div>
 
@@ -251,6 +293,37 @@
             generated: "Imetolewa {date}",
             limitations_title: "Maelezo:",
             ai_note: "Muhtasari huu umeandikwa na AI kulingana na dalili zilizopimwa.",
+            act_title: "Shughuli za Timu",
+            act_subtitle: "Matukio yaliyorekodiwa na wanachama wa biashara yako",
+            act_period_today: "Leo",
+            act_period_yesterday: "Jana",
+            act_period_this_week: "Wiki hii",
+            act_period_last_week: "Wiki iliyopita",
+            act_period_last_7_days: "Siku 7 zilizopita",
+            act_loading: "Inatengeneza muhtasari wa shughuli...",
+            act_error: "Imeshindwa kupata muhtasari wa shughuli.",
+            act_empty_title: "Hakuna matukio",
+            act_empty_text: "Hakuna matukio yaliyorekodiwa kwa kipindi hiki.",
+            act_stat_events: "Matukio",
+            act_stat_actors: "Wanachama hai",
+            act_stat_failed: "Yaliyoshindikana",
+            act_stat_members: "Wanachama wote",
+            act_categories: "Kwa aina ya shughuli",
+            act_members: "Shughuli kwa mwanachama",
+            act_noteworthy: "Matukio muhimu",
+            act_noteworthy_none: "Hakuna matukio muhimu kwa kipindi hiki.",
+            act_days: "Kwa siku",
+            act_silent: "Hawana matukio yaliyorekodiwa",
+            act_silent_none: "Kila mwanachama ana matukio yaliyorekodiwa.",
+            act_reword_note: "Maandishi yaliyoandikwa upya na AI kutoka matukio yale yale yaliyorekodiwa.",
+            act_prev: "Kipindi kilichopita",
+            act_dir_up: "Zaidi ya kipindi kilichopita",
+            act_dir_down: "Pungufu kuliko kipindi kilichopita",
+            act_dir_flat: "Sawa na kipindi kilichopita",
+            act_dir_from_zero: "Kipindi kilichopita hakikuwa na matukio",
+            act_failed_tag: "Imeshindwa",
+            act_refs: "Kumbukumbu",
+            act_sources: "Vyanzo",
         };
 
         function t(key, params) {
@@ -434,6 +507,193 @@
             } catch (e) { /* transient network failure: keep the card and let them retry */ }
         }
 
+        /* ================= TEAM ACTIVITY DIGEST (capability #17) =================
+         * GET /api/ai/activity/digest reads this business's OWN activity log
+         * rows (`user_logs`) for the requested daily/weekly window. Every count,
+         * member and timestamp is computed server-side; the model may only REWORD
+         * the same figures, so the prose can never disagree with the numbers.
+         * The digest never judges staff - the counts are recorded events only.
+         */
+        const ACT_PERIODS = ['today', 'yesterday', 'this_week', 'last_week', 'last_7_days'];
+        let actPeriod = 'this_week';
+        let actData = null;
+        let actError = false;
+        let actLoading = false;
+
+        function actShortTime(value) { return String(value || '').slice(0, 16).replace('T', ' '); }
+
+        function actDirColor(direction) {
+            return direction === 'up' ? '#27ae60' : direction === 'down' ? '#e67e22' : '#7c5cbf';
+        }
+
+        function actDirLabel(direction) {
+            const key = ['up', 'down', 'from_zero'].indexOf(direction) > -1 ? direction : 'flat';
+            return t('act_dir_' + key);
+        }
+
+        window.setActPeriod = function (period) {
+            if (ACT_PERIODS.indexOf(period) === -1 || actPeriod === period) return;
+            actPeriod = period;
+            window.loadActivity();
+        };
+
+        window.loadActivity = async function () {
+            if (!userToken || actLoading) return;
+            actLoading = true;
+            actError = false;
+            renderActivity();
+            try {
+                const url = API_BASE_URL + '/api/ai/activity/digest?period=' + encodeURIComponent(actPeriod) +
+                    '&locale=' + encodeURIComponent(currentLocale());
+                const res = await fetch(url, { headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + userToken } });
+                if (res.status === 401) { window.location.replace('../login?role=msimamizi'); return; }
+                const data = await res.json().catch(function () { return {}; });
+                if (!res.ok || !data || !data.success) { actData = null; actError = true; }
+                else { actData = data; actError = false; }
+            } catch (e) {
+                actData = null;
+                actError = true;
+            } finally {
+                actLoading = false;
+                renderActivity();
+            }
+        };
+
+        function actChipsHtml() {
+            return ACT_PERIODS.map(function (p) {
+                return '<div class="act-chip' + (actPeriod === p ? ' active' : '') + '" data-period="' + p + '">' +
+                    escapeHtml(t('act_period_' + p)) + '</div>';
+            }).join('');
+        }
+
+        function actBarsHtml(series, emptyText) {
+            if (!series || !series.length) return '<div class="history-empty">' + escapeHtml(emptyText) + '</div>';
+            const counts = series.map(function (d) { return Number(d.count) || 0; });
+            const max = Math.max.apply(null, counts) || 1;
+            return '<div class="act-bars">' + series.map(function (d) {
+                const count = Number(d.count) || 0;
+                const height = Math.max(3, Math.round((count / max) * 58));
+                return '<div class="act-bar-col" title="' + escapeHtml(String(d.date || '') + ' - ' + count) + '">' +
+                    '<div class="act-bar" style="height:' + height + 'px;' + (count ? '' : 'background:#dfe4ea;') + '"></div>' +
+                    '<div class="act-bar-day">' + escapeHtml(String(d.date || '').slice(5)) + '</div>' +
+                '</div>';
+            }).join('') + '</div>';
+        }
+
+        function renderActivity() {
+            const chips = document.getElementById('actChips');
+            const body = document.getElementById('actBody');
+            if (!chips || !body) return;
+
+            chips.innerHTML = actChipsHtml();
+            Array.prototype.forEach.call(chips.querySelectorAll('[data-period]'), function (chip) {
+                chip.addEventListener('click', function () { window.setActPeriod(chip.getAttribute('data-period')); });
+            });
+
+            if (actLoading) {
+                body.innerHTML = '<div class="state-box"><div class="loading-spinner dm-sc"></div><div class="state-text">' +
+                    escapeHtml(t('act_loading')) + '</div></div>';
+                return;
+            }
+
+            if (actError || !actData) {
+                body.innerHTML = '<div class="state-box"><i class="fa-solid fa-triangle-exclamation" style="font-size:32px;color:#e74c3c;"></i>' +
+                    '<div class="state-title">' + escapeHtml(t('error_title')) + '</div>' +
+                    '<div class="state-text">' + escapeHtml(t('act_error')) + '</div>' +
+                    '<button class="retry-btn" onclick="window.loadActivity()">' + escapeHtml(t('retry')) + '</button></div>';
+                return;
+            }
+
+            const d = actData;
+            const totals = d.totals || {};
+            const comparison = d.comparison || {};
+            const events = Number(totals.events) || 0;
+
+            let html = '';
+
+            /* Counts - recorded events, never a performance score. */
+            html += '<div class="stats-row">' +
+                '<div class="stat-chip"><span>' + escapeHtml(t('act_stat_events')) + '</span><b>' + events + '</b></div>' +
+                '<div class="stat-chip"><span>' + escapeHtml(t('act_stat_actors')) + '</span><b>' + (Number(totals.actors) || 0) + '</b></div>' +
+                '<div class="stat-chip"><span>' + escapeHtml(t('act_stat_failed')) + '</span><b>' + (Number(totals.failed) || 0) + '</b></div>' +
+                '<div class="stat-chip"><span>' + escapeHtml(t('act_stat_members')) + '</span><b>' + (Number(totals.members) || 0) + '</b></div>' +
+            '</div>';
+
+            /* The paragraph: the model's reword when it passed the number gate,
+               otherwise the deterministic lines. Either way: the same figures. */
+            const prose = (d.ai && !d.ai.degraded && d.digest_text) ? d.digest_text : (d.narrative || []).join(' ');
+            html += '<div class="summary-card"><div class="summary-label">' + escapeHtml(t('act_title')) + '</div>' +
+                '<p>' + escapeHtml(prose) + '</p>' +
+                '<div class="act-compare" style="color:' + actDirColor(comparison.direction) + ';margin-top:8px;">' +
+                    escapeHtml(actDirLabel(comparison.direction)) +
+                    ' (' + escapeHtml(t('act_prev')) + ': ' + (Number(comparison.previous_events) || 0) + ')' +
+                '</div>' +
+                '<div class="summary-note">' + escapeHtml(t('act_reword_note')) + '</div>' +
+            '</div>';
+
+            if (events === 0) {
+                html += '<div class="act-panel"><div class="state-box" style="padding:26px 12px;">' +
+                    '<i class="fa-solid fa-clock" style="font-size:30px;color:#95a5a6;"></i>' +
+                    '<div class="state-title">' + escapeHtml(t('act_empty_title')) + '</div>' +
+                    '<div class="state-text">' + escapeHtml(t('act_empty_text')) + '</div></div></div>';
+            }
+
+            html += '<div class="act-panel"><div class="act-panel-title">' + escapeHtml(t('act_days')) + '</div>' +
+                actBarsHtml(d.day_series || [], t('act_empty_text')) + '</div>';
+
+            const categories = d.categories || [];
+            if (categories.length) {
+                html += '<div class="act-panel"><div class="act-panel-title">' + escapeHtml(t('act_categories')) + '</div>' +
+                    categories.map(function (row) {
+                        const failed = Number(row.failed) || 0;
+                        return '<div class="act-list-row"><span class="act-list-name">' + escapeHtml(row.label) + '</span>' +
+                            '<span class="act-list-value">' + (Number(row.count) || 0) +
+                            (failed ? ' / ' + failed + ' ' + escapeHtml(t('act_failed_tag')) : '') + '</span></div>';
+                    }).join('') + '</div>';
+            }
+
+            const members = (d.members || []).filter(function (m) { return Number(m.count) > 0; });
+            if (members.length) {
+                html += '<div class="act-panel"><div class="act-panel-title">' + escapeHtml(t('act_members')) + '</div>' +
+                    members.map(function (m) {
+                        return '<div class="act-list-row"><span class="act-list-name">' + escapeHtml(m.name) + '</span>' +
+                            '<span class="act-list-value">' + (Number(m.count) || 0) +
+                            (m.last_at ? ' <span class="act-event-meta">' + escapeHtml(actShortTime(m.last_at)) + '</span>' : '') + '</span></div>';
+                    }).join('') + '</div>';
+            }
+
+            /* Missing logging coverage stays visible. */
+            const silent = d.silent_members || [];
+            html += '<div class="act-silent"><b>' + escapeHtml(t('act_silent')) + ':</b> ' +
+                (silent.length ? silent.map(escapeHtml).join(', ') : escapeHtml(t('act_silent_none'))) + '</div>';
+
+            const noteworthy = d.noteworthy || [];
+            html += '<div class="act-panel" style="margin-top:14px;"><div class="act-panel-title">' + escapeHtml(t('act_noteworthy')) + '</div>' +
+                (noteworthy.length ? noteworthy.map(function (ev) {
+                    const failed = String(ev.status || '') !== 'success';
+                    const refs = (ev.refs || []).map(function (r) {
+                        return escapeHtml(String(r.field)) + ': ' + escapeHtml(String(r.value));
+                    }).join(' | ');
+                    return '<div class="act-event"><div class="act-event-top">' +
+                        '<span class="act-event-action">' + escapeHtml(ev.action) + '</span>' +
+                        (failed ? '<span class="act-tag">' + escapeHtml(t('act_failed_tag')) + '</span>' : '<span class="act-tag" style="background:#f3eeff;color:#7c5cbf;">' + escapeHtml(ev.category_label || '') + '</span>') +
+                    '</div>' +
+                    '<div class="act-event-meta">' + escapeHtml(ev.actor_name || '') + ' - ' + escapeHtml(actShortTime(ev.at)) + '</div>' +
+                    (refs ? '<div class="act-refs"><b>' + escapeHtml(t('act_refs')) + ':</b> ' + refs + '</div>' : '') +
+                    '</div>';
+                }).join('') : '<div class="history-empty">' + escapeHtml(t('act_noteworthy_none')) + '</div>') + '</div>';
+
+            const sources = d.sources || [];
+            const limitations = d.limitations || [];
+            html += '<div class="limitations"><b>' + escapeHtml(t('limitations_title')) + '</b> ' +
+                limitations.map(escapeHtml).join('<br>') +
+                (sources.length ? '<div style="margin-top:6px;"><b>' + escapeHtml(t('act_sources')) + ':</b> ' + sources.map(escapeHtml).join(' ') + '</div>' : '') +
+                (d.generated_at ? '<div style="margin-top:6px;">' + escapeHtml(t('generated', { date: actShortTime(d.generated_at) })) + '</div>' : '') +
+            '</div>';
+
+            body.innerHTML = html;
+        }
+
         function setupSidebar() {
             const toggle = document.getElementById('mobileMenuToggle');
             const sidebar = document.getElementById('sidebar');
@@ -459,10 +719,12 @@
             } catch (e) { /* keep the static fallback */ }
             document.getElementById('refreshBtn').addEventListener('click', function () { loadAnomalies(); });
             await loadAnomalies();
+            await window.loadActivity();
         }
 
         if (window.DM && typeof window.DM.onChange === 'function') {
             window.DM.onChange(function () { if (!loading && lastData) loadAnomalies(); });
+            window.DM.onChange(function () { renderActivity(); if (!actLoading && actData) window.loadActivity(); });
         }
 
         init();

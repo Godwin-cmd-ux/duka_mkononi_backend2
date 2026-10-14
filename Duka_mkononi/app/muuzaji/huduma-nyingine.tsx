@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -8,6 +8,8 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import NlEntry from '../../components/NlEntry';
+import OnboardingAssistant from '../../components/OnboardingAssistant';
 import { useLang } from '../../context/LanguageContext';
 
 /**
@@ -38,6 +40,8 @@ const SERVICES: ServiceCard[] = [
 export default function HudumaNyingine() {
   const { t } = useLang();
   const router = useRouter();
+  // Capability #19 - getting-started checklist + approved onboarding answers.
+  const [guideOpen, setGuideOpen] = useState(false);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -48,6 +52,26 @@ export default function HudumaNyingine() {
         </View>
 
         <View style={styles.grid}>
+          {/* Capability #19 - the getting-started guide, always available */}
+          <TouchableOpacity
+            key="getting-started"
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            style={[styles.card, { backgroundColor: '#eef2ff', borderColor: '#4f46e5' }]}
+            onPress={() => setGuideOpen(true)}
+          >
+            <View style={[styles.iconWrap, { backgroundColor: '#4f46e5' }]}>
+              <Text style={styles.icon}>🧭</Text>
+            </View>
+            <View style={styles.cardBody}>
+              <Text style={[styles.cardTitle, { color: '#4f46e5' }]}>
+                {t('onboarding_ai.title')}
+              </Text>
+              <Text style={styles.cardDesc}>{t('onboarding_ai.subtitle')}</Text>
+            </View>
+            <Text style={[styles.chevron, { color: '#4f46e5' }]}>›</Text>
+          </TouchableOpacity>
+
           {SERVICES.map((service) => (
             <TouchableOpacity
               key={service.key}
@@ -71,7 +95,12 @@ export default function HudumaNyingine() {
             </TouchableOpacity>
           ))}
         </View>
+
+        {/* Capability #25 - one sentence in, an editable preview out. */}
+        <NlEntry />
       </ScrollView>
+
+      <OnboardingAssistant visible={guideOpen} onClose={() => setGuideOpen(false)} />
     </SafeAreaView>
   );
 }

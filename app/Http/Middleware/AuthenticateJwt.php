@@ -23,7 +23,7 @@ class AuthenticateJwt
 
         try {
             $decoded = JwtToken::decode($token);
-            $user = User::where('id', $decoded->userId)->select('id', 'email', 'role', 'full_name', 'business_name', 'business_id', 'status', 'is_online', 'last_seen')->first();
+            $user = User::where('id', $decoded->userId)->select('id', 'email', 'role', 'full_name', 'business_name', 'business_id', 'status', 'is_online', 'last_seen', 'language')->first();
 
             if (!$user) {
                 AuditLogger::log($decoded->userId ?? null, 'AUTH_FAILED', $request->getRequestUri(), ['reason' => 'User not found'], $ip, 'failed');
@@ -37,6 +37,9 @@ class AuthenticateJwt
             $request->attributes->set('jwt_business_name', $user->business_name);
             $request->attributes->set('jwt_business_id', $user->business_id ?: \App\Services\BusinessResolver::idForUser($user->id));
             $request->attributes->set('jwt_ip', $ip);
+            // Capability #22: the caller's stored account language, used by
+            // BaseController::resolveLocale() when the client omits `locale`.
+            $request->attributes->set('jwt_language', $user->language ?? null);
 
             AuditLogger::log($user->id, 'AUTH_SUCCESS', $request->getRequestUri(), ['role' => $user->role], $ip, 'success');
 

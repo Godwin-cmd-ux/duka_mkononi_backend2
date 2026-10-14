@@ -32,6 +32,16 @@
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
+        <!-- Blank Supabase so a test run can never read from, or write an audit
+             row to, the live project: the PostgREST client fails fast and the
+             callers (AuditLogger, catalogue queries) already swallow it. -->
+        <env name="SUPABASE_URL" value=""/>
+        <env name="SUPABASE_ANON_KEY" value=""/>
+        <env name="SUPABASE_SERVICE_ROLE_KEY" value=""/>
+        <!-- The concierge's model step only ever adds one acknowledgement
+             sentence; switching it off keeps the suite offline and pins the
+             fact that every answer is correct without the provider. -->
+        <env name="AI_CONCIERGE_NARRATE" value="false"/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>

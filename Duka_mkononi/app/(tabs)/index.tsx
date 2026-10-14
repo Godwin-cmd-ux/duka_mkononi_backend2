@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import PublicConcierge from '../../components/PublicConcierge';
 import { useLang, Lang, LANGUAGE_NAMES, LANGUAGE_FLAGS, ALL_LANGUAGES } from '../../context/LanguageContext';
 
 const { width, height } = Dimensions.get('window');
@@ -249,6 +250,29 @@ export default function HomeScreen() {
                 </Animated.View>
               ))}
             </View>
+
+            {/* Public AI Concierge (capability #21) - this screen is the app's
+                public homepage (it only shows while logged out), so the ask box
+                for visitors belongs here. It answers from the public knowledge
+                base and the public catalogue only, in the chosen language. */}
+            <Animated.View
+              style={[
+                styles.infoContainer,
+                {
+                  opacity: fadeAnim,
+                  transform: [
+                    {
+                      translateY: fadeAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [30, 0]
+                      })
+                    }
+                  ]
+                }
+              ]}
+            >
+              <PublicConcierge />
+            </Animated.View>
 
             {/* Info Section */}
             <Animated.View 

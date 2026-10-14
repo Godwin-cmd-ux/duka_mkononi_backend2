@@ -6,17 +6,22 @@ import TabSwipe from '../../components/tab-swipe';
 import { useLang } from '../../context/LanguageContext';
 
 // Tab order — used by the swipe gesture to pick the neighbouring page.
-const SYSTEM_ADMIN_TABS = ['/system_admin/dashboard', '/system_admin/notify'];
+const SYSTEM_ADMIN_TABS = ['/system_admin/dashboard', '/system_admin/notify', '/system_admin/inquiries', '/system_admin/certification', '/system_admin/analytics'];
 
 export default function SystemAdminLayout() {
   const router = useRouter();
   const pathname = usePathname();
   const { t } = useLang();
 
-  // Tabs mbili tu
+  // Tabs tano: dashibodi, taarifa, uchanganuzi wa maswali (capability #18),
+  // ukaguzi wa uthibitisho (capability #19) na uchanganuzi wa jukwaa kwa
+  // lugha ya kawaida (capability #20)
   const tabs = [
     { id: 'dashboard', label: t('system_admin.dashboard'), icon: 'home', route: 'dashboard' },
     { id: 'notify', label: t('system_admin.notify'), icon: 'notifications', route: 'notify' },
+    { id: 'inquiries', label: t('inquiry_triage.tab_inquiries'), icon: 'mail-unread', route: 'inquiries' },
+    { id: 'certification', label: t('certification_ai.nav_certification'), icon: 'shield-checkmark', route: 'certification' },
+    { id: 'analytics', label: t('admin_analytics.nav_analytics'), icon: 'stats-chart', route: 'analytics' },
   ];
 
   return (
@@ -57,6 +62,9 @@ export default function SystemAdminLayout() {
           >
             <Tabs.Screen name="dashboard" />
             <Tabs.Screen name="notify" />
+            <Tabs.Screen name="inquiries" />
+            <Tabs.Screen name="certification" />
+            <Tabs.Screen name="analytics" />
           </Tabs>
         </TabSwipe>
       </View>
@@ -91,7 +99,7 @@ const styles = StyleSheet.create({
   },
   tabLabel: {
     marginTop: 6,
-    fontSize: 14,
+    fontSize: 12,
     color: '#95a5a6',
     fontWeight: '500',
   },

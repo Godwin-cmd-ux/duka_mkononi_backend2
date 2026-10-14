@@ -267,16 +267,4 @@ class AiTrustSummaryController extends BaseController
             'last_order_at' => $last !== null ? substr($last, 0, 10) : null,
         ];
     }
-
-    private function resolveLocale(Request $request): string
-    {
-        $supported = (array) config('ai.locales', ['sw']);
-        $candidate = strtolower(trim((string) $request->query('locale', '')));
-
-        if ($candidate === '' || ! in_array($candidate, $supported, true)) {
-            $candidate = (string) config('ai.default_locale', 'sw');
-        }
-
-        return in_array($candidate, $supported, true) ? $candidate : 'sw';
-    }
 }

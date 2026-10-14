@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Services\Ai\ProductSearch;
 use App\Services\PublicCatalog;
 use Illuminate\Http\Request;
 
@@ -26,10 +27,28 @@ class ShopController extends BaseController
         $businessId = $request->query('business_id');
         $search = $request->query('search');
 
-        $all = PublicCatalog::products(
-            is_string($businessId) && $businessId !== '' ? $businessId : null,
-            is_string($search) && $search !== '' ? $search : null
-        );
+        $businessId = is_string($businessId) && $businessId !== '' ? $businessId : null;
+        $hasSearch = is_string($search) && trim($search) !== '';
+
+        /* Capability #24: when the search box is used and the capability is on,
+           rank the same public rows with the typo-tolerant matcher instead of
+           the old single substring test. Same fields, same pagination - the
+           ordering is simply the relevance one, and each row additionally
+           carries how it matched. With the flag off (or no query) the previous
+           behaviour is byte-for-byte preserved. */
+        $ranked = $hasSearch
+            && (bool) config('ai.features.search', true)
+            && (bool) config('ai.search.enabled', true);
+
+        if ($ranked) {
+            $result = ProductSearch::rank(PublicCatalog::products($businessId), trim((string) $search), [
+                // Keep every match here; the pagination below decides the page.
+                'limit' => max(1, (int) config('ai.search.max_candidates', 2000)),
+            ]);
+            $all = $result['results'];
+        } else {
+            $all = PublicCatalog::products($businessId, $hasSearch ? $search : null);
+        }
 
         $perPage = (int) $request->query('per_page', 24);
         $perPage = $perPage > 0 && $perPage <= 60 ? $perPage : 24;
