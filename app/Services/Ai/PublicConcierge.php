@@ -75,7 +75,7 @@ class PublicConcierge
      * site-navbar.blade.php - no invented phone, WhatsApp or download URL.
      */
     public const DEFAULT_EXTERNAL_LINKS = [
-        'download_apk' => 'https://expo.dev/artifacts/eas/ZRIDMBDq4PlR47LI2j_iuOItHZs6sz6DdPyFFJyqO8w.apk',
+        'download_apk' => 'https://expo.dev/artifacts/eas/sSt6M6ciZYqibinFP54G0VdOQ0HJt18ZEFsa5aG8tsQ.apk',
         'contact_email' => 'mailto:info@dukamkononi.com',
         'contact_phone' => 'tel:0757071967',
         'contact_whatsapp' => 'https://wa.me/255757071967',
