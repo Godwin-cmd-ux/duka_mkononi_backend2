@@ -40,7 +40,6 @@
             <a class="dm-nav-link" href="/shop" data-i18n="site_nav.shop">Shop</a>
             <a class="dm-nav-link" href="/track-orders" data-i18n="site_nav.track_orders">Track Orders</a>
             <a class="dm-nav-link" href="/advertisements" data-i18n="site_nav.advertisements">Advertisements</a>
-            <a class="dm-nav-link" href="/businesses" data-i18n="site_nav.businesses">Businesses</a>
             <a class="dm-nav-link" href="/#contact" data-i18n="site_nav.contact">Contact</a>
         </nav>
 
@@ -67,7 +66,6 @@
         <a href="/shop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><span data-i18n="site_nav.shop">Shop</span></a>
         <a href="/track-orders"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span data-i18n="site_nav.track_orders">Track Orders</span></a>
         <a href="/advertisements"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 20h8"/></svg><span data-i18n="site_nav.advertisements">Advertisements</span></a>
-        <a href="/businesses"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg><span data-i18n="site_nav.businesses">Businesses</span></a>
         <a href="/#contact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v14H4z"/><path d="m4 6 8 6 8-6"/></svg><span data-i18n="site_nav.contact">Contact</span></a>
         <a href="/home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg><span data-i18n="site_nav.login">Login</span></a>
         <a href="https://expo.dev/artifacts/eas/sSt6M6ciZYqibinFP54G0VdOQ0HJt18ZEFsa5aG8tsQ.apk" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg><span data-i18n="site_nav.download_app">Download App</span></a>

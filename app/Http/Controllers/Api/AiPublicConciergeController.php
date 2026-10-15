@@ -229,10 +229,12 @@ class AiPublicConciergeController extends BaseController
             'topics' => PublicConcierge::topics($locale),
             'examples' => PublicConcierge::supportedExamples($locale),
             'fallback_links' => PublicConcierge::fallbackLinks($locale, $external),
+            /* The `businesses` section is gone from here on purpose: the page
+               is still live, but the website links to it nowhere any more, so
+               the help payload must not advertise it either. */
             'links' => [
                 'home' => PublicConcierge::SECTION_LINKS['home'],
                 'shop' => PublicConcierge::SECTION_LINKS['shop'],
-                'businesses' => PublicConcierge::SECTION_LINKS['businesses'],
                 'download_apk' => $external['download_apk'] ?? PublicConcierge::DEFAULT_EXTERNAL_LINKS['download_apk'],
             ],
             'limits' => [

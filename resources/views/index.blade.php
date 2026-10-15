@@ -19,7 +19,6 @@
     .biz-card { display: flex; flex-direction: column; gap: 12px; padding: 18px; transition: transform .16s ease, box-shadow .16s ease; }
     .biz-card:hover { transform: translateY(-3px); box-shadow: var(--dm-shadow); }
     .biz-toolbar { max-width: 480px; margin: 0 auto 24px; }
-    .biz-more { display: flex; justify-content: center; margin-top: 26px; }
     .biz-logo { width: 54px; height: 54px; border-radius: 14px; background: #dbeafe; color: var(--dm-primary); display: grid; place-items: center; font-weight: 800; overflow: hidden; }
     .biz-logo img { width: 100%; height: 100%; object-fit: cover; }
     .account-card { padding: 26px 22px; display: flex; flex-direction: column; gap: 10px; }
@@ -49,10 +48,6 @@
                     <a class="dm-btn dm-btn--primary" href="/shop">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
                         <span data-i18n="site_home.cta_shop">Start Shopping</span>
-                    </a>
-                    <a class="dm-btn dm-btn--ghost" href="/businesses">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>
-                        <span data-i18n="site_home.cta_businesses">Explore Businesses</span>
                     </a>
                     <a class="dm-btn dm-btn--accent" href="https://expo.dev/artifacts/eas/sSt6M6ciZYqibinFP54G0VdOQ0HJt18ZEFsa5aG8tsQ.apk" target="_blank" rel="noopener">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
@@ -86,12 +81,6 @@
                     <div class="loading-spinner dm-sc"></div>
                     <p data-i18n="site_common.loading">Loading...</p>
                 </div>
-            </div>
-            <div class="biz-more" id="dmBizMore" hidden>
-                <a class="dm-btn dm-btn--ghost" href="/businesses">
-                    <span data-i18n="site_home.biz_view_all">View all businesses</span>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-                </a>
             </div>
         </div>
     </section>
@@ -205,7 +194,6 @@
 
     function renderBusinesses() {
         var box = document.getElementById('dmHomeBiz');
-        var more = document.getElementById('dmBizMore');
         var input = document.getElementById('dmBizSearch');
         var q = (input && input.value ? input.value : '').trim().toLowerCase();
         var list = allBusinesses;
@@ -230,7 +218,6 @@
                 box.appendChild(card);
             });
         }
-        if (more) more.hidden = !(allBusinesses.length > BIZ_LIMIT || (q && list.length));
     }
 
     function loadBusinesses() {

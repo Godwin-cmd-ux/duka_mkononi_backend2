@@ -81,16 +81,22 @@ class PublicConcierge
         'contact_whatsapp' => 'https://wa.me/255757071967',
     ];
 
-    /** Which link ids each topic offers (order = display order). */
+    /**
+     * Which link ids each topic offers (order = display order).
+     *
+     * The `businesses` section is deliberately not offered any more: the page
+     * itself stays live and keepable in SECTION_LINKS, but the website no
+     * longer links to it, so an answer must not either.
+     */
     public const TOPIC_LINKS = [
-        'what_is' => ['shop', 'businesses'],
+        'what_is' => ['shop'],
         'how_to_buy' => ['shop', 'track_orders'],
-        'how_to_sell' => ['business_signup', 'businesses'],
+        'how_to_sell' => ['business_signup'],
         'get_started' => ['client_signup', 'login', 'forgot'],
         'download_app' => ['download_apk', 'home'],
         'payments' => ['track_orders', 'contact_whatsapp'],
         'delivery_tracking' => ['track_orders', 'contact_whatsapp'],
-        'trust_safety' => ['businesses', 'contact_email'],
+        'trust_safety' => ['contact_email'],
         'contact_support' => ['contact_whatsapp', 'contact_email', 'contact_phone'],
     ];
 
@@ -117,7 +123,7 @@ class PublicConcierge
     public const MAX_LINKS = 4;
 
     /** The fallback sent with a refusal or an unanswered question. */
-    public const FALLBACK_LINKS = ['shop', 'businesses', 'track_orders', 'contact_whatsapp'];
+    public const FALLBACK_LINKS = ['shop', 'track_orders', 'contact_whatsapp'];
 
     /**
      * Keys that must never appear in a payload (private person/business data,

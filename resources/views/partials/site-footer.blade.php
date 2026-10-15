@@ -17,7 +17,6 @@
                 <h4 data-i18n="site_common.footer_explore">Explore</h4>
                 <ul>
                     <li><a href="/shop" data-i18n="site_nav.shop">Shop</a></li>
-                    <li><a href="/businesses" data-i18n="site_nav.businesses">Businesses</a></li>
                     <li><a href="/advertisements" data-i18n="site_nav.advertisements">Advertisements</a></li>
                     <li><a href="/track-orders" data-i18n="site_nav.track_orders">Track Orders</a></li>
                 </ul>
