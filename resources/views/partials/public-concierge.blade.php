@@ -70,6 +70,11 @@
     /* Logical inset properties only: the launcher and panel stay on the
        reading-end side of the page, so Urdu (RTL) mirrors without extra CSS. */
     .dmc-root { font-family: 'Inter', system-ui, sans-serif; }
+    /* The `hidden` attribute is only a UA-level `display: none`, so the explicit
+       `display` on .dmc-panel/.dmc-mic would win and leave them on screen no
+       matter what the script does. Restate it at a higher specificity so
+       opening and closing really show/hide. */
+    .dmc-panel[hidden], .dmc-mic[hidden] { display: none; }
     .dmc-launcher {
         position: fixed; inset-inline-end: 18px; bottom: 18px; z-index: 900;
         display: inline-flex; align-items: center; gap: 9px;
