@@ -21,9 +21,10 @@
             <p class="dm-lead" style="margin-top:10px" data-i18n="site_ads.sub">Offers and adverts posted on Duka Mkononi.</p>
         </div>
         <div class="dm-grid dm-grid--business" id="dmAds">
-            <div class="dm-card dm-skeleton" style="height:260px"></div>
-            <div class="dm-card dm-skeleton" style="height:260px"></div>
-            <div class="dm-card dm-skeleton" style="height:260px"></div>
+            <div class="dm-loading">
+                <div class="loading-spinner dm-sc"></div>
+                <p data-i18n="site_common.loading">Loading...</p>
+            </div>
         </div>
     </div>
 </main>

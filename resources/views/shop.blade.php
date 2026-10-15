@@ -100,8 +100,10 @@
             <aside class="shop-sidebar" aria-label="Businesses">
                 <h2 data-i18n="site_shop.biz_filter_label">Businesses</h2>
                 <div class="biz-list" id="dmBizList">
-                    <div class="dm-skeleton" style="height:44px"></div>
-                    <div class="dm-skeleton" style="height:44px"></div>
+                    <div class="dm-loading dm-loading--inline">
+                        <div class="loading-spinner dm-sc"></div>
+                        <p data-i18n="site_common.loading">Loading...</p>
+                    </div>
                 </div>
             </aside>
 
@@ -145,10 +147,10 @@
                     <span class="dm-muted" id="dmResultCount"></span>
                 </div>
                 <div class="dm-grid dm-grid--products" id="dmProducts">
-                    <div class="dm-card dm-skeleton" style="height:280px"></div>
-                    <div class="dm-card dm-skeleton" style="height:280px"></div>
-                    <div class="dm-card dm-skeleton" style="height:280px"></div>
-                    <div class="dm-card dm-skeleton" style="height:280px"></div>
+                    <div class="dm-loading">
+                        <div class="loading-spinner dm-sc"></div>
+                        <p data-i18n="site_common.loading">Loading...</p>
+                    </div>
                 </div>
                 <div id="dmShopMore" style="text-align:center;margin-top:22px"></div>
             </section>

@@ -68,7 +68,8 @@
         document.getElementById('dmTrackPhoneErr').textContent = '';
         if (phone.replace(/\D/g, '').length < 9) { document.getElementById('dmTrackPhoneErr').textContent = t('site_track.error_phone'); return; }
         var btn = document.getElementById('dmTrackSubmit'); btn.disabled = true;
-        results.innerHTML = '<div class="dm-card dm-skeleton" style="height:120px"></div>';
+        results.innerHTML = '<div class="dm-loading"><div class="loading-spinner dm-sc"></div>' +
+            '<p>' + esc(t('site_common.loading')) + '</p></div>';
         var q = '/api/orders/track?phone=' + encodeURIComponent(phone) + (ref ? '&reference=' + encodeURIComponent(ref) : '');
         fetch(q, { headers: { 'Accept': 'application/json' } }).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
             .then(function (res) {

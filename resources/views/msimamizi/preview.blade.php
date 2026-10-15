@@ -490,7 +490,12 @@
         </aside>
 
         <main class="main-content" id="mainContent">
-            <div id="previewContainer" data-i18n="msimamizi_preview.loading">Loading...</div>
+            <div id="previewContainer">
+                <div style="text-align: center; padding: 60px;">
+                    <div class="loading-spinner dm-sc" style="width:46px;height:46px;margin:0 auto 16px;"></div>
+                    <div data-i18n="msimamizi_preview.loading">Loading...</div>
+                </div>
+            </div>
         </main>
     </div>
 

@@ -49,9 +49,10 @@
         <div class="bl-count" id="dmBizCount"></div>
 
         <div class="dm-grid dm-grid--business" id="dmBizCards">
-            <div class="dm-card dm-skeleton" style="height:230px"></div>
-            <div class="dm-card dm-skeleton" style="height:230px"></div>
-            <div class="dm-card dm-skeleton" style="height:230px"></div>
+            <div class="dm-loading">
+                <div class="loading-spinner dm-sc"></div>
+                <p data-i18n="site_common.loading">Loading...</p>
+            </div>
         </div>
     </div>
 </main>
@@ -132,7 +133,9 @@
         if (trustCache[id] && trustLocale === dmLocale()) { renderTrust(panel, trustCache[id]); return; }
 
         btn.disabled = true;
-        panel.innerHTML = '<p class="dm-muted">' + esc(t('site_businesses.trust_loading')) + '</p>';
+        panel.innerHTML = '<div class="dm-loading dm-loading--inline">' +
+            '<div class="loading-spinner dm-sc"></div>' +
+            '<p class="dm-muted">' + esc(t('site_businesses.trust_loading')) + '</p></div>';
         fetch('/api/ai/trust/summary?business_id=' + encodeURIComponent(id) + '&locale=' + dmLocale(), { headers: { 'Accept': 'application/json' } })
             .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
             .then(function (res) {

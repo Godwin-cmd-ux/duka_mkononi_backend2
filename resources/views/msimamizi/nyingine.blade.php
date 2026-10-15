@@ -87,6 +87,9 @@
         .state-box { text-align: center; padding: 54px 20px; color: #7f8c8d; }
         .state-box .state-title { font-size: 16px; font-weight: 700; color: #2c3e50; margin-top: 14px; }
         .state-box .state-text { font-size: 13.5px; margin-top: 6px; }
+        /* Size for the SmartCart loading animation. Without a width/height the
+           cart has no box to draw in and the loader is invisible. */
+        .loading-spinner { width: 44px; height: 44px; margin: 0 auto; }
         .retry-btn {
             margin-top: 16px; background: #fff; border: 1px solid #dfe4ea; color: #2c3e50;
             border-radius: 12px; padding: 10px 20px; font-weight: 700; cursor: pointer;

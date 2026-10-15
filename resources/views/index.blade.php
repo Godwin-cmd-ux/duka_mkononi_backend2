@@ -82,9 +82,10 @@
                 <input class="dm-input" type="search" id="dmBizSearch" placeholder="Search businesses... (name or location)" data-i18n="site_home.biz_search_placeholder" data-i18n-attr="placeholder">
             </div>
             <div class="dm-grid dm-grid--business" id="dmHomeBiz">
-                <div class="dm-card dm-skeleton" style="height:150px"></div>
-                <div class="dm-card dm-skeleton" style="height:150px"></div>
-                <div class="dm-card dm-skeleton" style="height:150px"></div>
+                <div class="dm-loading">
+                    <div class="loading-spinner dm-sc"></div>
+                    <p data-i18n="site_common.loading">Loading...</p>
+                </div>
             </div>
             <div class="biz-more" id="dmBizMore" hidden>
                 <a class="dm-btn dm-btn--ghost" href="/businesses">

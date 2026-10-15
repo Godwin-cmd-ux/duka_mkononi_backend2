@@ -261,7 +261,9 @@
         if (text.length < 3) { return; }
         input.value = text;
         send.disabled = true;
-        answerBox.innerHTML = '<p class="dmc-loading">' + esc(label('public_concierge.loading', 'Looking for an answer...')) + '</p>';
+        answerBox.innerHTML = '<div class="dm-loading dm-loading--inline">' +
+            '<div class="loading-spinner dm-sc"></div>' +
+            '<p class="dmc-loading">' + esc(label('public_concierge.loading', 'Looking for an answer...')) + '</p></div>';
 
         fetch(ASK_URL, {
             method: 'POST',

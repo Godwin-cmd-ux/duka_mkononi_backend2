@@ -593,7 +593,10 @@
         <!-- MAIN CONTENT -->
         <main class="main-content" id="mainContent">
             <div id="dashboardContainer">
-                <div style="text-align: center; padding: 60px;" data-i18n="msimamizi_index.loading_dashboard">Loading dashboard...</div>
+                <div style="text-align: center; padding: 60px;">
+                    <div class="loading-spinner dm-sc" style="width:46px;height:46px;margin:0 auto 16px;"></div>
+                    <div data-i18n="msimamizi_index.loading_dashboard">Loading dashboard...</div>
+                </div>
             </div>
         </main>
     </div>

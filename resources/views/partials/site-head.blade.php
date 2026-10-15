@@ -22,6 +22,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <!-- The one SmartCart loading animation for the whole website. -->
+    <link rel="stylesheet" href="/css/smartcart-loader.css">
     <style>
         :root {
             --dm-navy: #0f172a;
@@ -129,8 +131,24 @@
         .dm-empty { text-align: center; padding: 48px 20px; color: var(--dm-muted); }
         .dm-empty svg { width: 44px; height: 44px; margin: 0 auto 14px; color: #cbd5e1; }
         .dm-empty h3 { margin-bottom: 6px; color: var(--dm-ink); }
-        .dm-skeleton { background: linear-gradient(90deg, #eef2f7 25%, #e2e8f0 37%, #eef2f7 63%); background-size: 400% 100%; animation: dmShimmer 1.4s infinite; border-radius: 8px; }
-        @keyframes dmShimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+        /* Loading state
+           Every public page hosts the same SmartCart animation instead of a
+           bare "Loading..." line or skeleton cards. The caption sits under the
+           cart and the box is centred in whatever it is dropped into — a grid
+           cell spans the whole row so the cart never gets half a column. */
+        .dm-loading {
+            grid-column: 1 / -1;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 14px; padding: 46px 20px; text-align: center; color: var(--dm-muted);
+        }
+        .dm-loading p { font-size: 14px; }
+        .dm-loading .loading-spinner { width: 52px; height: 52px; }
+        /* A loader built at runtime (the Track Orders lookup, for instance) does
+           not sit in .dm-loading, so it still needs a box of its own. */
+        .loading-spinner { width: 32px; height: 32px; }
+        .dm-loading--inline { padding: 18px 12px; gap: 10px; }
+        .dm-loading--inline .loading-spinner { width: 28px; height: 28px; }
+        .dm-loading--inline p { font-size: 13px; margin: 0; }
 
         /* Horizontal scroll tables (mobile) */
         .dm-table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
