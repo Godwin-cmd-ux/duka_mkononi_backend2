@@ -3,10 +3,11 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { API_BASE_URLS } from '../constants/api';
 
 /**
- * 🎨 Theme system (mobile) — the same two themes as the website.
+ * 🎨 Theme system (mobile) — the same three themes as the website.
  *
  *   white-professional    the existing Duka Mkononi design (DEFAULT, unchanged)
  *   royal-champagne-cream warm cream / ivory / royal gold
+ *   midnight-royal-gold   near-black canvas / charcoal cards / gold + orange
  *
  * The identifiers, the localStorage/AsyncStorage key ("dukamkononi_theme") and
  * the sync endpoint (PUT /api/user/theme) are shared with the website, so a
@@ -14,16 +15,17 @@ import { API_BASE_URLS } from '../constants/api';
  *
  * White Professional's values below are the app's current production hexes,
  * so the default theme renders exactly as before this system existed.
- * Royal values mirror public/css/themes.css on the website, one palette.
+ * Royal and Midnight values mirror public/css/themes.css on the website,
+ * one palette per platform.
  *
  * Screens opt in through useTheme().colors; screens that still use their own
  * literal colors are unaffected (documented boundary, same as the web
  * portal pages' inline styles).
  */
 
-export type ThemeId = 'white-professional' | 'royal-champagne-cream';
+export type ThemeId = 'white-professional' | 'royal-champagne-cream' | 'midnight-royal-gold';
 
-export const THEME_IDS: readonly ThemeId[] = ['white-professional', 'royal-champagne-cream'];
+export const THEME_IDS: readonly ThemeId[] = ['white-professional', 'royal-champagne-cream', 'midnight-royal-gold'];
 
 export interface ThemeColors {
   /** Page background (screens, layouts). */
@@ -83,6 +85,22 @@ export const PALETTES: Record<ThemeId, ThemeColors> = {
     primary: '#8b6f23',
     primaryDark: '#6e591b',
     tint: '#f6e8ce',
+    success: '#27ae60',
+    danger: '#e74c3c',
+    warn: '#f39c12',
+  },
+  'midnight-royal-gold': {
+    page: '#050505',
+    card: '#101010',
+    soft: '#282213',
+    ink: '#f8f8f8',
+    muted: '#a1a1aa',
+    muted2: '#8b8b93',
+    line: '#303030',
+    line2: '#262626',
+    primary: '#ff9f1c',
+    primaryDark: '#e88b0c',
+    tint: '#282213',
     success: '#27ae60',
     danger: '#e74c3c',
     warn: '#f39c12',

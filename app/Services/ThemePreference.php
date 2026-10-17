@@ -5,8 +5,9 @@ namespace App\Services;
 /**
  * Server-side validation for the website/app theme preference.
  *
- * Exactly two themes are approved (Phase 1 of the theme system); the
- * identifiers are stable, untranslated strings and mirror:
+ * Three themes are approved (Phase 1 approved the first two; the public-
+ * website phase added the third); the identifiers are stable, untranslated
+ * strings and mirror:
  *   - the allow-list in public/js/dm-theme.js
  *   - the migration default in 2026_10_17_000001_add_preferred_theme_to_users_table.php
  *   - the <html data-theme="..."> values in public/css/themes.css
@@ -25,16 +26,17 @@ class ThemePreference
     public const DEFAULT = 'white-professional';
 
     /**
-     * The two approved theme identifiers. Never translate or rename these;
+     * The approved theme identifiers. Never translate or rename these;
      * display names live in locales.json / locales.json `ui.*` keys.
      */
     public const ALLOWED = [
         'white-professional',
         'royal-champagne-cream',
+        'midnight-royal-gold',
     ];
 
     /**
-     * Returns the incoming theme when it is one of the two approved
+     * Returns the incoming theme when it is one of the approved
      * identifiers, otherwise null.
      */
     public static function normalize($theme): ?string

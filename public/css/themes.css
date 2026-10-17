@@ -1338,3 +1338,994 @@ html[data-theme="royal-champagne-cream"] .total-value { color: #4d6326 }
 html[data-theme="royal-champagne-cream"] .upload-btn { background: #5f7a2f }
 html[data-theme="royal-champagne-cream"] .upload-progress { color: #8b6f23 }
 html[data-theme="royal-champagne-cream"] .zimesomwa-btn { background: #5f7a2f }
+
+/*
+ * =====================================================================
+ *  Midnight Royal Gold — third approved theme (public + portals)
+ * =====================================================================
+ *
+ *  `midnight-royal-gold` is the premium dark look: nearly black canvas
+ *  (#050505), deep-charcoal cards (#101010 / #1B1B1B), royal gold
+ *  accents (#D4AF37 / #B89A35, borders #55451D, tint #282213), and
+ *  AMBER-ORANGE primary actions (#FF9F1C / hover #E88B0C) with charcoal
+ *  borders (#303030) and soft-white / silver text (#F8F8F8 / #A1A1AA).
+ *  Gold carries the luxury, orange carries the emphasis — never
+ *  collapsed into one flat black-and-yellow scheme.
+ *
+ *  SCOPE — every token and rule in this layer is prefixed with
+ *      html[data-theme="midnight-royal-gold"]
+ *  and nothing else: public website pages AND the authenticated
+ *  portal shells (mteja / muuzaji / msimamizi / system_admin) are all
+ *  covered. The public + shared-vocabulary rules continue below; the
+ *  full portal translation (shell / vocabulary gaps / portal-specific
+ *  extension / component sweep, authored from the Royal layer's four
+ *  portal sections through this theme's value map) is appended at the
+ *  end of this file in the "PHASE 2 — portal coverage" block.
+ *
+ *  Phase-1 history: rules used to carry a :not(:has(.sidebar)) guard
+ *  so portals stayed untouched until authorized. Portals are now
+ *  authorized, so the guard is removed — the layer also no longer
+ *  depends on :has() parsing at all.
+ *
+ *  White Professional stays byte-identical: not one unscoped rule is
+ *  added here. Selectors below that never appear on a given page are
+ *  simply inert there (same shared-vocabulary approach as the Royal
+ *  layer).
+ * --------------------------------------------------------------------
+ */
+
+/* ---- Design tokens: the same 89-key surface as the White and Royal
+        blocks, so every var()-based public style follows at once ---- */
+html[data-theme="midnight-royal-gold"] {
+
+    /* Site design system — charcoal surfaces, gold accent, soft-white ink */
+    --dm-navy: #f8f8f8;
+    --dm-ink: #f8f8f8;
+    --dm-muted: #a1a1aa;
+    --dm-line: #303030;
+    --dm-bg: #050505;
+    --dm-card: #101010;
+    --dm-primary: #ff9f1c;
+    --dm-primary-dark: #e88b0c;
+    --dm-accent: #d4af37;
+    --dm-accent-ink: #050505;
+    --dm-danger: #ef4444;
+    --dm-success: #22c55e;
+
+    /* Site chrome / interaction — dark neutrals, amber-orange focus */
+    --dm-nav-bg: rgba(5, 5, 5, .94);
+    --dm-hover: #1b1b1b;
+    --dm-tint: #282213;
+    --dm-tint-line: #55451d;
+    --dm-tint-ink: #d4af37;
+    --dm-ai-bg: #282213;
+    --dm-ai-line: #443a16;
+    --dm-ai-line-2: #3e3313;
+    --dm-ai-ink: #d4af37;
+    --dm-input-bg: #101010;
+    --dm-focus: rgba(255, 159, 28, .55);
+    --dm-focus-soft: rgba(255, 159, 28, .25);
+    --dm-selection: rgba(255, 159, 28, .25);
+    --dm-btn-glow: rgba(255, 159, 28, .32);
+
+    /* Alerts keep their semantic role on dark tints */
+    --dm-alert-ok-bg: #0e2418;
+    --dm-alert-ok-line: #23523a;
+    --dm-alert-err-bg: #2a1310;
+    --dm-alert-err-line: #6e3833;
+    --dm-alert-info-bg: #1a1a1a;
+    --dm-alert-info-line: #3a3a3a;
+
+    /* Shared toast */
+    --dm-toast-bg: #101010;
+    --dm-toast-text: #f8f8f8;
+
+    /* Floating concierge */
+    --pmc-panel: #101010;
+    --pmc-line: #303030;
+    --pmc-answer: #282213;
+    --pmc-ink: #f8f8f8;
+    --pmc-muted: #a1a1aa;
+    --pmc-strong: #f8f8f8;
+    --pmc-cta: #ff9f1c;
+    --pmc-cta-glow: rgba(255, 159, 28, .35);
+    --pmc-chip-bg: #1b1b1b;
+    --pmc-chip-hover: #242424;
+    --pmc-chip-line: #303030;
+    --pmc-chip-ink: #d4af37;
+
+    /* Standalone auth/account pages — midnight zone, orange primary */
+    --pg-page: #050505;
+    --pg-surface: #101010;
+    --pg-field: #101010;
+    --pg-soft: #1b1b1b;
+    --pg-soft-2: #171717;
+    --pg-soft-3: #1b1b1b;
+    --pg-soft-cool: #141414;
+    --pg-text: #f8f8f8;
+    --pg-muted: #a1a1aa;
+    --pg-muted-2: #8b8b93;
+    --pg-line: #303030;
+    --pg-line-2: #303030;
+    --pg-line-3: #303030;
+    --pg-line-soft: #262626;
+    --pg-cta-blue: #ff9f1c;
+    --pg-cta-red: #ef4444;
+    --pg-cta-green: #22c55e;
+    --pg-cta-blue-deep: #e88b0c;
+    --pg-glow-soft: rgba(255, 159, 28, .16);
+    --pg-glow-red: rgba(239, 68, 68, .18);
+    --pg-glow-green: rgba(34, 197, 94, .18);
+    --pg-cta-glow: rgba(255, 159, 28, .34);
+    --pg-cta-wash: rgba(255, 159, 28, .08);
+    --pg-cta-disabled: #6e5a1c;
+    --pg-info-bg: #1a1a1a;
+    --pg-desc: #a1a1aa;
+    --pg-line-4: #2a2a2a;
+    --pg-line-5: #2a2a2a;
+    --pg-line-6: #444444;
+    --pg-line-7: #242424;
+    --pg-pill: #1b1b1b;
+    --pg-pill-hover: #242424;
+    --pg-blue-tint: #282213;
+    --pg-page-soft: #131313;
+    --pg-soft-fill: #1b1b1b;
+    --pg-soft-4: #191919;
+    --pg-field-soft: #161616;
+    --pg-accent-bright: #ff9f1c;
+    --pg-step-idle: #1f1f1f;
+    --pg-step-idle-line: #3a3a3a;
+    --pg-brand-a: #d4af37;
+    --pg-brand-b: #b89a35;
+    --pg-brand-glow: rgba(212, 175, 55, .35);
+}
+
+/* ---- Midnight component overrides: public-page vocabulary translated
+        one-to-one from the Royal layer onto the midnight palette ---- */
+html[data-theme="midnight-royal-gold"] body {
+    background-color: #050505;
+    color: #f8f8f8;
+}
+
+/* ---- Page canvas ---- */
+html[data-theme="midnight-royal-gold"] .main-content,
+html[data-theme="midnight-royal-gold"] .page-bg {
+    background-color: #050505;
+}
+
+/* ---- Public site footer: it backgrounds itself with var(--dm-navy),
+        which Midnight repurposes for soft-white headings — pin the
+        footer to midnight black here (its #cbd5e1 text is inherited
+        and reads at ~11:1 on it). ---- */
+html[data-theme="midnight-royal-gold"] .dm-footer {
+    background-color: #050505;
+}
+
+/* ---- Cards / panels: deep charcoal + charcoal borders ---- */
+html[data-theme="midnight-royal-gold"] .section-card,
+html[data-theme="midnight-royal-gold"] .card,
+html[data-theme="midnight-royal-gold"] .stat,
+html[data-theme="midnight-royal-gold"] .summary-box,
+html[data-theme="midnight-royal-gold"] .business-card,
+html[data-theme="midnight-royal-gold"] .empty-container {
+    background-color: #101010;
+}
+
+html[data-theme="midnight-royal-gold"] .card,
+html[data-theme="midnight-royal-gold"] .stat {
+    border-color: #303030;
+}
+
+/* ---- Keyboard focus stays visible (amber-orange ring) ---- */
+html[data-theme="midnight-royal-gold"] a:focus-visible,
+html[data-theme="midnight-royal-gold"] button:focus-visible,
+html[data-theme="midnight-royal-gold"] [role="radio"]:focus-visible {
+    outline: 3px solid rgba(255, 159, 28, .55);
+    outline-offset: 2px;
+}
+
+/* ---- Buttons ---- */
+html[data-theme="midnight-royal-gold"] .btn-primary {
+    background-color: #ff9f1c;
+    color: #050505;
+}
+
+html[data-theme="midnight-royal-gold"] .btn-ghost {
+    background-color: #101010;
+    border-color: #303030;
+    color: #f8f8f8;
+}
+
+html[data-theme="midnight-royal-gold"] .btn-details {
+    background-color: #1b1b1b;
+    color: #a1a1aa;
+}
+
+html[data-theme="midnight-royal-gold"] .btn-logs {
+    background-color: #282213;
+    color: #d4af37;
+}
+
+html[data-theme="midnight-royal-gold"] .back-btn {
+    background-color: #1b1b1b;
+    color: #f8f8f8;
+}
+
+html[data-theme="midnight-royal-gold"] .retry-btn {
+    background-color: #ff9f1c;
+    color: #050505;
+}
+
+html[data-theme="midnight-royal-gold"] .phone-link {
+    color: #d4af37;
+}
+
+/* ---- Inputs / search: dark surfaces, amber-orange focus ---- */
+html[data-theme="midnight-royal-gold"] .search-box,
+html[data-theme="midnight-royal-gold"] .search-input {
+    background-color: #101010;
+    border-color: #303030;
+}
+
+html[data-theme="midnight-royal-gold"] .search-input:focus {
+    border-color: #ff9f1c;
+    box-shadow: 0 0 0 3px rgba(255, 159, 28, .22);
+}
+
+html[data-theme="midnight-royal-gold"] .toolbar select,
+html[data-theme="midnight-royal-gold"] .toolbar input,
+html[data-theme="midnight-royal-gold"] .field input,
+html[data-theme="midnight-royal-gold"] .field select,
+html[data-theme="midnight-royal-gold"] .field textarea,
+html[data-theme="midnight-royal-gold"] .input-field,
+html[data-theme="midnight-royal-gold"] .form-input {
+    border-color: #303030;
+}
+
+html[data-theme="midnight-royal-gold"] .loading-spinner {
+    border-color: #262626;
+    border-top-color: #d4af37;
+}
+
+/* ---- Typography groups: soft-white ink + muted silver ---- */
+html[data-theme="midnight-royal-gold"] .title,
+html[data-theme="midnight-royal-gold"] .page-title,
+html[data-theme="midnight-royal-gold"] .section-title,
+html[data-theme="midnight-royal-gold"] .card-title,
+html[data-theme="midnight-royal-gold"] .header-title,
+html[data-theme="midnight-royal-gold"] .business-name,
+html[data-theme="midnight-royal-gold"] .stat-number,
+html[data-theme="midnight-royal-gold"] .product-name,
+html[data-theme="midnight-royal-gold"] .money-value,
+html[data-theme="midnight-royal-gold"] .empty-title {
+    color: #f8f8f8;
+}
+
+html[data-theme="midnight-royal-gold"] .subtitle,
+html[data-theme="midnight-royal-gold"] .page-sub,
+html[data-theme="midnight-royal-gold"] .header-subtitle,
+html[data-theme="midnight-royal-gold"] .stat-label,
+html[data-theme="midnight-royal-gold"] .money-label,
+html[data-theme="midnight-royal-gold"] .empty-text,
+html[data-theme="midnight-royal-gold"] .muted,
+html[data-theme="midnight-royal-gold"] .empty-state,
+html[data-theme="midnight-royal-gold"] .empty-sub,
+html[data-theme="midnight-royal-gold"] .footer-text,
+html[data-theme="midnight-royal-gold"] .detail-value {
+    color: #a1a1aa;
+}
+
+/* ---- Shared chips / message / divider / avatar ---- */
+html[data-theme="midnight-royal-gold"] .chip {
+    border-color: #303030;
+    color: #f8f8f8;
+}
+
+html[data-theme="midnight-royal-gold"] .chip:hover {
+    background-color: #282213;
+    border-color: #55451d;
+}
+
+html[data-theme="midnight-royal-gold"] .message {
+    color: #f8f8f8;
+}
+
+html[data-theme="midnight-royal-gold"] .divider {
+    background-color: #2e2e2e;
+}
+
+html[data-theme="midnight-royal-gold"] .avatar {
+    background: linear-gradient(135deg, #d4af37, #b89a35);
+    color: #050505;
+}
+
+html[data-theme="midnight-royal-gold"] .empty i,
+html[data-theme="midnight-royal-gold"] .empty-icon {
+    color: #5c5c66;
+}
+
+/* ---- NL entry (nl-entry is included on index / shop / businesses /
+        advertisements): same treatment as under Royal, in midnight ---- */
+html[data-theme="midnight-royal-gold"] .dm-entry-banner[data-kind="info"] {
+    background-color: #282213;
+    color: #d4af37;
+    border-inline-start-color: #d4af37;
+}
+
+html[data-theme="midnight-royal-gold"] .dm-entry-btn {
+    border-color: #303030;
+    color: #f8f8f8;
+}
+
+html[data-theme="midnight-royal-gold"] .dm-entry-btn-primary {
+    background-color: #ff9f1c;
+    border-color: #ff9f1c;
+    color: #050505;
+}
+
+html[data-theme="midnight-royal-gold"] .dm-entry-candidate {
+    border-color: #303030;
+}
+
+html[data-theme="midnight-royal-gold"] .dm-entry-candidate.is-selected {
+    border-color: #d4af37;
+    background-color: #282213;
+}
+
+html[data-theme="midnight-royal-gold"] .dm-entry-chip {
+    background-color: #1b1b1b;
+    border-color: #262626;
+    color: #a1a1aa;
+}
+
+html[data-theme="midnight-royal-gold"] .dm-entry-chip:hover {
+    background-color: #282213;
+    border-color: #d4af37;
+}
+
+html[data-theme="midnight-royal-gold"] .dm-entry-chip-type {
+    color: #d4af37;
+}
+
+html[data-theme="midnight-royal-gold"] .dm-entry-field input,
+html[data-theme="midnight-royal-gold"] .dm-entry-field select,
+html[data-theme="midnight-royal-gold"] .dm-entry-text {
+    border-color: #303030;
+}
+
+html[data-theme="midnight-royal-gold"] .dm-entry-field input:focus,
+html[data-theme="midnight-royal-gold"] .dm-entry-field select:focus,
+html[data-theme="midnight-royal-gold"] .dm-entry-text:focus {
+    border-color: #ff9f1c;
+}
+
+html[data-theme="midnight-royal-gold"] .dm-entry-match {
+    background-color: #1b1b1b;
+    border-color: #262626;
+}
+
+html[data-theme="midnight-royal-gold"] .dm-entry-match-line,
+html[data-theme="midnight-royal-gold"] .dm-entry-title {
+    color: #f8f8f8;
+}
+
+html[data-theme="midnight-royal-gold"] .dm-entry-type {
+    background-color: #282213;
+    color: #d4af37;
+}
+
+html[data-theme="midnight-royal-gold"] .dm-entry-preview {
+    border-top-color: #303030;
+}
+
+html[data-theme="midnight-royal-gold"] .dm-entry-field-label,
+html[data-theme="midnight-royal-gold"] .dm-entry-status,
+html[data-theme="midnight-royal-gold"] .dm-entry-subtitle,
+html[data-theme="midnight-royal-gold"] .dm-entry-meta {
+    color: #a1a1aa;
+}
+
+/* =====================================================================
+ *  Midnight Companion Recolor — SmartCart loader, semantic chips,
+ *  inline styles, JS-injected colors, and orange-label contrast guards
+ * =====================================================================
+ *  Mirrors the Royal companion layer's three tricks (exact-terminator
+ *  [style*=]/[style$=] selectors, !important to beat inline styles, CSS
+ *  re-matching live as page JS writes el.style), translated onto the
+ *  midnight palette — and guarded like everything above so portals are
+ *  untouched. Status hues stay DIFFERENTIATED on dark tints: green
+ *  #22C55E, gold #D4AF37, amber #F59E0B, red #EF4444, silver #A1A1AA.
+ * -------------------------------------------------------------------- */
+
+/* ---- SmartCart loader: one variable override repaints the whole
+        gradient-driven cart animation (its rules are var()-based) ---- */
+html[data-theme="midnight-royal-gold"] .dm-sc.dm-sc {
+    --dm-sc-color: #d4af37;
+    --dm-sc-bright: #ebcb68;
+    --dm-sc-accent: #ff9f1c;
+    --dm-sc-accent-hi: #ffb44f;
+    --dm-sc-accent-lo: #b97c0c;
+}
+
+/* ---- Semantic chips: palette indicators on dark tints ---- */
+html[data-theme="midnight-royal-gold"] .b-ok,
+html[data-theme="midnight-royal-gold"] .alert-ok,
+html[data-theme="midnight-royal-gold"] .banner.ok,
+html[data-theme="midnight-royal-gold"] .btn-enable,
+html[data-theme="midnight-royal-gold"] .ai-verified-tag {
+    background-color: rgba(34, 197, 94, .14);
+    color: #22c55e;
+}
+
+html[data-theme="midnight-royal-gold"] .b-info,
+html[data-theme="midnight-royal-gold"] .alert-info {
+    background-color: #282213;
+    color: #d4af37;
+}
+
+html[data-theme="midnight-royal-gold"] .b-warn,
+html[data-theme="midnight-royal-gold"] .alert-warn,
+html[data-theme="midnight-royal-gold"] .banner.warn,
+html[data-theme="midnight-royal-gold"] .ai-warn {
+    background-color: rgba(245, 158, 11, .14);
+    color: #f59e0b;
+}
+
+html[data-theme="midnight-royal-gold"] .b-danger,
+html[data-theme="midnight-royal-gold"] .alert-err {
+    background-color: rgba(239, 68, 68, .15);
+    color: #ef4444;
+}
+
+html[data-theme="midnight-royal-gold"] .b-muted,
+html[data-theme="midnight-royal-gold"] .btn-disable {
+    background-color: #1b1b1b;
+    color: #a1a1aa;
+}
+
+/* ---- Inline text colors (same guard: an element that also paints a
+        background/border is handled by the joint rules below) ---- */
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style*="color:#2c3e50;"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style$="color:#2c3e50"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style*="color: #2c3e50;"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style$="color: #2c3e50"] { color: #f8f8f8 !important; }
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style*="color:#5d6d7e;"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style$="color:#5d6d7e"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style*="color: #5d6d7e;"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style$="color: #5d6d7e"] { color: #a1a1aa !important; }
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style*="color:#7f8c8d;"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style$="color:#7f8c8d"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style*="color: #7f8c8d;"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style$="color: #7f8c8d"] { color: #a1a1aa !important; }
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style*="color:#64748b;"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style$="color:#64748b"] { color: #a1a1aa !important; }
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style*="color:#95a5a6;"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style$="color:#95a5a6"] { color: #a1a1aa !important; }
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style*="color:#94a3b8;"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style$="color:#94a3b8"] { color: #a1a1aa !important; }
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style*="color:#7a8ba0;"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style$="color:#7a8ba0"] { color: #a1a1aa !important; }
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style*="color:#bdc3c7;"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style$="color:#bdc3c7"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style*="color:#b8c4cf;"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style$="color:#b8c4cf"] { color: #8b8b93 !important; }
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style*="color:#555;"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style$="color:#555"] { color: #f8f8f8 !important; }
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style*="color:#666;"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style$="color:#666"] { color: #a1a1aa !important; }
+/* Accent text/controls on plain surfaces converge to gold */
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style*="color:#667eea;"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style$="color:#667eea"] { color: #d4af37 !important; }
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style*="color:#3498db;"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style$="color:#3498db"] { color: #d4af37 !important; }
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style*="color:#7c5cbf;"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style$="color:#7c5cbf"] { color: #d4af37 !important; }
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style*="color:#9b59b6;"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style$="color:#9b59b6"] { color: #b89a35 !important; }
+/* Status text on plain surfaces: the palette's indicators ---- */
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style*="color:#27ae60;"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style$="color:#27ae60"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style*="color:#2ecc71;"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style$="color:#2ecc71"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style*="color:#28a745;"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style$="color:#28a745"] { color: #22c55e !important; }
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style*="color:#e74c3c;"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style$="color:#e74c3c"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style*="color:#dc3545;"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style$="color:#dc3545"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style*="color:#b3261e;"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style$="color:#b3261e"] { color: #ef4444 !important; }
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style*="color:#f39c12;"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style$="color:#f39c12"] { color: #f59e0b !important; }
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style*="color:#b9770e;"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style$="color:#b9770e"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style*="color:#b45309;"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style$="color:#b45309"] { color: #f59e0b !important; }
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style*="color:#e67e22;"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style$="color:#e67e22"] { color: #f59e0b !important; }
+
+/* ---- Inline backgrounds (solid hexes and the word "white") ---- */
+html[data-theme="midnight-royal-gold"] [style*="background:#f8f9fa;"],
+html[data-theme="midnight-royal-gold"] [style$="background:#f8f9fa"],
+html[data-theme="midnight-royal-gold"] [style*="background:#f4f6f7;"],
+html[data-theme="midnight-royal-gold"] [style$="background:#f4f6f7"] { background-color: #141414 !important; }
+html[data-theme="midnight-royal-gold"] [style*="background:white;"],
+html[data-theme="midnight-royal-gold"] [style$="background:white"],
+html[data-theme="midnight-royal-gold"] [style*="background:#fff;"],
+html[data-theme="midnight-royal-gold"] [style$="background:#fff"],
+html[data-theme="midnight-royal-gold"] [style*="background:#ffffff;"],
+html[data-theme="midnight-royal-gold"] [style$="background:#ffffff"] { background-color: #101010 !important; }
+html[data-theme="midnight-royal-gold"] [style*="background:#667eea;"],
+html[data-theme="midnight-royal-gold"] [style$="background:#667eea"] { background-color: #d4af37 !important; }
+html[data-theme="midnight-royal-gold"] [style*="background:#e8f4fd;"],
+html[data-theme="midnight-royal-gold"] [style$="background:#e8f4fd"],
+html[data-theme="midnight-royal-gold"] [style*="background:#eef4fa;"],
+html[data-theme="midnight-royal-gold"] [style$="background:#eef4fa"],
+html[data-theme="midnight-royal-gold"] [style*="background:#f3eeff;"],
+html[data-theme="midnight-royal-gold"] [style$="background:#f3eeff"] { background-color: #282213 !important; }
+html[data-theme="midnight-royal-gold"] [style*="background:#27ae60;"],
+html[data-theme="midnight-royal-gold"] [style$="background:#27ae60"],
+html[data-theme="midnight-royal-gold"] [style*="background:#2ecc71;"],
+html[data-theme="midnight-royal-gold"] [style$="background:#2ecc71"] { background-color: #22c55e !important; }
+html[data-theme="midnight-royal-gold"] [style*="background:#e8f6f3;"],
+html[data-theme="midnight-royal-gold"] [style$="background:#e8f6f3"],
+html[data-theme="midnight-royal-gold"] [style*="background:#f0f8f0;"],
+html[data-theme="midnight-royal-gold"] [style$="background:#f0f8f0"] { background-color: #10261a !important; }
+html[data-theme="midnight-royal-gold"] [style*="background:#e74c3c;"],
+html[data-theme="midnight-royal-gold"] [style$="background:#e74c3c"] { background-color: #ef4444 !important; }
+html[data-theme="midnight-royal-gold"] [style*="background:#95a5a6;"],
+html[data-theme="midnight-royal-gold"] [style$="background:#95a5a6"] { background-color: #3f3f46 !important; }
+html[data-theme="midnight-royal-gold"] [style*="background:#e67e22;"],
+html[data-theme="midnight-royal-gold"] [style$="background:#e67e22"] { background-color: #e88b0c !important; }
+html[data-theme="midnight-royal-gold"] [style*="background:#ff6b35;"],
+html[data-theme="midnight-royal-gold"] [style$="background:#ff6b35"] { background-color: #e88b0c !important; }
+html[data-theme="midnight-royal-gold"] [style*="background:#fff8e1;"],
+html[data-theme="midnight-royal-gold"] [style$="background:#fff8e1"],
+html[data-theme="midnight-royal-gold"] [style*="background:#fef5e7;"],
+html[data-theme="midnight-royal-gold"] [style$="background:#fef5e7"],
+html[data-theme="midnight-royal-gold"] [style*="background:#fdf3e7;"],
+html[data-theme="midnight-royal-gold"] [style$="background:#fdf3e7"],
+html[data-theme="midnight-royal-gold"] [style*="background:#fff9e6;"],
+html[data-theme="midnight-royal-gold"] [style$="background:#fff9e6"] { background-color: #2b2110 !important; }
+html[data-theme="midnight-royal-gold"] [style*="background:#fdecea;"],
+html[data-theme="midnight-royal-gold"] [style$="background:#fdecea"],
+html[data-theme="midnight-royal-gold"] [style*="background:#fce4ec;"],
+html[data-theme="midnight-royal-gold"] [style$="background:#fce4ec"] { background-color: #2a1310 !important; }
+
+/* ---- Inline borders ("solid #hex" inside any border shorthand) ---- */
+html[data-theme="midnight-royal-gold"] [style*="solid #ecf0f1;"],
+html[data-theme="midnight-royal-gold"] [style$="solid #ecf0f1"],
+html[data-theme="midnight-royal-gold"] [style*="solid #ddd;"],
+html[data-theme="midnight-royal-gold"] [style$="solid #ddd"],
+html[data-theme="midnight-royal-gold"] [style*="solid #dfe6e9;"],
+html[data-theme="midnight-royal-gold"] [style$="solid #dfe6e9"],
+html[data-theme="midnight-royal-gold"] [style*="solid #dfe4ea;"],
+html[data-theme="midnight-royal-gold"] [style$="solid #dfe4ea"] { border-color: #303030 !important; }
+html[data-theme="midnight-royal-gold"] [style*="solid #f1f3f4;"],
+html[data-theme="midnight-royal-gold"] [style$="solid #f1f3f4"],
+html[data-theme="midnight-royal-gold"] [style*="solid #eef2f7;"],
+html[data-theme="midnight-royal-gold"] [style$="solid #eef2f7"] { border-color: #262626 !important; }
+
+/* ---- Alpha-tinted JS badges: exact 8-digit forms, tint and text ---- */
+html[data-theme="midnight-royal-gold"] [style*="background:#27ae6018"],
+html[data-theme="midnight-royal-gold"] [style$="background:#27ae6018"],
+html[data-theme="midnight-royal-gold"] [style*="background:#27ae6020"],
+html[data-theme="midnight-royal-gold"] [style$="background:#27ae6020"],
+html[data-theme="midnight-royal-gold"] [style*="background:#2ecc7120"],
+html[data-theme="midnight-royal-gold"] [style$="background:#2ecc7120"] { background-color: #22c55e20 !important; }
+html[data-theme="midnight-royal-gold"] [style*="background:#e74c3c12"],
+html[data-theme="midnight-royal-gold"] [style$="background:#e74c3c12"],
+html[data-theme="midnight-royal-gold"] [style*="background:#e74c3c18"],
+html[data-theme="midnight-royal-gold"] [style$="background:#e74c3c18"],
+html[data-theme="midnight-royal-gold"] [style*="background:#e74c3c20"],
+html[data-theme="midnight-royal-gold"] [style$="background:#e74c3c20"] { background-color: #ef444420 !important; }
+html[data-theme="midnight-royal-gold"] [style*="background:#f39c1215"],
+html[data-theme="midnight-royal-gold"] [style$="background:#f39c1215"] { background-color: #f59e0b15 !important; }
+html[data-theme="midnight-royal-gold"] [style*="background:#e67e2220"],
+html[data-theme="midnight-royal-gold"] [style$="background:#e67e2220"] { background-color: #f59e0b20 !important; }
+html[data-theme="midnight-royal-gold"] [style*="background:#3498db20"],
+html[data-theme="midnight-royal-gold"] [style$="background:#3498db20"] { background-color: #d4af3720 !important; }
+html[data-theme="midnight-royal-gold"] [style*="background:#95a5a620"],
+html[data-theme="midnight-royal-gold"] [style$="background:#95a5a620"],
+html[data-theme="midnight-royal-gold"] [style*="background:#95a5a622"],
+html[data-theme="midnight-royal-gold"] [style$="background:#95a5a622"] { background-color: #a1a1aa22 !important; }
+/* paired text inside the alpha-tint badges */
+html[data-theme="midnight-royal-gold"] [style*="color:#27ae60;"] { color: #22c55e !important; }
+html[data-theme="midnight-royal-gold"] [style*="color:#e74c3c;"] { color: #ef4444 !important; }
+html[data-theme="midnight-royal-gold"] [style*="color:#f39c12;"] { color: #f59e0b !important; }
+html[data-theme="midnight-royal-gold"] [style*="color:#b9770e;"] { color: #f59e0b !important; }
+html[data-theme="midnight-royal-gold"] [style*="color:#7f8c8d;"] { color: #a1a1aa !important; }
+html[data-theme="midnight-royal-gold"] [style*="color:#5d6d7e;"] { color: #a1a1aa !important; }
+html[data-theme="midnight-royal-gold"] [style*="color:#3498db;"] { color: #d4af37 !important; }
+
+/* ---- Observed background+color pairs (both properties recolored even
+        though the guard excludes them from the single-property rules) ---- */
+html[data-theme="midnight-royal-gold"] [style*="background:#e8f4fd"][style*="color:#3498db"] { background-color: #282213 !important; color: #d4af37 !important; }
+html[data-theme="midnight-royal-gold"] [style*="background:#f4f6f7"][style*="color:#5d6d7e"] { background-color: #141414 !important; color: #a1a1aa !important; }
+html[data-theme="midnight-royal-gold"] [style*="background:#f8f9fa"][style*="color:#7f8c8d"] { background-color: #141414 !important; color: #a1a1aa !important; }
+html[data-theme="midnight-royal-gold"] [style*="background:#95a5a6"][style*="color:#7f8c8d"] { background-color: #3f3f46 !important; color: #f8f8f8 !important; }
+
+/* ---- Late additions: stragglers from the rendered-page coverage audit ---- */
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style*="color:#2c7e5f;"],
+html[data-theme="midnight-royal-gold"] :not([style*="background"])[style$="color:#2c7e5f"] { color: #22c55e !important; }
+html[data-theme="midnight-royal-gold"] [style*="background:#f39c1218"],
+html[data-theme="midnight-royal-gold"] [style$="background:#f39c1218"] { background-color: #f59e0b18 !important; }
+html[data-theme="midnight-royal-gold"] [style*="background:#fef9e7;"],
+html[data-theme="midnight-royal-gold"] [style$="background:#fef9e7"] { background-color: #2b2110 !important; }
+html[data-theme="midnight-royal-gold"] [style*="background:#fdedec;"],
+html[data-theme="midnight-royal-gold"] [style$="background:#fdedec"] { background-color: #2a1310 !important; }
+/* Unguarded partners for background+color pairs (safe: these pages spell
+   backgrounds "background:", never "background-color:") */
+html[data-theme="midnight-royal-gold"] [style*="color:#2c3e50;"],
+html[data-theme="midnight-royal-gold"] [style$="color:#2c3e50"] { color: #f8f8f8 !important; }
+html[data-theme="midnight-royal-gold"] [style*="color:#2c7e5f;"],
+html[data-theme="midnight-royal-gold"] [style$="color:#2c7e5f"] { color: #22c55e !important; }
+html[data-theme="midnight-royal-gold"] [style*="background:#3498db;"],
+html[data-theme="midnight-royal-gold"] [style$="background:#3498db"] { background-color: #bf5b08 !important; }
+
+/* ---- Orange-label contrast guards: the primary token becomes
+        #ff9f1c, which is LIGHT — labels that ship white must flip to
+        near-black or contrast fails. Only these primary-fill selectors
+        are touched; gold/green/red fills keep white labels. ---- */
+html[data-theme="midnight-royal-gold"] .login-btn { color: #050505; }
+html[data-theme="midnight-royal-gold"] .signup-btn { color: #050505; }
+html[data-theme="midnight-royal-gold"] .alert-btn { color: #050505; }
+html[data-theme="midnight-royal-gold"] .alert-btn-success { color: #050505; }
+html[data-theme="midnight-royal-gold"] .lang-modal-apply { color: #050505; }
+html[data-theme="midnight-royal-gold"] .dm-theme-modal-apply { color: #050505; }
+html[data-theme="midnight-royal-gold"] .dm-btn--primary { color: #050505; box-shadow: 0 6px 16px rgba(255, 159, 28, .3); }
+html[data-theme="midnight-royal-gold"] .dm-btn--danger { color: #050505; }
+html[data-theme="midnight-royal-gold"] .action-button .button-main-text,
+html[data-theme="midnight-royal-gold"] .action-button .button-desc { color: #f8f8f8; }
+/* Inline primary pairs: style attributes that paint the primary token
+   AND a white label together (OTP buttons etc.) */
+html[data-theme="midnight-royal-gold"] [style*="color:white;"][style*="var(--pg-cta-blue"] { color: #050505 !important; }
+html[data-theme="midnight-royal-gold"] [style*="color:#fff;"][style*="var(--pg-cta-blue"] { color: #050505 !important; }
+html[data-theme="midnight-royal-gold"] [style*="color: #fff;"][style*="var(--pg-cta-blue"] { color: #050505 !important; }
+html[data-theme="midnight-royal-gold"] [style*="color:#ffffff;"][style*="var(--pg-cta-blue"] { color: #050505 !important; }
+html[data-theme="midnight-royal-gold"] [style*="color: #ffffff;"][style*="var(--pg-cta-blue"] { color: #050505 !important; }
+html[data-theme="midnight-royal-gold"] [style*="color:white;"][style*="var(--pg-cta-green"] { color: #050505 !important; }
+html[data-theme="midnight-royal-gold"] [style*="color:white;"][style*="var(--dm-primary"] { color: #050505 !important; }
+
+/* =====================================================================
+ *  PHASE 2 — portal coverage (mteja / muuzaji / msimamizi / system_admin)
+ *  ------------------------------------------------------------------
+ *  Translated from the Royal layer's four portal sections (shell /
+ *  vocabulary gaps / portal-specific extension / component sweep)
+ *  through the established midnight value map: every champagne surface,
+ *  border, tint and accent carried over 1:1; semantic greens and reds
+ *  preserved (#22C55E / #EF4444 on translucent semantic washes);
+ *  gold ACTION fills promoted to the orange primary (#FF9F1C) with
+ *  near-black labels — the same contract .btn-primary follows above.
+ *  Decorative gold keeps #D4AF37 (stripes, borders, icons).
+ *  Selectors absent from a given portal page are inert there (same
+ *  shared-vocabulary approach as the Royal layer), and White /
+ *  Royal are untouched: every rule here is midnight-scoped.
+ * ===================================================================== */
+
+/* ---- Portal shell (sidebar / topbar / nav / tables / modals) ---- */
+html[data-theme="midnight-royal-gold"] .sidebar {
+    background-color: #101010;
+    border-right-color: #303030;
+}
+html[data-theme="midnight-royal-gold"] .sidebar-header { border-bottom-color: #303030; }
+html[data-theme="midnight-royal-gold"] .sidebar-footer { border-top-color: #303030; }
+html[data-theme="midnight-royal-gold"] .logo-icon { background: linear-gradient(135deg, #d4af37, #b89a35); color: #050505; }
+html[data-theme="midnight-royal-gold"] .logo-text h2 { color: #f8f8f8; }
+html[data-theme="midnight-royal-gold"] .logo-text p { color: #a1a1aa; }
+html[data-theme="midnight-royal-gold"] .nav-item { color: #a1a1aa; }
+html[data-theme="midnight-royal-gold"] .nav-item:hover { background-color: #1e1c16; color: #b89a35; }
+html[data-theme="midnight-royal-gold"] .nav-item.active { background-color: #282213; color: #b89a35; }
+html[data-theme="midnight-royal-gold"] .user-avatar { background-color: #282213; color: #d4af37; }
+html[data-theme="midnight-royal-gold"] .user-name { color: #f8f8f8; }
+html[data-theme="midnight-royal-gold"] .user-role { color: #d4af37; }
+html[data-theme="midnight-royal-gold"] .user-meta b { color: #f8f8f8; }
+html[data-theme="midnight-royal-gold"] .user-meta span { color: #a1a1aa; }
+html[data-theme="midnight-royal-gold"] .user-email { color: #a1a1aa; }
+html[data-theme="midnight-royal-gold"] .logout-btn { color: #ef4444; background-color: #1b1b1b; border-color: #303030; }
+html[data-theme="midnight-royal-gold"] .mobile-menu-toggle, html[data-theme="midnight-royal-gold"] .hamburger { background-color: #101010; border-color: #303030; }
+html[data-theme="midnight-royal-gold"] .mobile-menu-toggle svg { stroke: #d4af37; }
+html[data-theme="midnight-royal-gold"] .topbar { background-color: #101010; border-bottom-color: #303030; }
+html[data-theme="midnight-royal-gold"] .dashboard-header, html[data-theme="midnight-royal-gold"] .tabs-container { background-color: #101010; }
+html[data-theme="midnight-royal-gold"] .header-btn { background-color: #1b1b1b; }
+html[data-theme="midnight-royal-gold"] .card, html[data-theme="midnight-royal-gold"] .stat, html[data-theme="midnight-royal-gold"] .user-card, html[data-theme="midnight-royal-gold"] .log-card { border-color: #303030; }
+html[data-theme="midnight-royal-gold"] .user-card, html[data-theme="midnight-royal-gold"] .log-card, html[data-theme="midnight-royal-gold"] .filter-chip { background-color: #1b1b1b; }
+html[data-theme="midnight-royal-gold"] .stat-card { background-color: #101010; border: 1px solid #262626; border-left: 4px solid #d4af37; }
+html[data-theme="midnight-royal-gold"] .stat-icon { background-color: #282213; color: #d4af37; }
+html[data-theme="midnight-royal-gold"] .welcome-card { background: linear-gradient(135deg, #d4af37, #b89a35); color: #050505; }
+html[data-theme="midnight-royal-gold"] .tab-btn { color: #a1a1aa; }
+html[data-theme="midnight-royal-gold"] .tab-btn.active, html[data-theme="midnight-royal-gold"] .filter-chip.active { background-color: #ff9f1c; color: #050505; }
+html[data-theme="midnight-royal-gold"] .phone-link, html[data-theme="midnight-royal-gold"] .log-endpoint { color: #d4af37; }
+html[data-theme="midnight-royal-gold"] a:focus-visible, html[data-theme="midnight-royal-gold"] button:focus-visible, html[data-theme="midnight-royal-gold"] [role="radio"]:focus-visible, html[data-theme="midnight-royal-gold"] .nav-item:focus-visible { outline: 3px solid rgba(255, 159, 28, .55); outline-offset: 2px; }
+html[data-theme="midnight-royal-gold"] .refresh-btn { background-color: #282213; color: #d4af37; }
+html[data-theme="midnight-royal-gold"] .contact-btn, html[data-theme="midnight-royal-gold"] .twende-btn { background: linear-gradient(135deg, #d4af37, #b89a35); box-shadow: 0 2px 8px rgba(255, 159, 28, .25); }
+html[data-theme="midnight-royal-gold"] .orders-table th, html[data-theme="midnight-royal-gold"] .orders-table td { border-bottom-color: #262626; }
+html[data-theme="midnight-royal-gold"] .orders-table th { color: #a1a1aa; }
+html[data-theme="midnight-royal-gold"] .orders-table tr:hover td { background-color: #1b1a15; }
+html[data-theme="midnight-royal-gold"] table.data th { color: #f8f8f8; border-bottom-color: #303030; }
+html[data-theme="midnight-royal-gold"] table.data th, html[data-theme="midnight-royal-gold"] table.data td { border-bottom-color: #262626; }
+html[data-theme="midnight-royal-gold"] table.data td { color: #a1a1aa; }
+html[data-theme="midnight-royal-gold"] .modal, html[data-theme="midnight-royal-gold"] .modal-head, html[data-theme="midnight-royal-gold"] .modal-foot, html[data-theme="midnight-royal-gold"] .modal-content { background-color: #101010; }
+html[data-theme="midnight-royal-gold"] .modal-head, html[data-theme="midnight-royal-gold"] .modal-header, html[data-theme="midnight-royal-gold"] .modal-foot { border-color: #303030; }
+html[data-theme="midnight-royal-gold"] .detail-row { border-bottom-color: #262626; }
+html[data-theme="midnight-royal-gold"] .user-actions { border-top-color: #303030; }
+html[data-theme="midnight-royal-gold"] .line { border-bottom-color: #262626; }
+html[data-theme="midnight-royal-gold"] .timeline { border-left-color: #303030; }
+html[data-theme="midnight-royal-gold"] .timeline li::before { background-color: #ff9f1c; color: #050505; }
+html[data-theme="midnight-royal-gold"] .empty { color: #a1a1aa; }
+html[data-theme="midnight-royal-gold"] .empty-icon, html[data-theme="midnight-royal-gold"] .generated { color: #5c5c66; }
+html[data-theme="midnight-royal-gold"] .business-logo { background-color: #282213; }
+html[data-theme="midnight-royal-gold"] .business-logo-placeholder { border-color: #55451d; color: #d4af37; }
+html[data-theme="midnight-royal-gold"] .title, html[data-theme="midnight-royal-gold"] .page-title, html[data-theme="midnight-royal-gold"] .section-title, html[data-theme="midnight-royal-gold"] .card-title, html[data-theme="midnight-royal-gold"] .header-title, html[data-theme="midnight-royal-gold"] .topbar h1, html[data-theme="midnight-royal-gold"] .business-name, html[data-theme="midnight-royal-gold"] .stat-number, html[data-theme="midnight-royal-gold"] .product-name, html[data-theme="midnight-royal-gold"] .money-value, html[data-theme="midnight-royal-gold"] .empty-title, html[data-theme="midnight-royal-gold"] .state-box .state-title, html[data-theme="midnight-royal-gold"] .tri-sec > b, html[data-theme="midnight-royal-gold"] .meta-item b { color: #f8f8f8; }
+html[data-theme="midnight-royal-gold"] .subtitle, html[data-theme="midnight-royal-gold"] .page-sub, html[data-theme="midnight-royal-gold"] .header-subtitle, html[data-theme="midnight-royal-gold"] .stat-label, html[data-theme="midnight-royal-gold"] .money-label, html[data-theme="midnight-royal-gold"] .empty-text, html[data-theme="midnight-royal-gold"] .loading-text, html[data-theme="midnight-royal-gold"] .state-box, html[data-theme="midnight-royal-gold"] .list-text, html[data-theme="midnight-royal-gold"] .meta-item, html[data-theme="midnight-royal-gold"] .mono, html[data-theme="midnight-royal-gold"] .detail-value { color: #a1a1aa; }
+/* ---- Portal vocabulary gaps (AI tools, contacts, bars, chips) ---- */
+html[data-theme="midnight-royal-gold"] .btn-save,
+    html[data-theme="midnight-royal-gold"] .ask-btn,
+    html[data-theme="midnight-royal-gold"] .contact-sms-btn,
+    html[data-theme="midnight-royal-gold"] .contact-call-btn,
+    html[data-theme="midnight-royal-gold"] .ai-verify-btn,
+    html[data-theme="midnight-royal-gold"] .ai-btn-camera,
+    html[data-theme="midnight-royal-gold"] .bar-fill {
+    background-color: #ff9f1c;
+    color: #050505;
+}
+html[data-theme="midnight-royal-gold"] .ai-reset { color: #d4af37; }
+html[data-theme="midnight-royal-gold"] input:checked + .slider { background-color: #ff9f1c; color: #050505; }
+html[data-theme="midnight-royal-gold"] .selected-product-card, html[data-theme="midnight-royal-gold"] .ai-note { border-left-color: #d4af37; }
+html[data-theme="midnight-royal-gold"] .contact-cancel-btn, html[data-theme="midnight-royal-gold"] .cancel-btn { background-color: #1b1b1b; }
+html[data-theme="midnight-royal-gold"] .ai-upload-zone { border-color: #55451d; background-color: #101010; }
+html[data-theme="midnight-royal-gold"] .ai-upload-zone:hover, html[data-theme="midnight-royal-gold"] .ai-upload-zone.drag { border-color: #ff9f1c; background-color: #282213; }
+html[data-theme="midnight-royal-gold"] .ai-import-btn { border-color: #55451d; background-color: #101010; }
+html[data-theme="midnight-royal-gold"] .ai-banner.info { background-color: #282213; color: #d4af37; border-left-color: #d4af37; }
+html[data-theme="midnight-royal-gold"] .ai-summary-chip.existing, html[data-theme="midnight-royal-gold"] .ai-status.existing { background-color: #282213; color: #d4af37; }
+html[data-theme="midnight-royal-gold"] .ai-card { background-color: #282213; }
+html[data-theme="midnight-royal-gold"] .ai-card-title, html[data-theme="midnight-royal-gold"] .ai-card-text { color: #d4af37; }
+html[data-theme="midnight-royal-gold"] .modal-footer { border-top-color: #303030; }
+html[data-theme="midnight-royal-gold"] .form-input, html[data-theme="midnight-royal-gold"] .ask-input { border-color: #303030; }
+html[data-theme="midnight-royal-gold"] .bar-track { background-color: #262626; }
+html[data-theme="midnight-royal-gold"] .stats-container { background-color: #1b1b1b; }
+html[data-theme="midnight-royal-gold"] .headline-card { background-color: #101010; }
+html[data-theme="midnight-royal-gold"] .ai-table { background-color: #101010; }
+html[data-theme="midnight-royal-gold"] .ai-table th { background-color: #1b1b1b; border-bottom-color: #303030; }
+html[data-theme="midnight-royal-gold"] .ai-table td { border-bottom-color: #262626; }
+html[data-theme="midnight-royal-gold"] .ai-table-scroll { border-color: #303030; }
+html[data-theme="midnight-royal-gold"] .ai-preview-item { background-color: #1b1b1b; border-color: #303030; }
+html[data-theme="midnight-royal-gold"] .ai-modal-content { background-color: #101010; }
+html[data-theme="midnight-royal-gold"] .ai-modal-header { border-bottom-color: #303030; }
+html[data-theme="midnight-royal-gold"] .headline, html[data-theme="midnight-royal-gold"] .customer-name, html[data-theme="midnight-royal-gold"] .bar-value, html[data-theme="midnight-royal-gold"] .ai-table th, html[data-theme="midnight-royal-gold"] .ai-modal-title, html[data-theme="midnight-royal-gold"] .ai-note-title, html[data-theme="midnight-royal-gold"] .ai-uz-main, html[data-theme="midnight-royal-gold"] .tri-list, html[data-theme="midnight-royal-gold"] ul.dm-list { color: #f8f8f8; }
+html[data-theme="midnight-royal-gold"] .ai-note-text, html[data-theme="midnight-royal-gold"] .ai-preview-name, html[data-theme="midnight-royal-gold"] .ai-conf-row, html[data-theme="midnight-royal-gold"] .ai-progress-text, html[data-theme="midnight-royal-gold"] .ai-modal-close, html[data-theme="midnight-royal-gold"] .ai-uz-sub, html[data-theme="midnight-royal-gold"] .business-location, html[data-theme="midnight-royal-gold"] .examples-title, html[data-theme="midnight-royal-gold"] .contact-modal-sub, html[data-theme="midnight-royal-gold"] .bar-label, html[data-theme="midnight-royal-gold"] .muted, html[data-theme="midnight-royal-gold"] .empty-state, html[data-theme="midnight-royal-gold"] .empty-sub, html[data-theme="midnight-royal-gold"] .footer-text, html[data-theme="midnight-royal-gold"] .limitations, html[data-theme="midnight-royal-gold"] .limitations b, html[data-theme="midnight-royal-gold"] .list-bullet { color: #a1a1aa; }
+/* ---- Portal-specific pages (extension 2) ---- */
+html[data-theme="midnight-royal-gold"] .logo {
+    background: linear-gradient(135deg, #d4af37, #b89a35);
+}
+html[data-theme="midnight-royal-gold"] .manual-link { border-top-color: #303030; }
+html[data-theme="midnight-royal-gold"] .manual-link a { color: #d4af37; }
+html[data-theme="midnight-royal-gold"] .redirect-container { background: rgba(16, 16, 16, .97); }
+html[data-theme="midnight-royal-gold"] .redirect-note { color: #a1a1aa; }
+html[data-theme="midnight-royal-gold"] .done-btn, html[data-theme="midnight-royal-gold"] .send-btn, html[data-theme="midnight-royal-gold"] .test-btn { background-color: #ff9f1c; color: #050505; }
+html[data-theme="midnight-royal-gold"] .send-btn.disabled { background-color: #3f3f46; }
+html[data-theme="midnight-royal-gold"] .type-btn { border-color: #ff9f1c; background-color: #101010; }
+html[data-theme="midnight-royal-gold"] .type-btn.active { background-color: #ff9f1c; border-color: #ff9f1c; color: #050505; }
+html[data-theme="midnight-royal-gold"] .select-all, html[data-theme="midnight-royal-gold"] .user-item.selected { background-color: #282213; }
+html[data-theme="midnight-royal-gold"] .select-recipients { background-color: #1b1b1b; border-color: #ff9f1c; }
+html[data-theme="midnight-royal-gold"] .notif-card { background-color: #1b1b1b; border-left-color: #d4af37; }
+html[data-theme="midnight-royal-gold"] .filter-row, html[data-theme="midnight-royal-gold"] .user-item { border-bottom-color: #303030; }
+html[data-theme="midnight-royal-gold"] .notif-footer, html[data-theme="midnight-royal-gold"] .notif-time, html[data-theme="midnight-royal-gold"] .recipient-count, html[data-theme="midnight-royal-gold"] .char-count { color: #a1a1aa; }
+html[data-theme="midnight-royal-gold"] .notif-message { color: #f8f8f8; }
+html[data-theme="midnight-royal-gold"] .act-bar { background-color: #ff9f1c; color: #050505; }
+html[data-theme="midnight-royal-gold"] .act-chip { border-color: #303030; color: #a1a1aa; }
+html[data-theme="midnight-royal-gold"] .act-chip.active { background-color: #282213; border-color: #55451d; color: #d4af37; }
+html[data-theme="midnight-royal-gold"] .act-event { border-top-color: #262626; }
+html[data-theme="midnight-royal-gold"] .act-list-row, html[data-theme="midnight-royal-gold"] .history-row { color: #a1a1aa; border-top-color: #262626; }
+html[data-theme="midnight-royal-gold"] .act-panel, html[data-theme="midnight-royal-gold"] .alert-card, html[data-theme="midnight-royal-gold"] .history-card { background-color: #101010; border-color: #303030; }
+html[data-theme="midnight-royal-gold"] .ai-chip { background-color: #282213; border-color: #55451d; color: #d4af37; }
+html[data-theme="midnight-royal-gold"] .alert-detail { color: #a1a1aa; }
+html[data-theme="midnight-royal-gold"] .evidence-row { background-color: #1b1b1b; color: #a1a1aa; }
+html[data-theme="midnight-royal-gold"] .act-event-action, html[data-theme="midnight-royal-gold"] .act-list-name, html[data-theme="midnight-royal-gold"] .act-list-value, html[data-theme="midnight-royal-gold"] .act-panel-title, html[data-theme="midnight-royal-gold"] .alert-title, html[data-theme="midnight-royal-gold"] .history-subject, html[data-theme="midnight-royal-gold"] .history-title { color: #f8f8f8; }
+html[data-theme="midnight-royal-gold"] .act-bar-day, html[data-theme="midnight-royal-gold"] .act-event-meta, html[data-theme="midnight-royal-gold"] .act-refs, html[data-theme="midnight-royal-gold"] .evidence-label, html[data-theme="midnight-royal-gold"] .history-empty { color: #a1a1aa; }
+html[data-theme="midnight-royal-gold"] .hub-header { background-color: #101010; }
+html[data-theme="midnight-royal-gold"] .hub-desc { color: #a1a1aa; }
+html[data-theme="midnight-royal-gold"] .hub-ads, html[data-theme="midnight-royal-gold"] .hub-ask, html[data-theme="midnight-royal-gold"] .hub-copilot, html[data-theme="midnight-royal-gold"] .hub-health, html[data-theme="midnight-royal-gold"] .hub-price, html[data-theme="midnight-royal-gold"] .hub-restock { background-color: #282213; border-color: #55451d; }
+html[data-theme="midnight-royal-gold"] .hub-ads .hub-icon, html[data-theme="midnight-royal-gold"] .hub-ask .hub-icon, html[data-theme="midnight-royal-gold"] .hub-copilot .hub-icon, html[data-theme="midnight-royal-gold"] .hub-health .hub-icon, html[data-theme="midnight-royal-gold"] .hub-price .hub-icon, html[data-theme="midnight-royal-gold"] .hub-restock .hub-icon { background-color: #ff9f1c; color: #050505; }
+html[data-theme="midnight-royal-gold"] .hub-ads .hub-title, html[data-theme="midnight-royal-gold"] .hub-ads .hub-arrow, html[data-theme="midnight-royal-gold"] .hub-ask .hub-title, html[data-theme="midnight-royal-gold"] .hub-ask .hub-arrow, html[data-theme="midnight-royal-gold"] .hub-copilot .hub-title, html[data-theme="midnight-royal-gold"] .hub-copilot .hub-arrow, html[data-theme="midnight-royal-gold"] .hub-health .hub-title, html[data-theme="midnight-royal-gold"] .hub-health .hub-arrow, html[data-theme="midnight-royal-gold"] .hub-price .hub-title, html[data-theme="midnight-royal-gold"] .hub-price .hub-arrow, html[data-theme="midnight-royal-gold"] .hub-restock .hub-title, html[data-theme="midnight-royal-gold"] .hub-restock .hub-arrow { color: #b89a35; }
+/* ---- Component sweep: every remaining class-based accent component (all 28 portal pages) ---- */
+html[data-theme="midnight-royal-gold"] .ack {
+    background: #282213;
+}
+html[data-theme="midnight-royal-gold"] .act-silent { background: rgba(245, 158, 11, .14); color: #f59e0b; }
+html[data-theme="midnight-royal-gold"] .act-tag { background: rgba(239, 68, 68, .15); color: #ef4444; }
+html[data-theme="midnight-royal-gold"] .action-btn { background: #1b1b1b; }
+html[data-theme="midnight-royal-gold"] .action-btn.liked .fa-heart { color: #ef4444; }
+html[data-theme="midnight-royal-gold"] .action-btn.liked { color: #ef4444; }
+html[data-theme="midnight-royal-gold"] .action-num { background: rgba(34, 197, 94, .14); color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .ad-media { background: #1b1b1b; }
+html[data-theme="midnight-royal-gold"] .add-btn { background: #22c55e; }
+html[data-theme="midnight-royal-gold"] .add-cart-btn { background: #22c55e; }
+html[data-theme="midnight-royal-gold"] .ai-banner.error { background: rgba(239, 68, 68, .15); color: #ef4444; }
+html[data-theme="midnight-royal-gold"] .ai-biz-save { background: #ff9f1c; color: #050505; }
+html[data-theme="midnight-royal-gold"] .ai-btn-process { background: #ef4444; }
+html[data-theme="midnight-royal-gold"] .ai-chip.active { background: #ff9f1c; border-color: #ff9f1c; color: #050505; }
+html[data-theme="midnight-royal-gold"] .ai-dots span { background: #ef4444; }
+html[data-theme="midnight-royal-gold"] .ai-entry-btn:hover { border-color: #ff9f1c; background: #282213; }
+html[data-theme="midnight-royal-gold"] .ai-entry-ic { background: #282213; color: #d4af37; }
+html[data-theme="midnight-royal-gold"] .ai-import-btn:hover { border-color: #ff9f1c; background: #282213; }
+html[data-theme="midnight-royal-gold"] .ai-metric { background: #1b1b1b; }
+html[data-theme="midnight-royal-gold"] .ai-retry { background: #ff9f1c; color: #050505; }
+html[data-theme="midnight-royal-gold"] .ai-status.new { background: rgba(34, 197, 94, .14); color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .ai-status.review { background: rgba(245, 158, 11, .14); color: #f59e0b; }
+html[data-theme="midnight-royal-gold"] .ai-summary-chip.ok { background: #22c55e; }
+html[data-theme="midnight-royal-gold"] .ai-summary-chip.review { background: rgba(245, 158, 11, .14); color: #f59e0b; }
+html[data-theme="midnight-royal-gold"] .ai-table input:focus, html[data-theme="midnight-royal-gold"] .ai-table select:focus { border-color: #ff9f1c; }
+html[data-theme="midnight-royal-gold"] .ai-table input:focus { border-color: #ef4444; }
+html[data-theme="midnight-royal-gold"] .ai-upload-zone:hover, html[data-theme="midnight-royal-gold"] .ai-upload-zone.drag { background: #282213; border-color: #ff9f1c; }
+html[data-theme="midnight-royal-gold"] .answer-card { background: #282213; }
+html[data-theme="midnight-royal-gold"] .approved-text { color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .ask-input:focus { border-color: #ff9f1c; }
+html[data-theme="midnight-royal-gold"] .ask-row input:focus { border-color: #ff9f1c; }
+html[data-theme="midnight-royal-gold"] .badge { background: rgba(34, 197, 94, .14); color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .badge-success { color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .badge-warning { color: #f59e0b; }
+html[data-theme="midnight-royal-gold"] .bar i { background: #ff9f1c; color: #050505; }
+html[data-theme="midnight-royal-gold"] .btn-approve { background: #22c55e; }
+html[data-theme="midnight-royal-gold"] .btn-danger:hover { background: rgba(239, 68, 68, .15); color: #ef4444; }
+html[data-theme="midnight-royal-gold"] .btn-edit { background: #ff9f1c; color: #050505; }
+html[data-theme="midnight-royal-gold"] .btn-logout { background: #ef4444; }
+html[data-theme="midnight-royal-gold"] .btn-permanent { background: #ef4444; }
+html[data-theme="midnight-royal-gold"] .btn-reject { background: #ef4444; }
+html[data-theme="midnight-royal-gold"] .btn:hover { background: rgba(34, 197, 94, .14); color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .camera-badge { background: #ff9f1c; color: #050505; }
+html[data-theme="midnight-royal-gold"] .cart-badge { background: #22c55e; }
+html[data-theme="midnight-royal-gold"] .cart-qty-btn { background: #1b1b1b; }
+html[data-theme="midnight-royal-gold"] .cart-remove { background: #ef4444; }
+html[data-theme="midnight-royal-gold"] .cart-summary { background: #1b1b1b; }
+html[data-theme="midnight-royal-gold"] .category-chip { background: #1b1b1b; }
+html[data-theme="midnight-royal-gold"] .category-chip.selected { background: #22c55e; border-color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .category-text { color: #d4af37; }
+html[data-theme="midnight-royal-gold"] .char-count.over { color: #ef4444; }
+html[data-theme="midnight-royal-gold"] .chart-bar i { background: #ff9f1c; color: #050505; }
+html[data-theme="midnight-royal-gold"] .chart-bar { background: #2e2e2e; }
+html[data-theme="midnight-royal-gold"] .checkout-modal-btn { background: #22c55e; }
+html[data-theme="midnight-royal-gold"] .chip-human { background: #282213; }
+html[data-theme="midnight-royal-gold"] .chip.selected { background: #22c55e; border-color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .close-sales-btn { background: #ef4444; }
+html[data-theme="midnight-royal-gold"] .closed-badge { color: #ef4444; }
+html[data-theme="midnight-royal-gold"] .confirm-cancel { background: #1b1b1b; }
+html[data-theme="midnight-royal-gold"] .confirm-close { background: #ef4444; }
+html[data-theme="midnight-royal-gold"] .contact-email { color: #d4af37; }
+html[data-theme="midnight-royal-gold"] .contact-phone { color: #d4af37; }
+html[data-theme="midnight-royal-gold"] .conv-del { color: #ef4444; }
+html[data-theme="midnight-royal-gold"] .conv-row:hover { background: #282213; }
+html[data-theme="midnight-royal-gold"] .cost-text { color: #ef4444; }
+html[data-theme="midnight-royal-gold"] .customer-avatar { background: #282213; }
+html[data-theme="midnight-royal-gold"] .customer-total { color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .date-badge { background: #ff9f1c; color: #050505; }
+html[data-theme="midnight-royal-gold"] .date-btn { background: #1b1b1b; }
+html[data-theme="midnight-royal-gold"] .date-btn.primary { background: #ff9f1c; color: #050505; }
+html[data-theme="midnight-royal-gold"] .date-display { background: #1b1b1b; }
+html[data-theme="midnight-royal-gold"] .date-field input { background: #1b1b1b; }
+html[data-theme="midnight-royal-gold"] .date-field input:focus { border-color: #ff9f1c; }
+html[data-theme="midnight-royal-gold"] .date-filter-active { color: #22c55e; background: rgba(34, 197, 94, .14); }
+html[data-theme="midnight-royal-gold"] .date-nav { color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .delete-icon { color: #ef4444; }
+html[data-theme="midnight-royal-gold"] .dismiss-btn { background: rgba(34, 197, 94, .14); color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .dm-entry-banner[data-kind="error"] { background: rgba(239, 68, 68, .15); color: #ef4444; }
+html[data-theme="midnight-royal-gold"] .dm-entry-banner[data-kind="success"] { background: rgba(34, 197, 94, .14); color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .dm-entry-banner[data-kind="warn"] { background: rgba(245, 158, 11, .14); color: #f59e0b; }
+html[data-theme="midnight-royal-gold"] .dm-entry-flags li { color: #f59e0b; background: rgba(245, 158, 11, .14); }
+html[data-theme="midnight-royal-gold"] .dm-entry-missing { color: #ef4444; }
+html[data-theme="midnight-royal-gold"] .dock-cart-badge { background: #22c55e; }
+html[data-theme="midnight-royal-gold"] .dock-cart-info { background: rgba(34, 197, 94, .14); color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .dock-checkout { background: #22c55e; }
+html[data-theme="midnight-royal-gold"] .dock-price { color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .edit-btn { background: #282213; color: #d4af37; }
+html[data-theme="midnight-royal-gold"] .edit-profile-btn { background: #282213; }
+html[data-theme="midnight-royal-gold"] .empty-add { background: rgba(34, 197, 94, .14); color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .ev-product { background: #282213; color: #d4af37; }
+html[data-theme="midnight-royal-gold"] .ev-sale { background: rgba(34, 197, 94, .14); color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .ev-warn { background: rgba(245, 158, 11, .14); color: #f59e0b; }
+html[data-theme="midnight-royal-gold"] .existing-btn:hover { border-color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .expense-text { color: #f59e0b; }
+html[data-theme="midnight-royal-gold"] .expenses-total { color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .extra-stats { background: #1b1b1b; }
+html[data-theme="midnight-royal-gold"] .filter-info { background: #282213; }
+html[data-theme="midnight-royal-gold"] .flag-row { background: rgba(245, 158, 11, .14); color: #f59e0b; }
+html[data-theme="midnight-royal-gold"] .focused-tag { color: #d4af37; }
+html[data-theme="midnight-royal-gold"] .form-select:focus, html[data-theme="midnight-royal-gold"] .form-input:focus { border-color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .go-sell-btn { background: #22c55e; }
+html[data-theme="midnight-royal-gold"] .gross-profit-text { color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .guide-chip { background: #1b1b1b; }
+html[data-theme="midnight-royal-gold"] .helper-text { color: #f59e0b; }
+html[data-theme="midnight-royal-gold"] .history-badge { background: #1b1b1b; }
+html[data-theme="midnight-royal-gold"] .hub-ads .hub-title, html[data-theme="midnight-royal-gold"] .hub-ads .hub-arrow { color: #b89a35; }
+html[data-theme="midnight-royal-gold"] .hub-ask .hub-title, html[data-theme="midnight-royal-gold"] .hub-ask .hub-arrow { color: #b89a35; }
+html[data-theme="midnight-royal-gold"] .hub-copilot .hub-title, html[data-theme="midnight-royal-gold"] .hub-copilot .hub-arrow { color: #b89a35; }
+html[data-theme="midnight-royal-gold"] .hub-health .hub-title, html[data-theme="midnight-royal-gold"] .hub-health .hub-arrow { color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .hub-restock .hub-title, html[data-theme="midnight-royal-gold"] .hub-restock .hub-arrow { color: #f59e0b; }
+html[data-theme="midnight-royal-gold"] .info-card { background: #282213; }
+html[data-theme="midnight-royal-gold"] .info-text { background: #282213; }
+html[data-theme="midnight-royal-gold"] .input-field:focus { border-color: #ff9f1c; }
+html[data-theme="midnight-royal-gold"] .instructions { background: #282213; }
+html[data-theme="midnight-royal-gold"] .instructions-box { background: rgba(245, 158, 11, .14); }
+html[data-theme="midnight-royal-gold"] .item-amount { color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .logout-area span { color: #ef4444; }
+html[data-theme="midnight-royal-gold"] .logout-btn-main { background: #ef4444; }
+html[data-theme="midnight-royal-gold"] .logout-btn:hover { background-color: rgba(239, 68, 68, .15); }
+html[data-theme="midnight-royal-gold"] .media-picker-text { color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .mini-btn.del { background: rgba(239, 68, 68, .15); color: #ef4444; }
+html[data-theme="midnight-royal-gold"] .mini-btn.load { background: #282213; }
+html[data-theme="midnight-royal-gold"] .modal-avatar { background: #ff9f1c; color: #050505; }
+html[data-theme="midnight-royal-gold"] .msg.assistant { background: #282213; }
+html[data-theme="midnight-royal-gold"] .msg.user { background: #22c55e; }
+html[data-theme="midnight-royal-gold"] .nav-item:hover, html[data-theme="midnight-royal-gold"] .nav-item.active { background-color: rgba(34, 197, 94, .14); color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .nav-tab.active { background: #ff9f1c; color: #050505; }
+html[data-theme="midnight-royal-gold"] .net-loss { color: #ef4444; }
+html[data-theme="midnight-royal-gold"] .net-value { color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .new-badge { background: #ef4444; }
+html[data-theme="midnight-royal-gold"] .next-step { color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .notice { background: rgba(245, 158, 11, .14); color: #f59e0b; }
+html[data-theme="midnight-royal-gold"] .online-dot { background: #22c55e; }
+html[data-theme="midnight-royal-gold"] .order-btn { background: #22c55e; }
+html[data-theme="midnight-royal-gold"] .order-btn:hover { background: #22c55e; }
+html[data-theme="midnight-royal-gold"] .owner-badge { background: #282213; }
+html[data-theme="midnight-royal-gold"] .payment-text { color: #d4af37; }
+html[data-theme="midnight-royal-gold"] .photo-pick-btn:hover { border-color: #ef4444; background: rgba(239, 68, 68, .15); color: #ef4444; }
+html[data-theme="midnight-royal-gold"] .preview-area:focus { border-color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .preview-card { background: #282213; }
+html[data-theme="midnight-royal-gold"] .price { color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .price-diff.negative { background: rgba(239, 68, 68, .15); }
+html[data-theme="midnight-royal-gold"] .print-day-btn { background: #ff9f1c; color: #050505; }
+html[data-theme="midnight-royal-gold"] .product-item { background: #1b1b1b; }
+html[data-theme="midnight-royal-gold"] .product-item-price { color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .product-item-stock { color: #d4af37; }
+html[data-theme="midnight-royal-gold"] .product-item.owner { background: rgba(34, 197, 94, .14); }
+html[data-theme="midnight-royal-gold"] .product-item.selected { background: rgba(34, 197, 94, .14); border-color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .product-item:hover { background: #1b1b1b; }
+html[data-theme="midnight-royal-gold"] .product-option.selected { border-color: #22c55e; background: rgba(34, 197, 94, .14); }
+html[data-theme="midnight-royal-gold"] .product-price { color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .product-tab.active { background: #ff9f1c; color: #050505; }
+html[data-theme="midnight-royal-gold"] .quick-chip { color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .quick-chip:hover { background: rgba(34, 197, 94, .14); }
+html[data-theme="midnight-royal-gold"] .receipt-btn { color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .report-search .search-clear:hover { color: #ef4444; }
+html[data-theme="midnight-royal-gold"] .report-search input:focus { border-color: #ff9f1c; }
+html[data-theme="midnight-royal-gold"] .req-why { background: #282213; }
+html[data-theme="midnight-royal-gold"] .required-star { color: #ef4444; }
+html[data-theme="midnight-royal-gold"] .role { color: #d4af37; }
+html[data-theme="midnight-royal-gold"] .role-badge { background: #282213; }
+html[data-theme="midnight-royal-gold"] .sale-btn { background: #22c55e; }
+html[data-theme="midnight-royal-gold"] .sale-item.closed { background: #1b1b1b; }
+html[data-theme="midnight-royal-gold"] .sale-total { color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .save-btn { background: #22c55e; }
+html[data-theme="midnight-royal-gold"] .selected-banner { background: rgba(34, 197, 94, .14); }
+html[data-theme="midnight-royal-gold"] .selected-banner-close { color: #ef4444; }
+html[data-theme="midnight-royal-gold"] .selected-banner-title { color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .selected-banner.non-owner { background: rgba(245, 158, 11, .14); border-left-color: #d4af37; }
+html[data-theme="midnight-royal-gold"] .seller-count { background: #ef4444; }
+html[data-theme="midnight-royal-gold"] .severity.high { background: #ef4444; }
+html[data-theme="midnight-royal-gold"] .severity.low { background: #ff9f1c; color: #050505; }
+html[data-theme="midnight-royal-gold"] .severity.medium { background: #ff9f1c; color: #050505; }
+html[data-theme="midnight-royal-gold"] .stat-badge { background: #1b1b1b; }
+html[data-theme="midnight-royal-gold"] .stat-badge.likes { color: #d4af37; }
+html[data-theme="midnight-royal-gold"] .stat-badge.reports { color: #ef4444; }
+html[data-theme="midnight-royal-gold"] .status-approved { background: rgba(34, 197, 94, .14); color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .status-attention { background: rgba(239, 68, 68, .15); color: #ef4444; }
+html[data-theme="midnight-royal-gold"] .status-badge { background: #282213; }
+html[data-theme="midnight-royal-gold"] .status-pending { color: #f59e0b; }
+html[data-theme="midnight-royal-gold"] .status-rejected { background: rgba(239, 68, 68, .15); color: #ef4444; }
+html[data-theme="midnight-royal-gold"] .status-strong { background: rgba(34, 197, 94, .14); color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .status-watch { background: rgba(245, 158, 11, .14); color: #f59e0b; }
+html[data-theme="midnight-royal-gold"] .stock-badge { background: #282213; color: #d4af37; }
+html[data-theme="midnight-royal-gold"] .stock-badge.low { color: #f59e0b; }
+html[data-theme="midnight-royal-gold"] .stock-badge.out { background: rgba(239, 68, 68, .15); color: #ef4444; }
+html[data-theme="midnight-royal-gold"] .stock-pill { background: rgba(34, 197, 94, .14); color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .stock-pill.out { background: rgba(239, 68, 68, .15); color: #ef4444; }
+html[data-theme="midnight-royal-gold"] .submit-btn.add { background: #22c55e; }
+html[data-theme="midnight-royal-gold"] .submit-btn.addstock { background: #ff9f1c; color: #050505; }
+html[data-theme="midnight-royal-gold"] .submit-btn.update { background: #ff9f1c; color: #050505; }
+html[data-theme="midnight-royal-gold"] .system-admin-btn { color: #b89a35; }
+html[data-theme="midnight-royal-gold"] .tag { background: #282213; }
+html[data-theme="midnight-royal-gold"] .today-badge { background: #22c55e; }
+html[data-theme="midnight-royal-gold"] .total-value { color: #22c55e; }
+html[data-theme="midnight-royal-gold"] .upload-btn { background: #22c55e; }
+html[data-theme="midnight-royal-gold"] .upload-progress { color: #d4af37; }
+html[data-theme="midnight-royal-gold"] .zimesomwa-btn { background: #22c55e; }

@@ -7,10 +7,11 @@ import { PALETTES, THEME_IDS, useTheme, type ThemeId } from '../lib/theme';
 /**
  * 🎨 In-app theme selector (mobile twin of the website's paintbrush panel).
  *
- * Two cards — White Professional (default) and Royal Champagne Cream — with a
- * live-color preview built from each theme's REAL palette values, plus a
- * check mark AND a "Selected" text label so selection never relies on colour
- * alone. Inserted into each role's settings surface.
+ * Three cards — White Professional (default), Royal Champagne Cream and
+ * Midnight Royal Gold — with a live-color preview built from each theme's
+ * REAL palette values, plus a check mark AND a "Selected" text label so
+ * selection never relies on colour alone. Inserted into each role's
+ * settings surface.
  */
 
 /** Preview dots per theme — real hexes from PALETTES (kept literal so the
@@ -18,11 +19,19 @@ import { PALETTES, THEME_IDS, useTheme, type ThemeId } from '../lib/theme';
 const PREVIEW_DOTS: Record<ThemeId, string[]> = {
   'white-professional': ['#f8fafc', '#ffffff', '#667eea', '#2c3e50', '#e2e8f0'],
   'royal-champagne-cream': ['#f4e8d0', '#fcfbf7', '#8b6f23', '#171717', '#d9d8cf'],
+  'midnight-royal-gold': ['#282213', '#101010', '#ff9f1c', '#f8f8f8', '#303030'],
 };
 
 const THEME_NAME: Record<ThemeId, string> = {
   'white-professional': 'White Professional',
   'royal-champagne-cream': 'Royal Champagne Cream',
+  'midnight-royal-gold': 'Midnight Royal Gold',
+};
+
+const DESC_KEY: Record<ThemeId, string> = {
+  'white-professional': 'theme.white_desc',
+  'royal-champagne-cream': 'theme.royal_desc',
+  'midnight-royal-gold': 'theme.midnight_desc',
 };
 
 export default function ThemeSelector() {
@@ -35,7 +44,7 @@ export default function ThemeSelector() {
 
       {THEME_IDS.map((id) => {
         const selected = theme === id;
-        const desc = t(id === 'white-professional' ? 'theme.white_desc' : 'theme.royal_desc');
+        const desc = t(DESC_KEY[id]);
         return (
           <TouchableOpacity
             key={id}

@@ -204,6 +204,12 @@
         --dm-radio-dot: #8b6f23;
     }
 
+    .dm-theme-card[data-theme-id="midnight-royal-gold"] {
+        --dm-radio-bg: #101010;
+        --dm-radio-line: #444444;
+        --dm-radio-dot: #ff9f1c;
+    }
+
     .dm-theme-name {
         font-size: 14px;
         font-weight: 600;
@@ -387,6 +393,8 @@
     .dm-theme-swatch--white::after { background: #1e3a8a; }
     .dm-theme-swatch--royal { background: #f4e8d0; }
     .dm-theme-swatch--royal::after { background: #8b6f23; }
+    .dm-theme-swatch--midnight { background: #101010; }
+    .dm-theme-swatch--midnight::after { background: #ff9f1c; }
 
     .dm-theme-modal-list .dm-theme-name { font-size: 16px; font-weight: 600; }
 
@@ -411,6 +419,14 @@
     }
 
     .dm-theme-modal-list .dm-theme-card[data-theme-id="royal-champagne-cream"][aria-checked="true"] .dm-theme-name { color: #8b6f23; }
+
+    .dm-theme-modal-list .dm-theme-card[data-theme-id="midnight-royal-gold"][aria-checked="true"] {
+        background: #282213;
+        border-color: #d4af37;
+        box-shadow: none;
+    }
+
+    .dm-theme-modal-list .dm-theme-card[data-theme-id="midnight-royal-gold"][aria-checked="true"] .dm-theme-name { color: #d4af37; }
 
     /* Actions: same geometry as the language sheet's Funga / Tuma buttons. */
     .dm-theme-modal-actions { display: flex; gap: 12px; }
@@ -561,6 +577,14 @@
                         <span class="dm-theme-radio" aria-hidden="true"></span>
                     </button>
 
+                    <button type="button" class="dm-theme-card" role="radio" data-theme-id="midnight-royal-gold" aria-checked="false">
+                        <span class="dm-theme-item-left">
+                            <span class="dm-theme-swatch dm-theme-swatch--midnight" aria-hidden="true"></span>
+                            <span class="dm-theme-name">Midnight Royal Gold</span>
+                        </span>
+                        <span class="dm-theme-radio" aria-hidden="true"></span>
+                    </button>
+
                 </div>
 
                 <div class="dm-theme-modal-actions">
@@ -593,6 +617,11 @@
             <button type="button" class="dm-theme-card" role="radio" data-theme-id="royal-champagne-cream" aria-checked="false">
                 <span class="dm-theme-radio" aria-hidden="true"></span>
                 <span class="dm-theme-name">Royal Champagne Cream</span>
+            </button>
+
+            <button type="button" class="dm-theme-card" role="radio" data-theme-id="midnight-royal-gold" aria-checked="false">
+                <span class="dm-theme-radio" aria-hidden="true"></span>
+                <span class="dm-theme-name">Midnight Royal Gold</span>
             </button>
 
         </div>

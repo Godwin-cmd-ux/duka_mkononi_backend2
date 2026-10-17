@@ -1,9 +1,10 @@
 /*
  * Duka Mkononi — theme manager (window.DMTheme).
  *
- * One lightweight runtime for the website's two approved themes:
+ * One lightweight runtime for the website's approved themes:
  *   white-professional      default (the original Duka Mkononi design)
  *   royal-champagne-cream   warm cream / ivory / royal gold
+ *   midnight-royal-gold     premium dark: charcoal / gold / amber-orange
  *
  * Responsibilities:
  *   - validate every stored / incoming identifier against the allow-list
@@ -27,7 +28,7 @@
     var LEGACY_STORAGE_KEY = 'lukamkononi_theme';
     var SYNC_URL = '/api/user/theme';
     var DEFAULT = 'white-professional';
-    var ALLOWED = ['white-professional', 'royal-champagne-cream'];
+    var ALLOWED = ['white-professional', 'royal-champagne-cream', 'midnight-royal-gold'];
     var listeners = [];
 
     function isValid(theme) {
