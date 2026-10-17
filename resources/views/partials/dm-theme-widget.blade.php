@@ -120,128 +120,94 @@
         color: var(--dm-ink, #1e293b);
     }
 
-    .dm-theme-cards { display: grid; gap: 10px; }
+    .dm-theme-cards { display: grid; gap: 8px; }
 
+    /* Cards mirror the home page's language pills (.dm-lang-item): the same
+       compact horizontal pill geometry — theme name + radio, nothing else. */
     .dm-theme-card {
         position: relative;
-        display: grid;
-        gap: 8px;
+        display: flex;
+        align-items: center;
+        gap: 9px;
         text-align: left;
-        padding: 12px;
-        border-radius: 12px;
-        border: 2px solid var(--dm-line, #e2e8f0);
-        background: var(--dm-bg, #f8fafc);
-        color: inherit;
+        padding: 9px 15px;
+        border-radius: 999px;
+        border: 1px solid var(--dm-line, #e2e8f0);
+        background: var(--dm-card, #fff);
+        color: var(--dm-ink, #1e293b);
         font-family: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        white-space: nowrap;
         cursor: pointer;
+        box-shadow: 0 6px 16px rgba(44, 62, 80, .12);
         transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
     }
 
-    .dm-theme-card:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(15, 23, 42, .1); }
+    .dm-theme-card:hover { transform: translateY(-1px); box-shadow: 0 10px 22px rgba(44, 62, 80, .2); }
 
     .dm-theme-card:focus-visible {
         outline: 3px solid var(--dm-focus, rgba(30, 58, 138, .45));
         outline-offset: 2px;
     }
 
+    /* The radio mirrors the theme it offers: ring = that theme's border,
+       fill = its background, inner dot = its accent. Its background and the
+       card's text colors shift with the active theme via the shared vars. */
+    .dm-theme-radio {
+        position: relative;
+        flex: 0 0 auto;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 2px solid var(--dm-radio-line, #cbd5e1);
+        background: var(--dm-radio-bg, #fff);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: border-color .16s ease;
+    }
+
+    .dm-theme-radio::after {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--dm-radio-dot, #1e3a8a);
+        transform: scale(0);
+        transition: transform .16s ease;
+    }
+
+    .dm-theme-card[aria-checked="true"] .dm-theme-radio::after { transform: scale(1); }
+
+    /* Selection never relies on color alone: the radio's inner dot is a
+       structural change, plus the card ring and aria-checked for AT. */
     .dm-theme-card[aria-checked="true"] {
-        border-color: var(--dm-primary, #1e3a8a);
-        box-shadow: 0 0 0 3px var(--dm-focus-soft, rgba(30, 58, 138, .14));
+        border-color: var(--dm-radio-dot, #1e3a8a);
+        box-shadow: 0 0 0 3px var(--dm-focus-soft, rgba(30, 58, 138, .14)), 0 6px 16px rgba(44, 62, 80, .12);
         background: var(--dm-card, #fff);
     }
 
-    /* Selection never relies on color alone: a check badge AND a text label. */
-    .dm-theme-check {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        background: var(--dm-primary, #1e3a8a);
-        color: #fff;
-        box-shadow: 0 2px 6px rgba(15, 23, 42, .25);
+    /* Real colors of each offered theme (never live vars: the card must show
+       that theme's palette whichever theme is active). */
+    .dm-theme-card[data-theme-id="white-professional"] {
+        --dm-radio-bg: #ffffff;
+        --dm-radio-line: #cbd5e1;
+        --dm-radio-dot: #1e3a8a;
     }
 
-    .dm-theme-check svg { width: 14px; height: 14px; }
-    .dm-theme-card[aria-checked="true"] .dm-theme-check { display: flex; }
+    .dm-theme-card[data-theme-id="royal-champagne-cream"] {
+        --dm-radio-bg: #f4e8d0;
+        --dm-radio-line: #d9d8cf;
+        --dm-radio-dot: #8b6f23;
+    }
 
     .dm-theme-name {
-        font-size: 14.5px;
-        font-weight: 700;
-        color: var(--dm-ink, #1e293b);
-        padding-right: 30px;
-    }
-
-    .dm-theme-desc {
-        font-size: 12.5px;
-        line-height: 1.5;
-        color: var(--dm-muted, #64748b);
-        overflow-wrap: anywhere;
-    }
-
-    .dm-theme-status {
-        display: none;
-        align-items: center;
-        gap: 6px;
-        font-size: 12px;
-        font-weight: 700;
-        letter-spacing: .04em;
-        text-transform: uppercase;
-        color: var(--dm-primary, #1e3a8a);
-    }
-
-    .dm-theme-card[aria-checked="true"] .dm-theme-status { display: inline-flex; }
-
-    /* ---- Visual preview: a mini page mock built from each theme's REAL
-       colors (not live variables, so the card always shows the OTHER
-       theme's palette no matter which theme is active). ---- */
-    .dm-preview { display: grid; gap: 6px; border-radius: 10px; padding: 10px; border: 1px solid transparent; }
-
-    .dm-preview--white { background: #f8fafc; border-color: #e2e8f0; }
-    .dm-preview--royal { background: #f4e8d0; border-color: #d9d8cf; }
-
-    .dm-preview-row { display: flex; gap: 6px; align-items: stretch; }
-
-    .dm-preview-card {
-        flex: 1;
-        display: grid;
-        gap: 5px;
-        padding: 8px;
-        border-radius: 8px;
-        border: 1px solid transparent;
-    }
-
-    .dm-preview--white .dm-preview-card { background: #ffffff; border-color: #e2e8f0; }
-    .dm-preview--royal .dm-preview-card { background: #fcfbf7; border-color: #d9d8cf; }
-
-    .dm-preview-line { height: 6px; border-radius: 4px; }
-    .dm-preview-line--title { width: 70%; }
-    .dm-preview--white .dm-preview-line { background: #1e293b; }
-    .dm-preview--white .dm-preview-line--sub { background: #64748b; width: 90%; }
-    .dm-preview--royal .dm-preview-line { background: #171717; }
-    .dm-preview--royal .dm-preview-line--sub { background: #5f636e; width: 90%; }
-
-    .dm-preview-btn {
-        margin-top: 3px;
-        height: 14px;
-        width: 58%;
-        border-radius: 999px;
-    }
-
-    .dm-preview--white .dm-preview-btn { background: #1e3a8a; }
-    .dm-preview--royal .dm-preview-btn { background: #8b6f23; }
-
-    .dm-preview-dots { display: flex; gap: 5px; }
-
-    .dm-preview-dot {
-        width: 14px;
-        height: 14px;
-        border-radius: 50%;
-        border: 1px solid rgba(15, 23, 42, .14);
+        font-size: 14px;
+        font-weight: 600;
+        color: inherit;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     /* Mobile: mirror the language widget's tightened rail. */
@@ -396,55 +362,13 @@
         <div class="dm-theme-cards" role="radiogroup" aria-labelledby="dmThemePanelTitle">
 
             <button type="button" class="dm-theme-card" role="radio" data-theme-id="white-professional" aria-checked="true">
-                <span class="dm-theme-check" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
-                         stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-                </span>
-                <span class="dm-preview dm-preview--white" aria-hidden="true">
-                    <span class="dm-preview-row">
-                        <span class="dm-preview-card">
-                            <span class="dm-preview-line dm-preview-line--title"></span>
-                            <span class="dm-preview-line dm-preview-line--sub"></span>
-                            <span class="dm-preview-btn"></span>
-                        </span>
-                    </span>
-                    <span class="dm-preview-dots">
-                        <span class="dm-preview-dot" style="background:#f8fafc"></span>
-                        <span class="dm-preview-dot" style="background:#ffffff"></span>
-                        <span class="dm-preview-dot" style="background:#1e3a8a"></span>
-                        <span class="dm-preview-dot" style="background:#1e293b"></span>
-                        <span class="dm-preview-dot" style="background:#e2e8f0"></span>
-                    </span>
-                </span>
+                <span class="dm-theme-radio" aria-hidden="true"></span>
                 <span class="dm-theme-name">White Professional</span>
-                <span class="dm-theme-desc" data-i18n="ui.theme_white_desc">Clean, bright, and familiar. Retains the original Duka Mkononi appearance with professional layouts, neutral surfaces, and existing brand styling.</span>
-                <span class="dm-theme-status" data-i18n="ui.theme_selected">Selected</span>
             </button>
 
             <button type="button" class="dm-theme-card" role="radio" data-theme-id="royal-champagne-cream" aria-checked="false">
-                <span class="dm-theme-check" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
-                         stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-                </span>
-                <span class="dm-preview dm-preview--royal" aria-hidden="true">
-                    <span class="dm-preview-row">
-                        <span class="dm-preview-card">
-                            <span class="dm-preview-line dm-preview-line--title"></span>
-                            <span class="dm-preview-line dm-preview-line--sub"></span>
-                            <span class="dm-preview-btn"></span>
-                        </span>
-                    </span>
-                    <span class="dm-preview-dots">
-                        <span class="dm-preview-dot" style="background:#f4e8d0"></span>
-                        <span class="dm-preview-dot" style="background:#fcfbf7"></span>
-                        <span class="dm-preview-dot" style="background:#8b6f23"></span>
-                        <span class="dm-preview-dot" style="background:#171717"></span>
-                        <span class="dm-preview-dot" style="background:#d9d8cf"></span>
-                    </span>
-                </span>
+                <span class="dm-theme-radio" aria-hidden="true"></span>
                 <span class="dm-theme-name">Royal Champagne Cream</span>
-                <span class="dm-theme-desc" data-i18n="ui.theme_royal_desc">Warm, elegant, and luxurious. Combines soft cream backgrounds, ivory cards, royal gold accents, and refined neutral text for a premium shopping experience.</span>
-                <span class="dm-theme-status" data-i18n="ui.theme_selected">Selected</span>
             </button>
 
         </div>
