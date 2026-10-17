@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title data-i18n="msimamizi_index.page_title">Dashbodi ya Msimamizi - Dukamkononi</title>
+    <link rel="stylesheet" href="/css/themes.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {
@@ -530,6 +531,7 @@
     <body>
     @endverbatim
     @include('partials.dm-lang-widget', ['dmLangHideButton' => true])
+@include('partials.dm-theme-widget', ['dmThemePlacement' => 'bottom'])
     @verbatim
     <div class="mobile-menu-toggle" id="mobileMenuToggle">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2">

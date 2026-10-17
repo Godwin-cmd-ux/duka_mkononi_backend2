@@ -6,6 +6,7 @@
     <title data-i18n="home.page_title">Dukamkononi | Karibu Dukani</title>
     <!-- Google Fonts & simple reset -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/themes.css">
     <style>
         * {
             margin: 0;
@@ -15,13 +16,13 @@
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
-            background-color: #ffffff;
+            background-color: var(--pg-page, #ffffff);
             overflow-x: hidden;
         }
 
         /* Safe area simulation */
         .safe-area {
-            background-color: #ffffff;
+            background-color: var(--pg-page, #ffffff);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -71,13 +72,13 @@
         .logo-circle {
             width: 100px;
             height: 100px;
-            background: linear-gradient(135deg, #3498db, #2980b9);
+            background: linear-gradient(135deg, var(--pg-brand-a, #3498db), var(--pg-brand-b, #2980b9));
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto;
-            box-shadow: 0 10px 20px rgba(52, 152, 219, 0.3);
+            box-shadow: 0 10px 20px var(--pg-brand-glow, rgba(52, 152, 219, 0.3));
             transition: transform 0.2s ease;
         }
 
@@ -90,14 +91,14 @@
         .header {
             font-size: 32px;
             font-weight: 800;
-            color: #2c3e50;
+            color: var(--pg-text, #2c3e50);
             letter-spacing: -0.3px;
             margin-top: 12px;
         }
 
         .sub-header {
             font-size: 16px;
-            color: #7f8c8d;
+            color: var(--pg-muted, #7f8c8d);
             margin-top: 8px;
             font-weight: 500;
         }
@@ -128,7 +129,7 @@
 
         .action-button {
             width: 100%;
-            background-color: #3498db;
+            background-color: var(--pg-cta-blue, #3498db);
             border-radius: 20px;
             padding: 0 20px;
             height: 85px;
@@ -199,11 +200,11 @@
         }
 
         .info-card {
-            background-color: #f8f9fa;
+            background-color: var(--pg-soft, #f8f9fa);
             border-radius: 24px;
             padding: 25px 20px;
             text-align: center;
-            border: 1px solid #eef2f6;
+            border: 1px solid var(--pg-line-4, #eef2f6);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
         }
 
@@ -214,13 +215,13 @@
         .info-title {
             font-size: 20px;
             font-weight: 700;
-            color: #2c3e50;
+            color: var(--pg-text, #2c3e50);
             margin-bottom: 12px;
         }
 
         .info-text {
             font-size: 15px;
-            color: #5d6d7e;
+            color: var(--pg-desc, #5d6d7e);
             line-height: 1.5;
         }
 
@@ -297,7 +298,7 @@
             text-align: center;
             margin-top: 20px;
             padding-top: 20px;
-            border-top: 1px solid #eef2f5;
+            border-top: 1px solid var(--pg-line-5, #eef2f5);
             opacity: 0;
             animation: fadeSlideUp 0.5s forwards;
             animation-delay: 0.4s;
@@ -306,11 +307,11 @@
         .footer-text {
             font-size: 14px;
             font-weight: 500;
-            color: #7f8c8d;
+            color: var(--pg-muted, #7f8c8d);
         }
         .footer-sub {
             font-size: 12px;
-            color: #95a5a6;
+            color: var(--pg-muted-2, #95a5a6);
             margin-top: 5px;
         }
 
@@ -325,7 +326,7 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            background: #f0f4f8;
+            background: var(--pg-pill, #f0f4f8);
             border: none;
             cursor: pointer;
             padding: 8px 14px;
@@ -334,17 +335,17 @@
             font-family: inherit;
             transition: background 0.2s ease, transform 0.08s ease;
         }
-        .lang-switcher:hover { background: #e6edf5; }
+        .lang-switcher:hover { background: var(--pg-pill-hover, #e6edf5); }
         .lang-switcher:active { transform: scale(0.97); }
-        .lang-switcher svg { display: block; color: #2c3e50; }
+        .lang-switcher svg { display: block; color: var(--pg-text, #2c3e50); }
         .lang-switcher-label {
             font-size: 14px;
             font-weight: 600;
-            color: #2c3e50;
+            color: var(--pg-text, #2c3e50);
             margin: 0 2px;
             white-space: nowrap;
         }
-        .lang-chevron { color: #7f8c8d !important; }
+        .lang-chevron { color: var(--pg-muted, #7f8c8d) !important; }
 
         /* ---- Language selector modal (bottom sheet, mirrors the mobile app) ---- */
         .lang-modal-overlay {
@@ -363,7 +364,7 @@
         .lang-modal-sheet {
             width: 100%;
             max-width: 550px;
-            background: #ffffff;
+            background: var(--pg-surface, #ffffff);
             border-top-left-radius: 28px;
             border-top-right-radius: 28px;
             padding: 12px 24px 34px;
@@ -379,7 +380,7 @@
             width: 40px;
             height: 4px;
             border-radius: 2px;
-            background: #e0e0e0;
+            background: var(--pg-line, #e0e0e0);
             margin: 0 auto 16px;
         }
         .lang-modal-header { text-align: center; margin-bottom: 20px; }
@@ -387,20 +388,20 @@
             width: 56px;
             height: 56px;
             border-radius: 50%;
-            background: #e8f4fd;
+            background: var(--pg-blue-tint, #e8f4fd);
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 12px;
-            color: #3498db;
+            color: var(--pg-cta-blue, #3498db);
         }
         .lang-modal-title {
             font-size: 22px;
             font-weight: 700;
-            color: #2c3e50;
+            color: var(--pg-text, #2c3e50);
             margin-bottom: 4px;
         }
-        .lang-modal-subtitle { font-size: 14px; color: #7f8c8d; }
+        .lang-modal-subtitle { font-size: 14px; color: var(--pg-muted, #7f8c8d); }
         .lang-modal-list {
             overflow-y: auto;
             margin-bottom: 20px;
@@ -414,35 +415,35 @@
             justify-content: space-between;
             padding: 14px 16px;
             border-radius: 12px;
-            background: #f8f9fa;
+            background: var(--pg-soft, #f8f9fa);
             border: 1.5px solid transparent;
             cursor: pointer;
             width: 100%;
             text-align: left;
             font-family: inherit;
         }
-        .lang-modal-item.selected { background: #e8f4fd; border-color: #3498db; }
+        .lang-modal-item.selected { background: var(--pg-blue-tint, #e8f4fd); border-color: var(--pg-cta-blue, #3498db); }
         .lang-modal-item-left { display: flex; align-items: center; }
         .lang-modal-flag { font-size: 30px; margin-right: 14px; line-height: 1; }
         .lang-modal-info { display: flex; flex-direction: column; }
-        .lang-modal-name { font-size: 16px; font-weight: 600; color: #2c3e50; }
-        .lang-modal-item.selected .lang-modal-name { color: #3498db; }
-        .lang-modal-code { font-size: 12px; color: #95a5a6; font-weight: 500; margin-top: 2px; }
+        .lang-modal-name { font-size: 16px; font-weight: 600; color: var(--pg-text, #2c3e50); }
+        .lang-modal-item.selected .lang-modal-name { color: var(--pg-cta-blue, #3498db); }
+        .lang-modal-code { font-size: 12px; color: var(--pg-muted-2, #95a5a6); font-weight: 500; margin-top: 2px; }
         .lang-modal-radio {
             width: 22px;
             height: 22px;
             border-radius: 50%;
-            border: 2px solid #ccc;
+            border: 2px solid var(--pg-line-6, #ccc);
             display: flex;
             align-items: center;
             justify-content: center;
         }
-        .lang-modal-item.selected .lang-modal-radio { border-color: #3498db; }
+        .lang-modal-item.selected .lang-modal-radio { border-color: var(--pg-cta-blue, #3498db); }
         .lang-modal-radio span {
             width: 12px;
             height: 12px;
             border-radius: 50%;
-            background: #3498db;
+            background: var(--pg-cta-blue, #3498db);
             display: none;
         }
         .lang-modal-item.selected .lang-modal-radio span { display: block; }
@@ -452,8 +453,8 @@
             height: 50px;
             border: none;
             border-radius: 12px;
-            background: #f0f4f8;
-            color: #7f8c8d;
+            background: var(--pg-pill, #f0f4f8);
+            color: var(--pg-muted, #7f8c8d);
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
@@ -464,7 +465,7 @@
             height: 50px;
             border: none;
             border-radius: 12px;
-            background: #3498db;
+            background: var(--pg-cta-blue, #3498db);
             color: #ffffff;
             font-size: 16px;
             font-weight: 700;
@@ -474,10 +475,10 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
+            box-shadow: 0 4px 8px var(--pg-cta-glow, rgba(52, 152, 219, 0.3));
         }
         .lang-modal-apply:disabled {
-            background: #85c1e9;
+            background: var(--pg-cta-disabled, #85c1e9);
             box-shadow: none;
             cursor: default;
         }
@@ -543,6 +544,9 @@
                         </svg>
                     </button>
                 </div>
+@endverbatim
+@include('partials.dm-theme-widget', ['dmThemePlacement' => 'home'])
+@verbatim
 
                 <!-- Header animated -->
                 <div class="header-container">

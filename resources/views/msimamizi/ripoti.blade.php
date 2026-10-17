@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title data-i18n="msimamizi_ripoti.page_title">Ripoti - Dukamkononi Msimamizi</title>
+    <link rel="stylesheet" href="/css/themes.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -197,6 +198,7 @@
 <body>
 @endverbatim
 @include('partials.dm-lang-widget', ['dmLangHideButton' => true])
+@include('partials.dm-theme-widget', ['dmThemePlacement' => 'bottom'])
 @verbatim
     <div class="mobile-menu-toggle" id="mobileMenuToggle">☰</div>
     <div class="msimamizi-layout">

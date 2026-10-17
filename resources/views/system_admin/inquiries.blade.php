@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title data-i18n="system_admin_inquiries.page_title">Maswali - DukaMkononi Super Admin</title>
+    <link rel="stylesheet" href="/css/themes.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
     <style>
@@ -89,6 +90,7 @@
 <body>
 @endverbatim
 @include('partials.dm-lang-widget', ['dmLangHideButton' => true])
+@include('partials.dm-theme-widget', ['dmThemePlacement' => 'bottom'])
 @verbatim
 <div class="layout">
     <aside class="sidebar" id="dmSidebar">

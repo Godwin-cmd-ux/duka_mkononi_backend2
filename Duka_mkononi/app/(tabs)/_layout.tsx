@@ -1,20 +1,23 @@
 import { Stack } from 'expo-router';
 import React from 'react';
 import { StatusBar } from 'react-native';
+import { useTheme } from '../../lib/theme';
 
 export default function RootLayout() {
+  const { colors } = useTheme();
+
   return (
     <>
       <StatusBar 
         barStyle="dark-content" 
-        backgroundColor="#ffffff" 
+        backgroundColor={colors.card}
       />
       <Stack
         screenOptions={{
           headerStyle: {
-            backgroundColor: '#ffffff',
+            backgroundColor: colors.card,
           },
-          headerTintColor: '#2c3e50',
+          headerTintColor: colors.ink,
           headerTitleStyle: {
             fontWeight: 'bold',
           },

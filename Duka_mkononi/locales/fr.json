@@ -1,4 +1,10 @@
 {
+  "theme": {
+    "title": "Thème",
+    "selected": "Sélectionné",
+    "white_desc": "Propre et lumineux — le design original Duka Mkononi.",
+    "royal_desc": "Champagne royal chaleureux — un aspect élégant et premium."
+  },
   "app": {
     "title": "DUKANI APP",
     "version": "Version 1.0.0",

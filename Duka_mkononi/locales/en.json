@@ -1,4 +1,10 @@
 {
+  "theme": {
+    "title": "Theme",
+    "selected": "Selected",
+    "white_desc": "Clean, bright and professional — the original Duka Mkononi design.",
+    "royal_desc": "Warm royal champagne gold — a premium, elegant look."
+  },
   "app": {
     "title": "DUKANI APP",
     "version": "Version 1.0.0",

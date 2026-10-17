@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import ThemeSelector from '../../components/theme-selector';
 import SmartCartLoader from '../../components/SmartCartLoader';
 import OnboardingAssistant from '../../components/OnboardingAssistant';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -662,6 +663,7 @@ export default function NyingineScreen() {
         contentContainerStyle={styles.content}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
+        <ThemeSelector />
         <View style={styles.headerRow}>
           <View style={styles.headerText}>
             <View style={styles.titleRow}>

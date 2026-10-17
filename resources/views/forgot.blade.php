@@ -1,5 +1,6 @@
 @include('partials.dm-locale')
 <link rel="stylesheet" href="/css/smartcart-loader.css">
+<link rel="stylesheet" href="/css/themes.css">
 @verbatim
 <head>
     <meta charset="UTF-8">
@@ -15,7 +16,7 @@
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: #f8f9fa;
+            background-color: var(--pg-page-soft, #f8f9fa);
             overflow-x: hidden;
         }
 
@@ -52,7 +53,7 @@
             width: 40px;
             height: 40px;
             border-radius: 12px;
-            background-color: #f1f2f6;
+            background-color: var(--pg-soft-4, #f1f2f6);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -75,7 +76,7 @@
         .role-badge {
             padding: 6px 14px;
             border-radius: 30px;
-            background-color: #f1f2f6;
+            background-color: var(--pg-soft-4, #f1f2f6);
             font-size: 12px;
             font-weight: 600;
         }
@@ -131,12 +132,12 @@
         }
 
         .step-line.visible {
-            background-color: #ddd;
+            background-color: var(--pg-line-2, #ddd);
         }
 
         /* Form Container */
         .form-container {
-            background-color: white;
+            background-color: var(--pg-surface, white);
             border-radius: 24px;
             padding: 28px 24px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.08);
@@ -162,13 +163,13 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            background-color: #f8f9fa;
+            background-color: var(--pg-soft-fill, #f8f9fa);
         }
 
         .instruction-text {
             font-size: 16px;
             text-align: center;
-            color: #2c3e50;
+            color: var(--pg-text, #2c3e50);
             margin-bottom: 25px;
             line-height: 1.5;
         }
@@ -186,16 +187,16 @@
         .sub-instruction {
             font-size: 14px;
             text-align: center;
-            color: #7f8c8d;
+            color: var(--pg-muted, #7f8c8d);
             margin-bottom: 20px;
         }
 
         .input-group {
             display: flex;
             align-items: center;
-            background-color: #f8f9fa;
+            background-color: var(--pg-field-soft, #f8f9fa);
             border-radius: 14px;
-            border: 1px solid #e0e0e0;
+            border: 1px solid var(--pg-line, #e0e0e0);
             padding: 0 16px;
             margin-bottom: 16px;
         }
@@ -214,11 +215,11 @@
             background: transparent;
             border: none;
             outline: none;
-            color: #2c3e50;
+            color: var(--pg-text, #2c3e50);
         }
 
         .input-field::placeholder {
-            color: #95a5a6;
+            color: var(--pg-muted-2, #95a5a6);
         }
 
         .action-btn {
@@ -260,7 +261,7 @@
 
         .resend-text {
             font-size: 14px;
-            color: #7f8c8d;
+            color: var(--pg-muted, #7f8c8d);
         }
 
         .resend-link {
@@ -278,14 +279,14 @@
             justify-content: center;
             gap: 8px;
             border-radius: 14px;
-            border: 1px solid #ddd;
+            border: 1px solid var(--pg-line-2, #ddd);
             background: transparent;
             cursor: pointer;
             transition: all 0.2s;
         }
 
         .secondary-btn:active {
-            background-color: #f5f5f5;
+            background-color: var(--pg-soft-3, #f5f5f5);
         }
 
         .success-box {
@@ -306,7 +307,7 @@
 
         .success-message {
             font-size: 14px;
-            color: #2c3e50;
+            color: var(--pg-text, #2c3e50);
             line-height: 1.5;
         }
 
@@ -328,7 +329,7 @@
         .help-title {
             font-size: 14px;
             font-weight: 700;
-            color: #ff9800;
+            color: var(--pg-accent-bright, #ff9800);
         }
 
         .help-point {
@@ -340,19 +341,19 @@
 
         .help-text {
             font-size: 13px;
-            color: #ff9800;
+            color: var(--pg-accent-bright, #ff9800);
         }
 
         .footer {
             text-align: center;
             margin-top: 30px;
             padding-top: 20px;
-            border-top: 1px solid #eee;
+            border-top: 1px solid var(--pg-line-7, #eee);
         }
 
         .footer-text {
             font-size: 12px;
-            color: #95a5a6;
+            color: var(--pg-muted-2, #95a5a6);
         }
 
         .loader {
@@ -383,7 +384,7 @@
             z-index: 1000;
         }
         .alert-box {
-            background: white;
+            background: var(--pg-surface, white);
             border-radius: 28px;
             width: 85%;
             max-width: 320px;
@@ -397,7 +398,7 @@
         }
         .alert-message {
             font-size: 14px;
-            color: #5d6d7e;
+            color: var(--pg-desc, #5d6d7e);
             margin-bottom: 24px;
             line-height: 1.4;
         }
@@ -414,6 +415,7 @@
 <body>
 @endverbatim
 @include('partials.dm-lang-widget')
+@include('partials.dm-theme-widget')
 @verbatim
 <div class="keyboard-avoid">
     <div class="scroll-container">
@@ -540,8 +542,8 @@
     }
 
     function getRoleColor() {
-        const colors = { 'mteja': '#3498db', 'muuzaji': '#2ecc71', 'msimamizi': '#e74c3c' };
-        return colors[role] || '#2c3e50';
+        const colors = { 'mteja': 'var(--pg-cta-blue, #3498db)', 'muuzaji': 'var(--pg-cta-green, #2ecc71)', 'msimamizi': 'var(--pg-cta-red, #e74c3c)' };
+        return colors[role] || 'var(--pg-text, #2c3e50)';
     }
 
     function getRoleTitle() {
@@ -792,11 +794,11 @@
         ];
         stepIndicatorDiv.innerHTML = steps.map((s, idx) => `
             <div class="step-item" style="position: relative;">
-                <div class="step-circle" style="background: ${s.active ? color : '#ecf0f1'}; border-color: ${s.active ? color : '#bdc3c7'};">
-                    <span class="step-number" style="color: ${s.active ? 'white' : '#7f8c8d'}">${s.num}</span>
+                <div class="step-circle" style="background: ${s.active ? color : 'var(--pg-step-idle, #ecf0f1)'}; border-color: ${s.active ? color : 'var(--pg-step-idle-line, #bdc3c7)'}">
+                    <span class="step-number" style="color: ${s.active ? 'white' : 'var(--pg-muted, #7f8c8d)'}">${s.num}</span>
                 </div>
-                <span class="step-label" style="color: ${s.active ? color : '#95a5a6'}">${s.label}</span>
-                ${idx < steps.length - 1 ? `<div class="step-line ${step >= idx + 2 ? 'visible' : ''}" style="background: ${step >= idx + 2 ? color : '#ecf0f1'}"></div>` : ''}
+                <span class="step-label" style="color: ${s.active ? color : 'var(--pg-muted-2, #95a5a6)'}">${s.label}</span>
+                ${idx < steps.length - 1 ? `<div class="step-line ${step >= idx + 2 ? 'visible' : ''}" style="background: ${step >= idx + 2 ? color : 'var(--pg-step-idle, #ecf0f1)'}"></div>` : ''}
             </div>
         `).join('');
         

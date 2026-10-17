@@ -79,50 +79,50 @@
         position: fixed; inset-inline-end: 18px; bottom: 18px; z-index: 900;
         display: inline-flex; align-items: center; gap: 9px;
         padding: 13px 18px; border: 0; border-radius: 999px; cursor: pointer;
-        background: #4f46e5; color: #fff; font-weight: 700; font-size: 14.5px;
-        box-shadow: 0 10px 26px rgba(79, 70, 229, .32);
+        background: var(--pmc-cta, #4f46e5); color: #fff; font-weight: 700; font-size: 14.5px;
+        box-shadow: 0 10px 26px var(--pmc-cta-glow, rgba(79, 70, 229, .32));
     }
     .dmc-launcher-dot { width: 9px; height: 9px; border-radius: 50%; background: #a5f3fc; }
     .dmc-panel {
         position: fixed; inset-inline-end: 18px; bottom: 82px; z-index: 901;
         width: min(420px, calc(100vw - 24px)); max-height: min(80vh, 660px);
         display: flex; flex-direction: column; overflow: hidden;
-        background: #fff; border: 1px solid #e2e8f0; border-radius: 18px;
+        background: var(--pmc-panel, #fff); border: 1px solid var(--dm-line, #e2e8f0); border-radius: 18px;
         box-shadow: 0 22px 60px rgba(15, 23, 42, .22);
     }
-    .dmc-head { display: flex; align-items: flex-start; gap: 10px; padding: 15px 16px; border-bottom: 1px solid #eef2f7; }
-    .dmc-head h3 { margin: 0; font-size: 15.5px; font-weight: 800; color: #0f172a; }
-    .dmc-head p { margin: 3px 0 0; font-size: 12.5px; color: #64748b; }
-    .dmc-close { margin-left: auto; border: 0; background: transparent; font-size: 22px; line-height: 1; cursor: pointer; color: #64748b; }
+    .dmc-head { display: flex; align-items: flex-start; gap: 10px; padding: 15px 16px; border-bottom: 1px solid var(--pmc-line, #eef2f7); }
+    .dmc-head h3 { margin: 0; font-size: 15.5px; font-weight: 800; color: var(--pmc-ink, #0f172a); }
+    .dmc-head p { margin: 3px 0 0; font-size: 12.5px; color: var(--pmc-muted, #64748b); }
+    .dmc-close { margin-left: auto; border: 0; background: transparent; font-size: 22px; line-height: 1; cursor: pointer; color: var(--pmc-muted, #64748b); }
     .dmc-body { padding: 14px 16px 18px; overflow-y: auto; }
-    .dmc-note { margin: 0 0 12px; padding: 9px 11px; border-radius: 10px; background: #eff6ff; color: #1e40af; font-size: 12px; }
+    .dmc-note { margin: 0 0 12px; padding: 9px 11px; border-radius: 10px; background: var(--dm-alert-info-bg, #eff6ff); color: #1e40af; font-size: 12px; }
     .dmc-ask { display: flex; gap: 8px; }
-    .dmc-ask input { flex: 1; min-width: 0; padding: 11px 12px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 14px; font-family: inherit; }
-    .dmc-send { padding: 11px 15px; border: 0; border-radius: 10px; background: #4f46e5; color: #fff; font-weight: 700; font-size: 14px; cursor: pointer; }
+    .dmc-ask input { flex: 1; min-width: 0; padding: 11px 12px; border: 1px solid var(--dm-line, #e2e8f0); border-radius: 10px; font-size: 14px; font-family: inherit; }
+    .dmc-send { padding: 11px 15px; border: 0; border-radius: 10px; background: var(--pmc-cta, #4f46e5); color: #fff; font-weight: 700; font-size: 14px; cursor: pointer; }
     .dmc-send:disabled { opacity: .6; cursor: progress; }
-    .dmc-section { margin: 14px 0 7px; font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #334155; }
+    .dmc-section { margin: 14px 0 7px; font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--pmc-strong, #334155); }
     .dmc-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-    .dmc-chip { border: 1px solid #e0e7ff; background: #eef2ff; color: #3730a3; border-radius: 999px; padding: 7px 11px; font-size: 12.5px; cursor: pointer; font-family: inherit; text-align: left; }
-    .dmc-chip:hover { background: #e0e7ff; }
-    .dmc-answer { margin-top: 14px; padding: 13px; border: 1px solid #eef2f7; border-radius: 14px; background: #fcfdff; }
-    .dmc-answer h4 { margin: 0 0 6px; font-size: 14.5px; font-weight: 800; color: #0f172a; }
-    .dmc-answer p { margin: 0 0 8px; font-size: 13.5px; color: #334155; line-height: 1.5; }
+    .dmc-chip { border: 1px solid var(--pmc-chip-line, #e0e7ff); background: var(--pmc-chip-bg, #eef2ff); color: var(--pmc-chip-ink, #3730a3); border-radius: 999px; padding: 7px 11px; font-size: 12.5px; cursor: pointer; font-family: inherit; text-align: left; }
+    .dmc-chip:hover { background: var(--pmc-chip-hover, #e0e7ff); }
+    .dmc-answer { margin-top: 14px; padding: 13px; border: 1px solid var(--pmc-line, #eef2f7); border-radius: 14px; background: var(--pmc-answer, #fcfdff); }
+    .dmc-answer h4 { margin: 0 0 6px; font-size: 14.5px; font-weight: 800; color: var(--pmc-ink, #0f172a); }
+    .dmc-answer p { margin: 0 0 8px; font-size: 13.5px; color: var(--pmc-strong, #334155); line-height: 1.5; }
     .dmc-answer ul { margin: 0 0 10px 18px; font-size: 13px; color: #475569; }
-    .dmc-ack { margin: 8px 0 0; font-size: 12.5px; color: #1e40af; background: #eff6ff; border-radius: 9px; padding: 8px 10px; }
+    .dmc-ack { margin: 8px 0 0; font-size: 12.5px; color: #1e40af; background: var(--dm-alert-info-bg, #eff6ff); border-radius: 9px; padding: 8px 10px; }
     .dmc-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-    .dmc-link { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 10px; background: #fff; border: 1px solid #e2e8f0; color: #4f46e5; font-size: 13px; font-weight: 600; text-decoration: none; }
-    .dmc-item { display: flex; gap: 9px; padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px; color: #0f172a; }
+    .dmc-link { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 10px; background: var(--pmc-panel, #fff); border: 1px solid var(--dm-line, #e2e8f0); color: var(--pmc-cta, #4f46e5); font-size: 13px; font-weight: 600; text-decoration: none; }
+    .dmc-item { display: flex; gap: 9px; padding: 8px 0; border-bottom: 1px solid var(--dm-hover, #f1f5f9); font-size: 13px; color: var(--pmc-ink, #0f172a); }
     .dmc-item b { font-weight: 700; }
-    .dmc-item span { color: #64748b; }
-    .dmc-mic { display: inline-flex; align-items: center; justify-content: center; width: 42px; padding: 0; border: 1px solid #e2e8f0; border-radius: 10px; background: #fff; color: #4f46e5; cursor: pointer; }
-    .dmc-mic:hover { background: #eef2ff; }
+    .dmc-item span { color: var(--pmc-muted, #64748b); }
+    .dmc-mic { display: inline-flex; align-items: center; justify-content: center; width: 42px; padding: 0; border: 1px solid var(--dm-line, #e2e8f0); border-radius: 10px; background: var(--dm-input-bg, #fff); color: var(--pmc-cta, #4f46e5); cursor: pointer; }
+    .dmc-mic:hover { background: var(--pmc-chip-bg, #eef2ff); }
     .dmc-mic.listening { background: #fee2e2; border-color: #fecaca; color: #b91c1c; animation: dmcPulse 1.1s ease-in-out infinite; }
     @keyframes dmcPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(185, 28, 28, .28); } 50% { box-shadow: 0 0 0 7px rgba(185, 28, 28, 0); } }
-    .dmc-voice { margin: 8px 0 0; padding: 8px 10px; border-radius: 10px; background: #f8fafc; color: #475569; font-size: 12.5px; line-height: 1.45; }
-    .dmc-speak { margin-top: 8px; padding: 7px 12px; border: 1px solid #e0e7ff; border-radius: 10px; background: #eef2ff; color: #3730a3; font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: inherit; }
-    .dmc-speak.speaking { background: #e0e7ff; }
-    .dmc-err { margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: #fef2f2; color: #991b1b; font-size: 13px; }
-    .dmc-loading { margin-top: 12px; font-size: 13px; color: #64748b; }
+    .dmc-voice { margin: 8px 0 0; padding: 8px 10px; border-radius: 10px; background: var(--dm-bg, #f8fafc); color: #475569; font-size: 12.5px; line-height: 1.45; }
+    .dmc-speak { margin-top: 8px; padding: 7px 12px; border: 1px solid var(--pmc-chip-line, #e0e7ff); border-radius: 10px; background: var(--pmc-chip-bg, #eef2ff); color: var(--pmc-chip-ink, #3730a3); font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .dmc-speak.speaking { background: var(--pmc-chip-hover, #e0e7ff); }
+    .dmc-err { margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: var(--dm-alert-err-bg, #fef2f2); color: #991b1b; font-size: 13px; }
+    .dmc-loading { margin-top: 12px; font-size: 13px; color: var(--pmc-muted, #64748b); }
     @media (max-width: 520px) {
         .dmc-launcher { inset-inline-end: 12px; bottom: 12px; padding: 11px 14px; font-size: 13.5px; }
         .dmc-panel { inset-inline: 12px; width: auto; bottom: 70px; }

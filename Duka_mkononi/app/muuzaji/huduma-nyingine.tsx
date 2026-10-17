@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import ThemeSelector from '../../components/theme-selector';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import NlEntry from '../../components/NlEntry';
 import OnboardingAssistant from '../../components/OnboardingAssistant';
@@ -46,6 +47,7 @@ export default function HudumaNyingine() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <ThemeSelector />
         <View style={styles.header}>
           <Text style={styles.title}>{t('other_services.title')}</Text>
           <Text style={styles.subtitle}>{t('other_services.subtitle')}</Text>

@@ -1,4 +1,10 @@
 {
+  "theme": {
+    "title": "Design",
+    "selected": "Ausgewählt",
+    "white_desc": "Sauberes, helles Profil — das originale Duka-Mkononi-Design.",
+    "royal_desc": "Warmer königlicher Champagner — ein edler Premium-Look."
+  },
   "app": {
     "title": "DUKANI APP",
     "version": "Toleo 1.0.0",

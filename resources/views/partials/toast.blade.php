@@ -18,7 +18,7 @@
         display: flex;
         align-items: flex-start;
         gap: 12px;
-        background: #ffffff;
+        background: var(--dm-toast-bg, #ffffff);
         border-radius: 12px;
         padding: 14px 14px 14px 16px;
         box-shadow: 0 8px 24px rgba(15, 23, 42, 0.14), 0 2px 6px rgba(15, 23, 42, 0.08);
@@ -51,7 +51,7 @@
         flex: 1;
         font-size: 14px;
         line-height: 1.45;
-        color: #1e293b;
+        color: var(--dm-toast-text, #1e293b);
         font-weight: 500;
         white-space: pre-line;
         word-break: break-word;
@@ -74,7 +74,7 @@
 
     .toast-close:hover {
         color: #475569;
-        background: #f1f5f9;
+        background: var(--dm-hover, #f1f5f9);
     }
 
     /* Type accents */

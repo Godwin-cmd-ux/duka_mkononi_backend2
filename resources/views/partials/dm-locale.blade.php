@@ -24,4 +24,18 @@
     $dmDirection = in_array($dmLocale, $dmRtlLocales, true) ? 'rtl' : 'ltr';
 @endphp
 <!DOCTYPE html>
-<html lang="{{ $dmLocale }}" dir="{{ $dmDirection }}" data-dm-locale="{{ $dmLocale }}">
+<html lang="{{ $dmLocale }}" dir="{{ $dmDirection }}" data-dm-locale="{{ $dmLocale }}" data-theme="white-professional">
+{{-- Theme restore, runs before first paint so a Royal visitor never sees a
+     flash of the default design. The stored value is only ever COMPARED to the
+     two approved identifiers — raw storage/request data is never written into
+     markup, attributes or CSS, so localStorage cannot inject anything. --}}
+<script>
+(function () {
+    try {
+        if (window.localStorage.getItem('dukamkononi_theme') === 'royal-champagne-cream' ||
+            window.localStorage.getItem('lukamkononi_theme') === 'royal-champagne-cream') {
+            document.documentElement.setAttribute('data-theme', 'royal-champagne-cream');
+        }
+    } catch (e) { /* storage unavailable: stay on White Professional */ }
+})();
+</script>

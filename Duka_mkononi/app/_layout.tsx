@@ -7,6 +7,7 @@ import { setupBackgroundSync } from '../lib/background';
 import { pingServer } from '../lib/network';
 import { LanguageProvider } from '../context/LanguageContext';
 import { SessionProvider, useSession } from '../context/SessionContext';
+import { ThemeProvider } from '../lib/theme';
 
 // Keep the native splash screen visible until the session has been resolved
 SplashScreen.preventAutoHideAsync();
@@ -18,9 +19,11 @@ export default function RootLayout() {
     // wrapper intercepts touches in a way that broke TextInput tap-to-focus
     // on real Android devices (no cursor, no keyboard).
     <SessionProvider>
-      <LanguageProvider>
-        <RootNavigator />
-      </LanguageProvider>
+      <ThemeProvider>
+        <LanguageProvider>
+          <RootNavigator />
+        </LanguageProvider>
+      </ThemeProvider>
     </SessionProvider>
   );
 }

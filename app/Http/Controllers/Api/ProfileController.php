@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Models\Business;
 use App\Models\User;
 use App\Services\BusinessResolver;
+use App\Services\ThemePreference;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 
@@ -169,6 +170,41 @@ class ProfileController extends BaseController
             ]);
         } catch (\Throwable $error) {
             $this->log($userId, 'PROFILE_UPDATE_ERROR', '/api/user/profile', ['error' => $error->getMessage()], $ip, 'failed');
+            return $this->dbError($error, 'Hitilafu ya ndani ya server');
+        }
+    }
+
+    /**
+     * Persist the caller's explicit theme choice from the website's public-page
+     * selector (guarded by auth.jwt via PUT /api/user/theme).
+     *
+     * Mirrors how the language preference is stored: only allow-listed
+     * identifiers are accepted (422 otherwise) and the stored value is echoed
+     * back so the client can adopt it. If the write fails — e.g. the
+     * preferred_theme migration has not run yet — the error is reported
+     * honestly instead of pretending success; the client keeps its local
+     * preference either way.
+     */
+    public function theme(Request $request)
+    {
+        $userId = $this->userId($request);
+        $ip = $this->ip($request);
+
+        $theme = ThemePreference::normalize($request->input('theme'));
+
+        if (!$theme) {
+            $this->log($userId, 'PREFERRED_THEME_UPDATE_FAILED', '/api/user/theme', ['reason' => 'Invalid theme'], $ip, 'failed');
+            return $this->json(['error' => 'Mandhari si sahihi'], 422);
+        }
+
+        try {
+            User::where('id', $userId)->update(['preferred_theme' => $theme]);
+
+            $this->log($userId, 'PREFERRED_THEME_UPDATE', '/api/user/theme', ['preferred_theme' => $theme], $ip, 'success');
+
+            return $this->json(['preferred_theme' => $theme]);
+        } catch (\Throwable $error) {
+            $this->log($userId, 'PREFERRED_THEME_UPDATE_ERROR', '/api/user/theme', ['error' => $error->getMessage()], $ip, 'failed');
             return $this->dbError($error, 'Hitilafu ya ndani ya server');
         }
     }

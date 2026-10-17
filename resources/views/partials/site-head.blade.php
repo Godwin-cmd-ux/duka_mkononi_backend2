@@ -24,6 +24,9 @@
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <!-- The one SmartCart loading animation for the whole website. -->
     <link rel="stylesheet" href="/css/smartcart-loader.css">
+    <!-- Centralized two-theme token system (White Professional default,
+         Royal Champagne Cream via <html data-theme="...">). -->
+    <link rel="stylesheet" href="/css/themes.css">
     <style>
         :root {
             --dm-navy: #0f172a;
@@ -55,8 +58,8 @@
         img { max-width: 100%; display: block; }
         a { color: inherit; text-decoration: none; }
         button { font-family: inherit; }
-        ::selection { background: rgba(30, 58, 138, .18); }
-        :focus-visible { outline: 3px solid rgba(30, 58, 138, .45); outline-offset: 2px; border-radius: 6px; }
+        ::selection { background: var(--dm-selection, rgba(30, 58, 138, .18)); }
+        :focus-visible { outline: 3px solid var(--dm-focus, rgba(30, 58, 138, .45)); outline-offset: 2px; border-radius: 6px; }
 
         .dm-container { width: 100%; max-width: var(--dm-max); margin: 0 auto; padding: 0 20px; }
         .dm-section { padding: 64px 0; }
@@ -82,11 +85,11 @@
             min-height: 46px; white-space: nowrap;
         }
         .dm-btn svg { width: 18px; height: 18px; flex: 0 0 auto; }
-        .dm-btn--primary { background: var(--dm-primary); color: #fff; box-shadow: 0 6px 16px rgba(30, 58, 138, .22); }
+        .dm-btn--primary { background: var(--dm-primary); color: #fff; box-shadow: 0 6px 16px var(--dm-btn-glow, rgba(30, 58, 138, .22)); }
         .dm-btn--primary:hover { background: var(--dm-primary-dark); transform: translateY(-1px); }
-        .dm-btn--ghost { background: #fff; color: var(--dm-navy); border-color: var(--dm-line); }
+        .dm-btn--ghost { background: var(--dm-card, #fff); color: var(--dm-navy); border-color: var(--dm-line); }
         .dm-btn--ghost:hover { border-color: var(--dm-primary); color: var(--dm-primary); }
-        .dm-btn--accent { background: var(--dm-accent); color: #1f2937; }
+        .dm-btn--accent { background: var(--dm-accent); color: var(--dm-accent-ink, #1f2937); }
         .dm-btn--accent:hover { transform: translateY(-1px); }
         .dm-btn--danger { background: var(--dm-danger); color: #fff; }
         .dm-btn--sm { padding: 8px 14px; min-height: 38px; font-size: 13.5px; }
@@ -113,19 +116,19 @@
         .dm-label { font-size: 13.5px; font-weight: 600; color: var(--dm-ink); }
         .dm-input, .dm-select, .dm-textarea {
             width: 100%; padding: 12px 14px; border: 1px solid var(--dm-line); border-radius: var(--dm-radius-sm);
-            font-size: 15px; background: #fff; color: var(--dm-ink); min-height: 46px;
+            font-size: 15px; background: var(--dm-input-bg, #fff); color: var(--dm-ink); min-height: 46px;
             transition: border-color .15s ease, box-shadow .15s ease;
         }
-        .dm-input:focus, .dm-select:focus, .dm-textarea:focus { outline: none; border-color: var(--dm-primary); box-shadow: 0 0 0 3px rgba(30, 58, 138, .14); }
+        .dm-input:focus, .dm-select:focus, .dm-textarea:focus { outline: none; border-color: var(--dm-primary); box-shadow: 0 0 0 3px var(--dm-focus-soft, rgba(30, 58, 138, .14)); }
         .dm-textarea { min-height: 130px; resize: vertical; }
         .dm-error { color: var(--dm-danger); font-size: 13px; }
         .dm-hint { color: var(--dm-muted); font-size: 12.5px; }
 
         /* Alerts */
         .dm-alert { padding: 12px 16px; border-radius: var(--dm-radius-sm); font-size: 14.5px; border: 1px solid transparent; margin-bottom: 14px; }
-        .dm-alert--ok { background: #ecfdf5; color: #065f46; border-color: #a7f3d0; }
-        .dm-alert--err { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
-        .dm-alert--info { background: #eff6ff; color: #1e40af; border-color: #bfdbfe; }
+        .dm-alert--ok { background: var(--dm-alert-ok-bg); color: #065f46; border-color: var(--dm-alert-ok-line); }
+        .dm-alert--err { background: var(--dm-alert-err-bg); color: #991b1b; border-color: var(--dm-alert-err-line); }
+        .dm-alert--info { background: var(--dm-alert-info-bg); color: #1e40af; border-color: var(--dm-alert-info-line); }
 
         /* Empty state */
         .dm-empty { text-align: center; padding: 48px 20px; color: var(--dm-muted); }

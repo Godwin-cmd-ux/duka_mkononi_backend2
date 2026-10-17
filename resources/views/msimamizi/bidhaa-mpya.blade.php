@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title data-i18n="msimamizi_bidhaa.page_title">Bidhaa Mpya - Dukamkononi Msimamizi</title>
+    <link rel="stylesheet" href="/css/themes.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
     <style>
@@ -25,6 +26,7 @@ svg.icon{flex-shrink:0}
 <body>
 @endverbatim
 @include('partials.dm-lang-widget', ['dmLangHideButton' => true])
+@include('partials.dm-theme-widget', ['dmThemePlacement' => 'bottom'])
 @verbatim
 <div class="mobile-menu-toggle" id="mobileMenuToggle"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2"><path d="M3 12H21M3 6H21M3 18H21"/></svg></div>
 <div class="msimamizi-layout">

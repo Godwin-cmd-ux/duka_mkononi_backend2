@@ -16,6 +16,7 @@ import SmartCartLoader from '../../components/SmartCartLoader';
 import OnboardingAssistant from '../../components/OnboardingAssistant';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLang } from '../../context/LanguageContext';
+import ThemeSelector from '../../components/theme-selector';
 import { fetchWithTimeout } from '../../lib/network';
 
 import { API_BASE_URL } from '../../constants/api';
@@ -317,6 +318,7 @@ export default function MtejaNyingineScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          <ThemeSelector />
           <View style={styles.titleRow}>
             <Text style={styles.title}>{t('mteja_nyingine.title')}</Text>
             <View style={styles.aiChip}>

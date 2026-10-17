@@ -3,19 +3,21 @@ import React from 'react';
 import { Text } from 'react-native';
 import TabSwipe from '../../components/tab-swipe';
 import { useLang } from '../../context/LanguageContext';
+import { useTheme } from '../../lib/theme';
 
 // Tab order — used by the swipe gesture to pick the neighbouring page.
 const MUUZAJI_TABS = ['/muuzaji/profaili', '/muuzaji/mauzo', '/muuzaji/matumizi', '/muuzaji/uza', '/muuzaji/orders', '/muuzaji/huduma-nyingine'];
 
 export default function MuuzajiLayout() {
   const { t } = useLang();
+  const { colors } = useTheme();
 
   return (
     <TabSwipe tabs={MUUZAJI_TABS}>
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#2ecc71',
+        tabBarActiveTintColor: colors.primary,
       }}>
       <Tabs.Screen
         name="profaili"

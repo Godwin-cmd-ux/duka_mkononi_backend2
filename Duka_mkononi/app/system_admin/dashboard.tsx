@@ -1,6 +1,7 @@
 // C:\Users\HP\myApp\Duka_mkononi\app\system_admin\dashboard.tsx
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import ThemeSelector from '../../components/theme-selector';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
@@ -1459,6 +1460,7 @@ export default function SystemAdminDashboard() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <ThemeSelector />
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTitle}>

@@ -4,12 +4,13 @@
 <body>
 @endverbatim
 @include('partials.dm-lang-widget')
+@include('partials.dm-theme-widget')
 @include('partials.dm-voice')
 @include('partials.site-navbar')
 @verbatim
 <style>
     .ad-card { overflow: hidden; display: flex; flex-direction: column; }
-    .ad-media { aspect-ratio: 16 / 10; background: #f1f5f9; }
+    .ad-media { aspect-ratio: 16 / 10; background: var(--dm-hover, #f1f5f9); }
     .ad-media img, .ad-media video { width: 100%; height: 100%; object-fit: cover; }
     .ad-body { padding: 16px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
 </style>

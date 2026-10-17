@@ -4,6 +4,7 @@ import React from 'react';
 import { StyleSheet } from 'react-native';
 import TabSwipe from '../../components/tab-swipe';
 import { useLang } from '../../context/LanguageContext';
+import { useTheme } from '../../lib/theme';
 
 // Tab order — used by the swipe gesture to pick the neighbouring page.
 const MSIMAMIZI_TABS = [
@@ -17,15 +18,16 @@ const MSIMAMIZI_TABS = [
 
 export default function MsimamiziLayout() {
   const { t } = useLang();
+  const { colors } = useTheme();
   
   return (
     <TabSwipe tabs={MSIMAMIZI_TABS}>
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#e74c3c',
-        tabBarInactiveTintColor: '#95a5a6',
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.muted2,
         headerShown: false,
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: [styles.tabBar, { backgroundColor: colors.card, borderTopColor: colors.line }],
       }}
     >
       <Tabs.Screen

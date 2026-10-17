@@ -162,6 +162,10 @@ Route::middleware('auth.jwt')->group(function () {
     Route::get('user/profile', [ProfileController::class, 'show']);
     Route::put('user/profile', [ProfileController::class, 'update']);
     Route::put('user/password', [ProfileController::class, 'changePassword']);
+    // Theme preference: written when an authenticated visitor explicitly picks
+    // a theme on a public page (Phase 1 selector). Validation lives server-side
+    // in App\Services\ThemePreference.
+    Route::put('user/theme', [ProfileController::class, 'theme']);
     Route::put('onboarding/profile', [ProfileController::class, 'onboarding']);
 
     Route::post('setup/ai-import-migration', [AiImportController::class, 'migration']);

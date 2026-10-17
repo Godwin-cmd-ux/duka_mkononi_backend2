@@ -1,0 +1,876 @@
+/*
+ * Duka Mkononi — centralized website theme tokens.
+ *
+ * Two approved themes, applied through <html data-theme="...">:
+ *   white-professional      The existing Duka Mkononi design. Every :root value
+ *                           below IS the current production palette, so this
+ *                           theme is pixel-identical to the pre-theme website.
+ *   royal-champagne-cream   Warm cream / ivory / royal gold alternative.
+ *
+ * The white defaults live in :root; the royal values live in an
+ * html[data-theme] block so they win by specificity regardless of the order
+ * stylesheets arrive in. Page styles consume var(--token) only — no hex
+ * re-declaration per page, no per-page conditional colors.
+ *
+ * Semantic status colors (danger/success, role gradients) keep their hue in
+ * both themes on purpose: they carry meaning, not decoration.
+ */
+
+/* ------------------------------------------------------------------ */
+/* White Professional — the existing palette (unchanged design)         */
+/* ------------------------------------------------------------------ */
+:root,
+html[data-theme="white-professional"] {
+
+    /* Site design system (mirrors partials/site-head values) */
+    --dm-navy: #0f172a;
+    --dm-ink: #1e293b;
+    --dm-muted: #64748b;
+    --dm-line: #e2e8f0;
+    --dm-bg: #f8fafc;
+    --dm-card: #ffffff;
+    --dm-primary: #1e3a8a;
+    --dm-primary-dark: #172554;
+    --dm-accent: #f59e0b;
+    --dm-accent-ink: #1f2937;
+    --dm-danger: #dc2626;
+    --dm-success: #059669;
+
+    /* Site chrome / interaction */
+    --dm-nav-bg: rgba(255, 255, 255, .92);
+    --dm-hover: #f1f5f9;
+    --dm-tint: #dbeafe;
+    --dm-tint-line: #bfdbfe;
+    --dm-tint-ink: #1e40af;
+    --dm-ai-bg: #eef2ff;
+    --dm-ai-line: #e0e7ff;
+    --dm-ai-line-2: #c7d2fe;
+    --dm-ai-ink: #4338ca;
+    --dm-input-bg: #ffffff;
+    --dm-focus: rgba(30, 58, 138, .45);
+    --dm-focus-soft: rgba(30, 58, 138, .14);
+    --dm-selection: rgba(30, 58, 138, .18);
+    --dm-btn-glow: rgba(30, 58, 138, .22);
+
+    /* Alerts (public pages use .dm-alert; values are the current colors) */
+    --dm-alert-ok-bg: #ecfdf5;
+    --dm-alert-ok-line: #a7f3d0;
+    --dm-alert-err-bg: #fef2f2;
+    --dm-alert-err-line: #fecaca;
+    --dm-alert-info-bg: #eff6ff;
+    --dm-alert-info-line: #bfdbfe;
+
+    /* Shared toast (fallbacks keep it identical where themes.css is absent) */
+    --dm-toast-bg: #ffffff;
+    --dm-toast-text: #1e293b;
+
+    /* Floating concierge (public widget) */
+    --pmc-panel: #ffffff;
+    --pmc-line: #eef2f7;
+    --pmc-answer: #fcfdff;
+    --pmc-ink: #0f172a;
+    --pmc-muted: #64748b;
+    --pmc-strong: #334155;
+    --pmc-cta: #4f46e5;
+    --pmc-cta-glow: rgba(79, 70, 229, .32);
+    --pmc-chip-bg: #eef2ff;
+    --pmc-chip-hover: #e0e7ff;
+    --pmc-chip-line: #e0e7ff;
+    --pmc-chip-ink: #3730a3;
+
+    /* Standalone auth/account pages (login, forgot, signups, home) */
+    --pg-page: #ffffff;
+    --pg-surface: #ffffff;
+    --pg-field: #ffffff;
+    --pg-soft: #f8f9fa;
+    --pg-soft-2: #f4f6f8;
+    --pg-soft-3: #f5f5f5;
+    --pg-soft-cool: #f8fafc;
+    --pg-text: #2c3e50;
+    --pg-muted: #7f8c8d;
+    --pg-muted-2: #95a5a6;
+    --pg-line: #e0e0e0;
+    --pg-line-2: #ddd;
+    --pg-line-3: #d5dbe1;
+    --pg-line-soft: #ecf0f1;
+    --pg-cta-blue: #3498db;
+    --pg-cta-red: #e74c3c;
+    --pg-cta-green: #2ecc71;
+    --pg-cta-blue-deep: #2c7ab8;
+    --pg-glow-soft: rgba(52, 152, 219, .1);
+    --pg-glow-red: rgba(231, 76, 60, .1);
+    --pg-glow-green: rgba(46, 204, 113, .1);
+    --pg-cta-glow: rgba(52, 152, 219, .3);
+    --pg-cta-wash: rgba(52, 152, 219, .05);
+    --pg-cta-disabled: #85c1e9;
+    --pg-info-bg: #f0f8ff;
+    --pg-desc: #5d6d7e;
+    --pg-line-4: #eef2f6;
+    --pg-line-5: #eef2f5;
+    --pg-line-6: #cccccc;
+    --pg-line-7: #eeeeee;
+    --pg-pill: #f0f4f8;
+    --pg-pill-hover: #e6edf5;
+    --pg-blue-tint: #e8f4fd;
+    --pg-page-soft: #f8f9fa;
+    --pg-soft-fill: #f8f9fa;
+    --pg-soft-4: #f1f2f6;
+    --pg-field-soft: #f8f9fa;
+    --pg-accent-bright: #ff9800;
+    --pg-step-idle: #ecf0f1;
+    --pg-step-idle-line: #bdc3c7;
+    --pg-brand-a: #3498db;
+    --pg-brand-b: #2980b9;
+    --pg-brand-glow: rgba(52, 152, 219, .3);
+}
+
+/* ------------------------------------------------------------------ */
+/* Royal Champagne Cream                                               */
+/*                                                                     */
+/* html[data-theme] outranks any :root block on the page, so these      */
+/* values apply even when site-head's inline :root loads later.         */
+/* ------------------------------------------------------------------ */
+html[data-theme="royal-champagne-cream"] {
+
+    /* Site design system — cream surfaces, gold accent, charcoal text */
+    --dm-navy: #171717;
+    --dm-ink: #171717;
+    --dm-muted: #5f636e;
+    --dm-line: #d9d8cf;
+    --dm-bg: #f3f2ed;
+    --dm-card: #fcfbf7;
+    --dm-primary: #8b6f23;
+    --dm-primary-dark: #6e591b;
+    --dm-accent: #8b6f23;
+    --dm-accent-ink: #ffffff;
+    --dm-danger: #dc2626;
+    --dm-success: #059669;
+
+    /* Site chrome / interaction — warm neutrals, gold focus */
+    --dm-nav-bg: rgba(252, 251, 247, .95);
+    --dm-hover: #ece4d0;
+    --dm-tint: #f6e8ce;
+    --dm-tint-line: #e2d3ac;
+    --dm-tint-ink: #8b6f23;
+    --dm-ai-bg: #f6e8ce;
+    --dm-ai-line: #e5d9bc;
+    --dm-ai-line-2: #ded0ab;
+    --dm-ai-ink: #8b6f23;
+    --dm-input-bg: #ffffff;
+    --dm-focus: rgba(139, 111, 23, .55);
+    --dm-focus-soft: rgba(139, 111, 23, .2);
+    --dm-selection: rgba(139, 111, 23, .22);
+    --dm-btn-glow: rgba(139, 111, 23, .3);
+
+    /* Alerts keep their hue, warmed to sit on cream */
+    --dm-alert-ok-bg: #eef2e3;
+    --dm-alert-ok-line: #cfdcc0;
+    --dm-alert-err-bg: #f8eae6;
+    --dm-alert-err-line: #eccfc7;
+    --dm-alert-info-bg: #eef0e2;
+    --dm-alert-info-line: #d7d9c4;
+
+    /* Shared toast */
+    --dm-toast-bg: #fcfbf7;
+    --dm-toast-text: #171717;
+
+    /* Floating concierge */
+    --pmc-panel: #fcfbf7;
+    --pmc-line: #e7e1d0;
+    --pmc-answer: #f6e8ce;
+    --pmc-ink: #171717;
+    --pmc-muted: #5f636e;
+    --pmc-strong: #171717;
+    --pmc-cta: #8b6f23;
+    --pmc-cta-glow: rgba(139, 111, 23, .35);
+    --pmc-chip-bg: #f6e8ce;
+    --pmc-chip-hover: #eaddbd;
+    --pmc-chip-line: #e5d9bc;
+    --pmc-chip-ink: #8b6f23;
+
+    /* Standalone auth/account pages — champagne zone */
+    --pg-page: #f3f2ed;
+    --pg-surface: #fcfbf7;
+    --pg-field: #ffffff;
+    --pg-soft: #f6e8ce;
+    --pg-soft-2: #f3f2ed;
+    --pg-soft-3: #f6e8ce;
+    --pg-soft-cool: #f3f2ed;
+    --pg-text: #171717;
+    --pg-muted: #5f636e;
+    --pg-muted-2: #5f636e;
+    --pg-line: #d9d8cf;
+    --pg-line-2: #d9d8cf;
+    --pg-line-3: #d9d8cf;
+    --pg-line-soft: #e7e1d0;
+    --pg-cta-blue: #8b6f23;
+    --pg-cta-red: #8b6f23;
+    --pg-cta-green: #8b6f23;
+    --pg-cta-blue-deep: #6e591b;
+    --pg-glow-soft: rgba(139, 111, 23, .18);
+    --pg-glow-red: rgba(139, 111, 23, .18);
+    --pg-glow-green: rgba(139, 111, 23, .18);
+    --pg-cta-glow: rgba(139, 111, 23, .35);
+    --pg-cta-wash: rgba(139, 111, 23, .08);
+    --pg-cta-disabled: #cdb978;
+    --pg-info-bg: #f6e8ce;
+    --pg-desc: #5f636e;
+    --pg-line-4: #e7e1d0;
+    --pg-line-5: #e7e1d0;
+    --pg-line-6: #d9d8cf;
+    --pg-line-7: #e7e1d0;
+    --pg-pill: #f6e8ce;
+    --pg-pill-hover: #ecdfc0;
+    --pg-blue-tint: #f6e8ce;
+    --pg-page-soft: #f3f2ed;
+    --pg-soft-fill: #f6e8ce;
+    --pg-soft-4: #f6e8ce;
+    --pg-field-soft: #ffffff;
+    --pg-accent-bright: #8b6f23;
+    --pg-step-idle: #ece4d0;
+    --pg-step-idle-line: #d9d8cf;
+    --pg-brand-a: #8b6f23;
+    --pg-brand-b: #6e591b;
+    --pg-brand-glow: rgba(139, 111, 23, .35);
+}
+
+/*
+ * =====================================================================
+ *  Authenticated portal pages (mteja / muuzaji / msimamizi / system_admin)
+ * =====================================================================
+ *
+ *  These pages are standalone documents with their own inline <style> blocks
+ *  and literal hex colors (no token layer), each section using its own brand
+ *  accent (mteja purple, muuzaji green, msimamizi red/indigo, system_admin
+ *  blue) on a shared #f8f9fa / white / #ecf0f1 skeleton. To theme them
+ *  centrally — without rewriting 28 inline stylesheets — the Royal look is
+ *  delivered here as an OVERRIDE LAYER keyed on the selectors every page
+ *  already uses:
+ *
+ *    - Every rule is scoped to html[data-theme="royal-champagne-cream"],
+ *      which adds attribute + element specificity, so it beats each page's
+ *      own equal-class selectors regardless of source order, and it is
+ *      COMPLETELY INERT under White Professional (the default theme stays
+ *      byte-identical).
+ *    - Values mirror the Royal design tokens above exactly (same hexes as
+ *      --dm-* / --pg-* royal values), so portal and public pages share one
+ *      palette.
+ *    - Section brand accents on chrome (nav active states, logo gradients,
+ *      avatars, primary CTAs, active tabs/chips, links, spinners, focus)
+ *      converge to royal gold; SEMANTIC colors keep their hue in both themes
+ *      (.b-* / .alert-* / .banner.* status chips, success greens, danger
+ *      reds, warning ambers, logout red, online-dot).
+ *    - Pages with a permanently dark navy sidebar (#1f2937) adopt the same
+ *      ivory Royal shell; their light-on-dark text selectors are explicitly
+ *      re-colored here so contrast is preserved.
+ *    - Inline style="..." one-offs and JS-injected chart/palette colors keep
+ *      their existing hues by design (neutral grays read fine on ivory; the
+ *      status hues above are intentional in both themes).
+ *
+ *  Selector coverage: layout shell (body/sidebar/header/topbar/content),
+ *  navigation, user block, cards, tables, toolbars, fields, buttons, tabs,
+ *  chips, modals, empty/loading states, timelines — the shared vocabulary
+ *  verified across all 28 portal pages.
+ * ---------------------------------------------------------------------
+ */
+
+html[data-theme="royal-champagne-cream"] body {
+    background-color: #f3f2ed;
+    color: #171717;
+}
+
+/* ---- Page canvas ---- */
+html[data-theme="royal-champagne-cream"] .main-content,
+html[data-theme="royal-champagne-cream"] .page-bg {
+    background-color: #f3f2ed;
+}
+
+/* ---- Sidebar shell (light ivory + re-colored dark-navy variants) ---- */
+html[data-theme="royal-champagne-cream"] .sidebar {
+    background-color: #fcfbf7;
+    border-right-color: #d9d8cf;
+}
+html[data-theme="royal-champagne-cream"] .sidebar-header { border-bottom-color: #d9d8cf; }
+html[data-theme="royal-champagne-cream"] .sidebar-footer { border-top-color: #d9d8cf; }
+
+html[data-theme="royal-champagne-cream"] .logo-icon {
+    background: linear-gradient(135deg, #8b6f23, #6e591b);
+    color: #fff;
+}
+html[data-theme="royal-champagne-cream"] .logo-text h2 { color: #171717; }
+html[data-theme="royal-champagne-cream"] .logo-text p { color: #5f636e; }
+
+html[data-theme="royal-champagne-cream"] .nav-item { color: #5f636e; }
+html[data-theme="royal-champagne-cream"] .nav-item:hover {
+    background-color: #ece4d0;
+    color: #6e591b;
+}
+html[data-theme="royal-champagne-cream"] .nav-item.active {
+    background-color: #f6e8ce;
+    color: #6e591b;
+}
+
+/* ---- Sidebar user block ---- */
+html[data-theme="royal-champagne-cream"] .user-avatar {
+    background-color: #f6e8ce;
+    color: #8b6f23;
+}
+html[data-theme="royal-champagne-cream"] .user-name { color: #171717; }
+html[data-theme="royal-champagne-cream"] .user-role { color: #8b6f23; }
+html[data-theme="royal-champagne-cream"] .user-meta b { color: #171717; }
+html[data-theme="royal-champagne-cream"] .user-meta span { color: #5f636e; }
+html[data-theme="royal-champagne-cream"] .user-email { color: #5f636e; }
+html[data-theme="royal-champagne-cream"] .logout-btn {
+    color: #dc2626;
+    background-color: #f3f2ed;
+    border-color: #d9d8cf;
+}
+
+/* ---- Mobile sidebar toggle ---- */
+html[data-theme="royal-champagne-cream"] .mobile-menu-toggle,
+html[data-theme="royal-champagne-cream"] .hamburger {
+    background-color: #fcfbf7;
+    border-color: #d9d8cf;
+}
+/* Presentation attributes lose to this rule, so inline stroke="#667eea"
+   hamburger icons follow the theme too. */
+html[data-theme="royal-champagne-cream"] .mobile-menu-toggle svg { stroke: #8b6f23; }
+
+/* ---- Top bar / page headers ---- */
+html[data-theme="royal-champagne-cream"] .topbar {
+    background-color: #fcfbf7;
+    border-bottom-color: #d9d8cf;
+}
+html[data-theme="royal-champagne-cream"] .dashboard-header,
+html[data-theme="royal-champagne-cream"] .tabs-container {
+    background-color: #fcfbf7;
+}
+html[data-theme="royal-champagne-cream"] .header-btn {
+    background-color: #f3f2ed;
+}
+
+/* ---- Cards / panels ---- */
+html[data-theme="royal-champagne-cream"] .section-card,
+html[data-theme="royal-champagne-cream"] .card,
+html[data-theme="royal-champagne-cream"] .stat,
+html[data-theme="royal-champagne-cream"] .summary-box,
+html[data-theme="royal-champagne-cream"] .business-card,
+html[data-theme="royal-champagne-cream"] .empty-container {
+    background-color: #fcfbf7;
+}
+html[data-theme="royal-champagne-cream"] .card,
+html[data-theme="royal-champagne-cream"] .stat,
+html[data-theme="royal-champagne-cream"] .user-card,
+html[data-theme="royal-champagne-cream"] .log-card {
+    border-color: #d9d8cf;
+}
+html[data-theme="royal-champagne-cream"] .user-card,
+html[data-theme="royal-champagne-cream"] .log-card,
+html[data-theme="royal-champagne-cream"] .filter-chip {
+    background-color: #f3f2ed;
+}
+/* Stat cards come in two original treatments (soft #f8f9fa on dashboard,
+   white on notify); ivory with a warm outline reads as a card in both. */
+html[data-theme="royal-champagne-cream"] .stat-card {
+    background-color: #fcfbf7;
+    border: 1px solid #e7e1d0;
+    border-left: 4px solid #8b6f23;
+}
+html[data-theme="royal-champagne-cream"] .stat-icon {
+    background-color: #f6e8ce;
+    color: #8b6f23;
+}
+html[data-theme="royal-champagne-cream"] .welcome-card {
+    background: linear-gradient(135deg, #8b6f23, #6e591b);
+    color: #fff;
+}
+
+/* ---- Tabs / chips / links ---- */
+html[data-theme="royal-champagne-cream"] .tab-btn { color: #5f636e; }
+html[data-theme="royal-champagne-cream"] .tab-btn.active,
+html[data-theme="royal-champagne-cream"] .filter-chip.active {
+    background-color: #8b6f23;
+    color: #fff;
+}
+html[data-theme="royal-champagne-cream"] .phone-link,
+html[data-theme="royal-champagne-cream"] .log-endpoint { color: #8b6f23; }
+
+/* ---- Inputs / search ---- */
+html[data-theme="royal-champagne-cream"] .search-box {
+    background-color: #fcfbf7;
+    border-color: #d9d8cf;
+}
+html[data-theme="royal-champagne-cream"] .search-input {
+    background-color: #fcfbf7;
+    border-color: #d9d8cf;
+}
+html[data-theme="royal-champagne-cream"] .search-input:focus {
+    border-color: #8b6f23;
+    box-shadow: 0 0 0 3px rgba(139, 111, 23, .15);
+}
+html[data-theme="royal-champagne-cream"] .toolbar select,
+html[data-theme="royal-champagne-cream"] .toolbar input,
+html[data-theme="royal-champagne-cream"] .field input,
+html[data-theme="royal-champagne-cream"] .field select,
+html[data-theme="royal-champagne-cream"] .field textarea,
+html[data-theme="royal-champagne-cream"] .input-field {
+    border-color: #d9d8cf;
+}
+
+/* Royal-only keyboard focus affordance (White keeps its own per-page focus
+   styles untouched; inputs/selects keep their authored focus states). */
+html[data-theme="royal-champagne-cream"] a:focus-visible,
+html[data-theme="royal-champagne-cream"] button:focus-visible,
+html[data-theme="royal-champagne-cream"] [role="radio"]:focus-visible,
+html[data-theme="royal-champagne-cream"] .nav-item:focus-visible {
+    outline: 3px solid rgba(139, 111, 23, .55);
+    outline-offset: 2px;
+}
+
+/* ---- Buttons ---- */
+html[data-theme="royal-champagne-cream"] .btn-primary {
+    background-color: #8b6f23;
+    color: #fff;
+}
+html[data-theme="royal-champagne-cream"] .btn-ghost {
+    background-color: #fcfbf7;
+    border-color: #d9d8cf;
+    color: #171717;
+}
+html[data-theme="royal-champagne-cream"] .btn-details {
+    background-color: #f3f2ed;
+    color: #5f636e;
+}
+html[data-theme="royal-champagne-cream"] .btn-logs {
+    background-color: #f6e8ce;
+    color: #8b6f23;
+}
+html[data-theme="royal-champagne-cream"] .back-btn {
+    background-color: #f3f2ed;
+    color: #171717;
+}
+html[data-theme="royal-champagne-cream"] .refresh-btn {
+    background-color: #f6e8ce;
+    color: #8b6f23;
+}
+html[data-theme="royal-champagne-cream"] .retry-btn { background-color: #8b6f23; }
+html[data-theme="royal-champagne-cream"] .contact-btn,
+html[data-theme="royal-champagne-cream"] .twende-btn {
+    background: linear-gradient(135deg, #8b6f23, #6e591b);
+    box-shadow: 0 2px 8px rgba(139, 111, 23, .3);
+}
+
+/* ---- Tables ---- */
+html[data-theme="royal-champagne-cream"] .orders-table th,
+html[data-theme="royal-champagne-cream"] .orders-table td {
+    border-bottom-color: #e7e1d0;
+}
+html[data-theme="royal-champagne-cream"] .orders-table th { color: #5f636e; }
+html[data-theme="royal-champagne-cream"] .orders-table tr:hover td {
+    background-color: #faf6ec;
+}
+html[data-theme="royal-champagne-cream"] table.data th {
+    color: #171717;
+    border-bottom-color: #d9d8cf;
+}
+html[data-theme="royal-champagne-cream"] table.data th,
+html[data-theme="royal-champagne-cream"] table.data td {
+    border-bottom-color: #e7e1d0;
+}
+html[data-theme="royal-champagne-cream"] table.data td { color: #5f636e; }
+
+/* ---- Modals ---- */
+html[data-theme="royal-champagne-cream"] .modal,
+html[data-theme="royal-champagne-cream"] .modal-head,
+html[data-theme="royal-champagne-cream"] .modal-foot,
+html[data-theme="royal-champagne-cream"] .modal-content {
+    background-color: #fcfbf7;
+}
+html[data-theme="royal-champagne-cream"] .modal-head,
+html[data-theme="royal-champagne-cream"] .modal-header,
+html[data-theme="royal-champagne-cream"] .modal-foot {
+    border-color: #d9d8cf;
+}
+
+/* ---- Detail rows / timelines / dividers ---- */
+html[data-theme="royal-champagne-cream"] .detail-row { border-bottom-color: #e7e1d0; }
+html[data-theme="royal-champagne-cream"] .user-actions { border-top-color: #d9d8cf; }
+html[data-theme="royal-champagne-cream"] .line { border-bottom-color: #e7e1d0; }
+html[data-theme="royal-champagne-cream"] .timeline { border-left-color: #d9d8cf; }
+html[data-theme="royal-champagne-cream"] .timeline li::before {
+    background-color: #8b6f23;
+}
+
+/* ---- Empty / loading states ---- */
+html[data-theme="royal-champagne-cream"] .empty { color: #5f636e; }
+html[data-theme="royal-champagne-cream"] .empty i { color: #c9c2ae; }
+html[data-theme="royal-champagne-cream"] .empty-icon,
+html[data-theme="royal-champagne-cream"] .generated { color: #c9c2ae; }
+html[data-theme="royal-champagne-cream"] .loading-spinner {
+    border-color: #e2ddd0;
+    border-top-color: #8b6f23;
+}
+
+/* ---- Business logo placeholder (mteja listings) ---- */
+html[data-theme="royal-champagne-cream"] .business-logo {
+    background-color: #f6e8ce;
+}
+html[data-theme="royal-champagne-cream"] .business-logo-placeholder {
+    border-color: #e2d3ac;
+    color: #8b6f23;
+}
+
+/* ---- Typography groups: ink + warm muted (shared across sections) ---- */
+html[data-theme="royal-champagne-cream"] .title,
+html[data-theme="royal-champagne-cream"] .page-title,
+html[data-theme="royal-champagne-cream"] .section-title,
+html[data-theme="royal-champagne-cream"] .card-title,
+html[data-theme="royal-champagne-cream"] .header-title,
+html[data-theme="royal-champagne-cream"] .topbar h1,
+html[data-theme="royal-champagne-cream"] .business-name,
+html[data-theme="royal-champagne-cream"] .stat-number,
+html[data-theme="royal-champagne-cream"] .product-name,
+html[data-theme="royal-champagne-cream"] .money-value,
+html[data-theme="royal-champagne-cream"] .empty-title,
+html[data-theme="royal-champagne-cream"] .state-box .state-title,
+html[data-theme="royal-champagne-cream"] .tri-sec > b,
+html[data-theme="royal-champagne-cream"] .meta-item b {
+    color: #171717;
+}
+html[data-theme="royal-champagne-cream"] .subtitle,
+html[data-theme="royal-champagne-cream"] .page-sub,
+html[data-theme="royal-champagne-cream"] .header-subtitle,
+html[data-theme="royal-champagne-cream"] .stat-label,
+html[data-theme="royal-champagne-cream"] .money-label,
+html[data-theme="royal-champagne-cream"] .empty-text,
+html[data-theme="royal-champagne-cream"] .loading-text,
+html[data-theme="royal-champagne-cream"] .state-box,
+html[data-theme="royal-champagne-cream"] .list-text,
+html[data-theme="royal-champagne-cream"] .meta-item,
+html[data-theme="royal-champagne-cream"] .mono,
+html[data-theme="royal-champagne-cream"] .detail-value {
+    color: #5f636e;
+}
+
+/* ---- Extension: page-specific components that share the accent /
+   surface / neutral vocabulary (measured true gaps across the portal;
+   semantic status colors stay excluded by design) ---- */
+
+/* Accent controls converge to royal gold */
+html[data-theme="royal-champagne-cream"] .btn-save,
+html[data-theme="royal-champagne-cream"] .ask-btn,
+html[data-theme="royal-champagne-cream"] .contact-sms-btn,
+html[data-theme="royal-champagne-cream"] .contact-call-btn,
+html[data-theme="royal-champagne-cream"] .ai-verify-btn,
+html[data-theme="royal-champagne-cream"] .ai-btn-camera,
+html[data-theme="royal-champagne-cream"] .bar-fill {
+    background-color: #8b6f23;
+    color: #fff;
+}
+html[data-theme="royal-champagne-cream"] .avatar {
+    background: linear-gradient(135deg, #8b6f23, #6e591b);
+    color: #fff;
+}
+html[data-theme="royal-champagne-cream"] .ai-reset { color: #8b6f23; }
+html[data-theme="royal-champagne-cream"] input:checked + .slider {
+    background-color: #8b6f23;
+}
+html[data-theme="royal-champagne-cream"] .selected-product-card,
+html[data-theme="royal-champagne-cream"] .ai-note { border-left-color: #8b6f23; }
+html[data-theme="royal-champagne-cream"] .contact-cancel-btn,
+html[data-theme="royal-champagne-cream"] .cancel-btn {
+    background-color: #f3f2ed;
+}
+
+/* AI panel surfaces: purple/blue drafts -> champagne + gold */
+html[data-theme="royal-champagne-cream"] .ai-upload-zone {
+    border-color: #e2d3ac;
+    background-color: #fcfbf7;
+}
+html[data-theme="royal-champagne-cream"] .ai-upload-zone:hover,
+html[data-theme="royal-champagne-cream"] .ai-upload-zone.drag {
+    border-color: #8b6f23;
+    background-color: #f6e8ce;
+}
+html[data-theme="royal-champagne-cream"] .ai-import-btn {
+    border-color: #e2d3ac;
+    background-color: #fcfbf7;
+}
+
+/* Info-blue families become the Royal info champagne; semantic greens,
+   ambers and reds keep their hue */
+html[data-theme="royal-champagne-cream"] .ai-banner.info {
+    background-color: #f6e8ce;
+    color: #8b6f23;
+    border-left-color: #8b6f23;
+}
+html[data-theme="royal-champagne-cream"] .ai-summary-chip.existing,
+html[data-theme="royal-champagne-cream"] .ai-status.existing {
+    background-color: #f6e8ce;
+    color: #8b6f23;
+}
+html[data-theme="royal-champagne-cream"] .ai-card { background-color: #f6e8ce; }
+html[data-theme="royal-champagne-cream"] .ai-card-title,
+html[data-theme="royal-champagne-cream"] .ai-card-text { color: #8b6f23; }
+
+/* Extra surfaces and lines */
+html[data-theme="royal-champagne-cream"] .modal-footer { border-top-color: #d9d8cf; }
+html[data-theme="royal-champagne-cream"] .form-input,
+html[data-theme="royal-champagne-cream"] .ask-input { border-color: #d9d8cf; }
+html[data-theme="royal-champagne-cream"] .divider { background-color: #e7e1d0; }
+html[data-theme="royal-champagne-cream"] .chip {
+    border-color: #d9d8cf;
+    color: #171717;
+}
+html[data-theme="royal-champagne-cream"] .chip:hover {
+    background-color: #f6e8ce;
+    border-color: #e2d3ac;
+}
+html[data-theme="royal-champagne-cream"] .bar-track { background-color: #e2ddd0; }
+html[data-theme="royal-champagne-cream"] .stats-container { background-color: #f3f2ed; }
+html[data-theme="royal-champagne-cream"] .headline-card { background-color: #fcfbf7; }
+html[data-theme="royal-champagne-cream"] .ai-table { background-color: #fcfbf7; }
+html[data-theme="royal-champagne-cream"] .ai-table th {
+    background-color: #f3f2ed;
+    border-bottom-color: #d9d8cf;
+}
+html[data-theme="royal-champagne-cream"] .ai-table td { border-bottom-color: #e7e1d0; }
+html[data-theme="royal-champagne-cream"] .ai-table-scroll { border-color: #d9d8cf; }
+html[data-theme="royal-champagne-cream"] .ai-preview-item {
+    background-color: #f3f2ed;
+    border-color: #d9d8cf;
+}
+html[data-theme="royal-champagne-cream"] .ai-modal-content { background-color: #fcfbf7; }
+html[data-theme="royal-champagne-cream"] .ai-modal-header { border-bottom-color: #d9d8cf; }
+
+/* Extension ink group */
+html[data-theme="royal-champagne-cream"] .headline,
+html[data-theme="royal-champagne-cream"] .customer-name,
+html[data-theme="royal-champagne-cream"] .bar-value,
+html[data-theme="royal-champagne-cream"] .ai-table th,
+html[data-theme="royal-champagne-cream"] .ai-modal-title,
+html[data-theme="royal-champagne-cream"] .ai-note-title,
+html[data-theme="royal-champagne-cream"] .ai-uz-main,
+html[data-theme="royal-champagne-cream"] .tri-list,
+html[data-theme="royal-champagne-cream"] ul.dm-list {
+    color: #171717;
+}
+
+/* Extension muted group */
+html[data-theme="royal-champagne-cream"] .ai-note-text,
+html[data-theme="royal-champagne-cream"] .ai-preview-name,
+html[data-theme="royal-champagne-cream"] .ai-conf-row,
+html[data-theme="royal-champagne-cream"] .ai-progress-text,
+html[data-theme="royal-champagne-cream"] .ai-modal-close,
+html[data-theme="royal-champagne-cream"] .ai-uz-sub,
+html[data-theme="royal-champagne-cream"] .business-location,
+html[data-theme="royal-champagne-cream"] .examples-title,
+html[data-theme="royal-champagne-cream"] .contact-modal-sub,
+html[data-theme="royal-champagne-cream"] .bar-label,
+html[data-theme="royal-champagne-cream"] .muted,
+html[data-theme="royal-champagne-cream"] .empty-state,
+html[data-theme="royal-champagne-cream"] .empty-sub,
+html[data-theme="royal-champagne-cream"] .footer-text,
+html[data-theme="royal-champagne-cream"] .limitations,
+html[data-theme="royal-champagne-cream"] .limitations b,
+html[data-theme="royal-champagne-cream"] .list-bullet {
+    color: #5f636e;
+}
+
+/* ---- Extension 2: portal-specific pages (system_admin redirect + notify,
+   msimamizi activity/alerts/history, muuzaji entry hub) ---- */
+
+/* system_admin/index redirect card */
+html[data-theme="royal-champagne-cream"] .logo {
+    background: linear-gradient(135deg, #8b6f23, #6e591b);
+}
+html[data-theme="royal-champagne-cream"] .manual-link { border-top-color: #d9d8cf; }
+html[data-theme="royal-champagne-cream"] .manual-link a { color: #8b6f23; }
+html[data-theme="royal-champagne-cream"] .message { color: #171717; }
+html[data-theme="royal-champagne-cream"] .redirect-container {
+    background: rgba(252, 251, 247, .97);
+}
+html[data-theme="royal-champagne-cream"] .redirect-note { color: #5f636e; }
+
+/* system_admin/notify */
+html[data-theme="royal-champagne-cream"] .done-btn,
+html[data-theme="royal-champagne-cream"] .send-btn,
+html[data-theme="royal-champagne-cream"] .test-btn {
+    background-color: #8b6f23;
+    color: #fff;
+}
+html[data-theme="royal-champagne-cream"] .send-btn.disabled {
+    background-color: #95a5a6;
+}
+html[data-theme="royal-champagne-cream"] .type-btn {
+    border-color: #8b6f23;
+    background-color: #fcfbf7;
+}
+html[data-theme="royal-champagne-cream"] .type-btn.active {
+    background-color: #8b6f23;
+    border-color: #8b6f23;
+    color: #fff;
+}
+html[data-theme="royal-champagne-cream"] .select-all,
+html[data-theme="royal-champagne-cream"] .user-item.selected {
+    background-color: #f6e8ce;
+}
+html[data-theme="royal-champagne-cream"] .select-recipients {
+    background-color: #f3f2ed;
+    border-color: #8b6f23;
+}
+html[data-theme="royal-champagne-cream"] .notif-card {
+    background-color: #f3f2ed;
+    border-left-color: #8b6f23;
+}
+html[data-theme="royal-champagne-cream"] .filter-row,
+html[data-theme="royal-champagne-cream"] .user-item {
+    border-bottom-color: #d9d8cf;
+}
+html[data-theme="royal-champagne-cream"] .notif-footer,
+html[data-theme="royal-champagne-cream"] .notif-time,
+html[data-theme="royal-champagne-cream"] .recipient-count,
+html[data-theme="royal-champagne-cream"] .char-count {
+    color: #5f636e;
+}
+html[data-theme="royal-champagne-cream"] .notif-message { color: #171717; }
+
+/* msimamizi activity digest / alerts / history */
+html[data-theme="royal-champagne-cream"] .act-bar { background-color: #8b6f23; }
+html[data-theme="royal-champagne-cream"] .act-chip {
+    border-color: #d9d8cf;
+    color: #5f636e;
+}
+html[data-theme="royal-champagne-cream"] .act-chip.active {
+    background-color: #f6e8ce;
+    border-color: #e2d3ac;
+    color: #8b6f23;
+}
+html[data-theme="royal-champagne-cream"] .act-event { border-top-color: #e7e1d0; }
+html[data-theme="royal-champagne-cream"] .act-list-row,
+html[data-theme="royal-champagne-cream"] .history-row {
+    color: #5f636e;
+    border-top-color: #e7e1d0;
+}
+html[data-theme="royal-champagne-cream"] .act-panel,
+html[data-theme="royal-champagne-cream"] .alert-card,
+html[data-theme="royal-champagne-cream"] .history-card {
+    background-color: #fcfbf7;
+    border-color: #d9d8cf;
+}
+html[data-theme="royal-champagne-cream"] .ai-chip {
+    background-color: #f6e8ce;
+    border-color: #e2d3ac;
+    color: #8b6f23;
+}
+html[data-theme="royal-champagne-cream"] .alert-detail { color: #5f636e; }
+html[data-theme="royal-champagne-cream"] .evidence-row {
+    background-color: #f3f2ed;
+    color: #5f636e;
+}
+html[data-theme="royal-champagne-cream"] .act-event-action,
+html[data-theme="royal-champagne-cream"] .act-list-name,
+html[data-theme="royal-champagne-cream"] .act-list-value,
+html[data-theme="royal-champagne-cream"] .act-panel-title,
+html[data-theme="royal-champagne-cream"] .alert-title,
+html[data-theme="royal-champagne-cream"] .history-subject,
+html[data-theme="royal-champagne-cream"] .history-title {
+    color: #171717;
+}
+html[data-theme="royal-champagne-cream"] .act-bar-day,
+html[data-theme="royal-champagne-cream"] .act-event-meta,
+html[data-theme="royal-champagne-cream"] .act-refs,
+html[data-theme="royal-champagne-cream"] .evidence-label,
+html[data-theme="royal-champagne-cream"] .history-empty {
+    color: #5f636e;
+}
+
+/* muuzaji entry hub: service cards + entry flow (semantic error/warn/
+   success banners and amber flags keep their hue) */
+html[data-theme="royal-champagne-cream"] .dm-entry-banner[data-kind="info"] {
+    background-color: #f6e8ce;
+    color: #8b6f23;
+    border-inline-start-color: #8b6f23;
+}
+html[data-theme="royal-champagne-cream"] .dm-entry-btn {
+    border-color: #d9d8cf;
+    color: #171717;
+}
+html[data-theme="royal-champagne-cream"] .dm-entry-btn-primary {
+    background-color: #8b6f23;
+    border-color: #8b6f23;
+    color: #fff;
+}
+html[data-theme="royal-champagne-cream"] .dm-entry-candidate { border-color: #d9d8cf; }
+html[data-theme="royal-champagne-cream"] .dm-entry-candidate.is-selected {
+    border-color: #8b6f23;
+    background-color: #f6e8ce;
+}
+html[data-theme="royal-champagne-cream"] .dm-entry-chip {
+    background-color: #f3f2ed;
+    border-color: #e7e1d0;
+    color: #5f636e;
+}
+html[data-theme="royal-champagne-cream"] .dm-entry-chip:hover {
+    background-color: #f6e8ce;
+    border-color: #8b6f23;
+}
+html[data-theme="royal-champagne-cream"] .dm-entry-chip-type { color: #8b6f23; }
+html[data-theme="royal-champagne-cream"] .dm-entry-field input,
+html[data-theme="royal-champagne-cream"] .dm-entry-field select,
+html[data-theme="royal-champagne-cream"] .dm-entry-text {
+    border-color: #d9d8cf;
+}
+html[data-theme="royal-champagne-cream"] .dm-entry-field input:focus,
+html[data-theme="royal-champagne-cream"] .dm-entry-field select:focus,
+html[data-theme="royal-champagne-cream"] .dm-entry-text:focus {
+    border-color: #8b6f23;
+}
+html[data-theme="royal-champagne-cream"] .dm-entry-match {
+    background-color: #f3f2ed;
+    border-color: #e7e1d0;
+}
+html[data-theme="royal-champagne-cream"] .dm-entry-match-line,
+html[data-theme="royal-champagne-cream"] .dm-entry-title { color: #171717; }
+html[data-theme="royal-champagne-cream"] .dm-entry-type {
+    background-color: #f6e8ce;
+    color: #8b6f23;
+}
+html[data-theme="royal-champagne-cream"] .dm-entry-preview { border-top-color: #d9d8cf; }
+html[data-theme="royal-champagne-cream"] .dm-entry-field-label,
+html[data-theme="royal-champagne-cream"] .dm-entry-status,
+html[data-theme="royal-champagne-cream"] .dm-entry-subtitle,
+html[data-theme="royal-champagne-cream"] .dm-entry-meta { color: #5f636e; }
+html[data-theme="royal-champagne-cream"] .hub-header { background-color: #fcfbf7; }
+html[data-theme="royal-champagne-cream"] .hub-desc { color: #5f636e; }
+html[data-theme="royal-champagne-cream"] .hub-ads,
+html[data-theme="royal-champagne-cream"] .hub-ask,
+html[data-theme="royal-champagne-cream"] .hub-copilot,
+html[data-theme="royal-champagne-cream"] .hub-health,
+html[data-theme="royal-champagne-cream"] .hub-price,
+html[data-theme="royal-champagne-cream"] .hub-restock {
+    background-color: #f6e8ce;
+    border-color: #e2d3ac;
+}
+html[data-theme="royal-champagne-cream"] .hub-ads .hub-icon,
+html[data-theme="royal-champagne-cream"] .hub-ask .hub-icon,
+html[data-theme="royal-champagne-cream"] .hub-copilot .hub-icon,
+html[data-theme="royal-champagne-cream"] .hub-health .hub-icon,
+html[data-theme="royal-champagne-cream"] .hub-price .hub-icon,
+html[data-theme="royal-champagne-cream"] .hub-restock .hub-icon {
+    background-color: #8b6f23;
+}
+html[data-theme="royal-champagne-cream"] .hub-ads .hub-title,
+html[data-theme="royal-champagne-cream"] .hub-ads .hub-arrow,
+html[data-theme="royal-champagne-cream"] .hub-ask .hub-title,
+html[data-theme="royal-champagne-cream"] .hub-ask .hub-arrow,
+html[data-theme="royal-champagne-cream"] .hub-copilot .hub-title,
+html[data-theme="royal-champagne-cream"] .hub-copilot .hub-arrow,
+html[data-theme="royal-champagne-cream"] .hub-health .hub-title,
+html[data-theme="royal-champagne-cream"] .hub-health .hub-arrow,
+html[data-theme="royal-champagne-cream"] .hub-price .hub-title,
+html[data-theme="royal-champagne-cream"] .hub-price .hub-arrow,
+html[data-theme="royal-champagne-cream"] .hub-restock .hub-title,
+html[data-theme="royal-champagne-cream"] .hub-restock .hub-arrow {
+    color: #6e591b;
+}

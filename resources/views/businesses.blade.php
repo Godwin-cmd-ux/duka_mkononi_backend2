@@ -4,6 +4,7 @@
 <body>
 @endverbatim
 @include('partials.dm-lang-widget')
+@include('partials.dm-theme-widget')
 @include('partials.dm-voice')
 @include('partials.site-navbar')
 @verbatim
@@ -13,7 +14,7 @@
     .bl-toolbar .dm-input { padding-left: 42px; }
     .bl-count { text-align: center; font-weight: 700; color: var(--dm-navy); font-size: 15px; margin-bottom: 22px; }
     .bl-card { display: flex; flex-direction: column; gap: 14px; padding: 18px; }
-    .bl-logo { width: 56px; height: 56px; border-radius: 14px; background: #dbeafe; color: var(--dm-primary); display: grid; place-items: center; font-weight: 800; font-size: 20px; overflow: hidden; flex: 0 0 auto; }
+    .bl-logo { width: 56px; height: 56px; border-radius: 14px; background: var(--dm-tint, #dbeafe); color: var(--dm-primary); display: grid; place-items: center; font-weight: 800; font-size: 20px; overflow: hidden; flex: 0 0 auto; }
     .bl-logo img { width: 100%; height: 100%; object-fit: cover; }
     .bl-rows { display: flex; flex-direction: column; }
     .bl-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--dm-line); font-size: 13.5px; }
@@ -24,13 +25,13 @@
     /* Capability #12 - trust summary panel */
     .trust-btn { margin-top: 2px; }
     .trust-panel { display: none; border-top: 1px solid var(--dm-line); margin-top: 12px; padding-top: 12px; }
-    .trust-answer { background: #f8fafc; border: 1px solid var(--dm-line); border-radius: 12px; padding: 11px 13px; font-size: 14px; line-height: 1.55; color: var(--dm-ink); }
+    .trust-answer { background: var(--dm-bg, #f8fafc); border: 1px solid var(--dm-line); border-radius: 12px; padding: 11px 13px; font-size: 14px; line-height: 1.55; color: var(--dm-ink); }
     .trust-block { margin-top: 10px; }
     .trust-lbl { display: block; font-size: 10.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--dm-muted); margin-bottom: 5px; }
     .trust-line { font-size: 13px; color: var(--dm-ink); line-height: 1.65; }
     .trust-review { border: 1px solid var(--dm-line); border-radius: 10px; padding: 9px 11px; margin-bottom: 7px; font-size: 13px; color: var(--dm-ink); }
     .trust-review-head { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; margin-bottom: 3px; }
-    .trust-stars { color: #f59e0b; letter-spacing: 1px; font-size: 12px; }
+    .trust-stars { color: var(--dm-accent, #f59e0b); letter-spacing: 1px; font-size: 12px; }
     .trust-link { display: inline-block; margin-top: 6px; font-size: 12.5px; font-weight: 700; color: var(--dm-primary); }
     .trust-limits { margin-top: 10px; font-size: 11.5px; color: var(--dm-muted); line-height: 1.6; }
 </style>

@@ -1,5 +1,6 @@
 @include('partials.dm-locale')
 <link rel="stylesheet" href="/css/smartcart-loader.css">
+<link rel="stylesheet" href="/css/themes.css">
 @verbatim
 <head>
     <meta charset="UTF-8">
@@ -15,7 +16,7 @@
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: #ffffff;
+            background-color: var(--pg-page, #ffffff);
             overflow-x: hidden;
         }
 
@@ -59,7 +60,7 @@
 
         .sub-header {
             font-size: 16px;
-            color: #7f8c8d;
+            color: var(--pg-muted, #7f8c8d);
             text-align: center;
         }
 
@@ -76,7 +77,7 @@
         .label {
             font-size: 14px;
             font-weight: 600;
-            color: #2c3e50;
+            color: var(--pg-text, #2c3e50);
             margin-bottom: 8px;
             margin-left: 5px;
             display: block;
@@ -85,32 +86,32 @@
         .input-field {
             width: 100%;
             height: 56px;
-            background-color: #f8f9fa;
+            background-color: var(--pg-soft, #f8f9fa);
             border-radius: 12px;
             padding: 0 20px;
             font-size: 16px;
             font-family: 'Inter', sans-serif;
-            border: 1px solid #e0e0e0;
+            border: 1px solid var(--pg-line, #e0e0e0);
             transition: all 0.2s ease;
-            color: #2c3e50;
+            color: var(--pg-text, #2c3e50);
         }
 
         .input-field:focus {
             outline: none;
-            border-color: #3498db;
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
-            background-color: #ffffff;
+            border-color: var(--pg-cta-blue, #3498db);
+            box-shadow: 0 0 0 3px var(--pg-glow-soft, rgba(52, 152, 219, 0.1));
+            background-color: var(--pg-field, #ffffff);
         }
 
         .input-field::placeholder {
-            color: #95a5a6;
+            color: var(--pg-muted-2, #95a5a6);
         }
 
         /* Signup button */
         .signup-btn {
             width: 100%;
             height: 58px;
-            background-color: #3498db;
+            background-color: var(--pg-cta-blue, #3498db);
             border-radius: 12px;
             justify-content: center;
             align-items: center;
@@ -129,7 +130,7 @@
         }
 
         .signup-btn.disabled {
-            background-color: #85c1e9;
+            background-color: var(--pg-cta-disabled, #85c1e9);
             opacity: 0.8;
             transform: none;
             cursor: not-allowed;
@@ -151,7 +152,7 @@
 
         .terms-text {
             font-size: 12px;
-            color: #7f8c8d;
+            color: var(--pg-muted, #7f8c8d);
             line-height: 18px;
         }
 
@@ -171,13 +172,13 @@
         .back-btn-text {
             font-size: 16px;
             font-weight: 600;
-            color: #3498db;
+            color: var(--pg-cta-blue, #3498db);
             text-decoration: none;
         }
 
         /* Footer info card */
         .footer-info {
-            background-color: #f0f8ff;
+            background-color: var(--pg-info-bg, #f0f8ff);
             padding: 20px;
             border-radius: 12px;
             margin-top: 20px;
@@ -186,13 +187,13 @@
         .footer-text {
             font-size: 16px;
             font-weight: 700;
-            color: #2c3e50;
+            color: var(--pg-text, #2c3e50);
             margin-bottom: 10px;
         }
 
         .footer-bullet {
             font-size: 14px;
-            color: #3498db;
+            color: var(--pg-cta-blue, #3498db);
             margin-left: 10px;
             margin-bottom: 5px;
             display: block;
@@ -237,7 +238,7 @@
             backdrop-filter: blur(2px);
         }
         .alert-box {
-            background: white;
+            background: var(--pg-surface, white);
             border-radius: 28px;
             width: 85%;
             max-width: 340px;
@@ -249,16 +250,16 @@
             font-size: 20px;
             font-weight: 800;
             margin-bottom: 12px;
-            color: #2c3e50;
+            color: var(--pg-text, #2c3e50);
         }
         .alert-message {
             font-size: 15px;
-            color: #5d6d7e;
+            color: var(--pg-desc, #5d6d7e);
             margin-bottom: 24px;
             line-height: 1.4;
         }
         .alert-btn {
-            background-color: #3498db;
+            background-color: var(--pg-cta-blue, #3498db);
             padding: 12px;
             border-radius: 40px;
             font-weight: 700;
@@ -281,21 +282,21 @@
             width: 46px;
             height: 56px;
             border-radius: 12px;
-            border: 1.5px solid #d5dbe1;
-            background: #f8fafc;
+            border: 1.5px solid var(--pg-line-3, #d5dbe1);
+            background: var(--pg-soft-cool, #f8fafc);
             text-align: center;
             font-size: 22px;
             font-weight: 700;
-            color: #2c3e50;
+            color: var(--pg-text, #2c3e50);
             font-family: 'Inter', monospace;
             transition: border-color 0.2s;
         }
         .otp-box:focus {
             outline: none;
-            border-color: #3498db;
+            border-color: var(--pg-cta-blue, #3498db);
         }
         .otp-box.filled {
-            border-color: #3498db;
+            border-color: var(--pg-cta-blue, #3498db);
         }
         .otp-box.error {
             border-color: #e74c3c;
@@ -327,15 +328,15 @@
             right: 14px;
             padding: 6px;
             border-radius: 18px;
-            background: #f4f6f8;
+            background: var(--pg-soft-2, #f4f6f8);
             border: none;
             cursor: pointer;
             font-size: 18px;
-            color: #95a5a6;
+            color: var(--pg-muted-2, #95a5a6);
         }
         .otp-creating-text {
             font-size: 13px;
-            color: #7f8c8d;
+            color: var(--pg-muted, #7f8c8d);
             margin-top: 6px;
         }
     </style>
@@ -343,6 +344,7 @@
 <body>
 @endverbatim
 @include('partials.dm-lang-widget')
+@include('partials.dm-theme-widget')
 @verbatim
 <div class="keyboard-avoid">
     <div class="scroll-container">
@@ -549,14 +551,14 @@
                             <span style="font-size:34px;">✉️</span>
                         </div>
                     </div>
-                    <div class="alert-title" style="font-size:20px;font-weight:bold;color:#2c3e50;margin-bottom:6px;text-align:center;">${t('client_signup.otp_title')}</div>
-                    <div style="font-size:13px;color:#7f8c8d;text-align:center;line-height:19px;margin-bottom:22px;padding:0 6px;" id="otpSentTo" style="font-size:13px;color:#7f8c8d;text-align:center;line-height:19px;margin-bottom:22px;padding:0 6px;"></div>
+                    <div class="alert-title" style="font-size:20px;font-weight:bold;color:var(--pg-text, #2c3e50);margin-bottom:6px;text-align:center;">${t('client_signup.otp_title')}</div>
+                    <div style="font-size:13px;color:var(--pg-muted, #7f8c8d);text-align:center;line-height:19px;margin-bottom:22px;padding:0 6px;" id="otpSentTo" style="font-size:13px;color:#7f8c8d;text-align:center;line-height:19px;margin-bottom:22px;padding:0 6px;"></div>
                     <div class="otp-boxes" id="otpBoxes">${boxesHtml}</div>
                     <div class="otp-error-box" id="otpErrorBox">
                         <span class="otp-error-icon">⚠️</span>
                         <span class="otp-error-text" id="otpErrorText"></span>
                     </div>
-                    <button id="otpVerifyBtn" class="alert-btn" style="width:100%;height:54px;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;cursor:pointer;border:none;font-size:16px;font-weight:bold;color:white;background:#3498db;">
+                    <button id="otpVerifyBtn" class="alert-btn" style="width:100%;height:54px;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;cursor:pointer;border:none;font-size:16px;font-weight:bold;color:white;background:var(--pg-cta-blue, #3498db);">
                         <span>✓</span> <span id="otpVerifyText">${t('client_signup.otp_verify')}</span>
                         <span id="otpVerifyLoader" style="display:none;"><div class="loader dm-sc dm-sc--light" style="width:20px;height:20px;"></div></span>
                     </button>
@@ -565,11 +567,11 @@
                         <div class="otp-creating-text" id="otpCreatingText">${t('client_signup.otp_creating_account')}</div>
                     </div>
                     <div style="text-align:center;margin-bottom:14px;">
-                        <span id="otpNoCodeText" style="font-size:13px;color:#7f8c8d;">${t('client_signup.otp_no_code_received')}</span>
-                        <span id="otpResendBtn" style="font-size:13px;font-weight:700;color:#3498db;cursor:pointer;"></span>
+                        <span id="otpNoCodeText" style="font-size:13px;color:var(--pg-muted, #7f8c8d);">${t('client_signup.otp_no_code_received')}</span>
+                        <span id="otpResendBtn" style="font-size:13px;font-weight:700;color:var(--pg-cta-blue, #3498db);cursor:pointer;"></span>
                     </div>
                     <div style="text-align:center;">
-                        <span id="otpCancelBtn" style="font-size:13px;color:#7f8c8d;cursor:pointer;display:inline-flex;align-items:center;gap:5px;text-decoration:underline;">${t('client_signup.otp_change_email')}</span>
+                        <span id="otpCancelBtn" style="font-size:13px;color:var(--pg-muted, #7f8c8d);cursor:pointer;display:inline-flex;align-items:center;gap:5px;text-decoration:underline;">${t('client_signup.otp_change_email')}</span>
                     </div>
                 </div>
             </div>
@@ -601,17 +603,17 @@
         if (!resendBtn) return;
         if (otpResendBusy) {
             resendBtn.textContent = t('client_signup.otp_sending');
-            resendBtn.style.color = '#95a5a6';
+            resendBtn.style.color = 'var(--pg-muted-2, #95a5a6)';
             resendBtn.style.cursor = 'default';
             return;
         }
         if (otpCountdown > 0) {
             resendBtn.textContent = t('client_signup.otp_resend_countdown', { seconds: otpCountdown });
-            resendBtn.style.color = '#95a5a6';
+            resendBtn.style.color = 'var(--pg-muted-2, #95a5a6)';
             resendBtn.style.cursor = 'default';
         } else {
             resendBtn.textContent = t('client_signup.otp_resend_code');
-            resendBtn.style.color = '#3498db';
+            resendBtn.style.color = 'var(--pg-cta-blue, #3498db)';
             resendBtn.style.cursor = 'pointer';
         }
     }

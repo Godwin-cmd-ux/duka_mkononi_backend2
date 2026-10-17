@@ -3,7 +3,7 @@
     application. Eight destinations, all reachable on every screen size.
 --}}
 <style>
-    .dm-nav { position: sticky; top: 0; z-index: 500; background: rgba(255, 255, 255, .92); backdrop-filter: blur(10px); border-bottom: 1px solid var(--dm-line); }
+    .dm-nav { position: sticky; top: 0; z-index: 500; background: var(--dm-nav-bg, rgba(255, 255, 255, .92)); backdrop-filter: blur(10px); border-bottom: 1px solid var(--dm-line); }
     .dm-nav-inner { display: flex; align-items: center; gap: 16px; min-height: 66px; }
     .dm-brand { display: flex; align-items: center; gap: 10px; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; color: var(--dm-navy); font-size: 18px; letter-spacing: -.01em; }
     .dm-brand-mark {
@@ -12,14 +12,14 @@
     }
     .dm-nav-links { display: flex; align-items: center; gap: 4px; margin-left: auto; }
     .dm-nav-link { padding: 9px 12px; border-radius: 9px; font-size: 14.5px; font-weight: 500; color: var(--dm-ink); }
-    .dm-nav-link:hover { background: #f1f5f9; color: var(--dm-primary); }
+    .dm-nav-link:hover { background: var(--dm-hover, #f1f5f9); color: var(--dm-primary); }
     .dm-nav-cta { display: flex; align-items: center; gap: 8px; }
-    .dm-nav-toggle { display: none; margin-left: auto; width: 44px; height: 44px; border-radius: 10px; border: 1px solid var(--dm-line); background: #fff; cursor: pointer; align-items: center; justify-content: center; }
+    .dm-nav-toggle { display: none; margin-left: auto; width: 44px; height: 44px; border-radius: 10px; border: 1px solid var(--dm-line); background: var(--dm-input-bg, #fff); cursor: pointer; align-items: center; justify-content: center; }
     .dm-nav-toggle svg { width: 22px; height: 22px; color: var(--dm-ink); }
     @media (max-width: 960px) {
         .dm-nav-links, .dm-nav-cta.desktop { display: none; }
         .dm-nav-toggle { display: inline-flex; }
-        .dm-nav-drawer { display: block; position: fixed; inset: 66px 0 0 0; background: #fff; padding: 18px 20px 40px; overflow-y: auto; transform: translateY(-8px); opacity: 0; visibility: hidden; transition: opacity .2s ease, transform .2s ease, visibility .2s; z-index: 490; }
+        .dm-nav-drawer { display: block; position: fixed; inset: 66px 0 0 0; background: var(--dm-card, #fff); padding: 18px 20px 40px; overflow-y: auto; transform: translateY(-8px); opacity: 0; visibility: hidden; transition: opacity .2s ease, transform .2s ease, visibility .2s; z-index: 490; }
         .dm-nav-drawer.open { opacity: 1; visibility: visible; transform: translateY(0); }
         .dm-nav-drawer a { display: flex; align-items: center; gap: 12px; padding: 14px 12px; border-radius: 12px; font-size: 16px; font-weight: 600; border-bottom: 1px solid var(--dm-line); }
         .dm-nav-drawer a:last-child { border-bottom: none; margin-top: 8px; }

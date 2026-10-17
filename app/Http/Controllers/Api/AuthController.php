@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Models\User;
 use App\Services\BusinessResolver;
 use App\Services\JwtToken;
+use App\Services\ThemePreference;
 use Firebase\JWT\ExpiredException;
 use UnexpectedValueException;
 use Illuminate\Http\Request;
@@ -542,6 +543,7 @@ class AuthController extends BaseController
         $password = $request->input('password');
         $role = $request->input('role');
         $language = $request->input('language');
+        $theme = $request->input('theme');
 
         if (!$email || !$password || !$role) {
             $this->log(null, 'LOGIN_FAILED', '/api/login', ['reason' => 'Missing fields', 'email' => $email, 'role' => $role], $ip, 'failed');
@@ -583,6 +585,38 @@ class AuthController extends BaseController
                 }
             }
 
+            // Theme preference synchronization (same shape as the language
+            // preference above, one strict rule on top): an established,
+            // VALID database preference always wins and is never overwritten
+            // by the browser's value on login. The browser value is only
+            // adopted — and persisted, best effort — when the account has no
+            // valid stored theme yet. Neither present -> White Professional
+            // (reported, but not written, so a later explicit choice can
+            // still be adopted). Every step is guarded: a failed preference
+            // sync must never fail the login itself, and the visitor keeps
+            // their local theme either way.
+            $preferredTheme = ThemePreference::normalize($user->preferred_theme ?? null);
+
+            if (!$preferredTheme) {
+                $browserTheme = ThemePreference::normalize($theme);
+
+                if ($browserTheme) {
+                    $preferredTheme = $browserTheme;
+
+                    try {
+                        User::where('id', $user->id)->update(['preferred_theme' => $browserTheme]);
+                    } catch (\Throwable $themeError) {
+                        // Column missing (migration not run yet) or API unavailable:
+                        // local preference survives, login proceeds normally.
+                        $this->log($user->id, 'LOGIN_THEME_SYNC_SKIPPED', '/api/login', ['error' => $themeError->getMessage()], $ip, 'failed');
+                    }
+                }
+            }
+
+            if (!$preferredTheme) {
+                $preferredTheme = ThemePreference::DEFAULT;
+            }
+
             $now = $this->isoNow();
             User::where('id', $user->id)->update([
                 'is_online' => true,
@@ -618,6 +652,7 @@ class AuthController extends BaseController
                     'phone' => $user->phone,
                     'status' => $user->status,
                     'language' => $user->language ?: 'sw',
+                    'preferred_theme' => $preferredTheme,
                     'is_online' => true,
                     'last_seen' => $now
                 ]

@@ -4,12 +4,14 @@ import { Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import TabSwipe from '../../components/tab-swipe';
 import { useLang } from '../../context/LanguageContext';
+import { useTheme } from '../../lib/theme';
 
 // Tab order — used by the swipe gesture to pick the neighbouring page.
 const MTEJA_TABS = ['/mteja/biashara', '/mteja/matangazo', '/mteja/tafuta', '/mteja/profaili', '/mteja/nyingine'];
 
 export default function MtejaLayout() {
   const { t } = useLang();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
 
   return (
@@ -17,11 +19,11 @@ export default function MtejaLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#667eea',
+        tabBarActiveTintColor: colors.primary,
         tabBarStyle: {
-          backgroundColor: '#fff',
+          backgroundColor: colors.card,
           borderTopWidth: 1,
-          borderTopColor: '#e0e0e0',
+          borderTopColor: colors.line2,
           height: 60 + insets.bottom,
           paddingBottom: 10 + insets.bottom,
           paddingTop: 8,

@@ -17,6 +17,7 @@ import {
 import SmartCartLoader from '../components/SmartCartLoader';
 import { useLang, Lang, ALL_LANGUAGES } from '../context/LanguageContext';
 import { useSession } from '../context/SessionContext';
+import { normalizeThemeId, useTheme } from '../lib/theme';
 
 // ✅ BASE URL YA BACKEND YAKO
 import { API_BASE_URL } from '../constants/api';
@@ -104,6 +105,7 @@ export default function LoginScreen() {
     const role = params.role as string || 'mteja';
     const { lang, changeLang, t } = useLang();
 
+    const { setTheme } = useTheme();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -314,6 +316,14 @@ export default function LoginScreen() {
             // Save all data as key-value pairs
             const storageEntries = Object.entries(userDataToSave);
             await AsyncStorage.multiSet(storageEntries as [string, string][]);
+
+            // 🎨 Adopt the account's saved theme (the same preference the
+            // website syncs); a missing or invalid value keeps the current
+            // theme, so login never flashes or resets the user's choice.
+            const serverTheme = normalizeThemeId(data.preferred_theme);
+            if (serverTheme) {
+                setTheme(serverTheme);
+            }
 
             // 🔐 Tell the session gate the user is now logged in, so the role
             // dashboards become accessible and the home screen is locked out.

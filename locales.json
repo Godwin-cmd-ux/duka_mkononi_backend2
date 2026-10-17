@@ -1295,7 +1295,12 @@
         "alert_error": "Hitilafu"
       },
       "ui": {
-        "change_language": "Badilisha lugha"
+        "change_language": "Badilisha lugha",
+        "change_theme": "Badilisha mandhari",
+        "theme_panel_title": "Chagua mandhari yako",
+        "theme_white_desc": "Safi, wazi, na inayojulikana. Inadumisha muonekano wa awali wa Duka Mkononi kwa miundombinu ya kitaalamu, uso wa rangi za msingi, na mtindo wa sasa wa chapa.",
+        "theme_royal_desc": "Yenye joto, ya kifahari, na ya anasa. Inachanganya mandhari za krimu laini, kadi za ngambo, lafudhi za dhahabu ya kifalma, na maandishi ya rangi za kawaida kwa uzoefu wa ununuzi wa kiwango cha juu.",
+        "theme_selected": "Imechaguliwa"
       },
       "home": {
         "page_title": "Dukamkononi | Karibu Dukani",
@@ -4024,7 +4029,12 @@
         "alert_error": "Error"
       },
       "ui": {
-        "change_language": "Change language"
+        "change_language": "Change language",
+        "change_theme": "Change theme",
+        "theme_panel_title": "Choose your theme",
+        "theme_white_desc": "Clean, bright, and familiar. Retains the original Duka Mkononi appearance with professional layouts, neutral surfaces, and existing brand styling.",
+        "theme_royal_desc": "Warm, elegant, and luxurious. Combines soft cream backgrounds, ivory cards, royal gold accents, and refined neutral text for a premium shopping experience.",
+        "theme_selected": "Selected"
       },
       "home": {
         "page_title": "Dukamkononi | Welcome to the Shop",
@@ -6753,7 +6763,12 @@
         "alert_error": "Error"
       },
       "ui": {
-        "change_language": "Cambiar idioma"
+        "change_language": "Cambiar idioma",
+        "change_theme": "Cambiar tema",
+        "theme_panel_title": "Elige tu tema",
+        "theme_white_desc": "Limpio, brillante y familiar. Conserva el aspecto original de Duka Mkononi con diseños profesionales, superficies neutras y el estilo de marca existente.",
+        "theme_royal_desc": "Cálido, elegante y lujoso. Combina fondos crema suaves, tarjetas de marfil, acentos dorados reales y texto neutro refinado para una experiencia de compra premium.",
+        "theme_selected": "Seleccionado"
       },
       "home": {
         "page_title": "Dukamkononi | Bienvenido a la Tienda",
@@ -9482,7 +9497,12 @@
         "alert_error": "Erreur"
       },
       "ui": {
-        "change_language": "Changer de langue"
+        "change_language": "Changer de langue",
+        "change_theme": "Changer le thème",
+        "theme_panel_title": "Choisissez votre thème",
+        "theme_white_desc": "Épuré, lumineux et familier. Conserve l'apparence originale de Duka Mkononi avec des mises en page professionnelles, des surfaces neutres et le style de marque existant.",
+        "theme_royal_desc": "Chaleureux, élégant et luxueux. Associe des fonds crème doux, des cartes ivoire, des accents dorés royaux et un texte neutre raffiné pour une expérience d'achat premium.",
+        "theme_selected": "Sélectionné"
       },
       "home": {
         "page_title": "Dukamkononi | Bienvenue à la Boutique",
@@ -12211,7 +12231,12 @@
         "alert_error": "错误"
       },
       "ui": {
-        "change_language": "切换语言"
+        "change_language": "切换语言",
+        "change_theme": "切换主题",
+        "theme_panel_title": "选择您的主题",
+        "theme_white_desc": "干净、明亮、亲切。保留 Duka Mkononi 的原始外观，沿用专业的布局、中性表面和现有品牌风格。",
+        "theme_royal_desc": "温暖、优雅、奢华。柔和的奶油色背景、象牙白卡片、皇家金色点缀与精致的中性文字，营造高端购物体验。",
+        "theme_selected": "已选择"
       },
       "home": {
         "page_title": "Dukamkononi | 欢迎光临本店",
@@ -14940,7 +14965,12 @@
         "alert_error": "त्रुटि"
       },
       "ui": {
-        "change_language": "भाषा बदलें"
+        "change_language": "भाषा बदलें",
+        "change_theme": "थीम बदलें",
+        "theme_panel_title": "अपनी थीम चुनें",
+        "theme_white_desc": "साफ़, चमकदार और परिचित। मौजूदा Duka Mkononi रूप-रेखा को बनाए रखता है — व्यावसायिक लेआउट, तटस्थ सतह और वर्तमान ब्रांड स्टाइल के साथ।",
+        "theme_royal_desc": "गर्म, आकर्षक और शानदार। मुलायम क्रीम पृष्ठभूमि, हाथीदांत कार्ड, रॉयल गोल्ड एक्सेंट और परिष्कृत तटस्थ टेक्स्ट के साथ प्रीमियम शॉपिंग अनुभव।",
+        "theme_selected": "चयनित"
       },
       "home": {
         "page_title": "Dukamkononi | दुकान में आपका स्वागत है",
@@ -17669,7 +17699,12 @@
         "alert_error": "خرابی"
       },
       "ui": {
-        "change_language": "زبان تبدیل کریں"
+        "change_language": "زبان تبدیل کریں",
+        "change_theme": "تھیم تبدیل کریں",
+        "theme_panel_title": "اپنی تھیم منتخب کریں",
+        "theme_white_desc": "صفائی، روشن اور پہچان والی۔ اصل Duka Mkononi کی خاص شکل کو برقرار رکھتی ہے — پیشہ ورانہ خاکے، سادہ رنگ اور موجودہ برانڈ انداز کے ساتھ۔",
+        "theme_royal_desc": "گرم، شائستہ اور شاندار۔ نرم کریم پس منظر، عاجی کارڈ، شاہی سنہرے تسلیمات اور پرداختہ کردہ سادہ متن کے ساتھ پریمیوم خریداری کا تجربہ۔",
+        "theme_selected": "منتخب شدہ"
       },
       "home": {
         "page_title": "Dukamkononi | دکان میں خوش آمدید",
@@ -20398,7 +20433,12 @@
         "alert_error": "Fehler"
       },
       "ui": {
-        "change_language": "Sprache ändern"
+        "change_language": "Sprache ändern",
+        "change_theme": "Theme wechseln",
+        "theme_panel_title": "Wähle dein Thema",
+        "theme_white_desc": "Sauber, hell und vertraut. Erhält das ursprüngliche Erscheinungsbild von Duka Mkononi mit professionellen Layouts, neutralen Flächen und dem bestehenden Markenstil.",
+        "theme_royal_desc": "Warm, elegant und luxuriös. Verbindet weiche Creme-Hintergründe, elfenbeinfarbene Karten, königliche Goldakzente und feine neutrale Schrift für ein hochwertiges Einkaufserlebnis.",
+        "theme_selected": "Ausgewählt"
       },
       "home": {
         "page_title": "Dukamkononi | Willkommen im Laden",

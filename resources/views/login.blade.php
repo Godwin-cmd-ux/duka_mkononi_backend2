@@ -1,5 +1,6 @@
 @include('partials.dm-locale')
 <link rel="stylesheet" href="/css/smartcart-loader.css">
+<link rel="stylesheet" href="/css/themes.css">
 @verbatim
 <head>
     <meta charset="UTF-8">
@@ -15,7 +16,7 @@
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: #ffffff;
+            background-color: var(--pg-page, #ffffff);
             overflow-x: hidden;
         }
 
@@ -34,7 +35,7 @@
 
         .container {
             flex: 1;
-            background-color: #ffffff;
+            background-color: var(--pg-page, #ffffff);
             min-height: 800px;
             display: flex;
             flex-direction: column;
@@ -54,7 +55,7 @@
             justify-content: center;
             align-items: center;
             border-radius: 20px;
-            background-color: #f5f5f5;
+            background-color: var(--pg-soft-3, #f5f5f5);
             display: flex;
             cursor: pointer;
             transition: all 0.2s;
@@ -68,7 +69,7 @@
         .role-badge {
             padding: 8px 18px;
             border-radius: 30px;
-            background-color: #f5f5f5;
+            background-color: var(--pg-soft-3, #f5f5f5);
         }
 
         .role-badge-text {
@@ -103,13 +104,13 @@
         .welcome-text {
             font-size: 28px;
             font-weight: 800;
-            color: #2c3e50;
+            color: var(--pg-text, #2c3e50);
             margin-bottom: 8px;
         }
 
         .role-description {
             font-size: 16px;
-            color: #7f8c8d;
+            color: var(--pg-muted, #7f8c8d);
             line-height: 1.4;
         }
 
@@ -132,28 +133,28 @@
         .label-text {
             font-size: 14px;
             font-weight: 600;
-            color: #2c3e50;
+            color: var(--pg-text, #2c3e50);
             margin-left: 8px;
         }
 
         .input-field {
             width: 100%;
             height: 56px;
-            background-color: #f8f9fa;
+            background-color: var(--pg-soft, #f8f9fa);
             border-radius: 14px;
             padding: 0 20px;
             font-size: 16px;
             font-family: 'Inter', sans-serif;
-            border: 1px solid #e0e0e0;
+            border: 1px solid var(--pg-line, #e0e0e0);
             transition: all 0.2s;
-            color: #2c3e50;
+            color: var(--pg-text, #2c3e50);
         }
 
         .input-field:focus {
             outline: none;
-            border-color: #3498db;
-            background-color: #ffffff;
-            box-shadow: 0 0 0 3px rgba(52,152,219,0.1);
+            border-color: var(--pg-cta-blue, #3498db);
+            background-color: var(--pg-field, #ffffff);
+            box-shadow: 0 0 0 3px var(--pg-glow-soft, rgba(52,152,219,0.1));
         }
 
         .input-field.error {
@@ -202,7 +203,7 @@
             width: 22px;
             height: 22px;
             border-radius: 6px;
-            border: 2px solid #ddd;
+            border: 2px solid var(--pg-line-2, #ddd);
             margin-right: 10px;
             display: flex;
             align-items: center;
@@ -211,13 +212,13 @@
         }
 
         .checkbox.checked {
-            background-color: #3498db;
-            border-color: #3498db;
+            background-color: var(--pg-cta-blue, #3498db);
+            border-color: var(--pg-cta-blue, #3498db);
         }
 
         .remember-text {
             font-size: 14px;
-            color: #2c3e50;
+            color: var(--pg-text, #2c3e50);
         }
 
         .forgot-link {
@@ -272,7 +273,7 @@
 
         .signup-text {
             font-size: 15px;
-            color: #7f8c8d;
+            color: var(--pg-muted, #7f8c8d);
         }
 
         .signup-link {
@@ -289,14 +290,14 @@
             justify-content: center;
             gap: 10px;
             padding: 15px;
-            background-color: #f0f8ff;
+            background-color: var(--pg-info-bg, #f0f8ff);
             border-radius: 14px;
             margin-top: 10px;
         }
 
         .security-text {
             font-size: 14px;
-            color: #3498db;
+            color: var(--pg-cta-blue, #3498db);
         }
 
         .loader {
@@ -327,7 +328,7 @@
             z-index: 1000;
         }
         .alert-box {
-            background: white;
+            background: var(--pg-surface, white);
             border-radius: 28px;
             width: 85%;
             max-width: 320px;
@@ -341,7 +342,7 @@
         }
         .alert-message {
             font-size: 14px;
-            color: #5d6d7e;
+            color: var(--pg-desc, #5d6d7e);
             margin-bottom: 24px;
             line-height: 1.4;
         }
@@ -367,6 +368,7 @@
 <body>
 @endverbatim
 @include('partials.dm-lang-widget')
+@include('partials.dm-theme-widget')
 @verbatim
 <div class="keyboard-avoid">
     <div class="scroll-container">
@@ -400,7 +402,7 @@
                     <!-- Email -->
                     <div class="input-group">
                         <div class="input-label">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7f8c8d">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="stroke: var(--pg-muted, #7f8c8d)">
                                 <path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z" stroke-width="1.5"/>
                                 <path d="M22 6L12 13L2 6" stroke-width="1.5"/>
                             </svg>
@@ -413,7 +415,7 @@
                     <!-- Password -->
                     <div class="input-group">
                         <div class="input-label">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7f8c8d">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="stroke: var(--pg-muted, #7f8c8d)">
                                 <path d="M12 2C8.13 2 5 5.13 5 9V12C3.9 12 3 12.9 3 14V20C3 21.1 3.9 22 5 22H19C20.1 22 21 21.1 21 20V14C21 12.9 20.1 12 19 12V9C19 5.13 15.87 2 12 2Z" stroke-width="1.5"/>
                                 <path d="M12 17V15" stroke-width="1.5"/>
                             </svg>
@@ -422,7 +424,7 @@
                         <div class="password-wrapper">
                             <input type="password" id="passwordInput" class="input-field password-input" placeholder="••••••••" autocomplete="current-password">
                             <div id="togglePassword" class="eye-btn">
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7f8c8d">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style="stroke: var(--pg-muted, #7f8c8d)">
                                     <path d="M1 12C1 12 5 4 12 4C19 4 23 12 23 12C23 12 19 20 12 20C5 20 1 12 1 12Z" stroke-width="1.5"/>
                                     <circle cx="12" cy="12" r="3" stroke-width="1.5"/>
                                 </svg>
@@ -437,11 +439,11 @@
                             <div id="checkbox" class="checkbox"></div>
                             <span class="remember-text" data-i18n="login.remember_me">Nikumbuke</span>
                         </div>
-                        <div id="forgotLink" class="forgot-link" style="color: #3498db;" data-i18n="login.forgot_password">Umesahau nenosiri?</div>
+                        <div id="forgotLink" class="forgot-link" style="color: var(--pg-cta-blue, #3498db);" data-i18n="login.forgot_password">Umesahau nenosiri?</div>
                     </div>
 
                     <!-- Login Button -->
-                    <button id="loginBtn" class="login-btn" style="background-color: #3498db;">
+                    <button id="loginBtn" class="login-btn" style="background-color: var(--pg-cta-blue, #3498db);">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8">
                             <path d="M15 3H19C20.1 3 21 3.9 21 5V19C21 20.1 20.1 21 19 21H15"/>
                             <path d="M10 17L15 12L10 7"/>
@@ -453,13 +455,13 @@
                     <!-- Signup -->
                     <div class="signup-row">
                         <span class="signup-text" data-i18n="login.no_account">Huna akaunti?</span>
-                        <span id="signupLink" class="signup-link" style="color: #3498db;" data-i18n="login.signup_as_customer">Jisajili kama Mteja</span>
+                        <span id="signupLink" class="signup-link" style="color: var(--pg-cta-blue, #3498db);" data-i18n="login.signup_as_customer">Jisajili kama Mteja</span>
                     </div>
                 </div>
 
                 <!-- Security Info -->
                 <div class="security-box">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3498db">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="stroke: var(--pg-cta-blue, #3498db)">
                         <path d="M12 3L3 9L12 15L21 9L12 3Z" stroke-width="1.5"/>
                         <path d="M5 12L12 17.5L19 12" stroke-width="1.5"/>
                         <path d="M5 16L12 21.5L19 16" stroke-width="1.5"/>
@@ -568,8 +570,8 @@
     }
 
     function getRoleColor() {
-        const colors = { 'mteja': '#3498db', 'muuzaji': '#2ecc71', 'msimamizi': '#e74c3c', 'washa': '#9b59b6' };
-        return colors[role] || '#2c3e50';
+        const colors = { 'mteja': 'var(--pg-cta-blue, #3498db)', 'muuzaji': 'var(--pg-cta-green, #2ecc71)', 'msimamizi': 'var(--pg-cta-red, #e74c3c)', 'washa': '#9b59b6' };
+        return colors[role] || 'var(--pg-text, #2c3e50)';
     }
 
     function getRoleTitle() {
@@ -760,7 +762,7 @@
             const response = await fetch(`/api/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify({ email, password, role: backendRole, language: activeLocale() })
+                body: JSON.stringify({ email, password, role: backendRole, language: activeLocale(), theme: (window.DMTheme && DMTheme.isValid ? DMTheme.current() : null) })
             });
             
             if (!response.ok) {
@@ -777,6 +779,12 @@
             
             const user = data.user;
             const token = data.token;
+
+            // Theme synchronization on login: the account's stored preference
+            // (user.preferred_theme) is authoritative when valid — adopt it
+            // locally; when the server sent none, the visitor's own local
+            // choice is left untouched (and sync failures never break login).
+            if (window.DMTheme) DMTheme.adopt(user.preferred_theme);
             
             // Check user status
             if (user.status && user.status !== 'approved') {
