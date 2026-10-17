@@ -874,3 +874,467 @@ html[data-theme="royal-champagne-cream"] .hub-restock .hub-title,
 html[data-theme="royal-champagne-cream"] .hub-restock .hub-arrow {
     color: #6e591b;
 }
+
+/*
+ * =====================================================================
+ *  Royal Companion Recolor — inline styles, JS-generated colors,
+ *  semantic badges, and the SmartCart loader
+ * =====================================================================
+ *
+ *  The portal pages also carry colors that no class selector can reach:
+ *  literal style="…" attributes (~260 sites), colors injected by page JS
+ *  (role/status badges, severity chips, decision tabs), and the kept
+ *  semantic chips. This layer re-skins ALL of them under Royal without
+ *  touching a single page, using three tricks:
+ *
+ *    1. Attribute-substring rules with EXACT terminators:
+ *         [style*="color:#7f8c8d;"]   middle of a declaration list
+ *         [style$="color:#7f8c8d"]    last declaration (no semicolon)
+ *       The " ;"-terminated / end-anchored forms never match the 8-digit
+ *       alpha tints (#e74c3c18) or longer properties (background-color:),
+ *       so there are no substring collisions.
+ *    2. !important — the only way CSS can beat an inline style. Every rule
+ *       is Royal-scoped, so White Professional remains byte-identical.
+ *    3. CSS re-matches live when JS writes el.style.*, so dynamically
+ *       injected badges recolor the moment they hit the DOM.
+ *
+ *  The companion palette keeps status DIFFERENTIATION while shifting every
+ *  hue onto the champagne axis: greens become deep olive-sage, reds deep
+ *  burgundy, ambers burnt gold, blues/info champagne-gold, purple accents
+ *  full royal gold. White text on deep fills is kept on purpose (contrast);
+ *  neutral dim overlays (rgba) are shared by both themes by design.
+ * ---------------------------------------------------------------------
+ */
+
+/* ---- SmartCart loader: one variable override repaints the whole
+        gradient-driven cart animation (its rules are var()-based) ---- */
+html[data-theme="royal-champagne-cream"] .dm-sc.dm-sc {
+    --dm-sc-color: #8b6f23;
+    --dm-sc-bright: #c7a94a;
+    --dm-sc-accent: #b07d1a;
+    --dm-sc-accent-hi: #d9b44a;
+    --dm-sc-accent-lo: #8a6412;
+}
+
+/* ---- Semantic chips retuned to the champagne axis (kept
+        differentiated: sage = ok, gold = info, burnt amber = warn,
+        burgundy = danger, warm gray = muted) ---- */
+html[data-theme="royal-champagne-cream"] .b-ok,
+html[data-theme="royal-champagne-cream"] .alert-ok,
+html[data-theme="royal-champagne-cream"] .banner.ok,
+html[data-theme="royal-champagne-cream"] .btn-enable,
+html[data-theme="royal-champagne-cream"] .ai-verified-tag {
+    background-color: #edf0da;
+    color: #4d6326;
+}
+html[data-theme="royal-champagne-cream"] .b-info,
+html[data-theme="royal-champagne-cream"] .alert-info {
+    background-color: #f6e8ce;
+    color: #8b6f23;
+}
+html[data-theme="royal-champagne-cream"] .b-warn,
+html[data-theme="royal-champagne-cream"] .alert-warn,
+html[data-theme="royal-champagne-cream"] .banner.warn,
+html[data-theme="royal-champagne-cream"] .ai-warn {
+    background-color: #f8efd6;
+    color: #8a6412;
+}
+html[data-theme="royal-champagne-cream"] .b-danger,
+html[data-theme="royal-champagne-cream"] .alert-err {
+    background-color: #f6e6e0;
+    color: #8f2f26;
+}
+html[data-theme="royal-champagne-cream"] .b-muted {
+    background-color: #f3f2ed;
+    color: #5f636e;
+}
+html[data-theme="royal-champagne-cream"] .btn-disable {
+    background-color: #f3f2ed;
+    color: #5f636e;
+}
+
+/* ---- Inline text colors (guarded: an element that also paints a
+        background/border is handled by the joint rules below) ---- */
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style*="color:#2c3e50;"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style$="color:#2c3e50"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style*="color: #2c3e50;"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style$="color: #2c3e50"] { color: #171717 !important; }
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style*="color:#5d6d7e;"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style$="color:#5d6d7e"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style*="color: #5d6d7e;"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style$="color: #5d6d7e"] { color: #5f636e !important; }
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style*="color:#7f8c8d;"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style$="color:#7f8c8d"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style*="color: #7f8c8d;"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style$="color: #7f8c8d"] { color: #5f636e !important; }
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style*="color:#64748b;"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style$="color:#64748b"] { color: #5f636e !important; }
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style*="color:#95a5a6;"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style$="color:#95a5a6"] { color: #5f636e !important; }
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style*="color:#94a3b8;"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style$="color:#94a3b8"] { color: #5f636e !important; }
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style*="color:#7a8ba0;"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style$="color:#7a8ba0"] { color: #5f636e !important; }
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style*="color:#bdc3c7;"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style$="color:#bdc3c7"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style*="color:#b8c4cf;"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style$="color:#b8c4cf"] { color: #c9c2ae !important; }
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style*="color:#555;"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style$="color:#555"] { color: #171717 !important; }
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style*="color:#666;"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style$="color:#666"] { color: #5f636e !important; }
+/* Accent text/controls on plain surfaces converge to gold */
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style*="color:#667eea;"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style$="color:#667eea"] { color: #8b6f23 !important; }
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style*="color:#3498db;"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style$="color:#3498db"] { color: #8b6f23 !important; }
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style*="color:#7c5cbf;"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style$="color:#7c5cbf"] { color: #8b6f23 !important; }
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style*="color:#9b59b6;"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style$="color:#9b59b6"] { color: #6e591b !important; }
+/* Status text on plain surfaces: same champagne companions as the chips */
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style*="color:#27ae60;"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style$="color:#27ae60"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style*="color:#2ecc71;"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style$="color:#2ecc71"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style*="color:#28a745;"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style$="color:#28a745"] { color: #5f7a2f !important; }
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style*="color:#e74c3c;"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style$="color:#e74c3c"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style*="color:#dc3545;"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style$="color:#dc3545"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style*="color:#b3261e;"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style$="color:#b3261e"] { color: #a3372c !important; }
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style*="color:#f39c12;"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style$="color:#f39c12"] { color: #b07d1a !important; }
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style*="color:#b9770e;"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style$="color:#b9770e"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style*="color:#b45309;"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style$="color:#b45309"] { color: #8a6412 !important; }
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style*="color:#e67e22;"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style$="color:#e67e22"] { color: #b06a1c !important; }
+
+/* ---- Inline backgrounds (solid hexes and the word "white") ---- */
+html[data-theme="royal-champagne-cream"] [style*="background:#f8f9fa;"],
+html[data-theme="royal-champagne-cream"] [style$="background:#f8f9fa"],
+html[data-theme="royal-champagne-cream"] [style*="background:#f4f6f7;"],
+html[data-theme="royal-champagne-cream"] [style$="background:#f4f6f7"] { background-color: #f3f2ed !important; }
+html[data-theme="royal-champagne-cream"] [style*="background:white;"],
+html[data-theme="royal-champagne-cream"] [style$="background:white"],
+html[data-theme="royal-champagne-cream"] [style*="background:#fff;"],
+html[data-theme="royal-champagne-cream"] [style$="background:#fff"],
+html[data-theme="royal-champagne-cream"] [style*="background:#ffffff;"],
+html[data-theme="royal-champagne-cream"] [style$="background:#ffffff"] { background-color: #fcfbf7 !important; }
+html[data-theme="royal-champagne-cream"] [style*="background:#667eea;"],
+html[data-theme="royal-champagne-cream"] [style$="background:#667eea"] { background-color: #8b6f23 !important; }
+html[data-theme="royal-champagne-cream"] [style*="background:#e8f4fd;"],
+html[data-theme="royal-champagne-cream"] [style$="background:#e8f4fd"],
+html[data-theme="royal-champagne-cream"] [style*="background:#eef4fa;"],
+html[data-theme="royal-champagne-cream"] [style$="background:#eef4fa"],
+html[data-theme="royal-champagne-cream"] [style*="background:#f3eeff;"],
+html[data-theme="royal-champagne-cream"] [style$="background:#f3eeff"] { background-color: #f6e8ce !important; }
+html[data-theme="royal-champagne-cream"] [style*="background:#27ae60;"],
+html[data-theme="royal-champagne-cream"] [style$="background:#27ae60"],
+html[data-theme="royal-champagne-cream"] [style*="background:#2ecc71;"],
+html[data-theme="royal-champagne-cream"] [style$="background:#2ecc71"],
+html[data-theme="royal-champagne-cream"] [style*="background:#e8f6f3;"],
+html[data-theme="royal-champagne-cream"] [style$="background:#e8f6f3"],
+html[data-theme="royal-champagne-cream"] [style*="background:#f0f8f0;"],
+html[data-theme="royal-champagne-cream"] [style$="background:#f0f8f0"] { background-color: #6d8a35 !important; }
+html[data-theme="royal-champagne-cream"] [style*="background:#e74c3c;"],
+html[data-theme="royal-champagne-cream"] [style$="background:#e74c3c"] { background-color: #a3372c !important; }
+html[data-theme="royal-champagne-cream"] [style*="background:#95a5a6;"],
+html[data-theme="royal-champagne-cream"] [style$="background:#95a5a6"] { background-color: #5f636e !important; }
+html[data-theme="royal-champagne-cream"] [style*="background:#e67e22;"],
+html[data-theme="royal-champagne-cream"] [style$="background:#e67e22"] { background-color: #b06a1c !important; }
+html[data-theme="royal-champagne-cream"] [style*="background:#ff6b35;"],
+html[data-theme="royal-champagne-cream"] [style$="background:#ff6b35"] { background-color: #8b6f23 !important; }
+html[data-theme="royal-champagne-cream"] [style*="background:#fff8e1;"],
+html[data-theme="royal-champagne-cream"] [style$="background:#fff8e1"],
+html[data-theme="royal-champagne-cream"] [style*="background:#fef5e7;"],
+html[data-theme="royal-champagne-cream"] [style$="background:#fef5e7"],
+html[data-theme="royal-champagne-cream"] [style*="background:#fdf3e7;"],
+html[data-theme="royal-champagne-cream"] [style$="background:#fdf3e7"],
+html[data-theme="royal-champagne-cream"] [style*="background:#fff9e6;"],
+html[data-theme="royal-champagne-cream"] [style$="background:#fff9e6"] { background-color: #f8efd6 !important; }
+html[data-theme="royal-champagne-cream"] [style*="background:#fdecea;"],
+html[data-theme="royal-champagne-cream"] [style$="background:#fdecea"],
+html[data-theme="royal-champagne-cream"] [style*="background:#fce4ec;"],
+html[data-theme="royal-champagne-cream"] [style$="background:#fce4ec"] { background-color: #f6e6e0 !important; }
+
+/* ---- Inline borders ("solid #hex" matches inside any border shorthand;
+        border-color only recolors sides that actually have width) ---- */
+html[data-theme="royal-champagne-cream"] [style*="solid #ecf0f1;"],
+html[data-theme="royal-champagne-cream"] [style$="solid #ecf0f1"],
+html[data-theme="royal-champagne-cream"] [style*="solid #ddd;"],
+html[data-theme="royal-champagne-cream"] [style$="solid #ddd"],
+html[data-theme="royal-champagne-cream"] [style*="solid #dfe6e9;"],
+html[data-theme="royal-champagne-cream"] [style$="solid #dfe6e9"],
+html[data-theme="royal-champagne-cream"] [style*="solid #dfe4ea;"],
+html[data-theme="royal-champagne-cream"] [style$="solid #dfe4ea"] { border-color: #d9d8cf !important; }
+html[data-theme="royal-champagne-cream"] [style*="solid #f1f3f4;"],
+html[data-theme="royal-champagne-cream"] [style$="solid #f1f3f4"],
+html[data-theme="royal-champagne-cream"] [style*="solid #eef2f7;"],
+html[data-theme="royal-champagne-cream"] [style$="solid #eef2f7"] { border-color: #e7e1d0 !important; }
+
+/* ---- Alpha-tinted JS badges: exact 8-digit forms, tint and text ---- */
+html[data-theme="royal-champagne-cream"] [style*="background:#27ae6018"],
+html[data-theme="royal-champagne-cream"] [style$="background:#27ae6018"],
+html[data-theme="royal-champagne-cream"] [style*="background:#27ae6020"],
+html[data-theme="royal-champagne-cream"] [style$="background:#27ae6020"],
+html[data-theme="royal-champagne-cream"] [style*="background:#2ecc7120"],
+html[data-theme="royal-champagne-cream"] [style$="background:#2ecc7120"] { background-color: #5f7a2f20 !important; }
+html[data-theme="royal-champagne-cream"] [style*="background:#e74c3c12"],
+html[data-theme="royal-champagne-cream"] [style$="background:#e74c3c12"],
+html[data-theme="royal-champagne-cream"] [style*="background:#e74c3c18"],
+html[data-theme="royal-champagne-cream"] [style$="background:#e74c3c18"],
+html[data-theme="royal-champagne-cream"] [style*="background:#e74c3c20"],
+html[data-theme="royal-champagne-cream"] [style$="background:#e74c3c20"] { background-color: #a3372c20 !important; }
+html[data-theme="royal-champagne-cream"] [style*="background:#f39c1215"],
+html[data-theme="royal-champagne-cream"] [style$="background:#f39c1215"] { background-color: #b07d1a15 !important; }
+html[data-theme="royal-champagne-cream"] [style*="background:#e67e2220"],
+html[data-theme="royal-champagne-cream"] [style$="background:#e67e2220"] { background-color: #b06a1c20 !important; }
+html[data-theme="royal-champagne-cream"] [style*="background:#3498db20"],
+html[data-theme="royal-champagne-cream"] [style$="background:#3498db20"] { background-color: #8b6f2320 !important; }
+html[data-theme="royal-champagne-cream"] [style*="background:#95a5a620"],
+html[data-theme="royal-champagne-cream"] [style$="background:#95a5a620"],
+html[data-theme="royal-champagne-cream"] [style*="background:#95a5a622"],
+html[data-theme="royal-champagne-cream"] [style$="background:#95a5a622"] { background-color: #5f636e22 !important; }
+/* paired text inside the alpha-tint badges */
+html[data-theme="royal-champagne-cream"] [style*="color:#27ae60;"] { color: #5f7a2f !important; }
+html[data-theme="royal-champagne-cream"] [style*="color:#e74c3c;"] { color: #a3372c !important; }
+html[data-theme="royal-champagne-cream"] [style*="color:#f39c12;"] { color: #b07d1a !important; }
+html[data-theme="royal-champagne-cream"] [style*="color:#b9770e;"] { color: #8a6412 !important; }
+html[data-theme="royal-champagne-cream"] [style*="color:#7f8c8d;"] { color: #5f636e !important; }
+html[data-theme="royal-champagne-cream"] [style*="color:#5d6d7e;"] { color: #5f636e !important; }
+html[data-theme="royal-champagne-cream"] [style*="color:#3498db;"] { color: #8b6f23 !important; }
+
+/* ---- Observed background+color pairs (both properties recolored even
+        though the guard excludes them from the single-property rules) ---- */
+html[data-theme="royal-champagne-cream"] [style*="background:#e8f4fd"][style*="color:#3498db"] { background-color: #f6e8ce !important; color: #8b6f23 !important; }
+html[data-theme="royal-champagne-cream"] [style*="background:#f4f6f7"][style*="color:#5d6d7e"] { background-color: #f3f2ed !important; color: #5f636e !important; }
+html[data-theme="royal-champagne-cream"] [style*="background:#f8f9fa"][style*="color:#7f8c8d"] { background-color: #f3f2ed !important; color: #5f636e !important; }
+html[data-theme="royal-champagne-cream"] [style*="background:#95a5a6"][style*="color:#7f8c8d"] { background-color: #5f636e !important; color: #f3f2ed !important; }
+
+/* ---- Late additions: stragglers found by the rendered-page coverage
+        audit (teal status green, extra alpha/tint variants) ---- */
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style*="color:#2c7e5f;"],
+html[data-theme="royal-champagne-cream"] :not([style*="background"])[style$="color:#2c7e5f"] { color: #4f7358 !important; }
+html[data-theme="royal-champagne-cream"] [style*="background:#f39c1218"],
+html[data-theme="royal-champagne-cream"] [style$="background:#f39c1218"] { background-color: #b07d1a18 !important; }
+html[data-theme="royal-champagne-cream"] [style*="background:#fef9e7;"],
+html[data-theme="royal-champagne-cream"] [style$="background:#fef9e7"] { background-color: #f8efd6 !important; }
+html[data-theme="royal-champagne-cream"] [style*="background:#fdedec;"],
+html[data-theme="royal-champagne-cream"] [style$="background:#fdedec"] { background-color: #f6e6e0 !important; }
+/* Unguarded partners for background+color pairs (safe: portal inline styles
+   always spell backgrounds "background:", never "background-color:") */
+html[data-theme="royal-champagne-cream"] [style*="color:#2c3e50;"],
+html[data-theme="royal-champagne-cream"] [style$="color:#2c3e50"] { color: #171717 !important; }
+html[data-theme="royal-champagne-cream"] [style*="color:#2c7e5f;"],
+html[data-theme="royal-champagne-cream"] [style$="color:#2c7e5f"] { color: #4f7358 !important; }
+html[data-theme="royal-champagne-cream"] [style*="background:#3498db;"],
+html[data-theme="royal-champagne-cream"] [style$="background:#3498db"] { background-color: #8b6f23 !important; }
+
+/* ---- Component sweep: every remaining class-based accent component
+        across all 28 portal pages, translated through the companion
+        policy (accents->gold, greens->olive-sage, reds->burgundy,
+        ambers->burnt gold, tints->champagne) ---- */
+html[data-theme="royal-champagne-cream"] .ack { background: #f6e8ce }
+html[data-theme="royal-champagne-cream"] .act-silent { background: #f8efd6; color: #8a6412 }
+html[data-theme="royal-champagne-cream"] .act-tag { background: #f6e6e0; color: #a3372c }
+html[data-theme="royal-champagne-cream"] .action-btn { background: #f3f2ed }
+html[data-theme="royal-champagne-cream"] .action-btn.liked .fa-heart { color: #a3372c }
+html[data-theme="royal-champagne-cream"] .action-btn.liked { color: #a3372c }
+html[data-theme="royal-champagne-cream"] .action-num { background: #edf0da; color: #4d6326 }
+html[data-theme="royal-champagne-cream"] .ad-media { background: #f3f2ed }
+html[data-theme="royal-champagne-cream"] .add-btn { background: #5f7a2f }
+html[data-theme="royal-champagne-cream"] .add-cart-btn { background: #6d8a35 }
+html[data-theme="royal-champagne-cream"] .ai-banner.error { background: #f6e6e0; color: #a3372c }
+html[data-theme="royal-champagne-cream"] .ai-biz-save { background: #8b6f23 }
+html[data-theme="royal-champagne-cream"] .ai-btn-process { background: #a3372c }
+html[data-theme="royal-champagne-cream"] .ai-chip.active { background: #8b6f23; border-color: #8b6f23 }
+html[data-theme="royal-champagne-cream"] .ai-dots span { background: #a3372c }
+html[data-theme="royal-champagne-cream"] .ai-entry-btn:hover { border-color: #8b6f23; background: #f6e8ce }
+html[data-theme="royal-champagne-cream"] .ai-entry-ic { background: #f6e8ce; color: #8b6f23 }
+html[data-theme="royal-champagne-cream"] .ai-import-btn:hover { border-color: #8b6f23; background: #f6e8ce }
+html[data-theme="royal-champagne-cream"] .ai-metric { background: #f3f2ed }
+html[data-theme="royal-champagne-cream"] .ai-retry { background: #8b6f23 }
+html[data-theme="royal-champagne-cream"] .ai-status.new { background: #edf0da; color: #4d6326 }
+html[data-theme="royal-champagne-cream"] .ai-status.review { background: #f8efd6; color: #8a6412 }
+html[data-theme="royal-champagne-cream"] .ai-summary-chip.ok { background: #5f7a2f }
+html[data-theme="royal-champagne-cream"] .ai-summary-chip.review { background: #f8efd6; color: #8a6412 }
+html[data-theme="royal-champagne-cream"] .ai-table input:focus, html[data-theme="royal-champagne-cream"] .ai-table select:focus { border-color: #8b6f23 }
+html[data-theme="royal-champagne-cream"] .ai-table input:focus { border-color: #a3372c }
+html[data-theme="royal-champagne-cream"] .ai-upload-zone:hover, html[data-theme="royal-champagne-cream"] .ai-upload-zone.drag { background: #f6e8ce; border-color: #8b6f23 }
+html[data-theme="royal-champagne-cream"] .answer-card { background: #f6e8ce }
+html[data-theme="royal-champagne-cream"] .approved-text { color: #4d6326 }
+html[data-theme="royal-champagne-cream"] .ask-input:focus { border-color: #8b6f23 }
+html[data-theme="royal-champagne-cream"] .ask-row input:focus { border-color: #8b6f23 }
+html[data-theme="royal-champagne-cream"] .badge { background: #edf0da; color: #4d6326 }
+html[data-theme="royal-champagne-cream"] .badge-success { color: #4d6326 }
+html[data-theme="royal-champagne-cream"] .badge-warning { color: #8a6412 }
+html[data-theme="royal-champagne-cream"] .bar i { background: #8b6f23 }
+html[data-theme="royal-champagne-cream"] .btn-approve { background: #5f7a2f }
+html[data-theme="royal-champagne-cream"] .btn-danger:hover { background: #f6e6e0; color: #a3372c }
+html[data-theme="royal-champagne-cream"] .btn-edit { background: #8b6f23 }
+html[data-theme="royal-champagne-cream"] .btn-logout { background: #a3372c }
+html[data-theme="royal-champagne-cream"] .btn-permanent { background: #a3372c }
+html[data-theme="royal-champagne-cream"] .btn-reject { background: #a3372c }
+html[data-theme="royal-champagne-cream"] .btn:hover { background: #edf0da; color: #5f7a2f }
+html[data-theme="royal-champagne-cream"] .camera-badge { background: #8b6f23 }
+html[data-theme="royal-champagne-cream"] .cart-badge { background: #6d8a35 }
+html[data-theme="royal-champagne-cream"] .cart-qty-btn { background: #f3f2ed }
+html[data-theme="royal-champagne-cream"] .cart-remove { background: #a3372c }
+html[data-theme="royal-champagne-cream"] .cart-summary { background: #f3f2ed }
+html[data-theme="royal-champagne-cream"] .category-chip { background: #f3f2ed }
+html[data-theme="royal-champagne-cream"] .category-chip.selected { background: #6d8a35; border-color: #6d8a35 }
+html[data-theme="royal-champagne-cream"] .category-text { color: #8b6f23 }
+html[data-theme="royal-champagne-cream"] .char-count.over { color: #a3372c }
+html[data-theme="royal-champagne-cream"] .chart-bar i { background: #8b6f23 }
+html[data-theme="royal-champagne-cream"] .chart-bar { background: #e7e1d0 }
+html[data-theme="royal-champagne-cream"] .checkout-modal-btn { background: #6d8a35 }
+html[data-theme="royal-champagne-cream"] .chip-human { background: #f6e8ce }
+html[data-theme="royal-champagne-cream"] .chip.selected { background: #6d8a35; border-color: #6d8a35 }
+html[data-theme="royal-champagne-cream"] .close-sales-btn { background: #a3372c }
+html[data-theme="royal-champagne-cream"] .closed-badge { color: #a3372c }
+html[data-theme="royal-champagne-cream"] .confirm-cancel { background: #f3f2ed }
+html[data-theme="royal-champagne-cream"] .confirm-close { background: #a3372c }
+html[data-theme="royal-champagne-cream"] .contact-email { color: #8b6f23 }
+html[data-theme="royal-champagne-cream"] .contact-phone { color: #8b6f23 }
+html[data-theme="royal-champagne-cream"] .conv-del { color: #a3372c }
+html[data-theme="royal-champagne-cream"] .conv-row:hover { background: #f6e8ce }
+html[data-theme="royal-champagne-cream"] .cost-text { color: #a3372c }
+html[data-theme="royal-champagne-cream"] .customer-avatar { background: #f6e8ce }
+html[data-theme="royal-champagne-cream"] .customer-total { color: #4d6326 }
+html[data-theme="royal-champagne-cream"] .date-badge { background: #8b6f23 }
+html[data-theme="royal-champagne-cream"] .date-btn { background: #f3f2ed }
+html[data-theme="royal-champagne-cream"] .date-btn.primary { background: #8b6f23 }
+html[data-theme="royal-champagne-cream"] .date-display { background: #f3f2ed }
+html[data-theme="royal-champagne-cream"] .date-field input { background: #f3f2ed }
+html[data-theme="royal-champagne-cream"] .date-field input:focus { border-color: #8b6f23 }
+html[data-theme="royal-champagne-cream"] .date-filter-active { color: #4d6326; background: #edf0da }
+html[data-theme="royal-champagne-cream"] .date-nav { color: #5f7a2f }
+html[data-theme="royal-champagne-cream"] .delete-icon { color: #a3372c }
+html[data-theme="royal-champagne-cream"] .dismiss-btn { background: #edf0da; color: #4d6326 }
+html[data-theme="royal-champagne-cream"] .dm-entry-banner[data-kind="error"] { background: #f6e6e0; color: #a3372c }
+html[data-theme="royal-champagne-cream"] .dm-entry-banner[data-kind="success"] { background: #edf0da; color: #4d6326 }
+html[data-theme="royal-champagne-cream"] .dm-entry-banner[data-kind="warn"] { background: #f8efd6; color: #8a6412 }
+html[data-theme="royal-champagne-cream"] .dm-entry-field input:focus, html[data-theme="royal-champagne-cream"] .dm-entry-field select:focus { border-color: #5f7a2f }
+html[data-theme="royal-champagne-cream"] .dm-entry-flags li { color: #8a6412; background: #f8efd6 }
+html[data-theme="royal-champagne-cream"] .dm-entry-missing { color: #a3372c }
+html[data-theme="royal-champagne-cream"] .dock-cart-badge { background: #6d8a35 }
+html[data-theme="royal-champagne-cream"] .dock-cart-info { background: #edf0da; color: #4d6326 }
+html[data-theme="royal-champagne-cream"] .dock-checkout { background: #6d8a35 }
+html[data-theme="royal-champagne-cream"] .dock-price { color: #4d6326 }
+html[data-theme="royal-champagne-cream"] .edit-btn { background: #f6e8ce; color: #8b6f23 }
+html[data-theme="royal-champagne-cream"] .edit-profile-btn { background: #f6e8ce }
+html[data-theme="royal-champagne-cream"] .empty-add { background: #edf0da; color: #5f7a2f }
+html[data-theme="royal-champagne-cream"] .ev-product { background: #f6e8ce; color: #8b6f23 }
+html[data-theme="royal-champagne-cream"] .ev-sale { background: #edf0da; color: #4d6326 }
+html[data-theme="royal-champagne-cream"] .ev-warn { background: #f8efd6; color: #8a6412 }
+html[data-theme="royal-champagne-cream"] .existing-btn:hover { border-color: #6d8a35 }
+html[data-theme="royal-champagne-cream"] .expense-text { color: #8a6412 }
+html[data-theme="royal-champagne-cream"] .expenses-total { color: #4d6326 }
+html[data-theme="royal-champagne-cream"] .extra-stats { background: #f3f2ed }
+html[data-theme="royal-champagne-cream"] .filter-info { background: #f6e8ce }
+html[data-theme="royal-champagne-cream"] .flag-row { background: #f8efd6; color: #8a6412 }
+html[data-theme="royal-champagne-cream"] .focused-tag { color: #8b6f23 }
+html[data-theme="royal-champagne-cream"] .form-select:focus, html[data-theme="royal-champagne-cream"] .form-input:focus { border-color: #6d8a35 }
+html[data-theme="royal-champagne-cream"] .go-sell-btn { background: #6d8a35 }
+html[data-theme="royal-champagne-cream"] .gross-profit-text { color: #4d6326 }
+html[data-theme="royal-champagne-cream"] .guide-chip { background: #f3f2ed }
+html[data-theme="royal-champagne-cream"] .helper-text { color: #8a6412 }
+html[data-theme="royal-champagne-cream"] .history-badge { background: #f3f2ed }
+html[data-theme="royal-champagne-cream"] .hub-ads .hub-title, html[data-theme="royal-champagne-cream"] .hub-ads .hub-arrow { color: #6e591b }
+html[data-theme="royal-champagne-cream"] .hub-ask .hub-title, html[data-theme="royal-champagne-cream"] .hub-ask .hub-arrow { color: #6e591b }
+html[data-theme="royal-champagne-cream"] .hub-copilot .hub-title, html[data-theme="royal-champagne-cream"] .hub-copilot .hub-arrow { color: #6e591b }
+html[data-theme="royal-champagne-cream"] .hub-health .hub-title, html[data-theme="royal-champagne-cream"] .hub-health .hub-arrow { color: #4f7358 }
+html[data-theme="royal-champagne-cream"] .hub-restock .hub-title, html[data-theme="royal-champagne-cream"] .hub-restock .hub-arrow { color: #8a6412 }
+html[data-theme="royal-champagne-cream"] .info-card { background: #f6e8ce }
+html[data-theme="royal-champagne-cream"] .info-text { background: #f6e8ce }
+html[data-theme="royal-champagne-cream"] .input-field:focus { border-color: #8b6f23 }
+html[data-theme="royal-champagne-cream"] .instructions { background: #f6e8ce }
+html[data-theme="royal-champagne-cream"] .instructions-box { background: #f8efd6 }
+html[data-theme="royal-champagne-cream"] .item-amount { color: #4d6326 }
+html[data-theme="royal-champagne-cream"] .logout-area span { color: #a3372c }
+html[data-theme="royal-champagne-cream"] .logout-btn-main { background: #a3372c }
+html[data-theme="royal-champagne-cream"] .logout-btn:hover { background-color: #f6e6e0 }
+html[data-theme="royal-champagne-cream"] .media-picker-text { color: #5f7a2f }
+html[data-theme="royal-champagne-cream"] .mini-btn.del { background: #f6e6e0; color: #a3372c }
+html[data-theme="royal-champagne-cream"] .mini-btn.load { background: #f6e8ce }
+html[data-theme="royal-champagne-cream"] .modal-avatar { background: #8b6f23 }
+html[data-theme="royal-champagne-cream"] .msg.assistant { background: #f6e8ce }
+html[data-theme="royal-champagne-cream"] .msg.user { background: #6d8a35 }
+html[data-theme="royal-champagne-cream"] .nav-item:hover, html[data-theme="royal-champagne-cream"] .nav-item.active { background-color: #edf0da; color: #5f7a2f }
+html[data-theme="royal-champagne-cream"] .nav-tab.active { background: #8b6f23 }
+html[data-theme="royal-champagne-cream"] .net-loss { color: #a3372c }
+html[data-theme="royal-champagne-cream"] .net-value { color: #4d6326 }
+html[data-theme="royal-champagne-cream"] .new-badge { background: #a3372c }
+html[data-theme="royal-champagne-cream"] .next-step { color: #4d6326 }
+html[data-theme="royal-champagne-cream"] .notice { background: #f8efd6; color: #8a6412 }
+html[data-theme="royal-champagne-cream"] .online-dot { background: #6d8a35 }
+html[data-theme="royal-champagne-cream"] .order-btn { background: #5f7a2f }
+html[data-theme="royal-champagne-cream"] .order-btn:hover { background: #6d8a35 }
+html[data-theme="royal-champagne-cream"] .owner-badge { background: #f6e8ce }
+html[data-theme="royal-champagne-cream"] .payment-text { color: #8b6f23 }
+html[data-theme="royal-champagne-cream"] .photo-pick-btn:hover { border-color: #a3372c; background: #f6e6e0; color: #a3372c }
+html[data-theme="royal-champagne-cream"] .preview-area:focus { border-color: #6d8a35 }
+html[data-theme="royal-champagne-cream"] .preview-card { background: #f6e8ce }
+html[data-theme="royal-champagne-cream"] .price { color: #4d6326 }
+html[data-theme="royal-champagne-cream"] .price-diff.negative { background: #f6e6e0 }
+html[data-theme="royal-champagne-cream"] .print-day-btn { background: #8b6f23 }
+html[data-theme="royal-champagne-cream"] .product-item { background: #f3f2ed }
+html[data-theme="royal-champagne-cream"] .product-item-price { color: #4d6326 }
+html[data-theme="royal-champagne-cream"] .product-item-stock { color: #8b6f23 }
+html[data-theme="royal-champagne-cream"] .product-item.owner { background: #edf0da }
+html[data-theme="royal-champagne-cream"] .product-item.selected { background: #edf0da; border-color: #6d8a35 }
+html[data-theme="royal-champagne-cream"] .product-item:hover { background: #f3f2ed }
+html[data-theme="royal-champagne-cream"] .product-option.selected { border-color: #6d8a35; background: #edf0da }
+html[data-theme="royal-champagne-cream"] .product-price { color: #4d6326 }
+html[data-theme="royal-champagne-cream"] .product-tab.active { background: #8b6f23 }
+html[data-theme="royal-champagne-cream"] .quick-chip { color: #4d6326 }
+html[data-theme="royal-champagne-cream"] .quick-chip:hover { background: #edf0da }
+html[data-theme="royal-champagne-cream"] .receipt-btn { color: #4d6326 }
+html[data-theme="royal-champagne-cream"] .report-search .search-clear:hover { color: #a3372c }
+html[data-theme="royal-champagne-cream"] .report-search input:focus { border-color: #8b6f23 }
+html[data-theme="royal-champagne-cream"] .req-why { background: #f6e8ce }
+html[data-theme="royal-champagne-cream"] .required-star { color: #a3372c }
+html[data-theme="royal-champagne-cream"] .role { color: #8b6f23 }
+html[data-theme="royal-champagne-cream"] .role-badge { background: #f6e8ce }
+html[data-theme="royal-champagne-cream"] .sale-btn { background: #6d8a35 }
+html[data-theme="royal-champagne-cream"] .sale-item.closed { background: #f3f2ed }
+html[data-theme="royal-champagne-cream"] .sale-total { color: #4d6326 }
+html[data-theme="royal-champagne-cream"] .save-btn { background: #6d8a35 }
+html[data-theme="royal-champagne-cream"] .selected-banner { background: #edf0da }
+html[data-theme="royal-champagne-cream"] .selected-banner-close { color: #a3372c }
+html[data-theme="royal-champagne-cream"] .selected-banner-title { color: #4d6326 }
+html[data-theme="royal-champagne-cream"] .selected-banner.non-owner { background: #f8efd6; border-left-color: #b07d1a }
+html[data-theme="royal-champagne-cream"] .seller-count { background: #a3372c }
+html[data-theme="royal-champagne-cream"] .severity.high { background: #a3372c }
+html[data-theme="royal-champagne-cream"] .severity.low { background: #8b6f23 }
+html[data-theme="royal-champagne-cream"] .severity.medium { background: #b07d1a }
+html[data-theme="royal-champagne-cream"] .stat-badge { background: #f3f2ed }
+html[data-theme="royal-champagne-cream"] .stat-badge.likes { color: #8b6f23 }
+html[data-theme="royal-champagne-cream"] .stat-badge.reports { color: #a3372c }
+html[data-theme="royal-champagne-cream"] .status-approved { background: #edf0da; color: #4d6326 }
+html[data-theme="royal-champagne-cream"] .status-attention { background: #f6e6e0; color: #a3372c }
+html[data-theme="royal-champagne-cream"] .status-badge { background: #f6e8ce }
+html[data-theme="royal-champagne-cream"] .status-pending { color: #8a6412 }
+html[data-theme="royal-champagne-cream"] .status-rejected { background: #f6e6e0; color: #a3372c }
+html[data-theme="royal-champagne-cream"] .status-strong { background: #edf0da; color: #4d6326 }
+html[data-theme="royal-champagne-cream"] .status-watch { background: #f8efd6; color: #8a6412 }
+html[data-theme="royal-champagne-cream"] .stock-badge { background: #f6e8ce; color: #8b6f23 }
+html[data-theme="royal-champagne-cream"] .stock-badge.low { color: #8a6412 }
+html[data-theme="royal-champagne-cream"] .stock-badge.out { background: #f6e6e0; color: #a3372c }
+html[data-theme="royal-champagne-cream"] .stock-pill { background: #edf0da; color: #4d6326 }
+html[data-theme="royal-champagne-cream"] .stock-pill.out { background: #f6e6e0; color: #a3372c }
+html[data-theme="royal-champagne-cream"] .submit-btn.add { background: #6d8a35 }
+html[data-theme="royal-champagne-cream"] .submit-btn.addstock { background: #b07d1a }
+html[data-theme="royal-champagne-cream"] .submit-btn.update { background: #8b6f23 }
+html[data-theme="royal-champagne-cream"] .system-admin-btn { color: #6e591b }
+html[data-theme="royal-champagne-cream"] .tag { background: #f6e8ce }
+html[data-theme="royal-champagne-cream"] .today-badge { background: #6d8a35 }
+html[data-theme="royal-champagne-cream"] .total-value { color: #4d6326 }
+html[data-theme="royal-champagne-cream"] .upload-btn { background: #5f7a2f }
+html[data-theme="royal-champagne-cream"] .upload-progress { color: #8b6f23 }
+html[data-theme="royal-champagne-cream"] .zimesomwa-btn { background: #5f7a2f }
