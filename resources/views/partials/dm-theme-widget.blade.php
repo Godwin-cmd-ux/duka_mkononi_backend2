@@ -1,7 +1,9 @@
 {{--
     Dukamkononi website theme selector (public + authenticated portal pages).
 
-    Provides the floating paintbrush button and its two-card panel:
+    Provides the floating paintbrush button and its theme picker (a
+    bottom sheet on home that copies the language picker's pattern; a
+    panel beside/above the trigger elsewhere):
 
       White Professional       - the existing Duka Mkononi design (default)
       Royal Champagne Cream    - warm cream / ivory / royal gold)
@@ -262,21 +264,192 @@
         font-weight: 600;
     }
 
-    .dm-theme-widget--home .dm-theme-panel {
-        position: absolute;
-        right: 0;
-        left: auto;
-        top: calc(100% + 10px);
-        bottom: auto;
-        transform: translateY(6px);
-        width: min(340px, calc(100vw - 40px));
-        max-height: calc(100vh - 150px);
+    /* ---- Home opens the SAME way the home language picker opens: an
+       overlay fade + bottom sheet sliding up, the header ("Badili
+       Mandhari" + "Chagua Mandhari upendayo"), then the theme cards
+       listed like the language rows. Geometry copied 1:1 from home's
+       .lang-modal-* rules; widgets other than home keep the panel. ---- */
+    .dm-theme-modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        z-index: 10000;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.25s ease, visibility 0.25s ease;
     }
 
-    .dm-theme-widget--home.open .dm-theme-panel { transform: translateY(0); }
+    .dm-theme-modal.open { opacity: 1; visibility: visible; }
 
-    @media (max-width: 600px) {
-        .dm-theme-widget--home .dm-theme-panel { right: 0; width: min(340px, calc(100vw - 32px)); }
+    .dm-theme-sheet {
+        width: 100%;
+        max-width: 550px;
+        background: var(--pg-surface, #ffffff);
+        border-top-left-radius: 28px;
+        border-top-right-radius: 28px;
+        padding: 12px 24px 34px;
+        max-height: 75vh;
+        display: flex;
+        flex-direction: column;
+        transform: translateY(100%);
+        transition: transform 0.28s cubic-bezier(0.2, 0.9, 0.4, 1);
+        box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .dm-theme-modal.open .dm-theme-sheet { transform: translateY(0); }
+
+    .dm-theme-modal-handle {
+        width: 40px;
+        height: 4px;
+        border-radius: 2px;
+        background: var(--pg-line, #e0e0e0);
+        margin: 0 auto 16px;
+    }
+
+    .dm-theme-modal-header { text-align: center; margin-bottom: 20px; }
+
+    .dm-theme-modal-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: var(--pg-blue-tint, #e8f4fd);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 12px;
+        color: var(--pg-cta-blue, #3498db);
+    }
+
+    .dm-theme-modal-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--pg-text, #2c3e50);
+        margin-bottom: 4px;
+    }
+
+    .dm-theme-modal-subtitle { font-size: 14px; color: var(--pg-muted, #7f8c8d); }
+
+    .dm-theme-modal-list {
+        overflow-y: auto;
+        margin-bottom: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    /* Card rows are sized exactly like the language rows: 14x16 padding,
+       12px radius, swatch + name left, radio right. */
+    .dm-theme-modal-list .dm-theme-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        width: 100%;
+        padding: 14px 16px;
+        border-radius: 12px;
+        background: var(--pg-soft, #f8f9fa);
+        border: 1.5px solid transparent;
+        box-shadow: none;
+        font-size: 16px;
+        text-align: left;
+    }
+
+    .dm-theme-modal-list .dm-theme-card:hover { transform: none; box-shadow: none; }
+
+    .dm-theme-item-left { display: flex; align-items: center; min-width: 0; }
+
+    /* The swatch stands in for the language rows' flag: each theme's own
+       background with a corner of its accent. */
+    .dm-theme-swatch {
+        position: relative;
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        margin-right: 14px;
+        flex: 0 0 auto;
+        border: 1px solid rgba(15, 23, 42, .14);
+    }
+
+    .dm-theme-swatch::after {
+        content: "";
+        position: absolute;
+        right: 4px;
+        bottom: 4px;
+        width: 10px;
+        height: 10px;
+        border-radius: 3px;
+    }
+
+    .dm-theme-swatch--white { background: #f8fafc; }
+    .dm-theme-swatch--white::after { background: #1e3a8a; }
+    .dm-theme-swatch--royal { background: #f4e8d0; }
+    .dm-theme-swatch--royal::after { background: #8b6f23; }
+
+    .dm-theme-modal-list .dm-theme-name { font-size: 16px; font-weight: 600; }
+
+    .dm-theme-modal-list .dm-theme-radio { width: 22px; height: 22px; border-color: var(--pg-line-6, #ccc); }
+    .dm-theme-modal-list .dm-theme-radio::after { width: 12px; height: 12px; }
+    .dm-theme-modal-list .dm-theme-card[aria-checked="true"] .dm-theme-radio { border-color: var(--dm-radio-dot); }
+
+    /* Selected row: that theme's own tint + accent ring, in its palette (the
+       mirror the panel cards already do). */
+    .dm-theme-modal-list .dm-theme-card[data-theme-id="white-professional"][aria-checked="true"] {
+        background: #e9f0fa;
+        border-color: #1e3a8a;
+        box-shadow: none;
+    }
+
+    .dm-theme-modal-list .dm-theme-card[data-theme-id="white-professional"][aria-checked="true"] .dm-theme-name { color: #1e3a8a; }
+
+    .dm-theme-modal-list .dm-theme-card[data-theme-id="royal-champagne-cream"][aria-checked="true"] {
+        background: #f7edd6;
+        border-color: #8b6f23;
+        box-shadow: none;
+    }
+
+    .dm-theme-modal-list .dm-theme-card[data-theme-id="royal-champagne-cream"][aria-checked="true"] .dm-theme-name { color: #8b6f23; }
+
+    /* Actions: same geometry as the language sheet's Funga / Tuma buttons. */
+    .dm-theme-modal-actions { display: flex; gap: 12px; }
+
+    .dm-theme-modal-cancel {
+        flex: 1;
+        height: 50px;
+        border: none;
+        border-radius: 12px;
+        background: var(--pg-pill, #f0f4f8);
+        color: var(--pg-muted, #7f8c8d);
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: inherit;
+    }
+
+    .dm-theme-modal-apply {
+        flex: 1.5;
+        height: 50px;
+        border: none;
+        border-radius: 12px;
+        background: var(--pg-cta-blue, #3498db);
+        color: #ffffff;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        font-family: inherit;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-shadow: 0 4px 8px var(--pg-cta-glow, rgba(52, 152, 219, 0.3));
+    }
+
+    .dm-theme-modal-apply:disabled {
+        background: var(--pg-cta-disabled, #85c1e9);
+        box-shadow: none;
+        cursor: default;
     }
 
     /* bottom variant: fixed in the bottom-right corner on authenticated
@@ -332,8 +505,8 @@
         .dm-theme-main { transition: none !important; transform: none !important; }
         .dm-theme-widget.open .dm-theme-panel { transform: none !important; }
         [dir="rtl"] .dm-theme-widget.open .dm-theme-panel { transform: none !important; }
-        .dm-theme-widget--home .dm-theme-panel,
-        .dm-theme-widget--home.open .dm-theme-panel { transform: none !important; }
+        .dm-theme-modal,
+        .dm-theme-sheet { transition: none !important; transform: none !important; }
         .dm-theme-widget--bottom .dm-theme-panel,
         .dm-theme-widget--bottom.open .dm-theme-panel { transform: none !important; }
     }
@@ -341,7 +514,7 @@
 @endverbatim
 
 <div class="dm-theme-widget dm-theme-widget--{{ $dmThemePlacement }}" id="dmThemeWidget">
-    <button type="button" class="dm-theme-main" id="dmThemeToggle" aria-haspopup="true" aria-expanded="false"
+    <button type="button" class="dm-theme-main" id="dmThemeToggle" aria-haspopup="{{ $dmThemePlacement === 'home' ? 'dialog' : 'true' }}" aria-expanded="false"
             aria-label="Badilisha mandhari" data-i18n="ui.change_theme" data-i18n-attr="aria-label">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -353,6 +526,57 @@
         @endif
     </button>
 
+    @if ($dmThemePlacement === 'home')
+        {{-- Home: bottom sheet, identical pattern to the language picker. --}}
+        <div class="dm-theme-modal" id="dmThemeModal" aria-hidden="true">
+            <div class="dm-theme-sheet" role="dialog" aria-modal="true" aria-labelledby="dmThemeModalTitle">
+                <div class="dm-theme-modal-handle"></div>
+                <div class="dm-theme-modal-header">
+                    <div class="dm-theme-modal-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"></path>
+                            <path d="M6 16.5c-1.5 0-3 1-3 2.6 0 1.3-1 2.4-3 2.9 1.4 1.4 3.4 2.1 5.4 2.1 3 0 5.6-2 5.6-4.6 0-1.6-1.3-3-3-3Z" transform="translate(1.5 -4.4) scale(.92)"></path>
+                        </svg>
+                    </div>
+                    <h3 class="dm-theme-modal-title" id="dmThemeModalTitle" data-i18n="ui.theme_modal_title">Badili Mandhari</h3>
+                    <p class="dm-theme-modal-subtitle" data-i18n="ui.theme_modal_subtitle">Chagua Mandhari upendayo</p>
+                </div>
+
+                <div class="dm-theme-modal-list" role="radiogroup" aria-labelledby="dmThemeModalTitle">
+
+                    <button type="button" class="dm-theme-card" role="radio" data-theme-id="white-professional" aria-checked="true">
+                        <span class="dm-theme-item-left">
+                            <span class="dm-theme-swatch dm-theme-swatch--white" aria-hidden="true"></span>
+                            <span class="dm-theme-name">White Professional</span>
+                        </span>
+                        <span class="dm-theme-radio" aria-hidden="true"></span>
+                    </button>
+
+                    <button type="button" class="dm-theme-card" role="radio" data-theme-id="royal-champagne-cream" aria-checked="false">
+                        <span class="dm-theme-item-left">
+                            <span class="dm-theme-swatch dm-theme-swatch--royal" aria-hidden="true"></span>
+                            <span class="dm-theme-name">Royal Champagne Cream</span>
+                        </span>
+                        <span class="dm-theme-radio" aria-hidden="true"></span>
+                    </button>
+
+                </div>
+
+                <div class="dm-theme-modal-actions">
+                    <button type="button" class="dm-theme-modal-cancel" id="dmThemeCancel" data-i18n="ui.theme_close">Funga</button>
+                    <button type="button" class="dm-theme-modal-apply" id="dmThemeApply">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="12" cy="12" r="9"></circle>
+                            <path d="m8.5 12.5 2.5 2.5 4.5-5"></path>
+                        </svg>
+                        <span data-i18n="ui.theme_apply">Tuma</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    @else
     <div class="dm-theme-panel" id="dmThemePanel" role="dialog" aria-label="Theme" data-i18n="ui.theme_panel_title"
          data-i18n-attr="aria-label">
         <div class="dm-theme-head">
@@ -373,6 +597,7 @@
 
         </div>
     </div>
+    @endif
 </div>
 
 <script src="/js/dm-theme.js"></script>
@@ -383,32 +608,58 @@
 
     var widget = document.getElementById('dmThemeWidget');
     var toggle = document.getElementById('dmThemeToggle');
+    /* home renders the bottom-sheet modal; the other placements render the
+       dropdown panel under/above the trigger. */
+    var modal = document.getElementById('dmThemeModal');
     var panel = document.getElementById('dmThemePanel');
-    if (!widget || !toggle || !panel || !global.DMTheme) return;
+    var cancel = document.getElementById('dmThemeCancel');
+    var apply = document.getElementById('dmThemeApply');
+    if (!widget || !toggle || (!modal && !panel) || !global.DMTheme) return;
 
-    var cards = Array.prototype.slice.call(panel.querySelectorAll('.dm-theme-card'));
+    var cards = Array.prototype.slice.call(widget.querySelectorAll('.dm-theme-card'));
+    var pending = null; /* sheet: the choice waiting for Tuma */
+
+    function checkedId() {
+        /* The open sheet shows the pending choice; the dropdown applies on
+           tap, so it always shows the live theme. */
+        if (modal && modal.classList.contains('open') && pending) return pending;
+        return DMTheme.current();
+    }
 
     function paint() {
-        var active = DMTheme.current();
+        var active = checkedId();
         cards.forEach(function (card) {
             card.setAttribute('aria-checked', card.getAttribute('data-theme-id') === active ? 'true' : 'false');
         });
+        if (apply) apply.disabled = !pending || pending === DMTheme.current();
     }
 
     function open() {
-        widget.classList.add('open');
+        if (modal) {
+            pending = DMTheme.current();
+            modal.classList.add('open');
+            modal.setAttribute('aria-hidden', 'false');
+        } else {
+            widget.classList.add('open');
+        }
         toggle.setAttribute('aria-expanded', 'true');
         paint();
     }
 
     function close(focusToggle) {
-        widget.classList.remove('open');
+        if (modal) {
+            modal.classList.remove('open');
+            modal.setAttribute('aria-hidden', 'true');
+            pending = null;
+        } else {
+            widget.classList.remove('open');
+        }
         toggle.setAttribute('aria-expanded', 'false');
         if (focusToggle) toggle.focus();
     }
 
     function isOpen() {
-        return widget.classList.contains('open');
+        return modal ? modal.classList.contains('open') : widget.classList.contains('open');
     }
 
     toggle.addEventListener('click', function (e) {
@@ -420,9 +671,16 @@
     cards.forEach(function (card, index) {
         card.addEventListener('click', function (e) {
             e.stopPropagation();
-            DMTheme.set(card.getAttribute('data-theme-id'));
-            paint();
-            close(true);
+            if (modal) {
+                /* Sheet flow: highlight now, apply on Tuma — exactly how the
+                   language modal's list behaves. */
+                pending = card.getAttribute('data-theme-id');
+                paint();
+            } else {
+                DMTheme.set(card.getAttribute('data-theme-id'));
+                paint();
+                close(true);
+            }
         });
 
         card.addEventListener('keydown', function (e) {
@@ -436,10 +694,25 @@
         });
     });
 
-    /* Close on outside pointer (touch included — click events bubble). */
-    document.addEventListener('click', function (e) {
-        if (isOpen() && !widget.contains(e.target)) close(false);
-    });
+    if (modal) {
+        /* The sheet closes the same ways the language modal does: scrim tap
+           (this listener covers it), Funga above, Esc below. */
+        modal.addEventListener('click', function (e) {
+            if (e.target === modal) close(false);
+        });
+        if (cancel) cancel.addEventListener('click', function () { close(true); });
+        if (apply) {
+            apply.addEventListener('click', function () {
+                if (pending && pending !== DMTheme.current()) DMTheme.set(pending);
+                close(true);
+            });
+        }
+    } else {
+        /* Close on outside pointer (touch included — click events bubble). */
+        document.addEventListener('click', function (e) {
+            if (isOpen() && !widget.contains(e.target)) close(false);
+        });
+    }
 
     /* Escape closes and returns focus to the trigger. */
     document.addEventListener('keydown', function (e) {
