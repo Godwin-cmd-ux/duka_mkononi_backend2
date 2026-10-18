@@ -1192,7 +1192,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
 
         function handleLogout() {
             showConfirm(t('msimamizi_index.logout_title'), t('msimamizi_index.confirm_logout'), () => {
-                localStorage.clear();
+                (window.DMTheme ? DMTheme.clearSession() : localStorage.clear());
                 window.location.href = '../login?role=msimamizi';
             });
         }

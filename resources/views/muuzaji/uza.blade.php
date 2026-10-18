@@ -898,7 +898,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
 
         function setupSidebar() {
             document.getElementById('mobileMenuToggle').addEventListener('click', () => document.getElementById('sidebar').classList.toggle('open'));
-            document.getElementById('logoutBtn').addEventListener('click', () => { localStorage.clear(); window.location.href = '/login?role=muuzaji'; });
+            document.getElementById('logoutBtn').addEventListener('click', () => { (window.DMTheme ? DMTheme.clearSession() : localStorage.clear()); window.location.href = '/login?role=muuzaji'; });
         }
 
         async function init() {

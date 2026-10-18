@@ -436,7 +436,7 @@
         document.getElementById('dmUserName').textContent = user.full_name || user.email || '-';
         document.getElementById('dmAvatar').textContent = (user.full_name || user.email || 'A').trim().charAt(0).toUpperCase();
         document.getElementById('dmMenuBtn').onclick = function () { document.getElementById('dmSidebar').classList.toggle('open'); };
-        document.getElementById('dmLogout').onclick = function () { localStorage.clear(); window.location.href = '/login?role=system_admin'; };
+        document.getElementById('dmLogout').onclick = function () { (window.DMTheme ? DMTheme.clearSession() : localStorage.clear()); window.location.href = '/login?role=system_admin'; };
         document.getElementById('dmRefresh').onclick = function () { load(true); };
         var s = document.getElementById('dmStatusFilter'); s.value = state.status;
         s.onchange = function () { state.status = s.value; load(true); };

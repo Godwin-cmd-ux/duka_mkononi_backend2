@@ -1370,7 +1370,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             const logoutBtn = document.getElementById('logoutBtn');
             if (logoutBtn) {
                 logoutBtn.addEventListener('click', () => {
-                    localStorage.clear();
+                    (window.DMTheme ? DMTheme.clearSession() : localStorage.clear());
                     window.location.href = '/login?role=muuzaji';
                 });
             }

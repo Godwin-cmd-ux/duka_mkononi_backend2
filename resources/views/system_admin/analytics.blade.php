@@ -284,7 +284,7 @@
         document.getElementById('dmUserName').textContent = user.full_name || user.email || '-';
         document.getElementById('dmAvatar').textContent = (user.full_name || user.email || 'A').trim().charAt(0).toUpperCase();
         document.getElementById('dmMenuBtn').onclick = function () { document.getElementById('dmSidebar').classList.toggle('open'); };
-        document.getElementById('dmLogout').onclick = function () { localStorage.clear(); window.location.href = '/login?role=system_admin'; };
+        document.getElementById('dmLogout').onclick = function () { (window.DMTheme ? DMTheme.clearSession() : localStorage.clear()); window.location.href = '/login?role=system_admin'; };
         document.getElementById('dmAskBtn').onclick = function () { ask(document.getElementById('dmQuestion').value); };
         document.getElementById('dmQuestion').addEventListener('keydown', function (e) { if (e.key === 'Enter') ask(e.target.value); });
         document.getElementById('dmClearBtn').onclick = function () {

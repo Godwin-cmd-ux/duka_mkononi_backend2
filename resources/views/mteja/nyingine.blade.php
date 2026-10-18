@@ -452,7 +452,7 @@
             if (toggle && sidebar) toggle.addEventListener('click', function () { sidebar.classList.toggle('open'); });
             const logoutBtn = document.getElementById('logoutBtn');
             if (logoutBtn) logoutBtn.addEventListener('click', function () {
-                localStorage.clear();
+                (window.DMTheme ? DMTheme.clearSession() : localStorage.clear());
                 window.location.href = '/login?role=mteja';
             });
         }

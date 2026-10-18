@@ -105,7 +105,7 @@ export default function LoginScreen() {
     const role = params.role as string || 'mteja';
     const { lang, changeLang, t } = useLang();
 
-    const { setTheme } = useTheme();
+    const { theme, setTheme } = useTheme();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -250,7 +250,13 @@ export default function LoginScreen() {
                     email: sanitizedEmail,
                     password: password,
                     role: backendRole,
-                    language: lang
+                    language: lang,
+                    // 🎨 The theme this device is actively using. The backend
+                    // only adopts it when the account has no explicit choice
+                    // of its own yet (a non-default stored theme still wins),
+                    // so a dark theme chosen before signing in survives login
+                    // instead of being replaced by the server's default.
+                    theme
                 }),
             }, API_FETCH_TIMEOUT_MS);
 

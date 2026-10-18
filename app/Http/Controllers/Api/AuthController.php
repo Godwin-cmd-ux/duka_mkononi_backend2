@@ -585,24 +585,36 @@ class AuthController extends BaseController
                 }
             }
 
-            // Theme preference synchronization (same shape as the language
-            // preference above, one strict rule on top): an established,
-            // VALID database preference always wins and is never overwritten
-            // by the browser's value on login. The browser value is only
-            // adopted — and persisted, best effort — when the account has no
-            // valid stored theme yet. Neither present -> White Professional
-            // (reported, but not written, so a later explicit choice can
-            // still be adopted). Every step is guarded: a failed preference
-            // sync must never fail the login itself, and the visitor keeps
-            // their local theme either way.
-            $preferredTheme = ThemePreference::normalize($user->preferred_theme ?? null);
+            // Theme preference synchronization. The stored value comes in two
+            // different kinds, and each kind has its own rule:
+            //   - a NON-DEFAULT stored theme can only exist because somebody
+            //     chose it explicitly (the column default and the migration
+            //     backfill both write White Professional), so it always wins
+            //     and is never overwritten on login — that is what carries a
+            //     theme picked on one device to every other device;
+            //   - the DEFAULT value, or no stored value at all, means "the
+            //     account has never chosen", so the theme the visitor is
+            //     actively using in this browser wins and is persisted,
+            //     best effort. Without this second rule every login answered
+            //     White Professional and wiped the visitor's Midnight Royal
+            //     Gold (or any other choice) a moment before redirecting to
+            //     the authenticated portals — the theme looked like it was
+            //     "lost during login".
+            // Neither present -> White Professional (reported, but not
+            // written, so a later explicit choice can still be adopted).
+            // Every step is guarded: a failed preference sync must never fail
+            // the login itself, and the visitor keeps their local theme either
+            // way.
+            $storedTheme = ThemePreference::normalize($user->preferred_theme ?? null);
+            $browserTheme = ThemePreference::normalize($theme);
+            $preferredTheme = null;
 
-            if (!$preferredTheme) {
-                $browserTheme = ThemePreference::normalize($theme);
+            if ($storedTheme && $storedTheme !== ThemePreference::DEFAULT) {
+                $preferredTheme = $storedTheme;
+            } elseif ($browserTheme) {
+                $preferredTheme = $browserTheme;
 
-                if ($browserTheme) {
-                    $preferredTheme = $browserTheme;
-
+                if ($browserTheme !== $storedTheme) {
                     try {
                         User::where('id', $user->id)->update(['preferred_theme' => $browserTheme]);
                     } catch (\Throwable $themeError) {
@@ -611,10 +623,8 @@ class AuthController extends BaseController
                         $this->log($user->id, 'LOGIN_THEME_SYNC_SKIPPED', '/api/login', ['error' => $themeError->getMessage()], $ip, 'failed');
                     }
                 }
-            }
-
-            if (!$preferredTheme) {
-                $preferredTheme = ThemePreference::DEFAULT;
+            } else {
+                $preferredTheme = $storedTheme ?: ThemePreference::DEFAULT;
             }
 
             $now = $this->isoNow();

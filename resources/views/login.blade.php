@@ -780,10 +780,12 @@
             const user = data.user;
             const token = data.token;
 
-            // Theme synchronization on login: the account's stored preference
-            // (user.preferred_theme) is authoritative when valid — adopt it
-            // locally; when the server sent none, the visitor's own local
-            // choice is left untouched (and sync failures never break login).
+            // Theme synchronization on login: the server answers with the
+            // preference this account should use from now on — an explicit
+            // account choice wins, otherwise it echoes back the theme this
+            // browser just sent — so adopt it locally; when the server sent
+            // none, the visitor's own local choice is left untouched (and
+            // sync failures never break login).
             if (window.DMTheme) DMTheme.adopt(user.preferred_theme);
             
             // Check user status

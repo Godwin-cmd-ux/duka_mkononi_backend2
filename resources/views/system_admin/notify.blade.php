@@ -688,7 +688,7 @@
 
         function handleLogout() {
             if (confirm(t('confirm_logout'))) {
-                localStorage.clear();
+                (window.DMTheme ? DMTheme.clearSession() : localStorage.clear());
                 window.location.href = '/login?role=msimamizi';
             }
         }

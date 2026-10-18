@@ -424,7 +424,7 @@
             const sidebar = document.getElementById('sidebar');
             if (toggle && sidebar) toggle.addEventListener('click', function () { sidebar.classList.toggle('open'); });
             const logoutBtn = document.getElementById('logoutBtn');
-            if (logoutBtn) logoutBtn.addEventListener('click', function () { localStorage.clear(); window.location.href = '/login?role=muuzaji'; });
+            if (logoutBtn) logoutBtn.addEventListener('click', function () { (window.DMTheme ? DMTheme.clearSession() : localStorage.clear()); window.location.href = '/login?role=muuzaji'; });
             document.addEventListener('click', function (e) {
                 if (window.innerWidth <= 768) {
                     const bar = document.getElementById('sidebar');

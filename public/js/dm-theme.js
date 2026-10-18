@@ -16,7 +16,9 @@
  *     "dukamkononi_theme",
  *   - synchronize with the account (PUT /api/user/theme) when a session
  *     token exists, failing silently so the local preference always wins
- *     on failure.
+ *     on failure,
+ *   - survive sign-out: clearSession() drops the session keys but keeps the
+ *     choice, so logging back in does not restart from White Professional.
  *
  * The early no-flash snippet lives in partials/dm-locale; this module loads
  * after it and takes over interaction, storage and synchronization.
@@ -133,6 +135,25 @@
         return current();
     }
 
+    /* Sign-out helper used by every portal logout button (they used to call
+       localStorage.clear() outright, which also destroyed the visitor's theme
+       choice — so the next login started from White Professional and the
+       chosen theme looked lost around login). Everything session-related is
+       dropped; the validated theme preference is written straight back
+       (readStored() has already migrated the pre-release key by then). */
+    function clearSession() {
+        var keep = readStored();
+        try {
+            if (global.localStorage) localStorage.clear();
+        } catch (e) {
+            return false;
+        }
+        if (keep) {
+            try { localStorage.setItem(STORAGE_KEY, keep); } catch (e2) { /* private mode / quota */ }
+        }
+        return true;
+    }
+
     /* Boot-time restore. The inline snippet in partials/dm-locale already
        applies the stored theme before first paint (for no flash), but this
        module must not depend on that snippet knowing the full allow-list:
@@ -153,6 +174,7 @@
         apply: apply,
         set: set,
         adopt: adopt,
+        clearSession: clearSession,
         syncToServer: syncToServer,
         onChange: function (fn) {
             if (typeof fn !== 'function') return;
