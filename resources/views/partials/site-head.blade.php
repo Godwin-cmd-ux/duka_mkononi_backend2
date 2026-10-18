@@ -24,9 +24,10 @@
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <!-- The one SmartCart loading animation for the whole website. -->
     <link rel="stylesheet" href="/css/smartcart-loader.css">
-    <!-- Centralized two-theme token system (White Professional default,
-         Royal Champagne Cream via <html data-theme="...">). -->
-    <link rel="stylesheet" href="/css/themes.css">
+    <!-- Centralized theme token system: White Professional is the default;
+         Royal Champagne Cream, Midnight Royal Gold and Emerald Bazaar are
+         selected via <html data-theme="...">. -->
+    <link rel="stylesheet" href="/css/themes.css?v={{ filemtime(public_path('css/themes.css')) }}">
     <style>
         :root {
             --dm-navy: #0f172a;

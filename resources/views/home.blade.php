@@ -6,7 +6,9 @@
     <title data-i18n="home.page_title">Dukamkononi | Karibu Dukani</title>
     <!-- Google Fonts & simple reset -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/themes.css">
+@endverbatim
+    <link rel="stylesheet" href="/css/themes.css?v={{ filemtime(public_path('css/themes.css')) }}">
+@verbatim
     <style>
         * {
             margin: 0;
@@ -521,7 +523,7 @@
         }
     </style>
 </head>
-<body>
+<body class="dm-public">
 @endverbatim
 @include('partials.dm-lang-widget', ['dmLangHideButton' => true])
 @verbatim

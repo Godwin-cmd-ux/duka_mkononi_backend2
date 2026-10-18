@@ -1,7 +1,7 @@
 @include('partials.dm-locale')
 @include('partials.site-head', ['titleKey' => 'site_track.page_title', 'metaKey' => 'site_track.meta_description', 'titleFallback' => 'Track Orders - DukaMkononi'])
 @verbatim
-<body>
+<body class="dm-public">
 @endverbatim
 @include('partials.dm-lang-widget')
 @include('partials.dm-theme-widget')

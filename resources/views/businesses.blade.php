@@ -1,7 +1,7 @@
 @include('partials.dm-locale')
 @include('partials.site-head', ['titleKey' => 'site_businesses.page_title', 'metaKey' => 'site_businesses.meta_description', 'titleFallback' => 'Businesses - DukaMkononi'])
 @verbatim
-<body>
+<body class="dm-public">
 @endverbatim
 @include('partials.dm-lang-widget')
 @include('partials.dm-theme-widget')

@@ -7,11 +7,11 @@ import { PALETTES, THEME_IDS, useTheme, type ThemeId } from '../lib/theme';
 /**
  * 🎨 In-app theme selector (mobile twin of the website's paintbrush panel).
  *
- * Three cards — White Professional (default), Royal Champagne Cream and
- * Midnight Royal Gold — with a live-color preview built from each theme's
- * REAL palette values, plus a check mark AND a "Selected" text label so
- * selection never relies on colour alone. Inserted into each role's
- * settings surface.
+ * Five cards — White Professional (default), Royal Champagne Cream, Midnight
+ * Royal Gold, Emerald Bazaar and Oceanic Sapphire — with a live-color preview
+ * built from each theme's REAL palette values, plus a check mark AND a
+ * "Selected" text label so selection never relies on colour alone. Inserted
+ * into each role's settings surface.
  */
 
 /** Preview dots per theme — real hexes from PALETTES (kept literal so the
@@ -20,18 +20,24 @@ const PREVIEW_DOTS: Record<ThemeId, string[]> = {
   'white-professional': ['#f8fafc', '#ffffff', '#667eea', '#2c3e50', '#e2e8f0'],
   'royal-champagne-cream': ['#f4e8d0', '#fcfbf7', '#8b6f23', '#171717', '#d9d8cf'],
   'midnight-royal-gold': ['#282213', '#101010', '#ff9f1c', '#f8f8f8', '#303030'],
+  'emerald-bazaar': ['#dcefe5', '#ffffff', '#0e7a5f', '#0f241d', '#cfdfd7'],
+  'oceanic-sapphire': ['#eaf3ff', '#ffffff', '#2563eb', '#102a43', '#d7e3f0'],
 };
 
 const THEME_NAME: Record<ThemeId, string> = {
   'white-professional': 'White Professional',
   'royal-champagne-cream': 'Royal Champagne Cream',
   'midnight-royal-gold': 'Midnight Royal Gold',
+  'emerald-bazaar': 'Emerald Bazaar',
+  'oceanic-sapphire': 'Oceanic Sapphire',
 };
 
 const DESC_KEY: Record<ThemeId, string> = {
   'white-professional': 'theme.white_desc',
   'royal-champagne-cream': 'theme.royal_desc',
   'midnight-royal-gold': 'theme.midnight_desc',
+  'emerald-bazaar': 'theme.emerald_desc',
+  'oceanic-sapphire': 'theme.oceanic_desc',
 };
 
 export default function ThemeSelector() {

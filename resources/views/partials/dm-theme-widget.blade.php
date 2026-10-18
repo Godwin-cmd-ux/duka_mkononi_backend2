@@ -6,7 +6,13 @@
     panel beside/above the trigger elsewhere):
 
       White Professional       - the existing Duka Mkononi design (default)
-      Royal Champagne Cream    - warm cream / ivory / royal gold)
+      Royal Champagne Cream    - warm cream / ivory / royal gold
+      Midnight Royal Gold      - near-black canvas / gold / amber-orange
+      Emerald Bazaar           - mist-green daylight / white / deep emerald
+      Oceanic Sapphire         - icy daylight / white / ocean navy / sapphire
+                                 (public website only for now; same card shape
+                                 as the others, its one-line description as the
+                                 tooltip, hidden on authenticated placements)
 
     Placement variants:
       default                  fixed, directly under the floating language
@@ -30,6 +36,12 @@
     (data-i18n keys under `ui.*` in locales.json); display names are brand
     literals and are never translated. No emojis: icons are inline SVG, same
     convention as the language widget.
+
+    Cache: this partial versions /js/dm-theme.js with its filemtime, and the
+    pages version /css/themes.css the same way (home, whose head sits inside
+    a verbatim block, uses a literal ?v= revision). A browser that cached an older
+    stylesheet or an older allow-list therefore picks up a new theme
+    immediately instead of showing it as unavailable.
 --}}
 @php
     $dmThemePlacement = $dmThemePlacement ?? 'float';
@@ -208,6 +220,18 @@
         --dm-radio-bg: #101010;
         --dm-radio-line: #444444;
         --dm-radio-dot: #ff9f1c;
+    }
+
+    .dm-theme-card[data-theme-id="emerald-bazaar"] {
+        --dm-radio-bg: #ffffff;
+        --dm-radio-line: #bfe0d2;
+        --dm-radio-dot: #0e7a5f;
+    }
+
+    .dm-theme-card[data-theme-id="oceanic-sapphire"] {
+        --dm-radio-bg: #ffffff;
+        --dm-radio-line: #c9ddf8;
+        --dm-radio-dot: #2563eb;
     }
 
     .dm-theme-name {
@@ -395,6 +419,10 @@
     .dm-theme-swatch--royal::after { background: #8b6f23; }
     .dm-theme-swatch--midnight { background: #101010; }
     .dm-theme-swatch--midnight::after { background: #ff9f1c; }
+    .dm-theme-swatch--emerald { background: #dcefe5; }
+    .dm-theme-swatch--emerald::after { background: #0e7a5f; }
+    .dm-theme-swatch--oceanic { background: #eaf3ff; }
+    .dm-theme-swatch--oceanic::after { background: #2563eb; }
 
     .dm-theme-modal-list .dm-theme-name { font-size: 16px; font-weight: 600; }
 
@@ -427,6 +455,22 @@
     }
 
     .dm-theme-modal-list .dm-theme-card[data-theme-id="midnight-royal-gold"][aria-checked="true"] .dm-theme-name { color: #d4af37; }
+
+    .dm-theme-modal-list .dm-theme-card[data-theme-id="emerald-bazaar"][aria-checked="true"] {
+        background: #e3f1ea;
+        border-color: #0e7a5f;
+        box-shadow: none;
+    }
+
+    .dm-theme-modal-list .dm-theme-card[data-theme-id="emerald-bazaar"][aria-checked="true"] .dm-theme-name { color: #0e7a5f; }
+
+    .dm-theme-modal-list .dm-theme-card[data-theme-id="oceanic-sapphire"][aria-checked="true"] {
+        background: #eaf3ff;
+        border-color: #2563eb;
+        box-shadow: none;
+    }
+
+    .dm-theme-modal-list .dm-theme-card[data-theme-id="oceanic-sapphire"][aria-checked="true"] .dm-theme-name { color: #1d4ed8; }
 
     /* Actions: same geometry as the language sheet's Funga / Tuma buttons. */
     .dm-theme-modal-actions { display: flex; gap: 12px; }
@@ -585,6 +629,29 @@
                         <span class="dm-theme-radio" aria-hidden="true"></span>
                     </button>
 
+                    <button type="button" class="dm-theme-card" role="radio" data-theme-id="emerald-bazaar" aria-checked="false">
+                        <span class="dm-theme-item-left">
+                            <span class="dm-theme-swatch dm-theme-swatch--emerald" aria-hidden="true"></span>
+                            <span class="dm-theme-name">Emerald Bazaar</span>
+                        </span>
+                        <span class="dm-theme-radio" aria-hidden="true"></span>
+                    </button>
+
+                    {{-- Same shape as every other card: swatch + name + radio.
+                         The theme's one-line description rides along as the
+                         tooltip, so the row height matches the others exactly.
+                         Offered on the public pages and on every authenticated
+                         portal (both layers carry Oceanic rules). --}}
+                    <button type="button" class="dm-theme-card" role="radio" data-theme-id="oceanic-sapphire" aria-checked="false"
+                            title="A fresh, modern shopping experience combining deep ocean navy, vibrant sapphire blue, crisp white surfaces, and soft icy-blue backgrounds."
+                            data-i18n="ui.theme_oceanic_desc" data-i18n-attr="title">
+                        <span class="dm-theme-item-left">
+                            <span class="dm-theme-swatch dm-theme-swatch--oceanic" aria-hidden="true"></span>
+                            <span class="dm-theme-name">Oceanic Sapphire</span>
+                        </span>
+                        <span class="dm-theme-radio" aria-hidden="true"></span>
+                    </button>
+
                 </div>
 
                 <div class="dm-theme-modal-actions">
@@ -624,12 +691,27 @@
                 <span class="dm-theme-name">Midnight Royal Gold</span>
             </button>
 
+            <button type="button" class="dm-theme-card" role="radio" data-theme-id="emerald-bazaar" aria-checked="false">
+                <span class="dm-theme-radio" aria-hidden="true"></span>
+                <span class="dm-theme-name">Emerald Bazaar</span>
+            </button>
+
+            {{-- Same shape as every other card (both placements). --}}
+            <button type="button" class="dm-theme-card" role="radio" data-theme-id="oceanic-sapphire" aria-checked="false"
+                    title="A fresh, modern shopping experience combining deep ocean navy, vibrant sapphire blue, crisp white surfaces, and soft icy-blue backgrounds."
+                    data-i18n="ui.theme_oceanic_desc" data-i18n-attr="title">
+                <span class="dm-theme-radio" aria-hidden="true"></span>
+                <span class="dm-theme-name">Oceanic Sapphire</span>
+            </button>
+
         </div>
     </div>
     @endif
 </div>
 
-<script src="/js/dm-theme.js"></script>
+{{-- Versioned so a browser that cached an older copy (without the new theme
+     in its allow-list) picks the current one up immediately. --}}
+<script src="/js/dm-theme.js?v={{ filemtime(public_path('js/dm-theme.js')) }}"></script>
 @verbatim
 <script>
 (function (global) {

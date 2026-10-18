@@ -5,9 +5,9 @@ namespace App\Services;
 /**
  * Server-side validation for the website/app theme preference.
  *
- * Three themes are approved (Phase 1 approved the first two; the public-
- * website phase added the third); the identifiers are stable, untranslated
- * strings and mirror:
+ * Five themes are approved (Phase 1 approved the first two; the public-
+ * website phase added Midnight Royal Gold, Emerald Bazaar and Oceanic
+ * Sapphire); the identifiers are stable, untranslated strings and mirror:
  *   - the allow-list in public/js/dm-theme.js
  *   - the migration default in 2026_10_17_000001_add_preferred_theme_to_users_table.php
  *   - the <html data-theme="..."> values in public/css/themes.css
@@ -33,6 +33,8 @@ class ThemePreference
         'white-professional',
         'royal-champagne-cream',
         'midnight-royal-gold',
+        'emerald-bazaar',
+        'oceanic-sapphire',
     ];
 
     /**

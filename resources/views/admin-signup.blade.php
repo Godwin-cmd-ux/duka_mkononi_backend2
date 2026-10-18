@@ -1,6 +1,6 @@
 @include('partials.dm-locale')
 <link rel="stylesheet" href="/css/smartcart-loader.css">
-<link rel="stylesheet" href="/css/themes.css">
+<link rel="stylesheet" href="/css/themes.css?v={{ filemtime(public_path('css/themes.css')) }}">
 @verbatim
 <head>
     <meta charset="UTF-8">
@@ -328,7 +328,7 @@
         }
     </style>
 </head>
-<body>
+<body class="dm-public">
 @endverbatim
 @include('partials.dm-lang-widget')
 @include('partials.dm-theme-widget')

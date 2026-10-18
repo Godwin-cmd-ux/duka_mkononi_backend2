@@ -3,11 +3,13 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { API_BASE_URLS } from '../constants/api';
 
 /**
- * 🎨 Theme system (mobile) — the same three themes as the website.
+ * 🎨 Theme system (mobile) — the same themes as the website.
  *
  *   white-professional    the existing Duka Mkononi design (DEFAULT, unchanged)
  *   royal-champagne-cream warm cream / ivory / royal gold
  *   midnight-royal-gold   near-black canvas / charcoal cards / gold + orange
+ *   emerald-bazaar        mist-green daylight / white cards / deep emerald
+ *   oceanic-sapphire      icy daylight / white cards / ocean navy + sapphire
  *
  * The identifiers, the localStorage/AsyncStorage key ("dukamkononi_theme") and
  * the sync endpoint (PUT /api/user/theme) are shared with the website, so a
@@ -15,17 +17,28 @@ import { API_BASE_URLS } from '../constants/api';
  *
  * White Professional's values below are the app's current production hexes,
  * so the default theme renders exactly as before this system existed.
- * Royal and Midnight values mirror public/css/themes.css on the website,
- * one palette per platform.
+ * Every alternative palette mirrors public/css/themes.css on the website,
+ * one palette per platform (Oceanic Sapphire copies its token block).
  *
  * Screens opt in through useTheme().colors; screens that still use their own
  * literal colors are unaffected (documented boundary, same as the web
  * portal pages' inline styles).
  */
 
-export type ThemeId = 'white-professional' | 'royal-champagne-cream' | 'midnight-royal-gold';
+export type ThemeId =
+  | 'white-professional'
+  | 'royal-champagne-cream'
+  | 'midnight-royal-gold'
+  | 'emerald-bazaar'
+  | 'oceanic-sapphire';
 
-export const THEME_IDS: readonly ThemeId[] = ['white-professional', 'royal-champagne-cream', 'midnight-royal-gold'];
+export const THEME_IDS: readonly ThemeId[] = [
+  'white-professional',
+  'royal-champagne-cream',
+  'midnight-royal-gold',
+  'emerald-bazaar',
+  'oceanic-sapphire',
+];
 
 export interface ThemeColors {
   /** Page background (screens, layouts). */
@@ -101,6 +114,38 @@ export const PALETTES: Record<ThemeId, ThemeColors> = {
     primary: '#ff9f1c',
     primaryDark: '#e88b0c',
     tint: '#282213',
+    success: '#27ae60',
+    danger: '#e74c3c',
+    warn: '#f39c12',
+  },
+  'emerald-bazaar': {
+    page: '#f1f7f4',
+    card: '#ffffff',
+    soft: '#e3f1ea',
+    ink: '#0f241d',
+    muted: '#4f6b60',
+    muted2: '#7e968c',
+    line: '#cfdfd7',
+    line2: '#deece5',
+    primary: '#0e7a5f',
+    primaryDark: '#0a5f4a',
+    tint: '#dcefe5',
+    success: '#27ae60',
+    danger: '#e74c3c',
+    warn: '#f39c12',
+  },
+  'oceanic-sapphire': {
+    page: '#f4f8ff',
+    card: '#ffffff',
+    soft: '#eff6ff',
+    ink: '#102a43',
+    muted: '#64748b',
+    muted2: '#94a3b8',
+    line: '#d7e3f0',
+    line2: '#e4eefa',
+    primary: '#2563eb',
+    primaryDark: '#1d4ed8',
+    tint: '#eaf3ff',
     success: '#27ae60',
     danger: '#e74c3c',
     warn: '#f39c12',

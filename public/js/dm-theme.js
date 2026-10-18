@@ -5,6 +5,8 @@
  *   white-professional      default (the original Duka Mkononi design)
  *   royal-champagne-cream   warm cream / ivory / royal gold
  *   midnight-royal-gold     premium dark: charcoal / gold / amber-orange
+ *   emerald-bazaar          fresh light: mist / white / deep emerald
+ *   oceanic-sapphire        icy daylight: ocean navy / sapphire / white
  *
  * Responsibilities:
  *   - validate every stored / incoming identifier against the allow-list
@@ -28,7 +30,7 @@
     var LEGACY_STORAGE_KEY = 'lukamkononi_theme';
     var SYNC_URL = '/api/user/theme';
     var DEFAULT = 'white-professional';
-    var ALLOWED = ['white-professional', 'royal-champagne-cream', 'midnight-royal-gold'];
+    var ALLOWED = ['white-professional', 'royal-champagne-cream', 'midnight-royal-gold', 'emerald-bazaar', 'oceanic-sapphire'];
     var listeners = [];
 
     function isValid(theme) {
@@ -130,6 +132,17 @@
         }
         return current();
     }
+
+    /* Boot-time restore. The inline snippet in partials/dm-locale already
+       applies the stored theme before first paint (for no flash), but this
+       module must not depend on that snippet knowing the full allow-list:
+       a stored theme is re-applied here as soon as the module loads. Pages
+       that include the widget without the snippet, and any theme added to
+       ALLOWED later, therefore still carry the preference across pages. */
+    (function boot() {
+        var stored = readStored();
+        if (stored) apply(stored);
+    })();
 
     global.DMTheme = {
         __booted: true,

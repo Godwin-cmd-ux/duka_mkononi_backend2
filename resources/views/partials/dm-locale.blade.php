@@ -25,16 +25,27 @@
 @endphp
 <!DOCTYPE html>
 <html lang="{{ $dmLocale }}" dir="{{ $dmDirection }}" data-dm-locale="{{ $dmLocale }}" data-theme="white-professional">
-{{-- Theme restore, runs before first paint so a Royal visitor never sees a
-     flash of the default design. The stored value is only ever COMPARED to the
-     two approved identifiers — raw storage/request data is never written into
-     markup, attributes or CSS, so localStorage cannot inject anything. --}}
+{{-- Theme restore, runs before first paint so a visitor who chose any approved
+     theme never sees a flash of the default design. The allow-list must mirror
+     public/js/dm-theme.js (THEMES) and app/Services/ThemePreference.php — a theme
+     missing here is remembered but silently dropped on every other page. The
+     stored value is only ever COMPARED to the approved identifiers — raw
+     storage/request data is never written into markup, attributes or CSS, so
+     localStorage cannot inject anything. --}}
 <script>
 (function () {
+    var approved = ['white-professional', 'royal-champagne-cream', 'midnight-royal-gold', 'emerald-bazaar', 'oceanic-sapphire'];
     try {
-        if (window.localStorage.getItem('dukamkononi_theme') === 'royal-champagne-cream' ||
-            window.localStorage.getItem('lukamkononi_theme') === 'royal-champagne-cream') {
-            document.documentElement.setAttribute('data-theme', 'royal-champagne-cream');
+        var stored = window.localStorage.getItem('dukamkononi_theme');
+        if (approved.indexOf(stored) === -1) {
+            // Pre-release key: migrate the value once, then restore it too.
+            stored = window.localStorage.getItem('lukamkononi_theme');
+            if (approved.indexOf(stored) > -1) {
+                window.localStorage.setItem('dukamkononi_theme', stored);
+            }
+        }
+        if (approved.indexOf(stored) > -1) {
+            document.documentElement.setAttribute('data-theme', stored);
         }
     } catch (e) { /* storage unavailable: stay on White Professional */ }
 })();

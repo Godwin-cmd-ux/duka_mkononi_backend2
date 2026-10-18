@@ -1,7 +1,7 @@
 @include('partials.dm-locale')
 @include('partials.site-head', ['titleFallback' => 'DukaMkononi | Your online marketplace'])
 @verbatim
-<body>
+<body class="dm-public">
 @endverbatim
 @include('partials.dm-lang-widget')
 @include('partials.dm-theme-widget')

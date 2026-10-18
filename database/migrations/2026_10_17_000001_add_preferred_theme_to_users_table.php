@@ -8,12 +8,13 @@ use Illuminate\Support\Facades\Schema;
 /**
  * Phase 1 of the theme system: a dedicated preference column on `users`.
  *
- * Adds `preferred_theme` so an account can remember which of the two approved
+ * Adds `preferred_theme` so an account can remember which of the approved
  * themes its owner selected, mirroring how `language` remembers the preferred
  * locale (AuthController::login).
  *
- *  - Supports exactly the two approved identifiers:
+ *  - Supports exactly the five approved identifiers:
  *      'white-professional' | 'royal-champagne-cream'
+ *      | 'midnight-royal-gold' | 'emerald-bazaar' | 'oceanic-sapphire'
  *  - Defaults new users to 'white-professional' (the existing Duka Mkononi
  *    design stays the default experience).
  *  - Existing rows backfill: the column default covers engines that rewrite
@@ -32,6 +33,9 @@ return new class extends Migration
     private const ALLOWED = [
         'white-professional',
         'royal-champagne-cream',
+        'midnight-royal-gold',
+        'emerald-bazaar',
+        'oceanic-sapphire',
     ];
 
     public function up(): void
