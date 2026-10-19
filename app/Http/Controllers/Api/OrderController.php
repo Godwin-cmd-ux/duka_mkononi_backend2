@@ -346,12 +346,12 @@ class OrderController extends BaseController
 
     private function isOrderStaff(Request $request): bool
     {
-        return in_array($this->role($request), ['admin', 'seller', 'system_admin'], true);
+        return in_array($this->role($request), ['admin', 'seller', 'super_admin', 'system_admin'], true);
     }
 
     private function isPlatformAdmin(Request $request): bool
     {
-        return $this->role($request) === 'system_admin';
+        return in_array($this->role($request), ['super_admin', 'system_admin'], true);
     }
 
     private function canAccessOrder(Request $request, ?string $businessId): bool

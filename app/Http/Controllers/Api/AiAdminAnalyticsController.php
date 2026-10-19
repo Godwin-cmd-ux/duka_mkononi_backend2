@@ -364,7 +364,7 @@ class AiAdminAnalyticsController extends BaseController
                 $customers = Customer::query()->count();
                 $sales = Sale::query()->count();
                 $sellers = User::where('role', 'seller')->count();
-                $admins = User::whereIn('role', ['admin', 'system_admin'])->count();
+                $admins = User::whereIn('role', ['admin', 'super_admin', 'system_admin'])->count();
 
                 return [
                     'users' => $users,
@@ -537,6 +537,6 @@ class AiAdminAnalyticsController extends BaseController
     /** Mirrors the platform's system-admin check: system_admin or admin. */
     private function isSuperAdmin(Request $request): bool
     {
-        return in_array($this->role($request), ['system_admin', 'admin'], true);
+        return in_array($this->role($request), ['super_admin', 'system_admin', 'admin'], true);
     }
 }

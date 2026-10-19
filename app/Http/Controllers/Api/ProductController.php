@@ -545,7 +545,7 @@ class ProductController extends BaseController
             // platform pages, via ?business_id= or the legacy ?business=<name>
             // resolved through BusinessResolver so spelling variants collapse.
             $callerBusinessId = $this->businessId($request);
-            $isPlatformAdmin = $this->role($request) === 'system_admin';
+            $isPlatformAdmin = $this->isSuperAdmin($request);
             $scopeBusinessId = null;
 
             if ($isPlatformAdmin) {

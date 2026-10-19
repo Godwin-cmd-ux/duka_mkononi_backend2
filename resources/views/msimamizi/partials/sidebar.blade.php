@@ -481,8 +481,10 @@
                 window.location.href = '/login?role=msimamizi';
                 return false;
             }
-            // Check if user is admin/msimamizi
-            if (user.role !== 'admin' && user.role !== 'msimamizi') {
+            // Admin/msimamizi area. A promoted platform super admin
+            // (super_admin, or the legacy system_admin spelling) keeps full
+            // access to their business dashboard.
+            if (!['admin', 'msimamizi', 'super_admin', 'system_admin'].includes(user.role || '')) {
                 showToast(t('err_no_permission'), 'error');
                 window.location.href = '/home';
                 return false;

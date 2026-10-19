@@ -508,7 +508,9 @@
         function checkSystemAdmin() {
             const user = getCurrentUser();
             if (!user) { window.location.href = '/login?role=msimamizi'; return false; }
-            if (user.email !== "cosmavictorini1994@gmail.com") {
+            // Super admin is a database role (promoted by the technician),
+            // never a hardcoded email. 'system_admin' is the legacy spelling.
+            if (!['super_admin', 'system_admin'].includes(user.role || '')) {
                 showToast(t('err_no_permission'), 'error');
                 window.location.href = '/home';
                 return false;

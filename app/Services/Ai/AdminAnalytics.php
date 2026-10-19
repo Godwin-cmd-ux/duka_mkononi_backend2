@@ -68,7 +68,7 @@ class AdminAnalytics
     ];
 
     /** The role filter a question may apply (never a person). */
-    public const ROLE_FILTERS = ['admin', 'seller', 'customer', 'client', 'system_admin'];
+    public const ROLE_FILTERS = ['admin', 'seller', 'customer', 'client', 'super_admin', 'system_admin'];
 
     /** A single answer may cover at most this many days. */
     public const MAX_RANGE_DAYS = 366;
@@ -1620,6 +1620,7 @@ class AdminAnalytics
     {
         $map = [
             'seller' => ['seller', 'sellers', 'wauzaji', 'muuzaji', 'vendeur', 'vendedor', 'verkaufer', '卖家', 'विक्रेता', 'بیچنے والے'],
+            'super_admin' => ['super admin', 'system admin', 'super-admin', 'msimamizi mkuu', 'super administrateur', 'superadministrador', '超级管理员', 'सुपर एडमिन', 'سپر ایڈمن'],
             'system_admin' => ['super admin', 'system admin', 'super-admin', 'msimamizi mkuu', 'super administrateur', 'superadministrador', '超级管理员', 'सुपर एडमिन', 'سپر ایڈمن'],
             'admin' => ['admins', 'administrators', 'wasimamizi', 'administrateurs', 'administradores', '管理员', 'एडमिन', 'ایڈمن'],
             'customer' => ['customers', 'clients', 'wateja', 'clients ', 'clientes', 'kunden', '顾客', '客户', 'ग्राहक', 'گاہک'],

@@ -513,7 +513,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             loading = true; renderLoading();
             try {
                 const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` };
-                if (userData.role === 'admin') {
+                if (['admin', 'super_admin', 'system_admin'].includes(userData.role || '')) {
                     await fetchBusinessData(headers);
                     dataSource = 'admin';
                 } else {
@@ -800,7 +800,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         function refreshData() { fetchAllReports(); }
 
         function renderOverview() {
-            const isAdmin = userData.role === 'admin';
+            const isAdmin = ['admin', 'super_admin', 'system_admin'].includes(userData.role || '');
             return `
                 <div class="business-card">
                     <div class="business-name">${escapeHtml(userData.businessName)}</div>
@@ -957,7 +957,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         }
 
         function render() {
-            const isAdmin = userData.role === 'admin';
+            const isAdmin = ['admin', 'super_admin', 'system_admin'].includes(userData.role || '');
             const container = document.getElementById('mainContent');
             container.innerHTML = `
                 <div class="container">

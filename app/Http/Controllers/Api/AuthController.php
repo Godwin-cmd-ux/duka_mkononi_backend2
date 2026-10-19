@@ -85,6 +85,13 @@ class AuthController extends BaseController
         $email = $verified->email;
         $role = $verified->role;
         $passwordHash = $verified->passwordHash;
+
+        // Defense in depth: even a signed verification token may only carry
+        // a self-registerable role (the allow-list was enforced at initiate).
+        if (!\App\Services\Roles::isRegisterable($role)) {
+            $this->log(null, 'REGISTER_FAILED', '/api/register', ['reason' => 'Role not self-registerable', 'role' => $role], $ip, 'failed');
+            return $this->json(['error' => 'Role hii haijajiandikishwa'], 403);
+        }
         $full_name = $verified->full_name ?? null;
         $phone = $verified->phone ?? null;
         $business_name = $verified->business_name ?? null;
@@ -260,6 +267,14 @@ class AuthController extends BaseController
         if (!$email || !$password || !$role) {
             $this->log(null, 'REGISTER_INITIATE_FAILED', '/api/register/initiate', ['reason' => 'Missing required fields', 'email' => $email, 'role' => $role], $ip, 'failed');
             return $this->json(['error' => 'Email, password na role zinahitajika'], 400);
+        }
+
+        // Self-service signup may ONLY produce an ordinary role. Platform
+        // roles (super_admin, legacy system_admin) are granted exclusively by
+        // a technician updating the database - never through the API.
+        if (!\App\Services\Roles::isRegisterable($role)) {
+            $this->log(null, 'REGISTER_INITIATE_FAILED', '/api/register/initiate', ['reason' => 'Role not self-registerable', 'role' => $role], $ip, 'failed');
+            return $this->json(['error' => 'Role hii haijajiandikishwa. Chagua client, seller au admin.'], 400);
         }
 
         if ($role === 'admin' && (!$business_type || !in_array($business_type, self::BUSINESS_TYPE_ALLOWED, true))) {

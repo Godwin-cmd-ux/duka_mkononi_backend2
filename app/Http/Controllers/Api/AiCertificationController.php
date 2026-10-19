@@ -497,6 +497,6 @@ class AiCertificationController extends BaseController
     /** Mirrors the existing check: platform Super Admin = system_admin or admin. */
     private function isSuperAdmin(Request $request): bool
     {
-        return in_array($this->role($request), ['system_admin', 'admin'], true);
+        return in_array($this->role($request), ['super_admin', 'system_admin', 'admin'], true);
     }
 }

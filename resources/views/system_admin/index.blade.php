@@ -198,10 +198,11 @@
             
             try {
                 const userData = JSON.parse(userDataStr);
-                const userEmail = userData.email || '';
-                const isSystemAdmin = userEmail === "cosmavictorini1994@gmail.com";
+                // Super admin is a database role (promoted by the technician),
+                // never a hardcoded email. 'system_admin' is the legacy spelling.
+                const isSystemAdmin = ['super_admin', 'system_admin'].includes(userData.role || '');
                 
-                if (!isSystemAdmin && userData.role !== 'system_admin') {
+                if (!isSystemAdmin) {
                     // User is not system admin, redirect to home
                     console.log('User is not system admin, redirecting to home...');
                     setMessage('no_permission');

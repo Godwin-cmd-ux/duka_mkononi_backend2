@@ -270,7 +270,7 @@ class InquiryController extends BaseController
      */
     private function isSuperAdmin(Request $request): bool
     {
-        return in_array($this->role($request), ['system_admin', 'admin'], true);
+        return in_array($this->role($request), ['super_admin', 'system_admin', 'admin'], true);
     }
 
     private function publishedReviewMap(array $inquiryIds): array

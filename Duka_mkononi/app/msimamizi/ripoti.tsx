@@ -25,6 +25,11 @@ import { fetchWithTimeout } from '../../lib/network';
 
 import { API_BASE_URL } from '../../constants/api';
 
+// Admin identity: a promoted platform super admin (or the legacy
+// system_admin spelling) keeps full business-admin behaviour.
+const isAdminRole = (role: string | null | undefined): boolean =>
+    ['admin', 'super_admin', 'system_admin'].includes(role || '');
+
 interface Sale {
   // sales.id / sale_items.product_id / sales.customer_id are UUIDs. They were
   // typed `number` back when ids were sequential; nothing caught it because the
@@ -147,7 +152,7 @@ export default function RipotiScreen() {
   }, [lang]);
 
   useEffect(() => {
-    if (userData.role !== 'admin' || !userData.businessName) return;
+    if (!isAdminRole(userData.role) || !userData.businessName) return;
     const stop = registerLive<any[]>(
       'admin:users',
       async () => {
@@ -395,7 +400,7 @@ export default function RipotiScreen() {
         'ngrok-skip-browser-warning': 'true'
       };
 
-      if (user.role === 'admin') {
+      if (isAdminRole(user.role)) {
         await fetchBusinessData(headers, user.business_name || user.businessName);
         setDataSource('admin');
       } else {
@@ -858,7 +863,7 @@ export default function RipotiScreen() {
   // Mirrors buildExportTable() in resources/views/msimamizi/ripoti.blade.php:
   // first row is the header, the rest are data rows for the active tab.
   const buildExportRows = (): { title: string; rows: (string | number)[][] } => {
-    const isAdmin = userData.role === 'admin';
+    const isAdmin = isAdminRole(userData.role);
     const scope = isAdmin ? userData.businessName : t('reports.personal_report');
 
     switch (activeReport) {
@@ -974,7 +979,7 @@ export default function RipotiScreen() {
   };
 
   const renderOverview = () => {
-    const isAdmin = userData.role === 'admin';
+    const isAdmin = isAdminRole(userData.role);
     
     return (
       <View>
@@ -1120,7 +1125,7 @@ export default function RipotiScreen() {
   };
 
   const renderSalesReport = () => {
-    const isAdmin = userData.role === 'admin';
+    const isAdmin = isAdminRole(userData.role);
     
     return (
       <View>
@@ -1175,7 +1180,7 @@ export default function RipotiScreen() {
   };
 
   const renderSoldProducts = () => {
-    const isAdmin = userData.role === 'admin';
+    const isAdmin = isAdminRole(userData.role);
     
     return (
       <View>
@@ -1259,7 +1264,7 @@ export default function RipotiScreen() {
   };
 
   const renderUnsoldProducts = () => {
-    const isAdmin = userData.role === 'admin';
+    const isAdmin = isAdminRole(userData.role);
     
     return (
       <View>
@@ -1348,7 +1353,7 @@ export default function RipotiScreen() {
   };
 
   const renderProductsReport = () => {
-    const isAdmin = userData.role === 'admin';
+    const isAdmin = isAdminRole(userData.role);
     
     return (
       <View>
@@ -1420,7 +1425,7 @@ export default function RipotiScreen() {
   };
 
   const renderCustomersReport = () => {
-    const isAdmin = userData.role === 'admin';
+    const isAdmin = isAdminRole(userData.role);
     
     return (
       <View>
@@ -1538,7 +1543,7 @@ export default function RipotiScreen() {
             {t('reports.loading_full')}
           </Text>
           <Text style={styles.fallbackText}>
-            {userData.role === 'admin' ? t('reports.loading_business') : t('reports.loading_personal')}
+            {isAdminRole(userData.role) ? t('reports.loading_business') : t('reports.loading_personal')}
           </Text>
         </View>
       </SafeAreaView>

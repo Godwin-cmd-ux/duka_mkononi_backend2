@@ -202,7 +202,7 @@ class SecurityMonitor
                 ->count() + 1;
         }
 
-        $privileged = in_array((string) ($context['role'] ?? ''), ['admin', 'system_admin'], true);
+        $privileged = in_array((string) ($context['role'] ?? ''), ['admin', 'super_admin', 'system_admin'], true);
 
         // Known-account ladder (privileged accounts escalate earlier), but
         // never below what the ip ladder says for the same burst: a single

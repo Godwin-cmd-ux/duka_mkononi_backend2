@@ -197,7 +197,7 @@ class AiReplyController extends BaseController
                 return null;
             }
 
-            if ($role !== 'system_admin') {
+            if (!in_array((string) $role, ['super_admin', 'system_admin'], true)) {
                 $businessId = $this->businessId($request);
                 if (! $businessId || $order->business_id !== $businessId) {
                     return null;

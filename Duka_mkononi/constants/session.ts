@@ -27,6 +27,12 @@ export const getDashboardRouteForRole = (userRole: string | null | undefined): s
   switch (userRole) {
     case 'admin':
       return '/msimamizi';
+    // Platform super admin (promoted by the technician in the database;
+    // 'system_admin' is the legacy spelling of the same role) lands on the
+    // msimamizi dashboard, where the System Management button appears.
+    case 'super_admin':
+    case 'system_admin':
+      return '/msimamizi';
     case 'seller':
       return '/muuzaji/profaili';
     case 'customer':

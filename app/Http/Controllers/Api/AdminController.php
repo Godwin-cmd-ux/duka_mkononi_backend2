@@ -35,7 +35,7 @@ class AdminController extends BaseController
         try {
             $userId = $this->userId($request);
 
-            if ($this->role($request) !== 'admin') {
+            if (!$this->isAdmin($request)) {
                 $this->log($userId, 'ADMIN_UNAUTHORIZED', '/api/admin/users', ['reason' => 'Non-admin access attempt'], $this->ip($request), 'failed');
                 return $this->json(['error' => 'Unauthorized'], 403);
             }
@@ -49,7 +49,7 @@ class AdminController extends BaseController
             // BusinessResolver so spelling variants collapse to one business.
             $usersQuery = User::query()->orderByDesc('created_at');
             $callerBusinessId = $this->businessId($request);
-            $isPlatformAdmin = $this->role($request) === 'system_admin';
+            $isPlatformAdmin = $this->isSuperAdmin($request);
 
             if ($isPlatformAdmin) {
                 $businessIdFilter = trim((string) $request->query('business_id', ''));
@@ -70,7 +70,7 @@ class AdminController extends BaseController
             }
             $roleFilter = trim((string) $request->query('role', ''));
             if ($roleFilter !== '') {
-                $roles = array_values(array_filter(array_map('trim', explode(',', $roleFilter)), fn ($r) => in_array($r, ['admin', 'seller', 'client', 'system_admin'], true)));
+                $roles = array_values(array_filter(array_map('trim', explode(',', $roleFilter)), fn ($r) => in_array($r, ['admin', 'seller', 'client', 'customer', 'super_admin', 'system_admin'], true)));
                 if (count($roles) === 1) {
                     $usersQuery->where('role', $roles[0]);
                 } elseif (count($roles) > 1) {
@@ -132,7 +132,7 @@ class AdminController extends BaseController
         try {
             $userId = $this->userId($request);
 
-            if ($this->role($request) !== 'admin') {
+            if (!$this->isAdmin($request)) {
                 $this->log($userId, 'ADMIN_UNAUTHORIZED', '/api/admin/products', ['reason' => 'Non-admin access attempt'], $this->ip($request), 'failed');
                 return $this->json(['error' => 'Unauthorized'], 403);
             }
@@ -146,7 +146,7 @@ class AdminController extends BaseController
             // lookup used by the platform pages.
             $query = Product::query();
             $callerBusinessId = $this->businessId($request);
-            $isPlatformAdmin = $this->role($request) === 'system_admin';
+            $isPlatformAdmin = $this->isSuperAdmin($request);
 
             if ($isPlatformAdmin) {
                 $businessIdFilter = trim((string) $request->query('business_id', ''));
@@ -209,7 +209,7 @@ class AdminController extends BaseController
         try {
             $userId = $this->userId($request);
 
-            if ($this->role($request) !== 'admin') {
+            if (!$this->isAdmin($request)) {
                 $this->log($userId, 'ADMIN_UNAUTHORIZED', '/api/admin/sales', ['reason' => 'Non-admin access attempt'], $this->ip($request), 'failed');
                 return $this->json(['error' => 'Unauthorized'], 403);
             }
@@ -220,7 +220,7 @@ class AdminController extends BaseController
             // empty the whole report.
             $salesQuery = Sale::query();
             $callerBusinessId = $this->businessId($request);
-            $isPlatformAdmin = $this->role($request) === 'system_admin';
+            $isPlatformAdmin = $this->isSuperAdmin($request);
 
             if ($isPlatformAdmin) {
                 $businessIdFilter = trim((string) $request->query('business_id', ''));
@@ -339,7 +339,7 @@ class AdminController extends BaseController
         try {
             $userId = $this->userId($request);
 
-            if ($this->role($request) !== 'admin') {
+            if (!$this->isAdmin($request)) {
                 $this->log($userId, 'ADMIN_UNAUTHORIZED', '/api/admin/customers', ['reason' => 'Non-admin access attempt'], $this->ip($request), 'failed');
                 return $this->json(['error' => 'Unauthorized'], 403);
             }
@@ -347,7 +347,7 @@ class AdminController extends BaseController
             // Business scoping after the business_id migration: see products().
             $query = Customer::query();
             $callerBusinessId = $this->businessId($request);
-            $isPlatformAdmin = $this->role($request) === 'system_admin';
+            $isPlatformAdmin = $this->isSuperAdmin($request);
 
             if ($isPlatformAdmin) {
                 $businessIdFilter = trim((string) $request->query('business_id', ''));
@@ -397,7 +397,7 @@ class AdminController extends BaseController
         try {
             $userId = $this->userId($request);
 
-            if ($this->role($request) !== 'admin') {
+            if (!$this->isAdmin($request)) {
                 $this->log($userId, 'ADMIN_UNAUTHORIZED', '/api/admin/stats', ['reason' => 'Non-admin access attempt'], $this->ip($request), 'failed');
                 return $this->json(['error' => 'Unauthorized'], 403);
             }
@@ -458,7 +458,7 @@ class AdminController extends BaseController
         try {
             $adminId = $this->userId($request);
 
-            if ($this->role($request) !== 'admin') {
+            if (!$this->isAdmin($request)) {
                 $this->log($adminId, 'ADMIN_LOGS_UNAUTHORIZED', '/api/admin/logs', ['reason' => 'Non-admin access attempt'], $this->ip($request), 'failed');
                 return $this->json(['error' => 'Unauthorized'], 403);
             }
@@ -481,7 +481,7 @@ class AdminController extends BaseController
         try {
             $adminId = $this->userId($request);
 
-            if ($this->role($request) !== 'admin') {
+            if (!$this->isAdmin($request)) {
                 $this->log($adminId, 'ADMIN_LOGS_SEARCH_UNAUTHORIZED', '/api/admin/logs/search', ['reason' => 'Non-admin search attempt'], $this->ip($request), 'failed');
                 return $this->json(['error' => 'Unauthorized'], 403);
             }
@@ -559,7 +559,7 @@ class AdminController extends BaseController
             $adminId = $this->userId($request);
             $days = $request->input('days', 30);
 
-            if ($this->role($request) !== 'admin') {
+            if (!$this->isAdmin($request)) {
                 $this->log($adminId, 'ADMIN_LOGS_CLEANUP_UNAUTHORIZED', '/api/admin/logs/cleanup', ['reason' => 'Non-admin cleanup attempt'], $this->ip($request), 'failed');
                 return $this->json(['error' => 'Unauthorized'], 403);
             }
@@ -606,7 +606,7 @@ class AdminController extends BaseController
             $adminId = $this->userId($request);
             $userId = $id;
 
-            if ($this->role($request) !== 'admin') {
+            if (!$this->isAdmin($request)) {
                 $this->log($adminId, 'ADMIN_UNAUTHORIZED', '/api/admin/users/:id', [
                     'reason' => 'Non-admin delete attempt',
                     'target_user_id' => $userId,
@@ -662,7 +662,7 @@ class AdminController extends BaseController
             $userId = $id;
             $status = $request->input('status');
 
-            if ($this->role($request) !== 'admin') {
+            if (!$this->isAdmin($request)) {
                 $this->log($adminId, 'ADMIN_UNAUTHORIZED', '/api/admin/users/' . $userId . '/status', [
                     'reason' => 'Non-admin status update attempt',
                     'target_user_id' => $userId,
@@ -722,7 +722,7 @@ class AdminController extends BaseController
         try {
             $adminId = $this->userId($request);
 
-            if ($this->role($request) !== 'admin') {
+            if (!$this->isAdmin($request)) {
                 $this->log($adminId, 'ONLINE_USERS_UNAUTHORIZED', '/api/admin/online-users', ['reason' => 'Non-admin access attempt'], $this->ip($request), 'failed');
                 return $this->json(['error' => 'Unauthorized'], 403);
             }
@@ -766,7 +766,7 @@ class AdminController extends BaseController
         try {
             $adminId = $this->userId($request);
 
-            if ($this->role($request) !== 'admin') {
+            if (!$this->isAdmin($request)) {
                 $this->log($adminId, 'REAL_TIME_STATS_UNAUTHORIZED', '/api/admin/real-time-stats', ['reason' => 'Non-admin access attempt'], $this->ip($request), 'failed');
                 return $this->json(['error' => 'Unauthorized'], 403);
             }
@@ -824,7 +824,7 @@ class AdminController extends BaseController
             $adminId = $this->userId($request);
             $userId = $id;
 
-            if ($this->role($request) !== 'admin') {
+            if (!$this->isAdmin($request)) {
                 $this->log($adminId, 'PRESENCE_HISTORY_UNAUTHORIZED', '/api/admin/user/' . $userId . '/presence-history', ['reason' => 'Non-admin access attempt'], $this->ip($request), 'failed');
                 return $this->json(['error' => 'Unauthorized'], 403);
             }
@@ -880,7 +880,7 @@ class AdminController extends BaseController
             $userId = $id;
             $isOnline = $request->input('is_online');
 
-            if ($this->role($request) !== 'admin') {
+            if (!$this->isAdmin($request)) {
                 $this->log($adminId, 'UPDATE_PRESENCE_UNAUTHORIZED', '/api/admin/user/' . $userId . '/presence', ['reason' => 'Non-admin access attempt'], $this->ip($request), 'failed');
                 return $this->json(['error' => 'Unauthorized'], 403);
             }
@@ -925,7 +925,7 @@ class AdminController extends BaseController
         try {
             $adminId = $this->userId($request);
 
-            if ($this->role($request) !== 'admin') {
+            if (!$this->isAdmin($request)) {
                 $this->log($adminId, 'WS_STATUS_UNAUTHORIZED', '/api/admin/ws-status', ['reason' => 'Non-admin access attempt'], $this->ip($request), 'failed');
                 return $this->json(['error' => 'Unauthorized'], 403);
             }
@@ -953,7 +953,7 @@ class AdminController extends BaseController
         try {
             $adminId = $this->userId($request);
 
-            if ($this->role($request) !== 'admin') {
+            if (!$this->isAdmin($request)) {
                 return $this->json(['error' => 'Unauthorized'], 403);
             }
 
@@ -1009,7 +1009,7 @@ class AdminController extends BaseController
         try {
             $adminId = $this->userId($request);
 
-            if ($this->role($request) !== 'admin') {
+            if (!$this->isAdmin($request)) {
                 return $this->json(['error' => 'Unauthorized'], 403);
             }
 
@@ -1046,7 +1046,7 @@ class AdminController extends BaseController
         try {
             $adminId = $this->userId($request);
 
-            if ($this->role($request) !== 'admin') {
+            if (!$this->isAdmin($request)) {
                 return $this->json(['error' => 'Unauthorized'], 403);
             }
 

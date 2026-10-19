@@ -24,6 +24,18 @@ abstract class BaseController
         return $request->attributes->get('jwt_role');
     }
 
+    /** Platform super admin (canonical super_admin + legacy system_admin). */
+    protected function isSuperAdmin(Request $request): bool
+    {
+        return \App\Services\Roles::isSuperAdmin($this->role($request));
+    }
+
+    /** Business admin or above (admin, super_admin, legacy system_admin). */
+    protected function isAdmin(Request $request): bool
+    {
+        return \App\Services\Roles::isAdmin($this->role($request));
+    }
+
     protected function businessName(Request $request): ?string
     {
         return $request->attributes->get('jwt_business_name');

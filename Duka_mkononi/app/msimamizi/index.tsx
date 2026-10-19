@@ -163,11 +163,11 @@ export default function MsimamiziHomeScreen() {
           businessLongitude: typeof user.business_longitude === 'number' ? user.business_longitude : null
         });
 
-        // ✅ KUBADILISHWA: Angalia kama user ni system admin
-        const userEmail = user.email || '';
-        const isAdmin = userEmail === "cosmavictorini1994@gmail.com";
+        // Super admin is a database role (promoted by the technician),
+        // never a hardcoded email. 'system_admin' is the legacy spelling.
+        const isAdmin = ['super_admin', 'system_admin'].includes(user.role || '');
         setIsSystemAdmin(isAdmin);
-        console.log('👑 System Admin Check:', { email: userEmail, isSystemAdmin: isAdmin });
+        console.log('👑 System Admin Check:', { role: user.role, isSystemAdmin: isAdmin });
 
         // Set initial form data
         setEditFormData({

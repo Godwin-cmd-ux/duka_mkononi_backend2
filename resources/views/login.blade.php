@@ -549,7 +549,12 @@
             'seller': '/muuzaji/profaili',
             'muuzaji': '/muuzaji/profaili',
             'admin': '/msimamizi/index',
-            'msimamizi': '/msimamizi/index'
+            'msimamizi': '/msimamizi/index',
+            // Platform super admin (promoted by the technician in the database;
+            // 'system_admin' is the legacy spelling) lands on the msimamizi
+            // dashboard, where the System Management button appears.
+            'super_admin': '/msimamizi/index',
+            'system_admin': '/msimamizi/index'
         };
         // Also handle if userRole is from frontend mapping
         if (userRole === 'mteja') return '/mteja/biashara';

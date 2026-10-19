@@ -114,7 +114,7 @@ resolved and the resolution.
 
 - Isolated failed login → INFO; second → LOW; then ladder steps:
   account MEDIUM@3 / HIGH@5 / CRITICAL@10; **privileged accounts**
-  (admin/system_admin) MEDIUM@2 / HIGH@3 / CRITICAL@5; **source IP** ladder
+  (admin, super_admin - legacy system_admin) MEDIUM@2 / HIGH@3 / CRITICAL@5; **source IP** ladder
   MEDIUM@6 / HIGH@12 / CRITICAL@30 - deliberately higher so one shared NAT
   never paints a single user as malicious.
 - Authorization denials and rejected tokens use the IP ladder

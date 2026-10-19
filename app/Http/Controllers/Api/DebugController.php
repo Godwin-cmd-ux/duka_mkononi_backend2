@@ -23,7 +23,7 @@ class DebugController extends BaseController
      */
     public function checkUser(Request $request, string $email): JsonResponse
     {
-        if (strtolower((string) $this->role($request)) !== 'system_admin') {
+        if (!in_array(strtolower((string) $this->role($request)), ['super_admin', 'system_admin'], true)) {
             $this->log($this->userId($request), 'DEBUG_CHECK_USER_FORBIDDEN', '/api/debug/check-user', [
                 'role' => $this->role($request),
             ], $this->requestIp($request), 'failed');

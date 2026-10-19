@@ -698,7 +698,7 @@ class MonitoringController extends BaseController
     /** Server-side role gate (never a UI concern) + unauthorized audit. */
     private function guardAdmin(Request $request): ?JsonResponse
     {
-        if ($this->role($request) !== 'admin') {
+        if (!$this->isAdmin($request)) {
             $this->log(
                 $this->userId($request),
                 'ADMIN_MONITORING_UNAUTHORIZED',

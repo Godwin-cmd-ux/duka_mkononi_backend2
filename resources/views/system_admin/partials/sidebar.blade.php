@@ -422,11 +422,11 @@
                 return false;
             }
             
-            // Check if user is system admin (email check)
-            const userEmail = user.email || '';
-            const isSystemAdmin = userEmail === "cosmavictorini1994@gmail.com";
+            // Super admin is a database role (promoted by the technician),
+            // never a hardcoded email. 'system_admin' is the legacy spelling.
+            const isSystemAdmin = ['super_admin', 'system_admin'].includes(user.role || '');
             
-            if (!isSystemAdmin && user.role !== 'system_admin') {
+            if (!isSystemAdmin) {
                 showToast(t('err_no_permission'), 'error');
                 window.location.href = '/home';
                 return false;

@@ -826,7 +826,9 @@
                 businessLongitude: typeof user.business_longitude === 'number' ? user.business_longitude : null
             };
             
-            isSystemAdmin = user.email === "cosmavictorini1994@gmail.com";
+            // Super admin is a database role (promoted by the technician),
+            // never a hardcoded email. 'system_admin' is the legacy spelling.
+            isSystemAdmin = ['super_admin', 'system_admin'].includes(user.role || '');
             
             editFormData = {
                 name: user.full_name || 'Msimamizi',

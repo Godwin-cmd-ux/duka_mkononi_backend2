@@ -196,9 +196,9 @@ export default function NotifyScreen() {
 
       const userData = JSON.parse(userDataStr);
       
-      // Check if user is system admin
-      const userEmail = userData.email || '';
-      const isAdmin = userEmail === "cosmavictorini1994@gmail.com" || userData.role === 'admin';
+      // Super admin is a database role (promoted by the technician), never
+      // a hardcoded email. Business admins may also send notifications.
+      const isAdmin = ['super_admin', 'system_admin', 'admin'].includes(userData.role || '');
       
       if (!isAdmin) {
         Alert.alert(
