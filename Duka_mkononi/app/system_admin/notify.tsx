@@ -324,7 +324,7 @@ export default function NotifyScreen() {
 
       console.log('📡 Inapakua watumiaji...');
       
-      const response = await fetchWithTimeout(`${API_BASE_URL}/api/admin/users`, {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/api/admin/users?scope=platform`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',

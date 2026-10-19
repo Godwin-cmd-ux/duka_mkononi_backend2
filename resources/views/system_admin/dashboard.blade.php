@@ -551,7 +551,7 @@
             const token = localStorage.getItem('userToken');
             if (!token) return;
             try {
-                const res = await fetch(`${API_BASE_URL}/api/admin/users`, {
+                const res = await fetch(`${API_BASE_URL}/api/admin/users?scope=platform`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (res.ok) {

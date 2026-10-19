@@ -351,7 +351,10 @@ class OrderController extends BaseController
 
     private function isPlatformAdmin(Request $request): bool
     {
-        return in_array($this->role($request), ['super_admin', 'system_admin'], true);
+        // Opt-in only (?scope=platform): the msimamizi orders module stays
+        // business-scoped even for a promoted super admin.
+        return in_array($this->role($request), ['super_admin', 'system_admin'], true)
+            && $request->query('scope') === 'platform';
     }
 
     private function canAccessOrder(Request $request, ?string $businessId): bool

@@ -545,7 +545,9 @@ class ProductController extends BaseController
             // platform pages, via ?business_id= or the legacy ?business=<name>
             // resolved through BusinessResolver so spelling variants collapse.
             $callerBusinessId = $this->businessId($request);
-            $isPlatformAdmin = $this->isSuperAdmin($request);
+            // Opt-in only (?scope=platform): the msimamizi products module
+            // stays business-scoped even for a promoted super admin.
+            $isPlatformAdmin = $this->isSuperAdmin($request) && $request->query('scope') === 'platform';
             $scopeBusinessId = null;
 
             if ($isPlatformAdmin) {

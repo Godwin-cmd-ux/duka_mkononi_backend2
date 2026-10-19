@@ -273,7 +273,7 @@ export default function SystemAdminDashboard() {
 
       console.log('👥 Fetching users...');
       
-      const response = await fetchWithTimeout(`${API_BASE_URL}/api/admin/users`, {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/api/admin/users?scope=platform`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

@@ -49,7 +49,11 @@ class AdminController extends BaseController
             // BusinessResolver so spelling variants collapse to one business.
             $usersQuery = User::query()->orderByDesc('created_at');
             $callerBusinessId = $this->businessId($request);
-            $isPlatformAdmin = $this->isSuperAdmin($request);
+            // Platform-wide scope is OPT-IN: the msimamizi module must look
+            // exactly the same for a promoted super admin as for any business
+            // admin (their sellers/products/sales stay their own business).
+            // Only the system-module pages ask for the wider view.
+            $isPlatformAdmin = $this->isSuperAdmin($request) && $request->query('scope') === 'platform';
 
             if ($isPlatformAdmin) {
                 $businessIdFilter = trim((string) $request->query('business_id', ''));
@@ -146,7 +150,11 @@ class AdminController extends BaseController
             // lookup used by the platform pages.
             $query = Product::query();
             $callerBusinessId = $this->businessId($request);
-            $isPlatformAdmin = $this->isSuperAdmin($request);
+            // Platform-wide scope is OPT-IN: the msimamizi module must look
+            // exactly the same for a promoted super admin as for any business
+            // admin (their sellers/products/sales stay their own business).
+            // Only the system-module pages ask for the wider view.
+            $isPlatformAdmin = $this->isSuperAdmin($request) && $request->query('scope') === 'platform';
 
             if ($isPlatformAdmin) {
                 $businessIdFilter = trim((string) $request->query('business_id', ''));
@@ -220,7 +228,11 @@ class AdminController extends BaseController
             // empty the whole report.
             $salesQuery = Sale::query();
             $callerBusinessId = $this->businessId($request);
-            $isPlatformAdmin = $this->isSuperAdmin($request);
+            // Platform-wide scope is OPT-IN: the msimamizi module must look
+            // exactly the same for a promoted super admin as for any business
+            // admin (their sellers/products/sales stay their own business).
+            // Only the system-module pages ask for the wider view.
+            $isPlatformAdmin = $this->isSuperAdmin($request) && $request->query('scope') === 'platform';
 
             if ($isPlatformAdmin) {
                 $businessIdFilter = trim((string) $request->query('business_id', ''));
@@ -347,7 +359,11 @@ class AdminController extends BaseController
             // Business scoping after the business_id migration: see products().
             $query = Customer::query();
             $callerBusinessId = $this->businessId($request);
-            $isPlatformAdmin = $this->isSuperAdmin($request);
+            // Platform-wide scope is OPT-IN: the msimamizi module must look
+            // exactly the same for a promoted super admin as for any business
+            // admin (their sellers/products/sales stay their own business).
+            // Only the system-module pages ask for the wider view.
+            $isPlatformAdmin = $this->isSuperAdmin($request) && $request->query('scope') === 'platform';
 
             if ($isPlatformAdmin) {
                 $businessIdFilter = trim((string) $request->query('business_id', ''));
