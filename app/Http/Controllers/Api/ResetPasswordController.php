@@ -616,11 +616,16 @@ $codeRecord = Supabase::table('password_reset_codes')
         }
 
         try {
-            $user = User::whereRaw('LOWER(email) = ?', [mb_strtolower(trim($email))])->where('role', $role)->first();
+            // Looked up by email alone; the role check goes through
+            // Roles::loginSatisfies so a promoted platform super admin
+            // (super_admin, legacy system_admin) can reset the password of
+            // the msimamizi portal account they sign in to. Other roles still
+            // require an exact match.
+            $user = User::whereRaw('LOWER(email) = ?', [mb_strtolower(trim($email))])->first();
 
-            if (!$user) {
+            if (!$user || !\App\Services\Roles::loginSatisfies($user->role, $role)) {
                 $this->log(null, 'FORGOT_PASSWORD_FAILED', '/api/forgot-password', [
-                    'reason' => 'Account not found',
+                    'reason' => 'Account not found or role mismatch',
                     'email' => $email,
                     'role' => $role
                 ], $ip, 'failed');

@@ -42,4 +42,22 @@ final class Roles
     {
         return in_array((string) $role, self::REGISTERABLE, true);
     }
+
+    /**
+     * Does an account with $actualRole satisfy a login request for
+     * $requestedRole?
+     *
+     * The msimamizi portal logs in as 'admin', but a promoted platform super
+     * admin (super_admin, or the legacy system_admin spelling) owns that
+     * portal and must keep signing in through it; every other role continues
+     * to require an exact match.
+     */
+    public static function loginSatisfies(?string $actualRole, string $requestedRole): bool
+    {
+        if ((string) $actualRole === $requestedRole) {
+            return true;
+        }
+
+        return $requestedRole === 'admin' && self::isSuperAdmin($actualRole);
+    }
 }

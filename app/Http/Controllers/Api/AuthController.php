@@ -566,10 +566,16 @@ class AuthController extends BaseController
         }
 
         try {
-            $user = User::whereRaw('LOWER(email) = ?', [mb_strtolower(trim($email))])->where('role', $role)->first();
+            // The account is looked up by email alone and the role is then
+            // checked through Roles::loginSatisfies: the msimamizi portal
+            // requests 'admin', and a promoted platform super admin
+            // (super_admin, legacy system_admin) must keep signing in through
+            // that same portal. Every other role requires an exact match, so
+            // this never widens what a seller/customer token can reach.
+            $user = User::whereRaw('LOWER(email) = ?', [mb_strtolower(trim($email))])->first();
 
-            if (!$user) {
-                $this->log(null, 'LOGIN_FAILED', '/api/login', ['reason' => 'Account not found', 'email' => $email, 'role' => $role], $ip, 'failed');
+            if (!$user || !\App\Services\Roles::loginSatisfies($user->role, $role)) {
+                $this->log(null, 'LOGIN_FAILED', '/api/login', ['reason' => 'Account not found or role mismatch', 'email' => $email, 'role' => $role], $ip, 'failed');
                 return $this->json(['error' => 'Akaunti haipo au role si sahihi'], 401);
             }
 

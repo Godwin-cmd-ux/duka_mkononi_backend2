@@ -41,6 +41,23 @@ class RolesTest extends TestCase
         $this->assertFalse(Roles::isAdmin(null));
     }
 
+    public function test_super_admin_can_log_in_through_the_msimamizi_portal(): void
+    {
+        // The msimamizi portal requests role 'admin'; a promoted super admin
+        // must satisfy it (both spellings), with an exact match otherwise.
+        $this->assertTrue(Roles::loginSatisfies('super_admin', 'admin'));
+        $this->assertTrue(Roles::loginSatisfies('system_admin', 'admin'), 'Legacy spelling must keep signing in.');
+        $this->assertTrue(Roles::loginSatisfies('admin', 'admin'));
+        $this->assertTrue(Roles::loginSatisfies('seller', 'seller'));
+        $this->assertTrue(Roles::loginSatisfies('customer', 'customer'));
+
+        $this->assertFalse(Roles::loginSatisfies('super_admin', 'seller'), 'A super admin never satisfies a seller login.');
+        $this->assertFalse(Roles::loginSatisfies('super_admin', 'customer'));
+        $this->assertFalse(Roles::loginSatisfies('seller', 'admin'));
+        $this->assertFalse(Roles::loginSatisfies('customer', 'admin'));
+        $this->assertFalse(Roles::loginSatisfies(null, 'admin'));
+    }
+
     public function test_super_admin_is_never_self_registerable(): void
     {
         foreach (Roles::REGISTERABLE as $role) {
