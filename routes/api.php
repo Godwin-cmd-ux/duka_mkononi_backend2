@@ -35,6 +35,7 @@ use App\Http\Controllers\Api\DebugController;
 use App\Http\Controllers\Api\ExpenseController;
 use App\Http\Controllers\Api\InquiryController;
 use App\Http\Controllers\Api\MiscController;
+use App\Http\Controllers\Api\MonitoringController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PaymentController;
@@ -91,6 +92,13 @@ Route::get('shop/products', [ShopController::class, 'products']);
 Route::get('shop/products/{id}', [ShopController::class, 'product']);
 Route::get('shop/advertisements', [ShopController::class, 'advertisements']);
 Route::get('shop/reviews', [ShopController::class, 'reviews']);
+
+// Activity monitoring: PUBLIC browser-event ingestion. Throttled per IP and
+// strictly validated/allow-listed server-side; the authenticated actor is
+// derived ONLY from a verified JWT (a payload can never attribute events to
+// another user) and heartbeats update session liveness without storing rows.
+Route::post('monitoring/events', [MonitoringController::class, 'ingest'])
+    ->middleware('throttle:' . max(30, (int) config('monitoring.ingest.per_minute_limit', 120)) . ',1');
 
 // Capability #11 - Conversational Shopping Assistant. PUBLIC (any shopper,
 // signed in or not) and rate limited: it only reads the public catalogue.
@@ -348,6 +356,20 @@ Route::middleware('auth.jwt')->group(function () {
     Route::post('admin/migrate/realtime', [AdminController::class, 'migrateRealtime']);
     Route::post('admin/migrate/password-reset', [AdminController::class, 'migratePasswordReset']);
     Route::get('admin/database-info', [AdminController::class, 'databaseInfo']);
+
+    // Activity monitoring & security audit dashboard. Registered inside
+    // auth.jwt; every method ALSO re-checks the admin role server-side and
+    // audits unauthorized attempts (a hidden menu item is never the control).
+    Route::get('admin/monitoring/summary', [MonitoringController::class, 'summary']);
+    Route::get('admin/monitoring/timeline', [MonitoringController::class, 'timeline']);
+    Route::get('admin/monitoring/events/{id}', [MonitoringController::class, 'eventDetail']);
+    Route::get('admin/monitoring/users/{userId}/timeline', [MonitoringController::class, 'userTimeline']);
+    Route::get('admin/monitoring/sessions', [MonitoringController::class, 'sessions']);
+    Route::get('admin/monitoring/sessions/{sessionRef}', [MonitoringController::class, 'sessionDetail']);
+    Route::get('admin/monitoring/alerts', [MonitoringController::class, 'alerts']);
+    Route::post('admin/monitoring/alerts/{id}/status', [MonitoringController::class, 'alertStatus']);
+    Route::get('admin/monitoring/export', [MonitoringController::class, 'export']);
+    Route::post('admin/monitoring/setup', [MonitoringController::class, 'setup']);
 
     Route::post('admin/setup/notifications', [NotificationController::class, 'setup']);
     Route::post('admin/setup/notifications-read-state', [NotificationController::class, 'setupReadState']);

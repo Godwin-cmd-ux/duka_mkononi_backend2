@@ -50,3 +50,12 @@
     } catch (e) { /* storage unavailable: stay on White Professional */ }
 })();
 </script>
+{{-- Activity monitoring (advanced user activity monitoring & security audit
+     system - see MONITORING.md). ONE shared script included from this
+     universal partial covers every page: it delegates from document level, so
+     dynamically rendered controls/forms are instrumented without per-page
+     code and rerenders never duplicate listeners. It records interaction
+     METADATA only (never field values, query text, file names or contents),
+     batches requests, and stops entirely after logout. The server treats
+     everything it sends as untrusted. --}}
+<script src="/js/dm-monitor.js" defer></script>

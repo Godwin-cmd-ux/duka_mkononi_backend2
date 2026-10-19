@@ -646,6 +646,16 @@ class AuthController extends BaseController
                 'is_online' => true
             ], $ip, 'success');
 
+            // Monitoring (Phase 4A/5): open an auth session keyed by a
+            // server-derived reference (sha256 of the fresh token - the token
+            // itself is never stored). Best effort; login never fails on it.
+            \App\Services\Monitoring\ActivityTracker::startSession(
+                $user->id,
+                $token,
+                $request->userAgent(),
+                $request->ip()
+            );
+
             return $this->json([
                 'message' => 'Login successful',
                 'token' => $token,

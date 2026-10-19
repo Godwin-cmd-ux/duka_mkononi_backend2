@@ -41,6 +41,17 @@ class AuthenticateJwt
             // BaseController::resolveLocale() when the client omits `locale`.
             $request->attributes->set('jwt_language', $user->language ?? null);
 
+            // Monitoring heartbeat: server-observed API activity for this
+            // session, throttled to at most one write per session per minute
+            // (so an API-only client still shows live session activity without
+            // a database write on every request).
+            \App\Services\Monitoring\ActivityTracker::touchSession(
+                $user->id,
+                $token,
+                $request->userAgent(),
+                $request->ip()
+            );
+
             AuditLogger::log($user->id, 'AUTH_SUCCESS', $request->getRequestUri(), ['role' => $user->role], $ip, 'success');
 
             return $next($request);
