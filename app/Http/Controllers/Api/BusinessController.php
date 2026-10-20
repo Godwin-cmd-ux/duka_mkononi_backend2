@@ -361,8 +361,13 @@ class BusinessController extends BaseController
                 ], 404);
             }
 
+            // Every row is already an approved owner (the query filters on
+            // BUSINESS_OWNERS), so the admin is the first match regardless of
+            // which owner spelling they hold. A literal role === 'admin' here
+            // returned null after the owner was promoted to super_admin, which
+            // made hasAdmin false and emptied the seller's profile business.
             $admin = $businesses->first(function ($b) {
-                return $b->role === 'admin' && $b->status === 'approved';
+                return Roles::isBusinessOwner($b->role) && $b->status === 'approved';
             });
 
             $this->log(null, 'BUSINESS_BY_NAME_FOUND', '/api/business/by-name/' . $business_name, [
