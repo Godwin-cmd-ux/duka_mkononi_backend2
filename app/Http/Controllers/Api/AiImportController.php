@@ -9,6 +9,7 @@ use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\User;
 use App\Services\BusinessResolver;
+use App\Services\Roles;
 use App\Services\Supabase;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -563,7 +564,7 @@ Return exactly:
         }
 
         $businessUsers = User::where('business_id', $businessId)
-            ->whereIn('role', ['admin', 'seller'])
+            ->whereIn('role', Roles::BUSINESS_MEMBERS)
             ->where('status', 'approved')
             ->select('id')
             ->get()

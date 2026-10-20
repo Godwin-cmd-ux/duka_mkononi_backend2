@@ -94,8 +94,15 @@ class BusinessResolver
         // admins/sellers, which is what the pre-migration
         // `where('business_name', $name)->whereIn('role', ...)` filters did.
         // Callers that need every member simply omit these arguments.
+        //
+        // A request for 'admin' is expanded (Roles::expandMemberRoles) to also
+        // include super_admin/system_admin: a business admin who was promoted to
+        // a platform admin still owns their business, so their rows must stay in
+        // the business scope. Without this, changing X's role to super_admin
+        // silently dropped X's products/sales from every shared report the
+        // remaining sellers could see.
         if ($roles !== []) {
-            $query->whereIn('role', $roles);
+            $query->whereIn('role', Roles::expandMemberRoles($roles));
         }
         if ($status !== '') {
             $query->where('status', $status);

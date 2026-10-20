@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\User;
+use App\Services\Roles;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -159,13 +160,20 @@ class SaleController extends BaseController
                     $sellerUser = User::where('id', $userId)->select(['business_name', 'role'])->first();
 
                     if ($sellerUser && $sellerUser->role === 'seller') {
-                        $adminUser = User::where('business_name', $sellerUser->business_name)
-                            ->where('role', 'admin')
+                        // Shared-stock sale: the seller may sell a product owned
+                        // by the business's owner. Resolve the product's actual
+                        // owner and accept every owner spelling (admin,
+                        // super_admin, system_admin) in the same business, so
+                        // promoting the owner to a platform admin never locks
+                        // their sellers out of the shared inventory.
+                        $productOwner = User::where('id', $product->seller_id)
+                            ->whereIn('role', Roles::BUSINESS_OWNERS)
                             ->where('status', 'approved')
+                            ->where('business_name', $sellerUser->business_name)
                             ->select(['id'])
                             ->first();
 
-                        if (!$adminUser || $adminUser->id !== $product->seller_id) {
+                        if (!$productOwner) {
                             $stockIssues[] = [
                                 'product_id' => $item['product_id'],
                                 'product_name' => $product->name,

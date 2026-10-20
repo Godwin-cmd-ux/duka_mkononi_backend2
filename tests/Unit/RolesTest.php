@@ -70,4 +70,60 @@ class RolesTest extends TestCase
         $this->assertFalse(Roles::isRegisterable(''));
         $this->assertFalse(Roles::isRegisterable(null));
     }
+
+    /**
+     * A business's owner keeps owning it after being promoted to a platform
+     * admin. Every seller-facing scope asks for the owner/admin set, so it must
+     * treat admin, super_admin and system_admin as the same owner - otherwise
+     * changing X's role to super_admin orphans business Z and blanks the
+     * seller dashboard for the team still in it.
+     */
+    public function test_business_owners_include_every_admin_spelling(): void
+    {
+        foreach (['admin', 'super_admin', 'system_admin'] as $role) {
+            $this->assertTrue(Roles::isBusinessOwner($role), "[{$role}] must still own the business.");
+            $this->assertContains($role, Roles::BUSINESS_OWNERS);
+        }
+
+        $this->assertFalse(Roles::isBusinessOwner('seller'));
+        $this->assertFalse(Roles::isBusinessOwner('customer'));
+        $this->assertFalse(Roles::isBusinessOwner(null));
+    }
+
+    /**
+     * The member scope a seller's shared views use: owners + sellers. A promoted
+     * owner (super_admin / system_admin) must remain a member so their products
+     * and sales never vanish from the business the seller still works in.
+     */
+    public function test_business_members_keep_a_promoted_owner_in_scope(): void
+    {
+        foreach (['admin', 'super_admin', 'system_admin', 'seller'] as $role) {
+            $this->assertContains($role, Roles::BUSINESS_MEMBERS, "[{$role}] must remain a business member.");
+        }
+
+        $this->assertNotContains('customer', Roles::BUSINESS_MEMBERS);
+    }
+
+    /**
+     * Callers ask memberIds() for 'admin' to mean "this business's admins". The
+     * expansion folds in the platform-admin spellings so a role change never
+     * drops the owner's rows out of the shared scope. Non-admin requests are
+     * left untouched (no widening for 'seller'), and duplicates collapse.
+     */
+    public function test_expand_member_roles_widens_admin_but_not_other_roles(): void
+    {
+        $expanded = Roles::expandMemberRoles(['admin', 'seller']);
+
+        foreach (['admin', 'super_admin', 'system_admin', 'seller'] as $role) {
+            $this->assertContains($role, $expanded, "[{$role}] must survive the expansion.");
+        }
+
+        $this->assertSame(['seller'], Roles::expandMemberRoles(['seller']), 'A seller-only scope must not be widened.');
+        $this->assertSame([], Roles::expandMemberRoles([]), 'An empty scope stays empty.');
+        $this->assertSame(
+            ['admin', 'super_admin', 'system_admin'],
+            Roles::expandMemberRoles(['admin']),
+            'Expansion must be stable and free of duplicates.'
+        );
+    }
 }

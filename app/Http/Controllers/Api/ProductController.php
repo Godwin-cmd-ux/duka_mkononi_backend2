@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Models\Product;
 use App\Models\User;
 use App\Services\BusinessResolver;
+use App\Services\Roles;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -43,8 +44,12 @@ class ProductController extends BaseController
                 return $this->json($processedProducts);
             }
 
+            // A business keeps its data even after its admin is promoted to a
+            // platform admin (super_admin / system_admin): the owner-role check
+            // and the member scope below accept those spellings too, so changing
+            // X's role never blanks the seller dashboard for their team.
             $adminUser = User::where('business_name', $businessName)
-                ->where('role', 'admin')
+                ->whereIn('role', Roles::BUSINESS_OWNERS)
                 ->where('status', 'approved')
                 ->select(['id'])
                 ->first();
@@ -54,7 +59,7 @@ class ProductController extends BaseController
             }
 
             $businessUsers = User::where('business_name', $businessName)
-                ->whereIn('role', ['admin', 'seller'])
+                ->whereIn('role', Roles::BUSINESS_MEMBERS)
                 ->where('status', 'approved')
                 ->select(['id', 'email', 'full_name', 'role', 'status'])
                 ->get()
@@ -573,7 +578,7 @@ class ProductController extends BaseController
             }
 
             $businessUsers = User::where('business_id', $scopeBusinessId)
-                ->whereIn('role', ['admin', 'seller'])
+                ->whereIn('role', Roles::BUSINESS_MEMBERS)
                 ->where('status', 'approved')
                 ->select(['id', 'email', 'full_name', 'role', 'status'])
                 ->get()
@@ -626,7 +631,7 @@ class ProductController extends BaseController
 
             try {
                 $adminUsers = User::where('business_id', $scopeBusinessId)
-                    ->where('role', 'admin')
+                    ->whereIn('role', Roles::BUSINESS_OWNERS)
                     ->where('status', 'approved')
                     ->select(['id'])
                     ->limit(1)

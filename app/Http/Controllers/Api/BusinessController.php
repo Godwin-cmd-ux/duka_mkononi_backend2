@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Product;
 use App\Models\User;
+use App\Services\Roles;
 use Illuminate\Http\Request;
 
 class BusinessController extends BaseController
@@ -25,7 +26,7 @@ class BusinessController extends BaseController
 
             $adminUsers = User::select('id', 'email', 'role', 'status', 'created_at')
                 ->whereRaw('LOWER(business_name) = ?', [mb_strtolower(trim($business_name))])
-                ->where('role', 'admin')
+                ->whereIn('role', Roles::BUSINESS_OWNERS)
                 ->where('status', 'approved')
                 ->get();
 
@@ -340,7 +341,7 @@ class BusinessController extends BaseController
 
         try {
             $businesses = User::select('id', 'email', 'role', 'full_name', 'phone', 'business_name', 'business_location', 'status', 'created_at')
-                ->where('role', 'admin')
+                ->whereIn('role', Roles::BUSINESS_OWNERS)
                 ->where('status', 'approved')
                 ->whereRaw('LOWER(business_name) = ?', [mb_strtolower($decodedBusinessName)])
                 ->orderByDesc('created_at')

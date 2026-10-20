@@ -27,6 +27,23 @@ final class Roles
     /** Roles that may use business-admin and platform staff endpoints. */
     private const STAFF = ['admin', 'super_admin', 'system_admin'];
 
+    /**
+     * Roles that own/administer a business (its msimamizi). A platform admin
+     * (super_admin, or the legacy system_admin spelling) who was promoted from
+     * a business admin still belongs to that business, so these count as the
+     * business's owners. Keeping them here means changing a user's role never
+     * makes their business look owner-less to the sellers still in it.
+     */
+    public const BUSINESS_OWNERS = ['admin', 'super_admin', 'system_admin'];
+
+    /**
+     * Every role that can belong to a business and hold its data (products,
+     * sales, expenses, ...): the owners plus the sellers. Business data is
+     * scoped by membership (business_id / business_name), never by role, so a
+     * promoted owner's rows stay visible to their fellow members.
+     */
+    public const BUSINESS_MEMBERS = ['admin', 'super_admin', 'system_admin', 'seller'];
+
     public static function isSuperAdmin(?string $role): bool
     {
         return in_array((string) $role, self::SUPER, true);
@@ -35,6 +52,39 @@ final class Roles
     public static function isAdmin(?string $role): bool
     {
         return in_array((string) $role, self::STAFF, true);
+    }
+
+    /** Does this role own/administer a business? */
+    public static function isBusinessOwner(?string $role): bool
+    {
+        return in_array((string) $role, self::BUSINESS_OWNERS, true);
+    }
+
+    /**
+     * Expand a caller's requested member-roles so a request for 'admin' also
+     * pulls in the platform-admin spellings. Callers ask for 'admin' to mean
+     * "this business's admins"; a promoted owner (super_admin / system_admin)
+     * must stay in that set, so a role change never drops their rows out of the
+     * business's scope.
+     *
+     * @param  array<int, string>  $roles
+     * @return array<int, string>
+     */
+    public static function expandMemberRoles(array $roles): array
+    {
+        $expanded = [];
+
+        foreach ($roles as $role) {
+            $expanded[] = $role;
+
+            if ($role === 'admin') {
+                foreach (self::BUSINESS_OWNERS as $owner) {
+                    $expanded[] = $owner;
+                }
+            }
+        }
+
+        return array_values(array_unique($expanded));
     }
 
     /** Self-service signup allow-list (super_admin is never registerable). */

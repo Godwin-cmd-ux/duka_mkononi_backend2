@@ -121,7 +121,7 @@ class AuthController extends BaseController
 
                 $adminUsers = User::select('id', 'email', 'role', 'status')
                     ->whereRaw('LOWER(business_name) = ?', [mb_strtolower(trim($business_name))])
-                    ->where('role', 'admin')
+                    ->whereIn('role', \App\Services\Roles::BUSINESS_OWNERS)
                     ->where('status', 'approved')
                     ->get();
 
@@ -316,7 +316,7 @@ class AuthController extends BaseController
 
                 $adminUsers = User::select('id', 'email', 'role', 'status')
                     ->whereRaw('LOWER(business_name) = ?', [mb_strtolower(trim($business_name))])
-                    ->where('role', 'admin')
+                    ->whereIn('role', \App\Services\Roles::BUSINESS_OWNERS)
                     ->where('status', 'approved')
                     ->get();
 
