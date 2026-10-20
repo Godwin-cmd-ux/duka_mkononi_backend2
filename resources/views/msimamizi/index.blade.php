@@ -1436,8 +1436,11 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             // attached anywhere — clicking it did nothing.
             document.getElementById('logoutBtn')?.addEventListener('click', handleLogout);
             document.getElementById('openPasswordBtn')?.addEventListener('click', openPasswordModal);
-            document.getElementById('cancelPasswordBtn')?.addEventListener('click', closePasswordModal);
-            document.getElementById('savePasswordBtn')?.addEventListener('click', changePassword);
+            // cancelPasswordBtn/savePasswordBtn already carry inline onclick
+            // handlers in the modal markup. Binding them here as well fired
+            // changePassword() TWICE per click: two racing PUTs, where the
+            // second read the already-updated hash and surfaced "Nenosiri la
+            // sasa si sahihi" even though the change had succeeded.
         }
         
         // Pull the authoritative profile (includes business_type and
