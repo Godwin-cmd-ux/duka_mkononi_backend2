@@ -268,7 +268,7 @@ class InquiryController extends BaseController
      * endpoints. See the delivery report for the recommended hardening
      * (introduce a dedicated `system_admin` account/role).
      */
-    private function isSuperAdmin(Request $request): bool
+    protected function isSuperAdmin(Request $request): bool
     {
         return in_array($this->role($request), ['super_admin', 'system_admin', 'admin'], true);
     }

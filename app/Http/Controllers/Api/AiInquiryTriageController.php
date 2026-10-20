@@ -767,7 +767,7 @@ class AiInquiryTriageController extends BaseController
      * define it (the deployment stores platform admins under `admin`, while
      * `system_admin` is the reserved platform role).
      */
-    private function isSuperAdmin(Request $request): bool
+    protected function isSuperAdmin(Request $request): bool
     {
         return in_array($this->role($request), ['super_admin', 'system_admin', 'admin'], true);
     }

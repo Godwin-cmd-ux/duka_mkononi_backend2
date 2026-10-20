@@ -616,14 +616,23 @@ $codeRecord = Supabase::table('password_reset_codes')
         }
 
         try {
-            // Looked up by email alone; the role check goes through
-            // Roles::loginSatisfies so a promoted platform super admin
-            // (super_admin, legacy system_admin) can reset the password of
-            // the msimamizi portal account they sign in to. Other roles still
-            // require an exact match.
-            $user = User::whereRaw('LOWER(email) = ?', [mb_strtolower(trim($email))])->first();
+            // Every row sharing this email is fetched and the FIRST one that
+            // satisfies the requested role is used (Roles::loginSatisfies) so
+            // a promoted platform super admin (super_admin, legacy
+            // system_admin) can reset the password of the msimamizi portal
+            // account they sign in to. Other roles still require an exact
+            // match.
+            //
+            // The row must be chosen BY ROLE, never taken as the arbitrary
+            // first row for the email: one email can own several accounts
+            // (e.g. an admin and a seller of the same business), and the REST
+            // layer returns them in id order — a blind ->first() would resolve
+            // to the wrong role's account and reject a legitimate reset.
+            $user = User::whereRaw('LOWER(email) = ?', [mb_strtolower(trim($email))])
+                ->get()
+                ->first(fn ($candidate) => \App\Services\Roles::loginSatisfies($candidate->role, $role));
 
-            if (!$user || !\App\Services\Roles::loginSatisfies($user->role, $role)) {
+            if (!$user) {
                 $this->log(null, 'FORGOT_PASSWORD_FAILED', '/api/forgot-password', [
                     'reason' => 'Account not found or role mismatch',
                     'email' => $email,

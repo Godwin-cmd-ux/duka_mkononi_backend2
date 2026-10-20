@@ -72,7 +72,7 @@ class SystemAdminController extends BaseController
     }
 
     /** Mirrors InquiryController: platform Super Admin = system_admin or admin. */
-    private function isSuperAdmin(Request $request): bool
+    protected function isSuperAdmin(Request $request): bool
     {
         return in_array($this->role($request), ['super_admin', 'system_admin', 'admin'], true);
     }

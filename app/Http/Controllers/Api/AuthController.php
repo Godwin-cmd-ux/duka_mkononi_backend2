@@ -566,15 +566,26 @@ class AuthController extends BaseController
         }
 
         try {
-            // The account is looked up by email alone and the role is then
-            // checked through Roles::loginSatisfies: the msimamizi portal
-            // requests 'admin', and a promoted platform super admin
-            // (super_admin, legacy system_admin) must keep signing in through
-            // that same portal. Every other role requires an exact match, so
-            // this never widens what a seller/customer token can reach.
-            $user = User::whereRaw('LOWER(email) = ?', [mb_strtolower(trim($email))])->first();
+            // Every row sharing this email is fetched and the FIRST one that
+            // satisfies the requested role is used (Roles::loginSatisfies):
+            // the msimamizi portal requests 'admin', and a promoted platform
+            // super admin (super_admin, legacy system_admin) must keep signing
+            // in through that same portal. Every other role requires an exact
+            // match, so this never widens what a seller/customer token can
+            // reach.
+            //
+            // The row must be chosen BY ROLE, never taken as the arbitrary
+            // first row for the email: one email can own several accounts
+            // (e.g. an admin and a seller of the same business), and the REST
+            // layer returns them in id order — so a blind ->first() handed a
+            // seller row to the admin portal, which then rejected the login
+            // with "Akaunti haipo au role si sahihi" even though the admin
+            // account existed and its password was correct.
+            $user = User::whereRaw('LOWER(email) = ?', [mb_strtolower(trim($email))])
+                ->get()
+                ->first(fn ($candidate) => \App\Services\Roles::loginSatisfies($candidate->role, $role));
 
-            if (!$user || !\App\Services\Roles::loginSatisfies($user->role, $role)) {
+            if (!$user) {
                 $this->log(null, 'LOGIN_FAILED', '/api/login', ['reason' => 'Account not found or role mismatch', 'email' => $email, 'role' => $role], $ip, 'failed');
                 return $this->json(['error' => 'Akaunti haipo au role si sahihi'], 401);
             }

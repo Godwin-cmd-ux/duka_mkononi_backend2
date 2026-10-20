@@ -111,7 +111,7 @@ class LoginSecurityMonitoringTest extends TestCase
         return [
             'id' => 'u-1',
             'email' => 'seller@dukamkononi.test',
-            'password' => password_hash('CorrectHorse1', ['algo' => PASSWORD_BCRYPT, 'cost' => 4]),
+            'password' => password_hash('CorrectHorse1', PASSWORD_BCRYPT, ['cost' => 4]),
             'role' => 'seller',
             'status' => 'approved',
             'full_name' => 'Frank Mushi',

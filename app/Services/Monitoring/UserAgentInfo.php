@@ -53,7 +53,7 @@ class UserAgentInfo
         } elseif (preg_match('/\bWindows NT\s([0-9.]+)/i', $ua, $m)) {
             $os = 'Windows';
             $osVersion = self::windowsVersion($m[1]);
-        } elseif (preg_match('/Mac OS X\s([0-9_./]+)/i', $ua, $m)) {
+        } elseif (preg_match('/Mac OS X\s([0-9_.\/]+)/i', $ua, $m)) {
             // iPadOS in desktop mode still leaks "Mobile/"; without it this
             // really is a Mac.
             $os = stripos($ua, 'Mobile/') !== false ? 'iOS' : 'macOS';
