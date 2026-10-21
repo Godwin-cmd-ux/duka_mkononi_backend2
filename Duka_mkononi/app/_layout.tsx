@@ -1,12 +1,13 @@
 import '../lib/web-alert';
 import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { pruneCache } from '../db/cache';
 import { setupBackgroundSync } from '../lib/background';
 import { pingServer } from '../lib/network';
 import { LanguageProvider } from '../context/LanguageContext';
 import { SessionProvider, useSession } from '../context/SessionContext';
+import { getDashboardRouteForRole } from '../constants/session';
 import { ThemeProvider } from '../lib/theme';
 
 // Keep the native splash screen visible until the session has been resolved
@@ -70,6 +71,23 @@ function RootNavigator() {
       router.replace('/(tabs)');
     }
   }, [status, splashMinElapsed, isLoggedIn, router]);
+
+  // 🔐 Route newly signed-in users to their role's dashboard. This MUST live
+  // here, not in the login screen: the login screen unmounts the instant the
+  // session flips (its <Stack.Protected> guard turns false), so navigating from
+  // it races the guard — the target route group (muuzaji / mteja / msimamizi)
+  // isn't mounted yet, the replace lands on nothing, and the screen goes blank.
+  // Here the guard has already re-rendered and mounted the role group before
+  // this effect runs, so the dashboard route always exists. The ref makes it a
+  // one-shot per login, so it never hijacks normal in-app navigation.
+  const wasLoggedIn = useRef(false);
+  useEffect(() => {
+    if (status !== 'ready' || !splashMinElapsed) return;
+    if (isLoggedIn && !wasLoggedIn.current) {
+      router.replace(getDashboardRouteForRole(role) as any);
+    }
+    wasLoggedIn.current = isLoggedIn;
+  }, [status, splashMinElapsed, isLoggedIn, role, router]);
 
   if (status !== 'ready' || !splashMinElapsed) {
     // Native splash stays visible until the cached session has been resolved.

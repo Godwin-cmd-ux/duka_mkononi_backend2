@@ -350,19 +350,19 @@ export default function LoginScreen() {
                 console.log(`✅ Removed saved credentials for ${role}`);
             }
 
-            // ✅ DETERMINE DASHBOARD ROUTE (explicit per-role screen, e.g. /muuzaji/profaili)
-            const dashboardRoute = getDashboardRouteForRole(user.role);
+            // ✅ User display name for the success message.
             const userName = user.full_name || user.business_name || user.email.split('@')[0];
 
-            // 🔐➡️ Flip the session and route to the dashboard in the SAME tick.
-            // signIn() unmounts this login screen through the root layout's
-            // <Stack.Protected> guard, so navigation must not wait on the success
-            // Alert's onPress — that gap left the app stuck on a blank white
-            // screen with no alert, no toast and no next screen.
+            // 🔐 Flip the session ONLY — do not navigate from here. Navigation
+            // to the role dashboard is handled by the root layout's post-login
+            // effect (app/_layout.tsx), which runs AFTER the <Stack.Protected>
+            // guard has re-rendered and mounted the target group (muuzaji /
+            // mteja / msimamizi). Navigating from this screen races that guard:
+            // the route isn't mounted yet, the replace lands on nothing, and the
+            // screen goes blank — the bug that affected every account.
             signIn(user.role);
-            router.replace(dashboardRoute as any);
 
-            // 🎉 Success feedback (informational only — navigation already ran)
+            // 🎉 Success feedback (navigation is owned by the root layout)
             Alert.alert(t('login.success_title'), t('login.success_message', { userName }));
 
         } catch (error: any) {
