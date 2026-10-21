@@ -767,7 +767,7 @@
             const response = await fetch(`/api/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify({ email, password, role: backendRole, language: activeLocale(), theme: (window.DMTheme && DMTheme.isValid ? DMTheme.current() : null) })
+                body: JSON.stringify({ email, password, role: backendRole, language: activeLocale(), theme: (window.DMTheme && DMTheme.isValid ? DMTheme.current() : null), theme_explicit: (window.DMTheme && DMTheme.wasPicked ? DMTheme.wasPicked() : false) })
             });
             
             if (!response.ok) {
@@ -785,13 +785,15 @@
             const user = data.user;
             const token = data.token;
 
-            // Theme synchronization on login: the server answers with the
-            // preference this account should use from now on — an explicit
-            // account choice wins, otherwise it echoes back the theme this
-            // browser just sent — so adopt it locally; when the server sent
-            // none, the visitor's own local choice is left untouched (and
+            // Theme synchronization on login: a theme the visitor just picked on
+            // this page (DMTheme.wasPicked) is an explicit choice and the backend
+            // has already stored it, so adopting its answer keeps that choice.
+            // Otherwise the account's stored preference wins — which is how a
+            // theme picked on the phone reaches this browser. When the server
+            // sent none, the visitor's own local choice is left untouched (and
             // sync failures never break login).
             if (window.DMTheme) DMTheme.adopt(user.preferred_theme);
+            if (window.DMTheme && DMTheme.clearPicked) DMTheme.clearPicked();
             
             // Check user status
             if (user.status && user.status !== 'approved') {

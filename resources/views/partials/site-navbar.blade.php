@@ -45,7 +45,7 @@
 
         <div class="dm-nav-cta desktop">
             <a class="dm-btn dm-btn--ghost dm-btn--sm" href="/home" data-i18n="site_nav.login">Login</a>
-            <a class="dm-btn dm-btn--primary dm-btn--sm" href="https://expo.dev/artifacts/eas/sSt6M6ciZYqibinFP54G0VdOQ0HJt18ZEFsa5aG8tsQ.apk" target="_blank" rel="noopener">
+            <a class="dm-btn dm-btn--primary dm-btn--sm" href="https://expo.dev/artifacts/eas/aOSWPg-juMTiexhNBfKwuBj6ft0rBbdAnAqwTsRBQvc.apk" target="_blank" rel="noopener">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
                 <span data-i18n="site_nav.download_app">Download App</span>
             </a>
@@ -68,7 +68,7 @@
         <a href="/advertisements"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 20h8"/></svg><span data-i18n="site_nav.advertisements">Advertisements</span></a>
         <a href="/#contact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v14H4z"/><path d="m4 6 8 6 8-6"/></svg><span data-i18n="site_nav.contact">Contact</span></a>
         <a href="/home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg><span data-i18n="site_nav.login">Login</span></a>
-        <a href="https://expo.dev/artifacts/eas/sSt6M6ciZYqibinFP54G0VdOQ0HJt18ZEFsa5aG8tsQ.apk" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg><span data-i18n="site_nav.download_app">Download App</span></a>
+        <a href="https://expo.dev/artifacts/eas/aOSWPg-juMTiexhNBfKwuBj6ft0rBbdAnAqwTsRBQvc.apk" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg><span data-i18n="site_nav.download_app">Download App</span></a>
     </div>
 <script>
 (function () {
