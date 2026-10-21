@@ -153,9 +153,17 @@ export default function SmartCartLoader({
     inputRange: [0, 0.5, 0.7, 1],
     outputRange: [-pulseWidth, -pulseWidth, box, box],
   });
+  // The icon travels with the band but is counter-translated by exactly the
+  // band's own offset, so it stays pinned to the base cart while the bright
+  // window sweeps over it. Both ranges must be 4 points long: at 0.5 the band
+  // sits at -pulseWidth (icon offset +pulseWidth) and from 0.7 it holds at
+  // `box` (icon offset -box). A 3-point outputRange here throws inside
+  // react-native's Animated interpolation, which crashed every screen that
+  // renders this loader — including the login button's spinner and every
+  // dashboard while it fetches, leaving the app on a blank white screen.
   const bandIconX = cycle.interpolate({
     inputRange: [0, 0.5, 0.7, 1],
-    outputRange: [pulseWidth, -box, -box],
+    outputRange: [pulseWidth, pulseWidth, -box, -box],
   });
 
   const bright = lighten(color, 0.55);
