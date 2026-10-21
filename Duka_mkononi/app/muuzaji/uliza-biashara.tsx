@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useMemo } from 'react';
 import {
   Keyboard,
   ScrollView,
@@ -16,6 +16,7 @@ import { useLang } from '../../context/LanguageContext';
 import { fetchWithTimeout } from '../../lib/network';
 
 import { API_BASE_URL } from '../../constants/api';
+import { useTheme, ThemeColors } from '../../lib/theme';
 
 /**
  * Capability #4 - Natural-Language Business Reporting (seller mobile screen).
@@ -87,6 +88,8 @@ const COLUMN_KEY: Record<string, string> = {
 const MONEY_COLUMNS = ['amount', 'revenue', 'profit', 'total_purchases'];
 
 export default function UlizaBiasharaScreen() {
+  const { colors: tc } = useTheme();
+  const styles = useMemo(() => makeStyles(tc), [tc]);
   const { t, lang } = useLang();
 
   const [question, setQuestion] = useState('');
@@ -360,34 +363,34 @@ export default function UlizaBiasharaScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f9fa' },
+const makeStyles = (tc: ThemeColors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: tc.page },
   header: {
     paddingHorizontal: 20,
     paddingVertical: 14,
-    backgroundColor: '#ffffff',
+    backgroundColor: tc.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#ecf0f1',
+    borderBottomColor: tc.line,
   },
-  title: { fontSize: 18, fontWeight: '700', color: '#2c3e50' },
+  title: { fontSize: 18, fontWeight: '700', color: tc.ink },
   inputBar: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: '#ffffff',
+    backgroundColor: tc.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#ecf0f1',
+    borderBottomColor: tc.line,
   },
   input: {
     flex: 1,
-    backgroundColor: '#f4f6f7',
+    backgroundColor: tc.page,
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 14,
-    color: '#2c3e50',
+    color: tc.ink,
   },
   askBtn: {
     width: 44,
@@ -399,27 +402,27 @@ const styles = StyleSheet.create({
   },
   scroll: { padding: 16, paddingBottom: 40 },
   center: { alignItems: 'center', paddingVertical: 40, paddingHorizontal: 20 },
-  centerText: { marginTop: 10, color: '#7f8c8d', fontSize: 14, textAlign: 'center' },
-  emptyTitle: { marginTop: 12, fontSize: 18, fontWeight: '700', color: '#2c3e50' },
+  centerText: { marginTop: 10, color: tc.muted, fontSize: 14, textAlign: 'center' },
+  emptyTitle: { marginTop: 12, fontSize: 18, fontWeight: '700', color: tc.ink },
   section: { marginBottom: 16 },
-  sectionTitle: { fontSize: 15, fontWeight: '700', color: '#2c3e50', marginBottom: 8 },
-  examplesTitle: { fontSize: 13, fontWeight: '600', color: '#7f8c8d', marginBottom: 8 },
+  sectionTitle: { fontSize: 15, fontWeight: '700', color: tc.ink, marginBottom: 8 },
+  examplesTitle: { fontSize: 13, fontWeight: '600', color: tc.muted, marginBottom: 8 },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#ffffff',
+    backgroundColor: tc.card,
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 10,
     marginBottom: 8,
   },
-  chipText: { flex: 1, fontSize: 13, color: '#2c3e50' },
-  card: { backgroundColor: '#ffffff', borderRadius: 16, padding: 16, marginBottom: 14 },
+  chipText: { flex: 1, fontSize: 13, color: tc.ink },
+  card: { backgroundColor: tc.card, borderRadius: 16, padding: 16, marginBottom: 14 },
   answerCard: { backgroundColor: '#f4f9ff' },
-  cardTitle: { fontSize: 14, fontWeight: '700', color: '#2c3e50', marginBottom: 8 },
-  bodyText: { fontSize: 13, color: '#5d6d7e', lineHeight: 19 },
-  answerText: { fontSize: 15, color: '#2c3e50', lineHeight: 22, fontWeight: '600' },
+  cardTitle: { fontSize: 14, fontWeight: '700', color: tc.ink, marginBottom: 8 },
+  bodyText: { fontSize: 13, color: tc.muted, lineHeight: 19 },
+  answerText: { fontSize: 15, color: tc.ink, lineHeight: 22, fontWeight: '600' },
   aiCard: {
     backgroundColor: '#e8f8f0',
     borderRadius: 14,
@@ -429,18 +432,18 @@ const styles = StyleSheet.create({
   aiCardTitle: { fontSize: 12, fontWeight: '700', color: '#1e8449', marginBottom: 4 },
   aiCardText: { fontSize: 13, color: '#1e8449', lineHeight: 19 },
   metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 10 },
-  metaText: { fontSize: 12, color: '#95a5a6' },
-  muted: { fontSize: 12, color: '#95a5a6', marginBottom: 12 },
-  tableHeader: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#ecf0f1', paddingBottom: 6 },
-  tableHeaderCell: { fontSize: 12, fontWeight: '700', color: '#2c3e50', paddingRight: 6 },
+  metaText: { fontSize: 12, color: tc.muted2 },
+  muted: { fontSize: 12, color: tc.muted2, marginBottom: 12 },
+  tableHeader: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: tc.line, paddingBottom: 6 },
+  tableHeaderCell: { fontSize: 12, fontWeight: '700', color: tc.ink, paddingRight: 6 },
   tableRow: { flexDirection: 'row', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#f4f6f7' },
-  tableCell: { fontSize: 12, color: '#5d6d7e', paddingRight: 6 },
+  tableCell: { fontSize: 12, color: tc.muted, paddingRight: 6 },
   barRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
-  barLabel: { width: 90, fontSize: 11, color: '#5d6d7e' },
+  barLabel: { width: 90, fontSize: 11, color: tc.muted },
   barTrack: { flex: 1, height: 10, backgroundColor: '#ecf0f1', borderRadius: 5, overflow: 'hidden' },
   barFill: { height: 10, backgroundColor: '#2ecc71', borderRadius: 5 },
-  barValue: { width: 90, fontSize: 11, color: '#2c3e50', textAlign: 'right' },
+  barValue: { width: 90, fontSize: 11, color: tc.ink, textAlign: 'right' },
   listRow: { flexDirection: 'row', gap: 8, marginBottom: 6 },
-  listBullet: { fontSize: 14, fontWeight: '700', color: '#95a5a6' },
-  listText: { flex: 1, fontSize: 12, color: '#5d6d7e', lineHeight: 17 },
+  listBullet: { fontSize: 14, fontWeight: '700', color: tc.muted2 },
+  listText: { flex: 1, fontSize: 12, color: tc.muted, lineHeight: 17 },
 });

@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
     Alert,
     Modal,
@@ -20,6 +20,7 @@ import { fetchWithTimeout } from '../../lib/network';
 
 // ✅ BADILISHA HII IWE URL YA SERVER YAKO
 import { API_BASE_URL } from '../../constants/api';
+import { useTheme, ThemeColors } from '../../lib/theme';
 
 // A buying price is only "known" when it was actually recorded. 0 is a real
 // value, so an explicit null check is required — `|| 0` would erase the
@@ -136,6 +137,8 @@ interface DebugBusinessData {
 }
 
 export default function PreviewScreen() {
+  const { colors: tc } = useTheme();
+  const styles = useMemo(() => makeStyles(tc), [tc]);
   const { t, lang } = useLang();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -917,7 +920,7 @@ export default function PreviewScreen() {
       case 'sale':
         return { name: 'cash', color: '#27ae60' };
       case 'product_added':
-        return { name: 'cube', color: '#3498db' };
+        return { name: 'cube', color: tc.primary };
       case 'product_updated':
         return { name: 'refresh', color: '#f39c12' };
       case 'seller_joined':
@@ -929,7 +932,7 @@ export default function PreviewScreen() {
       case 'announcement':
         return { name: 'megaphone', color: '#e67e22' };
       default:
-        return { name: 'information-circle', color: '#95a5a6' };
+        return { name: 'information-circle', color: tc.muted2 };
     }
   };
 
@@ -1168,8 +1171,8 @@ export default function PreviewScreen() {
             <Text style={styles.debugText}>Role: {debugData.user.role}</Text>
             <View style={styles.debugDivider} />
             <Text style={styles.debugText}>Total Expenses: {debugData.all_expenses_count}</Text>
-            <Text style={styles.debugText}>Today's Expenses: {debugData.today_expenses_count}</Text>
-            <Text style={styles.debugText}>Today's Total: {formatCurrency(debugData.today_expenses_total)}</Text>
+            <Text style={styles.debugText}>Today&apos;s Expenses: {debugData.today_expenses_count}</Text>
+            <Text style={styles.debugText}>Today&apos;s Total: {formatCurrency(debugData.today_expenses_total)}</Text>
             
             {debugData.sample_expenses.length > 0 && (
               <>
@@ -1582,10 +1585,10 @@ export default function PreviewScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (tc: ThemeColors) => StyleSheet.create({
   screenSafe: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
   },
   container: {
     flex: 1,
@@ -1606,9 +1609,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     padding: 20,
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#ecf0f1',
+    borderBottomColor: tc.line,
   },
   headerContent: {
     flex: 1,
@@ -1620,17 +1623,17 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
   },
   businessName: {
     fontSize: 18,
-    color: '#3498db',
+    color: tc.primary,
     marginTop: 4,
     fontWeight: '600',
   },
   businessLocation: {
     fontSize: 14,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginTop: 2,
   },
   businessStats: {
@@ -1642,14 +1645,14 @@ const styles = StyleSheet.create({
   statItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 6,
   },
   statText: {
     fontSize: 12,
-    color: '#2c3e50',
+    color: tc.ink,
     marginLeft: 4,
   },
   refreshButton: {
@@ -1661,17 +1664,17 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     borderLeftWidth: 4,
-    borderLeftColor: '#3498db',
+    borderLeftColor: tc.primary,
   },
   infoTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 8,
   },
   infoText: {
     fontSize: 14,
-    color: '#2c3e50',
+    color: tc.ink,
     lineHeight: 20,
   },
   
@@ -1693,7 +1696,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginLeft: 8,
   },
   debugContent: {
@@ -1704,7 +1707,7 @@ const styles = StyleSheet.create({
   },
   debugText: {
     fontSize: 13,
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 4,
   },
   debugDivider: {
@@ -1715,13 +1718,13 @@ const styles = StyleSheet.create({
   debugSubtitle: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginTop: 8,
     marginBottom: 4,
   },
   debugSample: {
     fontSize: 12,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginBottom: 2,
   },
   
@@ -1732,12 +1735,12 @@ const styles = StyleSheet.create({
   },
   tabsHeader: {
     flexDirection: 'row',
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderRadius: 10,
     marginBottom: 16,
     padding: 4,
     borderWidth: 1,
-    borderColor: '#ecf0f1',
+    borderColor: tc.line,
   },
   tabButton: {
     flex: 1,
@@ -1756,11 +1759,11 @@ const styles = StyleSheet.create({
   tabButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#7f8c8d',
+    color: tc.muted,
     marginLeft: 6,
   },
   activeTabButtonText: {
-    color: '#3498db',
+    color: tc.primary,
   },
   tabContent: {
     flex: 1,
@@ -1773,18 +1776,18 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 16,
   },
   sectionCount: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#7f8c8d',
+    color: tc.muted,
     marginBottom: 16,
     marginLeft: 8,
   },
   dayCard: {
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -1794,7 +1797,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
     borderWidth: 1,
-    borderColor: '#ecf0f1',
+    borderColor: tc.line,
   },
   dateHeader: {
     flexDirection: 'row',
@@ -1818,7 +1821,7 @@ const styles = StyleSheet.create({
   },
   dayStats: {
     fontSize: 12,
-    color: '#7f8c8d',
+    color: tc.muted,
   },
   summaryGrid: {
     flexDirection: 'row',
@@ -1829,19 +1832,19 @@ const styles = StyleSheet.create({
   summaryBox: {
     flex: 1,
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     padding: 12,
     borderRadius: 8,
   },
   summaryNumber: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginTop: 4,
   },
   summaryLabel: {
     fontSize: 12,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginTop: 2,
   },
   
@@ -1851,7 +1854,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: tc.page,
     borderRadius: 8,
     borderLeftWidth: 3,
     borderLeftColor: '#9b59b6',
@@ -1865,7 +1868,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     fontWeight: '600',
-    color: '#2c3e50',
+    color: tc.ink,
     marginLeft: 8,
   },
   netProfitValue: {
@@ -1878,7 +1881,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
     paddingTop: 4,
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    borderTopColor: tc.line2,
   },
   expensesBadgeText: {
     fontSize: 12,
@@ -1900,17 +1903,17 @@ const styles = StyleSheet.create({
   sectionLabelText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#2c3e50',
+    color: tc.ink,
     marginLeft: 6,
   },
   customersText: {
     fontSize: 13,
-    color: '#7f8c8d',
+    color: tc.muted,
     lineHeight: 18,
   },
   sellersText: {
     fontSize: 13,
-    color: '#7f8c8d',
+    color: tc.muted,
     lineHeight: 18,
   },
   moreInfo: {
@@ -1919,23 +1922,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#ecf0f1',
+    borderTopColor: tc.line,
   },
   moreInfoText: {
     fontSize: 12,
-    color: '#3498db',
+    color: tc.primary,
     fontStyle: 'italic',
   },
   noData: {
     alignItems: 'center',
     justifyContent: 'center',
     padding: 40,
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderRadius: 12,
   },
   noDataText: {
     fontSize: 18,
-    color: '#95a5a6',
+    color: tc.muted2,
     marginTop: 16,
     fontWeight: '500',
     textAlign: 'center',
@@ -1972,12 +1975,12 @@ const styles = StyleSheet.create({
   eventsTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginLeft: 8,
   },
   eventsCount: {
     fontSize: 14,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginLeft: 4,
     fontWeight: '500',
   },
@@ -1985,19 +1988,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 40,
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderRadius: 12,
   },
   eventsLoadingText: {
     marginTop: 10,
     fontSize: 14,
-    color: '#7f8c8d',
+    color: tc.muted,
   },
   eventsList: {
     flex: 1,
   },
   eventCard: {
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -2007,7 +2010,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
     borderWidth: 1,
-    borderColor: '#ecf0f1',
+    borderColor: tc.line,
   },
   eventHeader: {
     flexDirection: 'row',
@@ -2028,11 +2031,11 @@ const styles = StyleSheet.create({
   eventType: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
   },
   eventDate: {
     fontSize: 12,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginTop: 2,
   },
   eventAmount: {
@@ -2042,7 +2045,7 @@ const styles = StyleSheet.create({
   },
   eventDescription: {
     fontSize: 14,
-    color: '#2c3e50',
+    color: tc.ink,
     lineHeight: 20,
     marginBottom: 12,
   },
@@ -2054,26 +2057,26 @@ const styles = StyleSheet.create({
   eventDetail: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 6,
   },
   eventDetailText: {
     fontSize: 12,
-    color: '#2c3e50',
+    color: tc.ink,
     marginLeft: 4,
   },
   noEvents: {
     alignItems: 'center',
     justifyContent: 'center',
     padding: 40,
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderRadius: 12,
   },
   noEventsText: {
     fontSize: 18,
-    color: '#95a5a6',
+    color: tc.muted2,
     marginTop: 16,
     fontWeight: '500',
     textAlign: 'center',
@@ -2095,7 +2098,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalContent: {
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderRadius: 16,
     width: '100%',
     maxWidth: 500,
@@ -2112,7 +2115,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#ecf0f1',
+    borderBottomColor: tc.line,
   },
   modalTitleContainer: {
     flexDirection: 'row',
@@ -2122,12 +2125,12 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginLeft: 8,
   },
   modalSubtitle: {
     fontSize: 14,
-    color: '#3498db',
+    color: tc.primary,
     marginLeft: 8,
     marginTop: 2,
   },
@@ -2155,7 +2158,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 10,
@@ -2163,20 +2166,20 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 4,
     textAlign: 'center',
   },
   statLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 2,
     textAlign: 'center',
   },
   statDescription: {
     fontSize: 12,
-    color: '#7f8c8d',
+    color: tc.muted,
     textAlign: 'center',
   },
   section: {
@@ -2188,10 +2191,10 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingBottom: 8,
     borderBottomWidth: 2,
-    borderBottomColor: '#ecf0f1',
+    borderBottomColor: tc.line,
   },
   expensesList: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     borderRadius: 8,
     padding: 12,
   },
@@ -2201,7 +2204,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#ecf0f1',
+    borderBottomColor: tc.line,
   },
   expenseInfo: {
     flex: 1,
@@ -2215,7 +2218,7 @@ const styles = StyleSheet.create({
   },
   expenseDescription: {
     fontSize: 13,
-    color: '#2c3e50',
+    color: tc.ink,
   },
   expenseAmount: {
     fontSize: 14,
@@ -2223,12 +2226,12 @@ const styles = StyleSheet.create({
     color: '#e67e22',
   },
   customersList: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     borderRadius: 8,
     padding: 12,
   },
   sellersList: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     borderRadius: 8,
     padding: 12,
   },
@@ -2237,11 +2240,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#ecf0f1',
+    borderBottomColor: tc.line,
   },
   listItemText: {
     fontSize: 14,
-    color: '#2c3e50',
+    color: tc.ink,
     marginLeft: 10,
   },
   sellerInfo: {
@@ -2249,15 +2252,15 @@ const styles = StyleSheet.create({
   },
   sellerName: {
     fontSize: 14,
-    color: '#2c3e50',
+    color: tc.ink,
   },
   sellerRole: {
     fontSize: 12,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginTop: 2,
   },
   salesList: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     borderRadius: 8,
     padding: 12,
   },
@@ -2267,7 +2270,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#ecf0f1',
+    borderBottomColor: tc.line,
   },
   saleInfo: {
     flex: 1,
@@ -2276,23 +2279,23 @@ const styles = StyleSheet.create({
   saleProduct: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 4,
   },
   saleDetails: {
     fontSize: 12,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginBottom: 2,
   },
   saleInvoice: {
     fontSize: 11,
-    color: '#3498db',
+    color: tc.primary,
     fontStyle: 'italic',
     marginBottom: 2,
   },
   saleCostPrice: {
     fontSize: 11,
-    color: '#7f8c8d',
+    color: tc.muted,
     fontStyle: 'italic',
   },
   saleAmount: {
@@ -2301,7 +2304,7 @@ const styles = StyleSheet.create({
   },
   saleQuantity: {
     fontSize: 12,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginBottom: 2,
   },
   saleTotal: {
@@ -2316,7 +2319,7 @@ const styles = StyleSheet.create({
   },
   moreSalesText: {
     fontSize: 12,
-    color: '#95a5a6',
+    color: tc.muted2,
     fontStyle: 'italic',
     textAlign: 'center',
     marginTop: 8,
@@ -2326,12 +2329,12 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     borderLeftWidth: 4,
-    borderLeftColor: '#3498db',
+    borderLeftColor: tc.primary,
   },
   finalSummaryTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 12,
     textAlign: 'center',
   },
@@ -2350,19 +2353,19 @@ const styles = StyleSheet.create({
   },
   summaryItemLabel: {
     fontSize: 14,
-    color: '#2c3e50',
+    color: tc.ink,
     marginLeft: 8,
     flex: 1,
   },
   summaryItemValue: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginLeft: 8,
   },
   emptyText: {
     fontSize: 14,
-    color: '#95a5a6',
+    color: tc.muted2,
     textAlign: 'center',
     fontStyle: 'italic',
     padding: 10,

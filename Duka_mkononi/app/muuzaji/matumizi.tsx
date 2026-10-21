@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -24,6 +24,7 @@ import { API_BASE_URL } from '../../constants/api';
 import { getCache, setCache } from '../../db/cache';
 import { registerLive, syncNow } from '../../lib/syncer';
 import { fetchWithTimeout, requireNetwork } from '../../lib/network';
+import { useTheme, ThemeColors } from '../../lib/theme';
 
 type Expense = {
     id: string;
@@ -46,6 +47,8 @@ type DailyProfit = {
 };
 
 export default function MatumiziScreen() {
+  const { colors: tc } = useTheme();
+  const styles = useMemo(() => makeStyles(tc), [tc]);
     const router = useRouter();
     const { t, lang } = useLang();
     const { signOut } = useSession();
@@ -799,21 +802,21 @@ export default function MatumiziScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (tc: ThemeColors) => StyleSheet.create({
     screenSafe: {
         flex: 1,
-        backgroundColor: '#f8f9fa',
+        backgroundColor: tc.page,
     },
     container: {
         flex: 1,
-        backgroundColor: '#f8f9fa',
+        backgroundColor: tc.page,
     },
     
     loadingContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#f8f9fa',
+        backgroundColor: tc.page,
     },
     
     loadingText: {
@@ -824,10 +827,10 @@ const styles = StyleSheet.create({
     
     // Header Styles
     header: {
-        backgroundColor: 'white',
+        backgroundColor: tc.card,
         padding: 20,
         borderBottomWidth: 1,
-        borderBottomColor: '#e0e0e0',
+        borderBottomColor: tc.line2,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
@@ -852,7 +855,7 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 22,
         fontWeight: 'bold',
-        color: '#2c3e50',
+        color: tc.ink,
         textAlign: 'center',
         flex: 1,
     },
@@ -868,11 +871,11 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        backgroundColor: 'white',
+        backgroundColor: tc.card,
         paddingVertical: 15,
         paddingHorizontal: 10,
         borderBottomWidth: 1,
-        borderBottomColor: '#e9ecef',
+        borderBottomColor: tc.line2,
     },
     
     dateNav: {
@@ -883,17 +886,17 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
-        backgroundColor: '#f8f9fa',
+        backgroundColor: tc.page,
         paddingHorizontal: 15,
         paddingVertical: 8,
         borderRadius: 20,
         borderWidth: 1,
-        borderColor: '#e0e0e0',
+        borderColor: tc.line2,
     },
     
     dateText: {
         fontSize: 15,
-        color: '#2c3e50',
+        color: tc.ink,
         fontWeight: '500',
     },
     
@@ -910,7 +913,7 @@ const styles = StyleSheet.create({
     
     // Profit Card
     profitCard: {
-        backgroundColor: 'white',
+        backgroundColor: tc.card,
         margin: 15,
         padding: 20,
         borderRadius: 16,
@@ -924,7 +927,7 @@ const styles = StyleSheet.create({
     profitTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#2c3e50',
+        color: tc.ink,
         marginBottom: 15,
     },
     
@@ -936,13 +939,13 @@ const styles = StyleSheet.create({
     
     profitLabel: {
         fontSize: 15,
-        color: '#7f8c8d',
+        color: tc.muted,
     },
     
     profitValue: {
         fontSize: 15,
         fontWeight: '600',
-        color: '#2c3e50',
+        color: tc.ink,
     },
     
     costText: {
@@ -984,7 +987,7 @@ const styles = StyleSheet.create({
         marginTop: 15,
         paddingTop: 15,
         borderTopWidth: 1,
-        borderTopColor: '#ecf0f1',
+        borderTopColor: tc.line,
     },
     
     statBox: {
@@ -994,12 +997,12 @@ const styles = StyleSheet.create({
     statNumber: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#2c3e50',
+        color: tc.ink,
     },
     
     statLabel: {
         fontSize: 13,
-        color: '#7f8c8d',
+        color: tc.muted,
         marginTop: 4,
     },
     
@@ -1043,7 +1046,7 @@ const styles = StyleSheet.create({
     expensesTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#2c3e50',
+        color: tc.ink,
     },
     
     expensesTotal: {
@@ -1058,12 +1061,12 @@ const styles = StyleSheet.create({
     
     // Expense Item
     expenseItem: {
-        backgroundColor: 'white',
+        backgroundColor: tc.card,
         borderRadius: 12,
         padding: 15,
         marginBottom: 10,
         borderWidth: 1,
-        borderColor: '#e9ecef',
+        borderColor: tc.line2,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.05,
@@ -1087,12 +1090,12 @@ const styles = StyleSheet.create({
     categoryText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#3498db',
+        color: tc.primary,
     },
     
     expenseDescription: {
         fontSize: 16,
-        color: '#2c3e50',
+        color: tc.ink,
         marginBottom: 10,
     },
     
@@ -1105,12 +1108,12 @@ const styles = StyleSheet.create({
     expenseAmount: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#2c3e50',
+        color: tc.ink,
     },
     
     expenseTime: {
         fontSize: 13,
-        color: '#95a5a6',
+        color: tc.muted2,
     },
     
     notesContainer: {
@@ -1119,14 +1122,14 @@ const styles = StyleSheet.create({
         marginTop: 10,
         paddingTop: 10,
         borderTopWidth: 1,
-        borderTopColor: '#ecf0f1',
+        borderTopColor: tc.line,
         gap: 6,
     },
     
     notesText: {
         flex: 1,
         fontSize: 13,
-        color: '#7f8c8d',
+        color: tc.muted,
         fontStyle: 'italic',
     },
     
@@ -1141,14 +1144,14 @@ const styles = StyleSheet.create({
     emptyTitle: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#2c3e50',
+        color: tc.ink,
         marginTop: 15,
         marginBottom: 8,
     },
     
     emptyText: {
         fontSize: 15,
-        color: '#7f8c8d',
+        color: tc.muted,
         textAlign: 'center',
         lineHeight: 22,
         marginBottom: 20,
@@ -1178,7 +1181,7 @@ const styles = StyleSheet.create({
     },
     
     modalContent: {
-        backgroundColor: 'white',
+        backgroundColor: tc.card,
         borderRadius: 16,
         width: '90%',
         maxHeight: '80%',
@@ -1190,13 +1193,13 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 20,
         borderBottomWidth: 1,
-        borderBottomColor: '#e9ecef',
+        borderBottomColor: tc.line2,
     },
     
     modalTitle: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#2c3e50',
+        color: tc.ink,
     },
     
     // Capability #7 - AI expense parse
@@ -1232,8 +1235,8 @@ const styles = StyleSheet.create({
         marginTop: 6,
     },
     aiDupText: { fontSize: 12.5, color: '#a94442' },
-    aiNoteText: { fontSize: 12, color: '#7f8c8d', marginTop: 6, fontStyle: 'italic' },
-    aiLimitsText: { fontSize: 11.5, color: '#95a5a6', lineHeight: 16, marginTop: 4 },
+    aiNoteText: { fontSize: 12, color: tc.muted, marginTop: 6, fontStyle: 'italic' },
+    aiLimitsText: { fontSize: 11.5, color: tc.muted2, lineHeight: 16, marginTop: 4 },
 
     modalBody: {
         padding: 20,
@@ -1246,7 +1249,7 @@ const styles = StyleSheet.create({
     formLabel: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#2c3e50',
+        color: tc.ink,
         marginBottom: 8,
     },
     
@@ -1255,13 +1258,13 @@ const styles = StyleSheet.create({
     },
     
     formInput: {
-        backgroundColor: '#f8f9fa',
+        backgroundColor: tc.page,
         borderWidth: 1,
         borderColor: '#dee2e6',
         borderRadius: 10,
         padding: 15,
         fontSize: 16,
-        color: '#2c3e50',
+        color: tc.ink,
     },
     
     textArea: {
@@ -1286,7 +1289,7 @@ const styles = StyleSheet.create({
     },
     
     categoryChip: {
-        backgroundColor: '#f8f9fa',
+        backgroundColor: tc.page,
         paddingHorizontal: 16,
         paddingVertical: 10,
         borderRadius: 25,
@@ -1301,7 +1304,7 @@ const styles = StyleSheet.create({
     },
     
     categoryChipText: {
-        color: '#2c3e50',
+        color: tc.ink,
         fontSize: 14,
         fontWeight: '500',
     },
@@ -1322,7 +1325,7 @@ const styles = StyleSheet.create({
     selectedCategoryText: {
         marginLeft: 6,
         fontSize: 14,
-        color: '#2c3e50',
+        color: tc.ink,
     },
     
     previewBox: {
@@ -1337,7 +1340,7 @@ const styles = StyleSheet.create({
     previewTitle: {
         fontSize: 15,
         fontWeight: 'bold',
-        color: '#2c3e50',
+        color: tc.ink,
         marginBottom: 8,
     },
     
@@ -1357,7 +1360,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         padding: 20,
         borderTopWidth: 1,
-        borderTopColor: '#e9ecef',
+        borderTopColor: tc.line2,
         gap: 10,
     },
     
@@ -1365,7 +1368,7 @@ const styles = StyleSheet.create({
         flex: 1,
         paddingVertical: 14,
         alignItems: 'center',
-        backgroundColor: '#f8f9fa',
+        backgroundColor: tc.page,
         borderRadius: 10,
     },
     

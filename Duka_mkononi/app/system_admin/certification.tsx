@@ -9,7 +9,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
     FlatList,
     Modal,
@@ -27,6 +27,7 @@ import { getCache, setCache } from '../../db/cache';
 import { useLang } from '../../context/LanguageContext';
 import { useSession } from '../../context/SessionContext';
 import { fetchWithTimeout } from '../../lib/network';
+import { useTheme, ThemeColors } from '../../lib/theme';
 
 const CACHE_KEY = 'system_admin:certification:queue';
 
@@ -87,6 +88,8 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 export default function SystemAdminCertification() {
+  const { colors: tc } = useTheme();
+  const styles = useMemo(() => makeStyles(tc), [tc]);
   const router = useRouter();
   const { t, lang } = useLang();
   const { signOut } = useSession();
@@ -363,22 +366,22 @@ export default function SystemAdminCertification() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (tc: ThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8fafc' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   header: {
     flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 14,
-    backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e2e8f0',
+    backgroundColor: tc.card, borderBottomWidth: 1, borderBottomColor: '#e2e8f0',
   },
   title: { fontSize: 18, fontWeight: '800', color: '#0f172a' },
   subtitle: { fontSize: 12.5, color: '#64748b', marginTop: 2 },
-  refreshBtn: { width: 42, height: 42, borderRadius: 12, borderWidth: 1, borderColor: '#e2e8f0', alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' },
+  refreshBtn: { width: 42, height: 42, borderRadius: 12, borderWidth: 1, borderColor: '#e2e8f0', alignItems: 'center', justifyContent: 'center', backgroundColor: tc.card },
   statsRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingTop: 14 },
-  stat: { flex: 1, backgroundColor: '#fff', borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 12, padding: 10 },
+  stat: { flex: 1, backgroundColor: tc.card, borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 12, padding: 10 },
   statLabel: { fontSize: 10.5, color: '#64748b', textTransform: 'uppercase' },
   statValue: { fontSize: 18, fontWeight: '800', color: '#0f172a', marginTop: 4 },
   list: { padding: 16, paddingBottom: 40, gap: 12 },
-  card: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 14, padding: 14, gap: 6 },
+  card: { backgroundColor: tc.card, borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 14, padding: 14, gap: 6 },
   cardHead: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
   cardTitle: { flex: 1, fontSize: 15, fontWeight: '700', color: '#0f172a' },
   cardMeta: { fontSize: 12.5, color: '#64748b' },
@@ -396,7 +399,7 @@ const styles = StyleSheet.create({
   section: { marginTop: 16, gap: 6 },
   sectionTitle: { fontSize: 13, fontWeight: '700', color: '#334155' },
   bullet: { fontSize: 13, color: '#475569' },
-  req: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#eef2f7', borderRadius: 12, padding: 12, marginTop: 10, gap: 4 },
+  req: { backgroundColor: tc.card, borderWidth: 1, borderColor: '#eef2f7', borderRadius: 12, padding: 12, marginTop: 10, gap: 4 },
   reqHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   reqTitle: { flex: 1, fontSize: 14, fontWeight: '700', color: '#0f172a' },
   reqMeta: { fontSize: 11.5, color: '#64748b' },

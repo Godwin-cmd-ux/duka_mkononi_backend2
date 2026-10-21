@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useMemo } from 'react';
 import {
   RefreshControl,
   ScrollView,
@@ -16,6 +16,7 @@ import { useLang } from '../../context/LanguageContext';
 import { fetchWithTimeout } from '../../lib/network';
 
 import { API_BASE_URL } from '../../constants/api';
+import { useTheme, ThemeColors } from '../../lib/theme';
 
 /**
  * Capability #5 - Business Health Score and Weekly Coaching (seller mobile screen).
@@ -93,6 +94,8 @@ const BAND_COLORS: Record<string, string> = {
 };
 
 export default function AfyaBiasharaScreen() {
+  const { colors: tc } = useTheme();
+  const styles = useMemo(() => makeStyles(tc), [tc]);
   const { t, lang } = useLang();
 
   const [digest, setDigest] = useState<HealthDigest | null>(null);
@@ -375,8 +378,8 @@ export default function AfyaBiasharaScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f9fa' },
+const makeStyles = (tc: ThemeColors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: tc.page },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -384,13 +387,13 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingHorizontal: 20,
     paddingVertical: 14,
-    backgroundColor: '#ffffff',
+    backgroundColor: tc.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#ecf0f1',
+    borderBottomColor: tc.line,
   },
   headerText: { flex: 1 },
-  title: { fontSize: 18, fontWeight: '700', color: '#2c3e50' },
-  subtitle: { fontSize: 12, color: '#95a5a6', marginTop: 2 },
+  title: { fontSize: 18, fontWeight: '700', color: tc.ink },
+  subtitle: { fontSize: 12, color: tc.muted2, marginTop: 2 },
   refreshBtn: {
     backgroundColor: '#2ecc71',
     borderRadius: 12,
@@ -403,13 +406,13 @@ const styles = StyleSheet.create({
   refreshBtnText: { color: '#ffffff', fontWeight: '700', fontSize: 13 },
   scroll: { padding: 16, paddingBottom: 40 },
   center: { alignItems: 'center', paddingVertical: 40, paddingHorizontal: 20 },
-  centerText: { marginTop: 10, color: '#7f8c8d', fontSize: 14, textAlign: 'center' },
-  emptyTitle: { marginTop: 12, fontSize: 18, fontWeight: '700', color: '#2c3e50' },
+  centerText: { marginTop: 10, color: tc.muted, fontSize: 14, textAlign: 'center' },
+  emptyTitle: { marginTop: 12, fontSize: 18, fontWeight: '700', color: tc.ink },
   scoreCard: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 18,
-    backgroundColor: '#ffffff',
+    backgroundColor: tc.card,
     borderRadius: 18,
     padding: 20,
     marginBottom: 14,
@@ -424,21 +427,21 @@ const styles = StyleSheet.create({
   scoreValue: { fontSize: 30, fontWeight: '800', color: '#ffffff', lineHeight: 34 },
   scoreMax: { fontSize: 11, color: '#ffffff', opacity: 0.9 },
   scoreMeta: { flex: 1 },
-  bandLabel: { fontSize: 18, fontWeight: '800', color: '#2c3e50', marginBottom: 4 },
-  scoreSummary: { fontSize: 13, color: '#5d6d7e', lineHeight: 19 },
-  periodText: { fontSize: 11, color: '#95a5a6', marginTop: 8 },
-  card: { backgroundColor: '#ffffff', borderRadius: 16, padding: 16, marginBottom: 14 },
-  cardTitle: { fontSize: 14, fontWeight: '700', color: '#2c3e50', marginBottom: 10 },
+  bandLabel: { fontSize: 18, fontWeight: '800', color: tc.ink, marginBottom: 4 },
+  scoreSummary: { fontSize: 13, color: tc.muted, lineHeight: 19 },
+  periodText: { fontSize: 11, color: tc.muted2, marginTop: 8 },
+  card: { backgroundColor: tc.card, borderRadius: 16, padding: 16, marginBottom: 14 },
+  cardTitle: { fontSize: 14, fontWeight: '700', color: tc.ink, marginBottom: 10 },
   component: { paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#f4f6f7' },
   componentHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
-  componentName: { fontSize: 14, fontWeight: '700', color: '#2c3e50', flex: 1 },
+  componentName: { fontSize: 14, fontWeight: '700', color: tc.ink, flex: 1 },
   componentStatus: { fontSize: 11, fontWeight: '700', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 20, overflow: 'hidden' },
   componentTrack: { height: 8, backgroundColor: '#ecf0f1', borderRadius: 4, overflow: 'hidden', marginBottom: 8 },
   componentFill: { height: 8, borderRadius: 4 },
-  componentEvidence: { fontSize: 12.5, color: '#7f8c8d', lineHeight: 18 },
+  componentEvidence: { fontSize: 12.5, color: tc.muted, lineHeight: 18 },
   changeRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
   changeIcon: { width: 24, textAlign: 'center', fontSize: 14 },
-  changeText: { flex: 1, fontSize: 13.5, color: '#5d6d7e' },
+  changeText: { flex: 1, fontSize: 13.5, color: tc.muted },
   action: { flexDirection: 'row', gap: 12, paddingVertical: 10 },
   actionNum: {
     width: 26,
@@ -450,8 +453,8 @@ const styles = StyleSheet.create({
   },
   actionNumText: { color: '#1e8449', fontWeight: '800', fontSize: 12 },
   actionBody: { flex: 1 },
-  actionTitle: { fontSize: 14, fontWeight: '700', color: '#2c3e50', marginBottom: 3 },
-  actionText: { fontSize: 13, color: '#5d6d7e', lineHeight: 19 },
+  actionTitle: { fontSize: 14, fontWeight: '700', color: tc.ink, marginBottom: 3 },
+  actionText: { fontSize: 13, color: tc.muted, lineHeight: 19 },
   historyRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -461,25 +464,25 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#f4f6f7',
   },
-  historyPeriod: { flex: 1, fontSize: 12.5, color: '#5d6d7e' },
+  historyPeriod: { flex: 1, fontSize: 12.5, color: tc.muted },
   historyBadge: {
     fontSize: 11,
     fontWeight: '700',
     paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: 20,
-    backgroundColor: '#f4f6f7',
-    color: '#5d6d7e',
+    backgroundColor: tc.page,
+    color: tc.muted,
     overflow: 'hidden',
   },
-  historyScore: { fontSize: 13, fontWeight: '700', color: '#2c3e50' },
+  historyScore: { fontSize: 13, fontWeight: '700', color: tc.ink },
   aiCard: { backgroundColor: '#e8f8f0', borderRadius: 14, padding: 14, marginBottom: 14 },
   aiCardTitle: { fontSize: 12, fontWeight: '700', color: '#1e8449', marginBottom: 4 },
   aiCardText: { fontSize: 13, color: '#1e8449', lineHeight: 19 },
   notice: { backgroundColor: '#fef5e7', borderRadius: 14, padding: 12, marginBottom: 14 },
   noticeText: { fontSize: 12.5, color: '#b9770e' },
-  muted: { fontSize: 13, color: '#95a5a6' },
+  muted: { fontSize: 13, color: tc.muted2 },
   listRow: { flexDirection: 'row', gap: 8, marginBottom: 6 },
-  listBullet: { fontSize: 14, fontWeight: '700', color: '#95a5a6' },
-  listText: { flex: 1, fontSize: 12, color: '#5d6d7e', lineHeight: 17 },
+  listBullet: { fontSize: 14, fontWeight: '700', color: tc.muted2 },
+  listText: { flex: 1, fontSize: 12, color: tc.muted, lineHeight: 17 },
 });

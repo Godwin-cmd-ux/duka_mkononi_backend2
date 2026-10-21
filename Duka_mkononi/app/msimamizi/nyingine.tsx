@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useMemo } from 'react';
 import {
   Alert,
   RefreshControl,
@@ -19,6 +19,7 @@ import { useLang } from '../../context/LanguageContext';
 import { fetchWithTimeout } from '../../lib/network';
 
 import { API_BASE_URL } from '../../constants/api';
+import { useTheme, ThemeColors } from '../../lib/theme';
 
 /**
  * Capability #6 - Anomaly & Leak Detection (manager mobile screen, "Nyingine").
@@ -144,6 +145,8 @@ const ACT_PERIODS: string[] = ['today', 'yesterday', 'this_week', 'last_week', '
 const shortStamp = (value?: string | null) => String(value || '').slice(0, 16).replace('T', ' ');
 
 export default function NyingineScreen() {
+  const { colors: tc } = useTheme();
+  const styles = useMemo(() => makeStyles(tc), [tc]);
   const { t, lang } = useLang();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -696,17 +699,17 @@ export default function NyingineScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#f8f9fa' },
+const makeStyles = (tc: ThemeColors) => StyleSheet.create({
+  screen: { flex: 1, backgroundColor: tc.page },
   content: { padding: 16, paddingBottom: 40 },
   headerRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 16 },
   headerText: { flex: 1 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  title: { fontSize: 22, fontWeight: '800', color: '#2c3e50' },
-  subtitle: { fontSize: 13, color: '#7f8c8d', marginTop: 3 },
+  title: { fontSize: 22, fontWeight: '800', color: tc.ink },
+  subtitle: { fontSize: 13, color: tc.muted, marginTop: 3 },
   guideEntry: {
-    flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#fff',
-    borderColor: '#ecf0f1', borderWidth: 1, borderRadius: 12,
+    flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: tc.card,
+    borderColor: tc.line, borderWidth: 1, borderRadius: 12,
     paddingHorizontal: 14, paddingVertical: 11, marginBottom: 14,
   },
   guideEntryText: { flex: 1, fontSize: 13.5, fontWeight: '700', color: '#e74c3c' },
@@ -722,36 +725,36 @@ const styles = StyleSheet.create({
   refreshBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
   statsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
   statChip: {
-    backgroundColor: '#fff', borderColor: '#ecf0f1', borderWidth: 1, borderRadius: 12,
+    backgroundColor: tc.card, borderColor: tc.line, borderWidth: 1, borderRadius: 12,
     paddingHorizontal: 14, paddingVertical: 8, alignItems: 'center',
   },
-  statLabel: { fontSize: 11, color: '#7f8c8d', fontWeight: '600' },
-  statValue: { fontSize: 16, fontWeight: '800', color: '#2c3e50' },
+  statLabel: { fontSize: 11, color: tc.muted, fontWeight: '600' },
+  statValue: { fontSize: 16, fontWeight: '800', color: tc.ink },
   summaryCard: { backgroundColor: '#1e2a4a', borderRadius: 16, padding: 16, marginBottom: 16 },
   summaryLabel: { fontSize: 10.5, fontWeight: '800', color: '#ffffffb3', letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 5 },
   summaryText: { fontSize: 14, color: '#fff', lineHeight: 21 },
   summaryNote: { fontSize: 11.5, color: '#ffffffb8', marginTop: 7 },
   stateBox: { alignItems: 'center', paddingVertical: 44, paddingHorizontal: 18 },
-  stateTitle: { fontSize: 16, fontWeight: '700', color: '#2c3e50', marginTop: 10 },
-  stateText: { fontSize: 13.5, color: '#7f8c8d', textAlign: 'center', marginTop: 5, lineHeight: 19 },
+  stateTitle: { fontSize: 16, fontWeight: '700', color: tc.ink, marginTop: 10 },
+  stateText: { fontSize: 13.5, color: tc.muted, textAlign: 'center', marginTop: 5, lineHeight: 19 },
   retryBtn: {
-    marginTop: 14, backgroundColor: '#fff', borderColor: '#dfe4ea', borderWidth: 1,
+    marginTop: 14, backgroundColor: tc.card, borderColor: '#dfe4ea', borderWidth: 1,
     borderRadius: 12, paddingHorizontal: 20, paddingVertical: 10,
   },
-  retryBtnText: { fontWeight: '700', color: '#2c3e50', fontSize: 14 },
+  retryBtnText: { fontWeight: '700', color: tc.ink, fontSize: 14 },
   alertCard: {
-    backgroundColor: '#fff', borderColor: '#ecf0f1', borderWidth: 1, borderRadius: 16,
+    backgroundColor: tc.card, borderColor: tc.line, borderWidth: 1, borderRadius: 16,
     padding: 15, marginBottom: 12,
   },
   alertTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  alertTitle: { flex: 1, fontSize: 15, fontWeight: '800', color: '#2c3e50' },
+  alertTitle: { flex: 1, fontSize: 15, fontWeight: '800', color: tc.ink },
   severity: { borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3 },
   severityText: { color: '#fff', fontSize: 10.5, fontWeight: '800' },
   alertDetail: { fontSize: 13.5, color: '#44546a', lineHeight: 20, marginTop: 7 },
   evidenceBox: { marginTop: 9 },
-  evidenceLabel: { fontSize: 10, fontWeight: '800', color: '#95a5a6', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 4 },
-  evidenceRow: { fontSize: 12, color: '#5d6d7e', backgroundColor: '#f8f9fa', borderRadius: 8, paddingHorizontal: 9, paddingVertical: 5, marginBottom: 4 },
-  verifyText: { fontSize: 12.5, color: '#7f8c8d', lineHeight: 18, marginTop: 9, borderLeftWidth: 3, borderLeftColor: '#f39c12', paddingLeft: 9 },
+  evidenceLabel: { fontSize: 10, fontWeight: '800', color: tc.muted2, letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 4 },
+  evidenceRow: { fontSize: 12, color: tc.muted, backgroundColor: tc.page, borderRadius: 8, paddingHorizontal: 9, paddingVertical: 5, marginBottom: 4 },
+  verifyText: { fontSize: 12.5, color: tc.muted, lineHeight: 18, marginTop: 9, borderLeftWidth: 3, borderLeftColor: '#f39c12', paddingLeft: 9 },
   dismissBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
     marginTop: 12, backgroundColor: '#eafaf1', borderColor: '#c8f0dc', borderWidth: 1,
@@ -759,46 +762,46 @@ const styles = StyleSheet.create({
   },
   dismissBtnText: { color: '#27ae60', fontWeight: '700', fontSize: 13.5 },
   historyCard: {
-    backgroundColor: '#fff', borderColor: '#ecf0f1', borderWidth: 1, borderRadius: 16,
+    backgroundColor: tc.card, borderColor: tc.line, borderWidth: 1, borderRadius: 16,
     padding: 15, marginTop: 12,
   },
-  historyTitle: { fontSize: 14.5, fontWeight: '800', color: '#2c3e50', marginBottom: 6 },
+  historyTitle: { fontSize: 14.5, fontWeight: '800', color: tc.ink, marginBottom: 6 },
   historyRow: { borderTopWidth: 1, borderTopColor: '#f4f6f9', paddingVertical: 7 },
-  historySubject: { fontSize: 13, fontWeight: '700', color: '#2c3e50' },
-  historyMeta: { fontSize: 12, color: '#7f8c8d', marginTop: 2 },
+  historySubject: { fontSize: 13, fontWeight: '700', color: tc.ink },
+  historyMeta: { fontSize: 12, color: tc.muted, marginTop: 2 },
   limitationsBox: { marginTop: 16 },
-  limitationsTitle: { fontSize: 12, fontWeight: '800', color: '#7f8c8d' },
-  limitationsText: { fontSize: 12, color: '#95a5a6', lineHeight: 17, marginTop: 3 },
+  limitationsTitle: { fontSize: 12, fontWeight: '800', color: tc.muted },
+  limitationsText: { fontSize: 12, color: tc.muted2, lineHeight: 17, marginTop: 3 },
   generated: { fontSize: 11.5, color: '#aeb6bf', marginTop: 6 },
   /* Team Activity Digest (capability #17) */
-  actSection: { marginTop: 26, borderTopWidth: 1, borderTopColor: '#ecf0f1', paddingTop: 20 },
+  actSection: { marginTop: 26, borderTopWidth: 1, borderTopColor: tc.line, paddingTop: 20 },
   actHead: { marginBottom: 10 },
-  actTitle: { fontSize: 18, fontWeight: '800', color: '#2c3e50' },
-  actSubtitle: { fontSize: 12.5, color: '#7f8c8d', marginTop: 3 },
+  actTitle: { fontSize: 18, fontWeight: '800', color: tc.ink },
+  actSubtitle: { fontSize: 12.5, color: tc.muted, marginTop: 3 },
   actChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginBottom: 14 },
   actChip: {
-    borderWidth: 1, borderColor: '#ecf0f1', backgroundColor: '#fff',
+    borderWidth: 1, borderColor: tc.line, backgroundColor: tc.card,
     borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6,
   },
   actChipActive: { backgroundColor: '#f3eeff', borderColor: '#e3d9ff' },
-  actChipText: { fontSize: 11.5, fontWeight: '700', color: '#5d6d7e' },
+  actChipText: { fontSize: 11.5, fontWeight: '700', color: tc.muted },
   actChipTextActive: { color: '#7c5cbf' },
   actCompare: { fontSize: 12, fontWeight: '700', marginTop: 8 },
   actPanel: {
-    backgroundColor: '#fff', borderColor: '#ecf0f1', borderWidth: 1, borderRadius: 16,
+    backgroundColor: tc.card, borderColor: tc.line, borderWidth: 1, borderRadius: 16,
     padding: 15, marginBottom: 12,
   },
-  actPanelTitle: { fontSize: 13, fontWeight: '800', color: '#2c3e50', marginBottom: 8 },
+  actPanelTitle: { fontSize: 13, fontWeight: '800', color: tc.ink, marginBottom: 8 },
   actBars: { flexDirection: 'row', alignItems: 'flex-end', gap: 4, height: 78 },
   actBarCol: { flex: 1, alignItems: 'center', justifyContent: 'flex-end' },
   actBar: { width: '100%', maxWidth: 24, borderTopLeftRadius: 5, borderTopRightRadius: 5 },
-  actBarDay: { fontSize: 9, color: '#95a5a6', marginTop: 3 },
+  actBarDay: { fontSize: 9, color: tc.muted2, marginTop: 3 },
   actRow: {
     flexDirection: 'row', justifyContent: 'space-between', gap: 10,
     paddingVertical: 6, borderTopWidth: 1, borderTopColor: '#f4f6f9',
   },
-  actRowName: { flexShrink: 1, fontSize: 13, fontWeight: '700', color: '#2c3e50' },
-  actRowValue: { fontSize: 13, fontWeight: '700', color: '#2c3e50' },
+  actRowName: { flexShrink: 1, fontSize: 13, fontWeight: '700', color: tc.ink },
+  actRowValue: { fontSize: 13, fontWeight: '700', color: tc.ink },
   actSilent: {
     backgroundColor: '#fff8e1', borderColor: '#ffe9a8', borderWidth: 1,
     borderRadius: 12, padding: 11, marginBottom: 12,
@@ -807,9 +810,9 @@ const styles = StyleSheet.create({
   actSilentLabel: { fontWeight: '800' },
   actEvent: { borderTopWidth: 1, borderTopColor: '#f4f6f9', paddingVertical: 8 },
   actEventTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  actEventAction: { flex: 1, fontSize: 12.5, fontWeight: '700', color: '#2c3e50' },
-  actEventMeta: { fontSize: 11.5, color: '#95a5a6', marginTop: 3 },
+  actEventAction: { flex: 1, fontSize: 12.5, fontWeight: '700', color: tc.ink },
+  actEventMeta: { fontSize: 11.5, color: tc.muted2, marginTop: 3 },
   actTag: { borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3 },
   actTagText: { fontSize: 10.5, fontWeight: '800' },
-  actRefs: { fontSize: 11.5, color: '#7f8c8d', marginTop: 4 },
+  actRefs: { fontSize: 11.5, color: tc.muted, marginTop: 4 },
 });

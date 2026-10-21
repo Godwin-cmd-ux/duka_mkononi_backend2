@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   RefreshControl,
   ScrollView,
@@ -16,6 +16,7 @@ import { getCache, setCache } from '../../db/cache';
 import { fetchWithTimeout, requireNetwork } from '../../lib/network';
 
 import { API_BASE_URL } from '../../constants/api';
+import { useTheme, ThemeColors } from '../../lib/theme';
 
 /**
  * Capability #2 - Pricing & Margin Advisor (seller mobile screen).
@@ -111,6 +112,8 @@ const SEVERITY_COLOR: Record<string, string> = {
 };
 
 export default function UshauriBeiScreen() {
+  const { colors: tc } = useTheme();
+  const styles = useMemo(() => makeStyles(tc), [tc]);
   const { t, lang } = useLang();
 
   const [loading, setLoading] = useState(true);
@@ -445,24 +448,24 @@ export default function UshauriBeiScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f9fa' },
+const makeStyles = (tc: ThemeColors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: tc.page },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 14,
-    backgroundColor: '#ffffff',
+    backgroundColor: tc.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#ecf0f1',
+    borderBottomColor: tc.line,
   },
-  title: { fontSize: 18, fontWeight: '700', color: '#2c3e50', flex: 1 },
+  title: { fontSize: 18, fontWeight: '700', color: tc.ink, flex: 1 },
   refreshBtn: { padding: 8 },
   scroll: { padding: 16, paddingBottom: 40 },
   center: { alignItems: 'center', paddingVertical: 60, paddingHorizontal: 20 },
-  centerText: { marginTop: 12, color: '#7f8c8d', fontSize: 14, textAlign: 'center' },
-  emptyTitle: { marginTop: 12, fontSize: 18, fontWeight: '700', color: '#2c3e50' },
+  centerText: { marginTop: 12, color: tc.muted, fontSize: 14, textAlign: 'center' },
+  emptyTitle: { marginTop: 12, fontSize: 18, fontWeight: '700', color: tc.ink },
   retryBtn: {
     marginTop: 16,
     backgroundColor: '#2ecc71',
@@ -481,36 +484,36 @@ const styles = StyleSheet.create({
   },
   bannerText: { flex: 1, fontSize: 13, fontWeight: '600' },
   card: {
-    backgroundColor: '#ffffff',
+    backgroundColor: tc.card,
     borderRadius: 16,
     padding: 16,
     marginBottom: 14,
   },
-  cardTitle: { fontSize: 15, fontWeight: '700', color: '#2c3e50', marginBottom: 12 },
+  cardTitle: { fontSize: 15, fontWeight: '700', color: tc.ink, marginBottom: 12 },
   statsGrid: { flexDirection: 'row', justifyContent: 'space-between' },
   statBox: { flex: 1, alignItems: 'center' },
-  statNumber: { fontSize: 20, fontWeight: '700', color: '#2c3e50' },
-  statLabel: { fontSize: 11, color: '#7f8c8d', textAlign: 'center', marginTop: 2 },
+  statNumber: { fontSize: 20, fontWeight: '700', color: tc.ink },
+  statLabel: { fontSize: 11, color: tc.muted, textAlign: 'center', marginTop: 2 },
   divider: { height: 1, backgroundColor: '#ecf0f1', marginVertical: 12 },
   row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3 },
-  rowLabel: { fontSize: 13, color: '#7f8c8d', flex: 1, paddingRight: 8 },
-  rowValue: { fontSize: 13, fontWeight: '600', color: '#2c3e50' },
-  muted: { fontSize: 11, color: '#95a5a6', marginTop: 8 },
-  headline: { fontSize: 14, color: '#2c3e50', fontWeight: '600', lineHeight: 20 },
+  rowLabel: { fontSize: 13, color: tc.muted, flex: 1, paddingRight: 8 },
+  rowValue: { fontSize: 13, fontWeight: '600', color: tc.ink },
+  muted: { fontSize: 11, color: tc.muted2, marginTop: 8 },
+  headline: { fontSize: 14, color: tc.ink, fontWeight: '600', lineHeight: 20 },
   section: { marginBottom: 16 },
-  sectionTitle: { fontSize: 15, fontWeight: '700', color: '#2c3e50', marginBottom: 10 },
+  sectionTitle: { fontSize: 15, fontWeight: '700', color: tc.ink, marginBottom: 10 },
   productCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: tc.card,
     borderRadius: 14,
     padding: 14,
     marginBottom: 10,
   },
   productHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 },
-  productName: { flex: 1, fontSize: 15, fontWeight: '700', color: '#2c3e50' },
+  productName: { flex: 1, fontSize: 15, fontWeight: '700', color: tc.ink },
   badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
   badgeText: { fontSize: 11, fontWeight: '700' },
   productMetaRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8, gap: 8 },
-  productMeta: { fontSize: 12, color: '#5d6d7e', flex: 1 },
+  productMeta: { fontSize: 12, color: tc.muted, flex: 1 },
   suggestBox: {
     marginTop: 10,
     padding: 10,
@@ -524,10 +527,10 @@ const styles = StyleSheet.create({
     paddingLeft: 10,
     borderLeftWidth: 3,
   },
-  aiNoteTitle: { fontSize: 12, fontWeight: '700', color: '#2c3e50' },
-  aiNoteText: { fontSize: 12, color: '#5d6d7e', marginTop: 3, lineHeight: 17 },
+  aiNoteTitle: { fontSize: 12, fontWeight: '700', color: tc.ink },
+  aiNoteText: { fontSize: 12, color: tc.muted, marginTop: 3, lineHeight: 17 },
   listRow: { flexDirection: 'row', gap: 8, marginBottom: 6 },
   listBullet: { fontSize: 14, fontWeight: '700' },
-  listText: { flex: 1, fontSize: 12, color: '#5d6d7e', lineHeight: 17 },
+  listText: { flex: 1, fontSize: 12, color: tc.muted, lineHeight: 17 },
   generated: { textAlign: 'center', fontSize: 11, color: '#bdc3c7', marginTop: 8 },
 });

@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
     Alert,
     FlatList,
@@ -21,6 +21,7 @@ import { API_BASE_URL } from '../../constants/api';
 import { getCache, setCache } from '../../db/cache';
 import { registerLive } from '../../lib/syncer';
 import { fetchWithTimeout, requireNetwork } from '../../lib/network';
+import { useTheme, ThemeColors } from '../../lib/theme';
 
 // Allowed forward transitions — mirrors OrderService::TRANSITIONS on the server.
 // The server is the source of truth; this only decides which buttons to show.
@@ -52,6 +53,8 @@ const STATUS_COLORS: Record<string, { bg: string; fg: string }> = {
 };
 
 export default function OrdersScreen() {
+  const { colors: tc } = useTheme();
+  const styles = useMemo(() => makeStyles(tc), [tc]);
   const { t, lang } = useLang();
 
   const localeMap: Record<string, string> = {
@@ -674,17 +677,17 @@ export default function OrdersScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screenSafe: { flex: 1, backgroundColor: '#f8f9fa' },
-  container: { flex: 1, backgroundColor: '#f8f9fa' },
+const makeStyles = (tc: ThemeColors) => StyleSheet.create({
+  screenSafe: { flex: 1, backgroundColor: tc.page },
+  container: { flex: 1, backgroundColor: tc.page },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 30 },
   loadingText: { marginTop: 15, fontSize: 16, color: '#666' },
 
   header: {
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
+    borderBottomColor: tc.line2,
   },
   headerTop: {
     flexDirection: 'row',
@@ -693,7 +696,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   headerActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  title: { fontSize: 22, fontWeight: 'bold', color: '#2c3e50', flex: 1 },
+  title: { fontSize: 22, fontWeight: 'bold', color: tc.ink, flex: 1 },
   refreshButton: {
     padding: 8,
     backgroundColor: '#eafaf1',
@@ -702,24 +705,24 @@ const styles = StyleSheet.create({
     borderColor: '#d5f5e3',
   },
   searchInput: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     borderWidth: 1,
     borderColor: '#e2e8f0',
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 11,
     fontSize: 15,
-    color: '#2c3e50',
+    color: tc.ink,
   },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 10,
   },
-  summaryText: { fontSize: 13, color: '#7f8c8d' },
-  summaryStrong: { color: '#2c3e50', fontWeight: '700' },
+  summaryText: { fontSize: 13, color: tc.muted },
+  summaryStrong: { color: tc.ink, fontWeight: '700' },
 
-  filtersScroll: { maxHeight: 52, backgroundColor: 'white' },
+  filtersScroll: { maxHeight: 52, backgroundColor: tc.card },
   filtersContent: { paddingHorizontal: 12, paddingVertical: 10, gap: 8 },
   filterChip: {
     paddingHorizontal: 14,
@@ -730,17 +733,17 @@ const styles = StyleSheet.create({
     borderColor: '#e2e8f0',
   },
   filterChipActive: { backgroundColor: '#2ecc71', borderColor: '#2ecc71' },
-  filterText: { fontSize: 13, color: '#5d6d7e', fontWeight: '600' },
+  filterText: { fontSize: 13, color: tc.muted, fontWeight: '600' },
   filterTextActive: { color: 'white' },
 
   listContent: { padding: 15, paddingBottom: 30 },
   orderCard: {
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderRadius: 12,
     padding: 15,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#e9ecef',
+    borderColor: tc.line2,
   },
   orderHead: {
     flexDirection: 'row',
@@ -748,11 +751,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10,
   },
-  reference: { fontSize: 15, fontWeight: 'bold', color: '#2c3e50' },
+  reference: { fontSize: 15, fontWeight: 'bold', color: tc.ink },
   badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
   badgeText: { fontSize: 12, fontWeight: '700' },
   orderRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 5 },
-  orderRowText: { fontSize: 14, color: '#2c3e50', flex: 1 },
+  orderRowText: { fontSize: 14, color: tc.ink, flex: 1 },
   orderFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -762,24 +765,24 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#f1f5f9',
   },
-  orderDate: { fontSize: 13, color: '#95a5a6' },
+  orderDate: { fontSize: 13, color: tc.muted2 },
   orderTotal: { fontSize: 16, fontWeight: 'bold', color: '#27ae60' },
 
   emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
-  emptyTitle: { fontSize: 20, fontWeight: 'bold', color: '#2c3e50', marginTop: 16 },
-  emptyText: { fontSize: 15, color: '#7f8c8d', textAlign: 'center', marginTop: 8, lineHeight: 22 },
+  emptyTitle: { fontSize: 20, fontWeight: 'bold', color: tc.ink, marginTop: 16 },
+  emptyText: { fontSize: 15, color: tc.muted, textAlign: 'center', marginTop: 8, lineHeight: 22 },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-  modalContent: { backgroundColor: 'white', borderRadius: 16, width: '92%', maxHeight: '85%' },
+  modalContent: { backgroundColor: tc.card, borderRadius: 16, width: '92%', maxHeight: '85%' },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
+    borderBottomColor: tc.line2,
   },
-  modalTitle: { fontSize: 19, fontWeight: 'bold', color: '#2c3e50' },
+  modalTitle: { fontSize: 19, fontWeight: 'bold', color: tc.ink },
   modalLoading: { padding: 40, alignItems: 'center' },
   modalBody: { padding: 18 },
 
@@ -789,7 +792,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 14,
   },
-  detailRef: { fontSize: 17, fontWeight: 'bold', color: '#2c3e50' },
+  detailRef: { fontSize: 17, fontWeight: 'bold', color: tc.ink },
   detailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -797,20 +800,20 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#f8f9fa',
   },
-  detailLabel: { fontSize: 14, color: '#7f8c8d' },
-  detailValue: { fontSize: 14, color: '#2c3e50', fontWeight: '500', flexShrink: 1, textAlign: 'right' },
+  detailLabel: { fontSize: 14, color: tc.muted },
+  detailValue: { fontSize: 14, color: tc.ink, fontWeight: '500', flexShrink: 1, textAlign: 'right' },
   noteBox: {
     marginTop: 12,
     padding: 12,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     borderRadius: 10,
     borderLeftWidth: 3,
     borderLeftColor: '#2ecc71',
   },
-  noteBoxLabel: { fontSize: 12, color: '#7f8c8d', fontWeight: '700', marginBottom: 4 },
-  noteBoxText: { fontSize: 14, color: '#2c3e50' },
+  noteBoxLabel: { fontSize: 12, color: tc.muted, fontWeight: '700', marginBottom: 4 },
+  noteBoxText: { fontSize: 14, color: tc.ink },
 
-  sectionTitle: { fontSize: 15, fontWeight: '700', color: '#2c3e50', marginTop: 18, marginBottom: 8 },
+  sectionTitle: { fontSize: 15, fontWeight: '700', color: tc.ink, marginTop: 18, marginBottom: 8 },
   itemRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -819,8 +822,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#f1f5f9',
   },
-  itemName: { fontSize: 14, color: '#2c3e50', flex: 1, marginRight: 8 },
-  itemQty: { fontSize: 13, color: '#7f8c8d' },
+  itemName: { fontSize: 14, color: tc.ink, flex: 1, marginRight: 8 },
+  itemQty: { fontSize: 13, color: tc.muted },
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -828,9 +831,9 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 2,
-    borderTopColor: '#ecf0f1',
+    borderTopColor: tc.line,
   },
-  totalRowLabel: { fontSize: 16, fontWeight: '700', color: '#2c3e50' },
+  totalRowLabel: { fontSize: 16, fontWeight: '700', color: tc.ink },
   totalRowValue: { fontSize: 18, fontWeight: 'bold', color: '#27ae60' },
 
   statusButtons: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
@@ -838,13 +841,13 @@ const styles = StyleSheet.create({
   statusButtonText: { fontSize: 14, fontWeight: '700' },
 
   noteInput: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     borderWidth: 1,
     borderColor: '#e2e8f0',
     borderRadius: 10,
     padding: 12,
     fontSize: 15,
-    color: '#2c3e50',
+    color: tc.ink,
     minHeight: 80,
   },
   saveNoteButton: {
@@ -864,9 +867,9 @@ const styles = StyleSheet.create({
     marginTop: 4, marginRight: 10,
   },
   historyBody: { flex: 1 },
-  historyStatus: { fontSize: 14, fontWeight: '600', color: '#2c3e50' },
-  historyDate: { fontSize: 12, color: '#95a5a6', marginTop: 2 },
-  historyNote: { fontSize: 13, color: '#7f8c8d', marginTop: 4, fontStyle: 'italic' },
+  historyStatus: { fontSize: 14, fontWeight: '600', color: tc.ink },
+  historyDate: { fontSize: 12, color: tc.muted2, marginTop: 2 },
+  historyNote: { fontSize: 13, color: tc.muted, marginTop: 4, fontStyle: 'italic' },
 
   draftCard: {
     backgroundColor: '#f8fafc',

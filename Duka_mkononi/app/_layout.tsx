@@ -78,7 +78,12 @@ function RootNavigator() {
     return null;
   }
 
-  const isAdmin = isLoggedIn && role === 'admin';
+  // 🛡️ A platform super admin (super_admin, or the legacy system_admin
+  // spelling) owns the msimamizi portal too — getDashboardRouteForRole() sends
+  // them to /msimamizi, so the guard must mount that group for them as well,
+  // otherwise they route to a screen that is not rendered and land blank.
+  const isAdmin =
+    isLoggedIn && (role === 'admin' || role === 'super_admin' || role === 'system_admin');
   const isSeller = isLoggedIn && role === 'seller';
   const isCustomer = isLoggedIn && role === 'customer';
   const knownRole = isAdmin || isSeller || isCustomer;

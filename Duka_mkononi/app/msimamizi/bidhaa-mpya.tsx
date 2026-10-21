@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import {
     Alert,
     Image,
@@ -29,6 +29,7 @@ import { fetchWithTimeout, requireNetwork } from '../../lib/network';
 import { uploadToCloudinary } from '../../utils/cloudinary';
 
 import { API_BASE_URL } from '../../constants/api';
+import { useTheme, ThemeColors } from '../../lib/theme';
 
 // Business types shared with the Blade AI-import modal, in the same order. New
 // types must stay in sync with `AI_BIZ_TYPES` in
@@ -43,6 +44,8 @@ const BIZ_TYPES = [
 ];
 
 export default function BidhaaMpyaScreen() {
+  const { colors: tc } = useTheme();
+  const styles = useMemo(() => makeStyles(tc), [tc]);
   const { t } = useLang();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -2238,17 +2241,17 @@ export default function BidhaaMpyaScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (tc: ThemeColors) => StyleSheet.create({
   screenSafe: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
   },
   keyboardAvoid: {
     flex: 1,
   },
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
   },
   scrollContent: {
     flexGrow: 1,
@@ -2257,19 +2260,19 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     padding: 30,
   },
   loadingText: {
     marginTop: 15,
     fontSize: 18,
-    color: '#2c3e50',
+    color: tc.ink,
   },
   header: {
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     padding: 25,
     borderBottomWidth: 1,
-    borderBottomColor: '#ecf0f1',
+    borderBottomColor: tc.line,
   },
   headerTop: {
     flexDirection: 'row',
@@ -2283,13 +2286,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     textAlign: 'center',
     flex: 1,
   },
   subtitle: {
     fontSize: 16,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginBottom: 8,
   },
   businessName: {
@@ -2299,7 +2302,7 @@ const styles = StyleSheet.create({
   },
   userInfo: {
     fontSize: 14,
-    color: '#95a5a6',
+    color: tc.muted2,
     fontStyle: 'italic',
     marginBottom: 4,
   },
@@ -2352,7 +2355,7 @@ const styles = StyleSheet.create({
   photoHint: {
     marginTop: 8,
     fontSize: 12,
-    color: '#7f8c8d',
+    color: tc.muted,
   },
   inputGroup: {
     marginBottom: 25,
@@ -2360,17 +2363,17 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 8,
   },
   input: {
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: tc.line2,
     borderRadius: 12,
     padding: 18,
     fontSize: 16,
-    color: '#2c3e50',
+    color: tc.ink,
   },
   priceContainer: {
     position: 'relative',
@@ -2388,7 +2391,7 @@ const styles = StyleSheet.create({
   },
   currencyText: {
     fontSize: 14,
-    color: '#7f8c8d',
+    color: tc.muted,
     fontWeight: 'bold',
   },
   pricePreview: {
@@ -2396,7 +2399,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   currentPrice: {
-    color: '#3498db',
+    color: tc.primary,
   },
   expectedPrice: {
     color: '#27ae60',
@@ -2427,7 +2430,7 @@ const styles = StyleSheet.create({
   priceDiffTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 10,
   },
   priceDiffRow: {
@@ -2438,7 +2441,7 @@ const styles = StyleSheet.create({
   },
   priceDiffLabel: {
     fontSize: 14,
-    color: '#7f8c8d',
+    color: tc.muted,
   },
   priceDiffValue: {
     fontSize: 16,
@@ -2457,12 +2460,12 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   categoryChip: {
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 25,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: tc.line2,
     marginRight: 12,
     marginBottom: 12,
     shadowColor: '#000',
@@ -2481,7 +2484,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   categoryText: {
-    color: '#7f8c8d',
+    color: tc.muted,
     fontSize: 14,
     fontWeight: '500',
   },
@@ -2495,11 +2498,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#e8f4fd',
     borderRadius: 12,
     borderLeftWidth: 4,
-    borderLeftColor: '#3498db',
+    borderLeftColor: tc.primary,
   },
   selectedCategory: {
     fontSize: 16,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginTop: 12,
     padding: 12,
     backgroundColor: '#f0f8f0',
@@ -2552,16 +2555,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#e8f4fd',
     borderRadius: 15,
     borderLeftWidth: 5,
-    borderLeftColor: '#3498db',
+    borderLeftColor: tc.primary,
   },
   previewTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 15,
   },
   previewCard: {
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     padding: 20,
     borderRadius: 12,
     shadowColor: '#000',
@@ -2579,7 +2582,7 @@ const styles = StyleSheet.create({
   previewName: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     flex: 1,
     marginRight: 10,
   },
@@ -2597,14 +2600,14 @@ const styles = StyleSheet.create({
   previewBadgeText: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
   },
   previewDetails: {
     gap: 10,
   },
   previewCategory: {
     fontSize: 15,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginBottom: 10,
   },
   previewPriceRow: {
@@ -2617,12 +2620,12 @@ const styles = StyleSheet.create({
   },
   priceLabel: {
     fontSize: 14,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginBottom: 5,
   },
   currentPricePreview: {
     fontSize: 16,
-    color: '#3498db',
+    color: tc.primary,
     fontWeight: 'bold',
   },
   expectedPricePreview: {
@@ -2633,7 +2636,7 @@ const styles = StyleSheet.create({
   previewPriceDiff: {
     marginTop: 10,
     padding: 10,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     borderRadius: 8,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -2662,7 +2665,7 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   existingProductsButton: {
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderRadius: 15,
     padding: 20,
     marginBottom: 15,
@@ -2686,12 +2689,12 @@ const styles = StyleSheet.create({
   existingProductsButtonTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 5,
   },
   existingProductsButtonSubtitle: {
     fontSize: 14,
-    color: '#7f8c8d',
+    color: tc.muted,
   },
   selectedProductCard: {
     backgroundColor: '#f0f8f0',
@@ -2730,14 +2733,14 @@ const styles = StyleSheet.create({
   selectedProductName: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
   },
   selectedProductDetails: {
     gap: 5,
   },
   selectedProductDetail: {
     fontSize: 14,
-    color: '#7f8c8d',
+    color: tc.muted,
   },
   stockAdditionInfo: {
     marginTop: 15,
@@ -2749,7 +2752,7 @@ const styles = StyleSheet.create({
   },
   stockAdditionLabel: {
     fontSize: 14,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginBottom: 5,
   },
   stockAdditionValue: {
@@ -2763,11 +2766,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#e8f4fd',
     borderRadius: 10,
     borderLeftWidth: 4,
-    borderLeftColor: '#3498db',
+    borderLeftColor: tc.primary,
   },
   editInfoLabel: {
     fontSize: 14,
-    color: '#2c3e50',
+    color: tc.ink,
     fontWeight: '500',
   },
   currentStockInfo: {
@@ -2783,7 +2786,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: '80%',
@@ -2794,25 +2797,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#ecf0f1',
+    borderBottomColor: tc.line,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
   },
   modalCloseButton: {
     padding: 5,
   },
   modalSearchInput: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     margin: 20,
     padding: 15,
     borderRadius: 12,
     fontSize: 16,
-    color: '#2c3e50',
+    color: tc.ink,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: tc.line2,
   },
   modalLoadingContainer: {
     padding: 40,
@@ -2821,7 +2824,7 @@ const styles = StyleSheet.create({
   modalLoadingText: {
     marginTop: 15,
     fontSize: 16,
-    color: '#7f8c8d',
+    color: tc.muted,
   },
   productsList: {
     maxHeight: 400,
@@ -2830,7 +2833,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#ecf0f1',
+    borderBottomColor: tc.line,
   },
   ownerProductItem: {
     backgroundColor: '#f0f8f0',
@@ -2853,7 +2856,7 @@ const styles = StyleSheet.create({
   productItemName: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     flex: 1,
   },
   ownerBadge: {
@@ -2870,7 +2873,7 @@ const styles = StyleSheet.create({
   },
   productItemCategory: {
     fontSize: 14,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginBottom: 8,
   },
   productItemDetails: {
@@ -2881,7 +2884,7 @@ const styles = StyleSheet.create({
   },
   productItemStock: {
     fontSize: 14,
-    color: '#3498db',
+    color: tc.primary,
     fontWeight: '500',
   },
   productItemPrice: {
@@ -2908,7 +2911,7 @@ const styles = StyleSheet.create({
   },
   noProductsText: {
     fontSize: 16,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginTop: 20,
     fontWeight: '500',
   },
@@ -2926,12 +2929,12 @@ const styles = StyleSheet.create({
   },
   modeCard: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderRadius: 15,
     padding: 16,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#e0e0e0',
+    borderColor: tc.line2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
@@ -2957,7 +2960,7 @@ const styles = StyleSheet.create({
   modeCardTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 4,
   },
   modeCardTitleActive: {
@@ -2965,7 +2968,7 @@ const styles = StyleSheet.create({
   },
   modeCardDesc: {
     fontSize: 12,
-    color: '#7f8c8d',
+    color: tc.muted,
     textAlign: 'center',
   },
   aiPanel: {
@@ -2982,12 +2985,12 @@ const styles = StyleSheet.create({
   aiHowTitle: {
     fontSize: 15,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 8,
   },
   aiHowStep: {
     fontSize: 13,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginBottom: 4,
     paddingLeft: 4,
   },
@@ -2998,7 +3001,7 @@ const styles = StyleSheet.create({
   },
   aiPickButton: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderRadius: 12,
     paddingVertical: 14,
     flexDirection: 'row',
@@ -3006,12 +3009,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: tc.line2,
   },
   aiPickButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#2c3e50',
+    color: tc.ink,
   },
   aiImagesHint: {
     fontSize: 13,
@@ -3049,7 +3052,7 @@ const styles = StyleSheet.create({
   },
   aiNoImages: {
     fontSize: 13,
-    color: '#95a5a6',
+    color: tc.muted2,
     fontStyle: 'italic',
     textAlign: 'center',
     marginTop: 6,
@@ -3083,14 +3086,14 @@ const styles = StyleSheet.create({
   },
   bizCardSub: {
     fontSize: 12,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginTop: 2,
     marginBottom: 10,
   },
   bizLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#7f8c8d',
+    color: tc.muted,
     marginBottom: 6,
   },
   bizLabelSpaced: {
@@ -3106,8 +3109,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#ddd',
-    backgroundColor: '#ffffff',
+    borderColor: tc.line2,
+    backgroundColor: tc.card,
   },
   bizTypeChipActive: {
     backgroundColor: '#8e44ad',
@@ -3115,7 +3118,7 @@ const styles = StyleSheet.create({
   },
   bizTypeText: {
     fontSize: 13,
-    color: '#7f8c8d',
+    color: tc.muted,
   },
   bizTypeTextActive: {
     color: '#ffffff',
@@ -3123,13 +3126,13 @@ const styles = StyleSheet.create({
   },
   bizInput: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: tc.line2,
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 15,
-    color: '#2c3e50',
-    backgroundColor: '#ffffff',
+    color: tc.ink,
+    backgroundColor: tc.card,
     marginTop: 10,
   },
   bizDescInput: {
@@ -3137,7 +3140,7 @@ const styles = StyleSheet.create({
   },
   bizHint: {
     fontSize: 11,
-    color: '#95a5a6',
+    color: tc.muted2,
     fontStyle: 'italic',
     marginTop: 6,
   },
@@ -3202,11 +3205,11 @@ const styles = StyleSheet.create({
   aiProgressText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#2c3e50',
+    color: tc.ink,
   },
   aiProgressNote: {
     fontSize: 12,
-    color: '#95a5a6',
+    color: tc.muted2,
     marginTop: 6,
   },
   aiResultsHeader: {
@@ -3216,7 +3219,7 @@ const styles = StyleSheet.create({
   aiResultsTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 6,
   },
   aiDisclaimer: {
@@ -3225,12 +3228,12 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   aiItemCard: {
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderRadius: 14,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: tc.line2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
@@ -3274,7 +3277,7 @@ const styles = StyleSheet.create({
   aiBadgeText: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
   },
   aiBadgeOkText: {
     color: 'white',
@@ -3282,11 +3285,11 @@ const styles = StyleSheet.create({
   aiConfidence: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#7f8c8d',
+    color: tc.muted,
   },
   aiCurrentStock: {
     fontSize: 13,
-    color: '#3498db',
+    color: tc.primary,
     marginBottom: 8,
   },
   aiField: {
@@ -3295,17 +3298,17 @@ const styles = StyleSheet.create({
   aiLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 5,
   },
   aiInput: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: tc.line2,
     borderRadius: 10,
     padding: 12,
     fontSize: 15,
-    color: '#2c3e50',
+    color: tc.ink,
   },
   aiRowTwo: {
     flexDirection: 'row',
@@ -3316,7 +3319,7 @@ const styles = StyleSheet.create({
   },
   aiSource: {
     fontSize: 12,
-    color: '#95a5a6',
+    color: tc.muted2,
     fontStyle: 'italic',
     marginBottom: 8,
   },
@@ -3357,13 +3360,13 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 14,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: tc.line2,
     borderRadius: 12,
     marginTop: 6,
   },
   aiClearButtonText: {
     fontSize: 15,
-    color: '#7f8c8d',
+    color: tc.muted,
     fontWeight: '600',
   },
 });

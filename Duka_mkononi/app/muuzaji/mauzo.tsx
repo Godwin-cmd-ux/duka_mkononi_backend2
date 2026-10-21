@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Print from 'expo-print';
 import { useRouter } from 'expo-router';
 import { shareAsync } from 'expo-sharing';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
     Alert,
     FlatList,
@@ -25,8 +25,11 @@ import { API_BASE_URL } from '../../constants/api';
 import { getCache, setCache } from '../../db/cache';
 import { registerLive, syncNow } from '../../lib/syncer';
 import { fetchWithTimeout, requireNetwork } from '../../lib/network';
+import { useTheme, ThemeColors } from '../../lib/theme';
 
 export default function MauzoScreen() {
+  const { colors: tc } = useTheme();
+  const styles = useMemo(() => makeStyles(tc), [tc]);
   const router = useRouter();
   const { t, lang } = useLang();
   const { signOut } = useSession();
@@ -1138,14 +1141,14 @@ export default function MauzoScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (tc: ThemeColors) => StyleSheet.create({
   screenSafe: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
   },
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
   },
   
   // LOADING STYLES
@@ -1153,7 +1156,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     padding: 30,
   },
   
@@ -1165,10 +1168,10 @@ const styles = StyleSheet.create({
   
   // HEADER STYLES
   header: {
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: tc.line2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -1194,7 +1197,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     textAlign: 'center',
     flex: 1,
   },
@@ -1223,11 +1226,11 @@ const styles = StyleSheet.create({
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e9ecef',
+    borderColor: tc.line2,
   },
   
   statItem: {
@@ -1260,12 +1263,12 @@ const styles = StyleSheet.create({
   },
   
   saleItem: {
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderRadius: 12,
     padding: 15,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#e9ecef',
+    borderColor: tc.line2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -1274,7 +1277,7 @@ const styles = StyleSheet.create({
   },
   
   saleItemClosed: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     borderColor: '#dee2e6',
   },
   
@@ -1293,13 +1296,13 @@ const styles = StyleSheet.create({
   invoiceNumber: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginRight: 10,
   },
   
   saleTime: {
     fontSize: 14,
-    color: '#95a5a6',
+    color: tc.muted2,
   },
   
   saleTotal: {
@@ -1321,14 +1324,14 @@ const styles = StyleSheet.create({
   productName: {
     flex: 1,
     fontSize: 16,
-    color: '#2c3e50',
+    color: tc.ink,
     marginLeft: 8,
     marginRight: 10,
   },
   
   quantity: {
     fontSize: 14,
-    color: '#7f8c8d',
+    color: tc.muted,
     fontWeight: '500',
   },
   
@@ -1340,7 +1343,7 @@ const styles = StyleSheet.create({
   
   customerName: {
     fontSize: 14,
-    color: '#2c3e50',
+    color: tc.ink,
     marginLeft: 8,
     fontWeight: '500',
   },
@@ -1353,7 +1356,7 @@ const styles = StyleSheet.create({
   
   paymentText: {
     fontSize: 13,
-    color: '#3498db',
+    color: tc.primary,
     marginLeft: 6,
   },
   
@@ -1365,7 +1368,7 @@ const styles = StyleSheet.create({
   
   notesText: {
     fontSize: 12,
-    color: '#95a5a6',
+    color: tc.muted2,
     marginLeft: 6,
     flex: 1,
     fontStyle: 'italic',
@@ -1377,7 +1380,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: '#ecf0f1',
+    borderTopColor: tc.line,
   },
   
   saleActions: {
@@ -1387,7 +1390,7 @@ const styles = StyleSheet.create({
   
   dateText: {
     fontSize: 13,
-    color: '#95a5a6',
+    color: tc.muted2,
   },
   
   editButton: {
@@ -1401,7 +1404,7 @@ const styles = StyleSheet.create({
   },
   
   editButtonText: {
-    color: '#3498db',
+    color: tc.primary,
     fontSize: 14,
     fontWeight: '500',
   },
@@ -1433,14 +1436,14 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginTop: 20,
     marginBottom: 10,
   },
   
   emptyText: {
     fontSize: 16,
-    color: '#7f8c8d',
+    color: tc.muted,
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: 20,
@@ -1495,7 +1498,7 @@ const styles = StyleSheet.create({
   },
   
   modalContent: {
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderRadius: 16,
     width: '90%',
     maxHeight: '80%',
@@ -1507,13 +1510,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
+    borderBottomColor: tc.line2,
   },
   
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
   },
   
   modalBody: {
@@ -1527,22 +1530,22 @@ const styles = StyleSheet.create({
   formLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 8,
   },
   
   formInput: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     borderWidth: 1,
     borderColor: '#dee2e6',
     borderRadius: 10,
     padding: 15,
     fontSize: 16,
-    color: '#2c3e50',
+    color: tc.ink,
   },
   
   readOnlyInput: {
-    backgroundColor: '#f0f0f0',
+    backgroundColor: tc.page,
     color: '#666',
     borderColor: '#ccc',
   },
@@ -1555,18 +1558,18 @@ const styles = StyleSheet.create({
   },
   
   summaryBox: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     padding: 15,
     borderRadius: 10,
     marginTop: 10,
     borderWidth: 1,
-    borderColor: '#e9ecef',
+    borderColor: tc.line2,
   },
   
   summaryTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 10,
   },
   
@@ -1582,7 +1585,7 @@ const styles = StyleSheet.create({
   },
   
   summaryValue: {
-    color: '#2c3e50',
+    color: tc.ink,
     fontSize: 14,
     fontWeight: '500',
   },
@@ -1613,7 +1616,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     padding: 20,
     borderTopWidth: 1,
-    borderTopColor: '#e9ecef',
+    borderTopColor: tc.line2,
     gap: 10,
   },
   
@@ -1621,7 +1624,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 14,
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     borderRadius: 10,
   },
   
@@ -1654,7 +1657,7 @@ const styles = StyleSheet.create({
   
   // CONFIRMATION MODAL
   confirmModalContent: {
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderRadius: 16,
     width: '85%',
     padding: 25,
@@ -1668,7 +1671,7 @@ const styles = StyleSheet.create({
   confirmTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 15,
     textAlign: 'center',
   },
@@ -1691,7 +1694,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 14,
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     borderRadius: 10,
   },
   

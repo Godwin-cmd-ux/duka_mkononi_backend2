@@ -9,7 +9,7 @@
 // decides which allow-listed metric it may run.
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   ActivityIndicator,
   SafeAreaView,
@@ -26,6 +26,7 @@ import { API_BASE_URL } from '../../constants/api';
 import { getCache, setCache } from '../../db/cache';
 import { useLang } from '../../context/LanguageContext';
 import { fetchWithTimeout } from '../../lib/network';
+import { useTheme, ThemeColors } from '../../lib/theme';
 
 const CACHE_KEY = 'system_admin:analytics:last';
 
@@ -79,6 +80,8 @@ interface AskResponse {
 }
 
 export default function SystemAdminAnalytics() {
+  const { colors: tc } = useTheme();
+  const styles = useMemo(() => makeStyles(tc), [tc]);
   const { t, lang } = useLang();
 
   const [question, setQuestion] = useState('');
@@ -330,20 +333,20 @@ export default function SystemAdminAnalytics() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (tc: ThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8fafc' },
   center: { alignItems: 'center', justifyContent: 'center', padding: 24 },
   header: {
     flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 14,
-    backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e2e8f0',
+    backgroundColor: tc.card, borderBottomWidth: 1, borderBottomColor: '#e2e8f0',
   },
   title: { fontSize: 18, fontWeight: '800', color: '#0f172a' },
   subtitle: { fontSize: 12.5, color: '#64748b', marginTop: 2 },
   list: { padding: 16, paddingBottom: 40, gap: 10 },
-  askCard: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 14, padding: 14, gap: 10 },
+  askCard: { backgroundColor: tc.card, borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 14, padding: 14, gap: 10 },
   input: {
     borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 11, paddingHorizontal: 14, paddingVertical: 12,
-    fontSize: 15, color: '#0f172a', backgroundColor: '#fff',
+    fontSize: 15, color: '#0f172a', backgroundColor: tc.card,
   },
   askButtons: { flexDirection: 'row', gap: 10 },
   primaryBtn: {
@@ -354,10 +357,10 @@ const styles = StyleSheet.create({
   btnDisabled: { opacity: 0.7 },
   ghostBtn: {
     alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#e2e8f0',
-    borderRadius: 12, paddingVertical: 13, paddingHorizontal: 16, backgroundColor: '#fff', minHeight: 46,
+    borderRadius: 12, paddingVertical: 13, paddingHorizontal: 16, backgroundColor: tc.card, minHeight: 46,
   },
   ghostBtnText: { color: '#334155', fontWeight: '600', fontSize: 14 },
-  card: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 14, padding: 14, gap: 8 },
+  card: { backgroundColor: tc.card, borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 14, padding: 14, gap: 8 },
   cardHead: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
   valueLabel: { fontSize: 12, color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.4 },
   value: { fontSize: 30, fontWeight: '800', color: '#0f172a' },

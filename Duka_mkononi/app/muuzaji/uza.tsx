@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
     Alert,
     FlatList,
@@ -27,6 +27,7 @@ import { API_BASE_URL } from '../../constants/api';
 import { getCache, setCache } from '../../db/cache';
 import { registerLive, syncNow } from '../../lib/syncer';
 import { fetchWithTimeout, requireNetwork } from '../../lib/network';
+import { useTheme, ThemeColors } from '../../lib/theme';
 
 // ✅ INTERFACE YA BIDHAA KATIKA KIKAPU
 interface CartItem {
@@ -41,6 +42,8 @@ interface CartItem {
 }
 
 export default function UzaScreen() {
+  const { colors: tc } = useTheme();
+  const styles = useMemo(() => makeStyles(tc), [tc]);
   const { t, lang } = useLang();
   const router = useRouter();
   const { signOut } = useSession();
@@ -1544,41 +1547,41 @@ export default function UzaScreen() {
 // Styles zinafanana na zilizopo, ziko kwenye code yako ya awali
 // Nimeondoa styles ili kuokoa nafasi, lakini zipo sawa na code yako ya awali
 
-const styles = StyleSheet.create({
+const makeStyles = (tc: ThemeColors) => StyleSheet.create({
   screenSafe: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
   },
   keyboardAvoid: {
     flex: 1,
   },
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     padding: 30,
   },
   loadingText: {
     marginTop: 15,
     fontSize: 18,
-    color: '#2c3e50',
+    color: tc.ink,
     fontWeight: '600',
   },
   loadingSubtext: {
     marginTop: 8,
     fontSize: 14,
-    color: '#7f8c8d',
+    color: tc.muted,
   },
   header: {
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#ecf0f1',
+    borderBottomColor: tc.line,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -1601,7 +1604,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     textAlign: 'center',
     flex: 1,
   },
@@ -1610,7 +1613,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 14,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginBottom: 4,
   },
   businessName: {
@@ -1620,7 +1623,7 @@ const styles = StyleSheet.create({
   },
   userInfo: {
     fontSize: 13,
-    color: '#95a5a6',
+    color: tc.muted2,
     fontStyle: 'italic',
     marginBottom: 6,
   },
@@ -1636,7 +1639,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#2c3e50',
+    color: tc.ink,
   },
   labelRow: {
     flexDirection: 'row',
@@ -1645,28 +1648,28 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   optionalBadge: {
-    backgroundColor: '#f0f0f0',
+    backgroundColor: tc.page,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 4,
   },
   optionalText: {
     fontSize: 10,
-    color: '#95a5a6',
+    color: tc.muted2,
     fontStyle: 'italic',
   },
   smallRefreshButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
   },
   refreshText: {
     fontSize: 12,
-    color: '#3498db',
+    color: tc.primary,
     fontWeight: '500',
   },
   errorContainer: {
@@ -1685,9 +1688,9 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: tc.line2,
     borderRadius: 12,
     paddingHorizontal: 12,
     marginBottom: 12,
@@ -1699,7 +1702,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     fontSize: 14,
-    color: '#2c3e50',
+    color: tc.ink,
   },
   loadingProducts: {
     flexDirection: 'row',
@@ -1707,27 +1710,27 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 25,
     gap: 10,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     borderRadius: 12,
   },
   loadingProductsText: {
     fontSize: 14,
-    color: '#7f8c8d',
+    color: tc.muted,
     textAlign: 'center',
   },
   noProductsContainer: {
     alignItems: 'center',
     padding: 30,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#e9ecef',
+    borderColor: tc.line2,
     borderStyle: 'dashed',
   },
   noProductsTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginTop: 15,
     marginBottom: 8,
   },
@@ -1759,7 +1762,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   clearSearchButtonText: {
-    color: '#3498db',
+    color: tc.primary,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -1782,10 +1785,10 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   productItem: {
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: tc.line2,
     marginBottom: 10,
     padding: 15,
     flexDirection: 'row',
@@ -1803,8 +1806,8 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   productItemOutOfStock: {
-    backgroundColor: '#f8f9fa',
-    borderColor: '#e9ecef',
+    backgroundColor: tc.page,
+    borderColor: tc.line2,
     opacity: 0.7,
   },
   productItemContent: {
@@ -1819,13 +1822,13 @@ const styles = StyleSheet.create({
   productName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#2c3e50',
+    color: tc.ink,
     flex: 1,
     marginRight: 10,
   },
   inCartIndicator: {
     fontSize: 12,
-    color: '#3498db',
+    color: tc.primary,
     fontStyle: 'italic',
   },
   productNameSelected: {
@@ -1851,11 +1854,11 @@ const styles = StyleSheet.create({
   productStockBadgeText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#3498db',
+    color: tc.primary,
   },
   productCategory: {
     fontSize: 13,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginBottom: 8,
   },
   productFooter: {
@@ -1876,7 +1879,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
@@ -1907,16 +1910,16 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 20,
     borderLeftWidth: 4,
-    borderLeftColor: '#3498db',
+    borderLeftColor: tc.primary,
   },
   productInfoTitle: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 10,
   },
   productDetails: {
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     padding: 15,
     borderRadius: 8,
   },
@@ -1938,7 +1941,7 @@ const styles = StyleSheet.create({
   currentStockBadgeText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#3498db',
+    color: tc.primary,
   },
   expectedPriceInfo: {
     flexDirection: 'row',
@@ -1964,7 +1967,7 @@ const styles = StyleSheet.create({
   },
   quantityLabel: {
     fontSize: 14,
-    color: '#2c3e50',
+    color: tc.ink,
     fontWeight: '600',
   },
   quantityInputContainer: {
@@ -1973,7 +1976,7 @@ const styles = StyleSheet.create({
   },
   quantityButtonSmall: {
     padding: 8,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     borderRadius: 6,
   },
   quantityInput: {
@@ -1982,11 +1985,11 @@ const styles = StyleSheet.create({
     padding: 8,
     marginHorizontal: 5,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: tc.line2,
     borderRadius: 6,
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
   },
   addToCartButton: {
     flexDirection: 'row',
@@ -2009,7 +2012,7 @@ const styles = StyleSheet.create({
   stockInfo: {
     marginTop: 10,
     padding: 8,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     borderRadius: 6,
   },
   stockInfoText: {
@@ -2032,13 +2035,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   input: {
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: tc.line2,
     borderRadius: 12,
     padding: 15,
     fontSize: 16,
-    color: '#2c3e50',
+    color: tc.ink,
     marginTop: 6,
   },
   inputError: {
@@ -2047,7 +2050,7 @@ const styles = StyleSheet.create({
   },
   customerHint: {
     fontSize: 12,
-    color: '#3498db',
+    color: tc.primary,
     marginTop: 6,
     fontStyle: 'italic',
   },
@@ -2067,7 +2070,7 @@ const styles = StyleSheet.create({
   },
   todayButtonText: {
     fontSize: 12,
-    color: '#3498db',
+    color: tc.primary,
     fontWeight: '500',
   },
   productDescription: {
@@ -2087,12 +2090,12 @@ const styles = StyleSheet.create({
   instructionsTitle: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 8,
   },
   instructionsText: {
     fontSize: 13,
-    color: '#7f8c8d',
+    color: tc.muted,
     lineHeight: 20,
   },
   cartNote: {
@@ -2113,7 +2116,7 @@ const styles = StyleSheet.create({
     bottom: 12,
     flexDirection: 'column',
     gap: 8,
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderRadius: 18,
     padding: 10,
     shadowColor: '#0f172a',
@@ -2135,7 +2138,7 @@ const styles = StyleSheet.create({
   dockName: {
     fontWeight: '700',
     fontSize: 14,
-    color: '#2c3e50',
+    color: tc.ink,
   },
   dockPrice: {
     fontSize: 12,
@@ -2167,7 +2170,7 @@ const styles = StyleSheet.create({
     borderColor: '#e5e7eb',
     borderRadius: 10,
     fontSize: 15,
-    color: '#2c3e50',
+    color: tc.ink,
   },
   dockAdd: {
     flexDirection: 'row',
@@ -2220,7 +2223,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   dockCartHint: {
-    color: '#5d6d7e',
+    color: tc.muted,
     fontSize: 11,
     marginLeft: 'auto',
   },
@@ -2247,7 +2250,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: '80%',
@@ -2259,12 +2262,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#ecf0f1',
+    borderBottomColor: tc.line,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
   },
   emptyCart: {
     alignItems: 'center',
@@ -2273,13 +2276,13 @@ const styles = StyleSheet.create({
   emptyCartText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginTop: 20,
     marginBottom: 10,
   },
   emptyCartSubtext: {
     fontSize: 14,
-    color: '#7f8c8d',
+    color: tc.muted,
     textAlign: 'center',
     lineHeight: 20,
   },
@@ -2293,7 +2296,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#ecf0f1',
+    borderBottomColor: tc.line,
   },
   cartItemInfo: {
     flex: 1,
@@ -2301,7 +2304,7 @@ const styles = StyleSheet.create({
   cartItemName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 4,
   },
   cartItemDetails: {
@@ -2311,13 +2314,13 @@ const styles = StyleSheet.create({
   },
   cartItemStock: {
     fontSize: 12,
-    color: '#3498db',
+    color: tc.primary,
     marginBottom: 4,
     fontStyle: 'italic',
   },
   cartItemSeller: {
     fontSize: 12,
-    color: '#95a5a6',
+    color: tc.muted2,
   },
   cartItemActions: {
     flexDirection: 'row',
@@ -2331,13 +2334,13 @@ const styles = StyleSheet.create({
   },
   quantityButton: {
     padding: 5,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     borderRadius: 6,
   },
   quantityText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     minWidth: 30,
     textAlign: 'center',
   },
@@ -2349,8 +2352,8 @@ const styles = StyleSheet.create({
   cartSummary: {
     padding: 20,
     borderTopWidth: 1,
-    borderTopColor: '#ecf0f1',
-    backgroundColor: '#f8f9fa',
+    borderTopColor: tc.line,
+    backgroundColor: tc.page,
   },
   summaryRow: {
     flexDirection: 'row',
@@ -2360,17 +2363,17 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: 14,
-    color: '#7f8c8d',
+    color: tc.muted,
   },
   summaryValue: {
     fontSize: 14,
-    color: '#2c3e50',
+    color: tc.ink,
     fontWeight: '500',
   },
   summaryTotalLabel: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
   },
   summaryTotal: {
     fontSize: 18,

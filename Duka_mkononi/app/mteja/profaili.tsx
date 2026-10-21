@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
       Alert,
     Modal,
@@ -26,6 +26,7 @@ import { API_BASE_URL } from '../../constants/api';
 import { getCache, setCache } from '../../db/cache';
 import { registerLive, syncNow } from '../../lib/syncer';
 import { fetchWithTimeout, requireNetwork } from '../../lib/network';
+import { useTheme, ThemeColors } from '../../lib/theme';
 
 interface UserProfile {
   // NB: user ids are UUID STRINGS (same finding as mteja/biashara and
@@ -43,6 +44,8 @@ interface UserProfile {
 }
 
 export default function ProfailiScreen() {
+  const { colors: tc } = useTheme();
+  const styles = useMemo(() => makeStyles(tc), [tc]);
   const { t, lang } = useLang();
   const { signOut } = useSession();
 
@@ -728,10 +731,10 @@ export default function ProfailiScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (tc: ThemeColors) => StyleSheet.create({
   screenSafe: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
   },
   container: {
     flex: 1,
@@ -740,7 +743,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
   },
   loadingText: {
     marginTop: 10,
@@ -748,11 +751,11 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   header: {
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     padding: 30,
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: tc.line2,
   },
   avatarWrap: {
     marginBottom: 15,
@@ -809,7 +812,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   infoCard: {
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderRadius: 12,
     padding: 20,
     shadowColor: '#000',
@@ -834,7 +837,7 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: tc.line2,
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
@@ -973,7 +976,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalContent: {
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     padding: 24,
     borderRadius: 16,
     width: '100%',
@@ -982,20 +985,20 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 8,
     textAlign: 'center',
   },
   modalSubtitle: {
     fontSize: 14,
-    color: '#7f8c8d',
+    color: tc.muted,
     textAlign: 'center',
     marginBottom: 20,
   },
   inputLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 6,
     marginTop: 12,
   },

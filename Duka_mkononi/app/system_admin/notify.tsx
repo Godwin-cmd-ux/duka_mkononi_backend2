@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
     Alert,
     FlatList,
@@ -28,6 +28,7 @@ import { API_BASE_URL } from '../../constants/api';
 import { getCache, setCache } from '../../db/cache';
 import { registerLive, syncNow } from '../../lib/syncer';
 import { fetchWithTimeout, requireNetwork } from '../../lib/network';
+import { useTheme, ThemeColors } from '../../lib/theme';
 
 // Types
 interface User {
@@ -72,6 +73,8 @@ const createEmptyTranslations = (): Translations => {
 };
 
 export default function NotifyScreen() {
+  const { colors: tc } = useTheme();
+  const styles = useMemo(() => makeStyles(tc), [tc]);
   const router = useRouter();
   const { t, lang } = useLang();
   const { signOut } = useSession();
@@ -1040,7 +1043,7 @@ export default function NotifyScreen() {
               <Text style={styles.inputLabel}>{t('notify.recipient_label')}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.typeSelector}>
                 {[
-                  { type: 'all', label: t('notify.recipient_all'), icon: 'people', color: '#3498db' },
+                  { type: 'all', label: t('notify.recipient_all'), icon: 'people', color: tc.primary },
                   { type: 'admins', label: t('notify.recipient_admins'), icon: 'shield', color: '#9b59b6' },
                   { type: 'sellers', label: t('notify.recipient_sellers'), icon: 'cart', color: '#f39c12' },
                   { type: 'clients', label: t('notify.recipient_clients'), icon: 'person', color: '#2ecc71' },
@@ -1267,10 +1270,10 @@ export default function NotifyScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (tc: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
   },
   loadingContainer: {
     flex: 1,
@@ -1309,9 +1312,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 15,
-    backgroundColor: '#fff',
+    backgroundColor: tc.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: tc.line2,
   },
   headerTitle: {
     flex: 1,
@@ -1319,11 +1322,11 @@ const styles = StyleSheet.create({
   headerTitleText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
   },
   headerSubtitle: {
     fontSize: 12,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginTop: 2,
   },
   headerActions: {
@@ -1344,11 +1347,11 @@ const styles = StyleSheet.create({
   },
   statsSummary: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
+    backgroundColor: tc.card,
     paddingVertical: 15,
     paddingHorizontal: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: tc.line2,
   },
   statItem: {
     flex: 1,
@@ -1358,16 +1361,16 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginTop: 5,
   },
   statLabel: {
     fontSize: 11,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginTop: 2,
   },
   formSection: {
-    backgroundColor: '#fff',
+    backgroundColor: tc.card,
     padding: 20,
     marginTop: 1,
     marginBottom: 16,
@@ -1381,7 +1384,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 15,
   },
   // Language Status Bar
@@ -1401,7 +1404,7 @@ const styles = StyleSheet.create({
   },
   languageStatusText: {
     fontSize: 13,
-    color: '#2c3e50',
+    color: tc.ink,
     fontWeight: '600',
   },
   languageProgressDots: {
@@ -1426,7 +1429,7 @@ const styles = StyleSheet.create({
     height: 14,
     borderRadius: 7,
     borderWidth: 2,
-    borderColor: '#3498db',
+    borderColor: tc.primary,
   },
   // Language Tabs
   languageTabsContainer: {
@@ -1439,14 +1442,14 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 20,
     borderWidth: 1.5,
-    borderColor: '#ddd',
+    borderColor: tc.line2,
     marginRight: 8,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     gap: 6,
   },
   languageTabActive: {
     backgroundColor: '#3498db',
-    borderColor: '#3498db',
+    borderColor: tc.primary,
   },
   languageTabComplete: {
     borderColor: '#27ae60',
@@ -1458,7 +1461,7 @@ const styles = StyleSheet.create({
   languageTabLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#2c3e50',
+    color: tc.ink,
   },
   languageTabLabelActive: {
     color: 'white',
@@ -1476,7 +1479,7 @@ const styles = StyleSheet.create({
   },
   refreshText: {
     fontSize: 14,
-    color: '#3498db',
+    color: tc.primary,
     fontWeight: '500',
   },
   inputContainer: {
@@ -1485,16 +1488,16 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 8,
   },
   textInput: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: tc.line2,
     borderRadius: 10,
     padding: 15,
     fontSize: 16,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     color: '#333',
   },
   messageInput: {
@@ -1504,7 +1507,7 @@ const styles = StyleSheet.create({
   charCount: {
     textAlign: 'right',
     fontSize: 12,
-    color: '#95a5a6',
+    color: tc.muted2,
     marginTop: 4,
   },
   typeSelector: {
@@ -1517,9 +1520,9 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 25,
     borderWidth: 1.5,
-    borderColor: '#3498db',
+    borderColor: tc.primary,
     marginRight: 10,
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     gap: 8,
   },
   typeButtonActive: {
@@ -1528,7 +1531,7 @@ const styles = StyleSheet.create({
   typeButtonText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#3498db',
+    color: tc.primary,
   },
   typeButtonTextActive: {
     color: 'white',
@@ -1536,11 +1539,11 @@ const styles = StyleSheet.create({
   },
   recipientCount: {
     fontSize: 13,
-    color: '#7f8c8d',
+    color: tc.muted,
     fontWeight: '500',
   },
   recipientCountValue: {
-    color: '#3498db',
+    color: tc.primary,
     fontWeight: 'bold',
   },
   selectRecipientsButton: {
@@ -1548,17 +1551,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 15,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     borderRadius: 10,
     borderWidth: 1.5,
-    borderColor: '#3498db',
+    borderColor: tc.primary,
     borderStyle: 'dashed',
   },
   selectRecipientsText: {
     flex: 1,
     marginLeft: 10,
     fontSize: 15,
-    color: '#2c3e50',
+    color: tc.ink,
     fontWeight: '500',
   },
   sendButton: {
@@ -1583,7 +1586,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   notificationsSection: {
-    backgroundColor: '#fff',
+    backgroundColor: tc.card,
     padding: 20,
     marginBottom: 30,
   },
@@ -1591,12 +1594,12 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   notificationCard: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     borderRadius: 12,
     padding: 18,
     marginBottom: 15,
     borderLeftWidth: 5,
-    borderLeftColor: '#3498db',
+    borderLeftColor: tc.primary,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -1615,7 +1618,7 @@ const styles = StyleSheet.create({
   notificationTitle: {
     fontSize: 17,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     flex: 1,
     marginRight: 10,
   },
@@ -1630,7 +1633,7 @@ const styles = StyleSheet.create({
   },
   notificationTime: {
     fontSize: 12,
-    color: '#95a5a6',
+    color: tc.muted2,
   },
   notificationMessage: {
     fontSize: 15,
@@ -1654,7 +1657,7 @@ const styles = StyleSheet.create({
   },
   recipientsText: {
     fontSize: 12,
-    color: '#7f8c8d',
+    color: tc.muted,
     flex: 1,
   },
   notificationMeta: {
@@ -1687,7 +1690,7 @@ const styles = StyleSheet.create({
   },
   senderText: {
     fontSize: 11,
-    color: '#95a5a6',
+    color: tc.muted2,
   },
   emptyNotifications: {
     alignItems: 'center',
@@ -1696,13 +1699,13 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     marginTop: 15,
-    color: '#2c3e50',
+    color: tc.ink,
     fontSize: 16,
     fontWeight: '500',
   },
   emptySubtext: {
     marginTop: 5,
-    color: '#95a5a6',
+    color: tc.muted2,
     fontSize: 14,
   },
   // Modal Styles
@@ -1712,7 +1715,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: tc.card,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: '85%',
@@ -1723,17 +1726,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: tc.line2,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
   },
   filterControls: {
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: tc.line2,
   },
   filterRow: {
     marginBottom: 15,
@@ -1741,7 +1744,7 @@ const styles = StyleSheet.create({
   filterLabel: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 12,
   },
   toggleContainer: {
@@ -1759,12 +1762,12 @@ const styles = StyleSheet.create({
   modalSearchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     paddingHorizontal: 15,
     paddingVertical: 12,
     borderRadius: 25,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: tc.line2,
     marginBottom: 15,
   },
   modalSearchInput: {
@@ -1800,14 +1803,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 15,
-    backgroundColor: '#fff',
+    backgroundColor: tc.card,
     borderRadius: 12,
     marginBottom: 12,
     borderWidth: 1.5,
-    borderColor: '#e0e0e0',
+    borderColor: tc.line2,
   },
   userItemSelected: {
-    borderColor: '#3498db',
+    borderColor: tc.primary,
     backgroundColor: '#e3f2fd',
   },
   userCheckbox: {
@@ -1819,17 +1822,17 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 3,
   },
   userEmail: {
     fontSize: 13,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginBottom: 3,
   },
   userBusiness: {
     fontSize: 12,
-    color: '#3498db',
+    color: tc.primary,
     fontStyle: 'italic',
   },
   userRoleBadge: {
@@ -1848,7 +1851,7 @@ const styles = StyleSheet.create({
   },
   modalEmptyText: {
     marginTop: 15,
-    color: '#95a5a6',
+    color: tc.muted2,
     fontSize: 16,
   },
   doneButton: {

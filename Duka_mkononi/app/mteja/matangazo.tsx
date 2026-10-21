@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ResizeMode, Video } from 'expo-av';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import {
     Alert,
     Dimensions,
@@ -25,6 +25,7 @@ import { fetchWithTimeout, requireNetwork } from '../../lib/network';
 
 const { width } = Dimensions.get('window');
 import { API_BASE_URL } from '../../constants/api';
+import { useTheme, ThemeColors } from '../../lib/theme';
 
 interface Matangazo {
   // NB: ids are UUID STRINGS - matangazo.blade.php's render() calls this out
@@ -52,6 +53,8 @@ interface Matangazo {
 }
 
 export default function MatangazoScreen() {
+  const { colors: tc } = useTheme();
+  const styles = useMemo(() => makeStyles(tc), [tc]);
   const { t, lang } = useLang();
 
   const localeMap: Record<string, string> = {
@@ -823,7 +826,7 @@ export default function MatangazoScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (tc: ThemeColors) => StyleSheet.create({
   screenSafe: {
     flex: 1,
     backgroundColor: '#f8f8f8',
@@ -840,7 +843,7 @@ const styles = StyleSheet.create({
   },
   listHeader: {
     padding: 20,
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
@@ -857,7 +860,7 @@ const styles = StyleSheet.create({
   },
   infoText: {
     fontSize: 14,
-    color: '#2c3e50',
+    color: tc.ink,
     backgroundColor: '#e8f4fd',
     padding: 10,
     borderRadius: 8,
@@ -878,7 +881,7 @@ const styles = StyleSheet.create({
     color: '#856404',
   },
   postContainer: {
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     marginBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
@@ -988,7 +991,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 8,
     borderRadius: 6,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
   },
   likedButton: {
     backgroundColor: '#ffe6e6',
@@ -1026,7 +1029,7 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   email: {
-    color: '#3498db',
+    color: tc.primary,
     fontWeight: '500',
     marginBottom: 5,
     fontSize: 14,

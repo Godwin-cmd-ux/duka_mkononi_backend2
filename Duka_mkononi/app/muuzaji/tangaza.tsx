@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as WebBrowser from 'expo-web-browser';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -18,6 +18,7 @@ import { useRouter } from 'expo-router';
 import { useLang } from '../../context/LanguageContext';
 import { fetchWithTimeout } from '../../lib/network';
 import { API_BASE_URL } from '../../constants/api';
+import { useTheme, ThemeColors } from '../../lib/theme';
 
 /**
  * Capability #8 - Advertisement & Product-Copy Studio (seller mobile screen).
@@ -109,6 +110,8 @@ const LANGS = [
 ];
 
 export default function TangazaScreen() {
+  const { colors: tc } = useTheme();
+  const styles = useMemo(() => makeStyles(tc), [tc]);
   const { t } = useLang();
   const router = useRouter();
 
@@ -567,7 +570,7 @@ export default function TangazaScreen() {
           </TouchableOpacity>
           <TouchableOpacity style={[styles.btn, styles.btnGhost]} disabled={generating} onPress={generateCopy} activeOpacity={0.85}>
             <Ionicons name="refresh" size={16} color="#2c3e50" />
-            <Text style={[styles.btnText, { color: '#2c3e50' }]}>{t('ad_studio.btn_regenerate')}</Text>
+            <Text style={[styles.btnText, { color: tc.ink }]}>{t('ad_studio.btn_regenerate')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -772,17 +775,17 @@ export default function TangazaScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#f8f9fa' },
+const makeStyles = (tc: ThemeColors) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: tc.page },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#fff',
+    backgroundColor: tc.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#ecf0f1',
+    borderBottomColor: tc.line,
   },
   backBtn: {
     width: 40,
@@ -793,31 +796,31 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerText: { flex: 1 },
-  title: { fontSize: 18, fontWeight: '800', color: '#2c3e50' },
-  subtitle: { fontSize: 12, color: '#7f8c8d', marginTop: 2, lineHeight: 17 },
+  title: { fontSize: 18, fontWeight: '800', color: tc.ink },
+  subtitle: { fontSize: 12, color: tc.muted, marginTop: 2, lineHeight: 17 },
   content: { padding: 16, paddingBottom: 40 },
   centerBox: { alignItems: 'center', paddingVertical: 50, paddingHorizontal: 12 },
-  loadingText: { marginTop: 12, color: '#7f8c8d', fontSize: 14 },
-  emptyTitle: { marginTop: 12, fontSize: 17, fontWeight: '700', color: '#2c3e50', textAlign: 'center' },
-  emptyText: { marginTop: 8, fontSize: 14, color: '#7f8c8d', textAlign: 'center', lineHeight: 20 },
+  loadingText: { marginTop: 12, color: tc.muted, fontSize: 14 },
+  emptyTitle: { marginTop: 12, fontSize: 17, fontWeight: '700', color: tc.ink, textAlign: 'center' },
+  emptyText: { marginTop: 8, fontSize: 14, color: tc.muted, textAlign: 'center', lineHeight: 20 },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: tc.card,
     borderRadius: 18,
     padding: 16,
     marginBottom: 14,
   },
-  cardTitle: { fontSize: 15, fontWeight: '800', color: '#2c3e50', marginBottom: 8 },
-  sectionHint: { fontSize: 12, color: '#95a5a6', marginBottom: 10, lineHeight: 17 },
+  cardTitle: { fontSize: 15, fontWeight: '800', color: tc.ink, marginBottom: 8 },
+  sectionHint: { fontSize: 12, color: tc.muted2, marginBottom: 10, lineHeight: 17 },
   productOption: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     borderWidth: 2,
-    borderColor: '#ecf0f1',
+    borderColor: tc.line,
     borderRadius: 14,
     padding: 12,
     marginBottom: 8,
-    backgroundColor: '#fff',
+    backgroundColor: tc.card,
   },
   productSelected: { borderColor: '#2ecc71', backgroundColor: '#e8f8f0' },
   radio: {
@@ -825,7 +828,7 @@ const styles = StyleSheet.create({
     height: 18,
     borderRadius: 9,
     borderWidth: 2,
-    borderColor: '#bdc3c7',
+    borderColor: tc.line2,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -833,8 +836,8 @@ const styles = StyleSheet.create({
   radioDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#2ecc71' },
   productMain: { flex: 1, minWidth: 0 },
   productRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  productName: { fontSize: 14, fontWeight: '700', color: '#2c3e50', flexShrink: 1 },
-  productMeta: { fontSize: 12, color: '#7f8c8d', marginTop: 2 },
+  productName: { fontSize: 14, fontWeight: '700', color: tc.ink, flexShrink: 1 },
+  productMeta: { fontSize: 12, color: tc.muted, marginTop: 2 },
   productPrice: { fontSize: 14, fontWeight: '800', color: '#27ae60' },
   stockPill: {
     fontSize: 10,
@@ -849,28 +852,28 @@ const styles = StyleSheet.create({
   stockOut: { color: '#c0392b', backgroundColor: '#fdeaea' },
   fieldBlock: { marginBottom: 14 },
   labelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
-  fieldLabel: { fontSize: 12, fontWeight: '800', color: '#5d6d7e', marginBottom: 6 },
+  fieldLabel: { fontSize: 12, fontWeight: '800', color: tc.muted, marginBottom: 6 },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     borderWidth: 1.5,
-    borderColor: '#e0e0e0',
+    borderColor: tc.line2,
     borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 8,
-    backgroundColor: '#fff',
+    backgroundColor: tc.card,
   },
   chipSelected: { backgroundColor: '#2ecc71', borderColor: '#2ecc71' },
-  chipText: { fontSize: 13, fontWeight: '600', color: '#5d6d7e' },
+  chipText: { fontSize: 13, fontWeight: '600', color: tc.muted },
   chipTextSelected: { color: '#fff' },
   input: {
     borderWidth: 1.5,
-    borderColor: '#e0e0e0',
+    borderColor: tc.line2,
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 14,
-    color: '#2c3e50',
-    backgroundColor: '#fff',
+    color: tc.ink,
+    backgroundColor: tc.card,
   },
   btn: {
     flexDirection: 'row',
@@ -900,8 +903,8 @@ const styles = StyleSheet.create({
   bannerWarn: { backgroundColor: '#fef5e7' },
   bannerText: { fontSize: 12.5, fontWeight: '700', flex: 1 },
   previewMedia: { width: '100%', height: 190, borderRadius: 14, marginBottom: 12, backgroundColor: '#ecf0f1' },
-  prodMeta: { fontSize: 12.5, color: '#7f8c8d', marginBottom: 10 },
-  prodName: { fontWeight: '800', color: '#2c3e50' },
+  prodMeta: { fontSize: 12.5, color: tc.muted, marginBottom: 10 },
+  prodName: { fontWeight: '800', color: tc.ink },
   flagRow: {
     flexDirection: 'row',
     gap: 8,
@@ -913,35 +916,35 @@ const styles = StyleSheet.create({
   flagText: { flex: 1, fontSize: 12.5, fontWeight: '600', color: '#b9770e', lineHeight: 17 },
   previewInput: {
     borderWidth: 1.5,
-    borderColor: '#e0e0e0',
+    borderColor: tc.line2,
     borderRadius: 12,
     padding: 12,
     fontSize: 14,
-    color: '#2c3e50',
+    color: tc.ink,
     backgroundColor: '#fdfefe',
     textAlignVertical: 'top',
   },
   headlineInput: { fontSize: 16, fontWeight: '700', minHeight: 54 },
   bodyInput: { minHeight: 130, lineHeight: 21 },
-  counter: { fontSize: 11, color: '#95a5a6', fontVariant: ['tabular-nums'] },
+  counter: { fontSize: 11, color: tc.muted2, fontVariant: ['tabular-nums'] },
   counterOver: { color: '#e74c3c', fontWeight: '800' },
   generated: { fontSize: 11, color: '#bdc3c7', textAlign: 'center', marginTop: 10 },
-  limitBox: { borderTopWidth: 1, borderTopColor: '#ecf0f1', marginTop: 14, paddingTop: 12 },
+  limitBox: { borderTopWidth: 1, borderTopColor: tc.line, marginTop: 14, paddingTop: 12 },
   limitItem: { flexDirection: 'row', gap: 8, marginBottom: 6, alignItems: 'flex-start' },
-  limitText: { flex: 1, fontSize: 12.5, color: '#7f8c8d', lineHeight: 18 },
+  limitText: { flex: 1, fontSize: 12.5, color: tc.muted, lineHeight: 18 },
   draftRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     borderWidth: 1,
-    borderColor: '#ecf0f1',
+    borderColor: tc.line,
     borderRadius: 14,
     padding: 10,
     marginBottom: 8,
   },
   draftMain: { flex: 1, minWidth: 0 },
-  draftTitle: { fontSize: 13, fontWeight: '700', color: '#2c3e50' },
-  draftMeta: { fontSize: 11, color: '#95a5a6', marginTop: 2 },
+  draftTitle: { fontSize: 13, fontWeight: '700', color: tc.ink },
+  draftMeta: { fontSize: 11, color: tc.muted2, marginTop: 2 },
   miniBtn: { borderRadius: 9, paddingHorizontal: 10, paddingVertical: 7 },
   miniLoad: { backgroundColor: '#eaf4fc' },
   miniLoadText: { fontSize: 12, fontWeight: '800', color: '#2980b9' },
@@ -975,6 +978,8 @@ type ReviewItem = {
 
 function ContentReviewCard() {
   const { t, lang } = useLang();
+  const { colors: tc } = useTheme();
+  const revStyles = useMemo(() => makeRevStyles(tc), [tc]);
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState<'ads' | 'products'>('ads');
@@ -1222,52 +1227,52 @@ function ContentReviewCard() {
   );
 }
 
-const revStyles = StyleSheet.create({
-  card: { backgroundColor: 'white', borderRadius: 16, padding: 16, marginBottom: 16, borderLeftWidth: 4, borderLeftColor: '#2980b9' },
+const makeRevStyles = (tc: ThemeColors) => StyleSheet.create({
+  card: { backgroundColor: tc.card, borderRadius: 16, padding: 16, marginBottom: 16, borderLeftWidth: 4, borderLeftColor: '#2980b9' },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   sparkle: { fontSize: 15 },
-  title: { flex: 1, fontSize: 15.5, fontWeight: '800', color: '#2c3e50' },
+  title: { flex: 1, fontSize: 15.5, fontWeight: '800', color: tc.ink },
   checkBtn: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, backgroundColor: '#2980b9' },
   checkBtnText: { color: 'white', fontSize: 12, fontWeight: '700' },
-  subtitle: { fontSize: 11.5, color: '#7f8c8d', marginTop: 2 },
+  subtitle: { fontSize: 11.5, color: tc.muted, marginTop: 2 },
   centerBox: { alignItems: 'center', paddingVertical: 16, gap: 6 },
-  muted: { fontSize: 12.5, color: '#7f8c8d', textAlign: 'center' },
+  muted: { fontSize: 12.5, color: tc.muted, textAlign: 'center' },
   errorText: { fontSize: 13, color: '#e74c3c', textAlign: 'center' },
   statsRow: { flexDirection: 'row', gap: 8, marginTop: 12, flexWrap: 'wrap' },
-  statBox: { flexGrow: 1, minWidth: 70, backgroundColor: '#f8f9fa', borderRadius: 12, paddingVertical: 8, paddingHorizontal: 6, alignItems: 'center' },
+  statBox: { flexGrow: 1, minWidth: 70, backgroundColor: tc.page, borderRadius: 12, paddingVertical: 8, paddingHorizontal: 6, alignItems: 'center' },
   statValue: { fontSize: 15, fontWeight: '800' },
-  statLabel: { fontSize: 9.5, color: '#7f8c8d', marginTop: 1 },
+  statLabel: { fontSize: 9.5, color: tc.muted, marginTop: 1 },
   tabRow: { flexDirection: 'row', gap: 8, marginTop: 12 },
-  tabChip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, backgroundColor: '#f4f6f7' },
+  tabChip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, backgroundColor: tc.page },
   tabChipActive: { backgroundColor: '#2980b9' },
-  tabText: { fontSize: 12, fontWeight: '700', color: '#5d6d7e' },
+  tabText: { fontSize: 12, fontWeight: '700', color: tc.muted },
   tabTextActive: { color: 'white' },
   itemCard: { backgroundColor: '#fafbfc', borderRadius: 14, padding: 12, marginTop: 10, borderWidth: 1, borderColor: '#f1f3f4' },
   itemHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  itemTitle: { flex: 1, fontSize: 13.5, fontWeight: '700', color: '#2c3e50' },
+  itemTitle: { flex: 1, fontSize: 13.5, fontWeight: '700', color: tc.ink },
   stateChip: { paddingHorizontal: 9, paddingVertical: 3, borderRadius: 10 },
   stateText: { fontSize: 10.5, fontWeight: '700' },
-  itemSub: { fontSize: 11.5, color: '#7f8c8d', marginTop: 2 },
+  itemSub: { fontSize: 11.5, color: tc.muted, marginTop: 2 },
   countRow: { flexDirection: 'row', gap: 6, marginTop: 6 },
   countBadge: { fontSize: 11, fontWeight: '700', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, overflow: 'hidden' },
-  findingBox: { borderTopWidth: 1, borderTopColor: '#ecf0f1', borderStyle: 'dashed', marginTop: 8, paddingTop: 8 },
+  findingBox: { borderTopWidth: 1, borderTopColor: tc.line, borderStyle: 'dashed', marginTop: 8, paddingTop: 8 },
   findingHead: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   sevChip: { paddingHorizontal: 9, paddingVertical: 3, borderRadius: 10 },
   sevText: { fontSize: 10.5, fontWeight: '700' },
-  findingMsg: { flex: 1, fontSize: 12.5, color: '#2c3e50' },
-  excerpt: { fontSize: 11, color: '#7f8c8d', backgroundColor: '#f8f9fa', borderLeftWidth: 3, borderLeftColor: '#dfe6e9', marginTop: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
+  findingMsg: { flex: 1, fontSize: 12.5, color: tc.ink },
+  excerpt: { fontSize: 11, color: tc.muted, backgroundColor: tc.page, borderLeftWidth: 3, borderLeftColor: '#dfe6e9', marginTop: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
   aiNote: { fontSize: 11, color: '#2980b9', marginTop: 4 },
   noFindings: { fontSize: 12, color: '#27ae60', marginTop: 8 },
   choiceRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
-  choiceChip: { flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 10, borderWidth: 1.5, borderColor: '#ecf0f1', backgroundColor: 'white' },
-  choiceText: { fontSize: 11.5, fontWeight: '700', color: '#7f8c8d', textAlign: 'center' },
-  noteInput: { marginTop: 8, borderWidth: 1, borderColor: '#ecf0f1', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9, fontSize: 12.5, color: '#2c3e50', backgroundColor: 'white' },
+  choiceChip: { flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 10, borderWidth: 1.5, borderColor: tc.line, backgroundColor: tc.card },
+  choiceText: { fontSize: 11.5, fontWeight: '700', color: tc.muted, textAlign: 'center' },
+  noteInput: { marginTop: 8, borderWidth: 1, borderColor: tc.line, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9, fontSize: 12.5, color: tc.ink, backgroundColor: tc.card },
   checkRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 },
-  checkbox: { width: 18, height: 18, borderRadius: 5, borderWidth: 1.5, borderColor: '#bdc3c7', alignItems: 'center', justifyContent: 'center', backgroundColor: 'white' },
+  checkbox: { width: 18, height: 18, borderRadius: 5, borderWidth: 1.5, borderColor: tc.line2, alignItems: 'center', justifyContent: 'center', backgroundColor: tc.card },
   checkboxOn: { backgroundColor: '#2980b9', borderColor: '#2980b9' },
   checkMark: { color: 'white', fontSize: 12, fontWeight: '800' },
-  checkLabel: { flex: 1, fontSize: 12, color: '#5d6d7e' },
+  checkLabel: { flex: 1, fontSize: 12, color: tc.muted },
   submitBtn: { marginTop: 10, borderRadius: 12, backgroundColor: '#2980b9', paddingVertical: 11, alignItems: 'center' },
   submitText: { color: 'white', fontSize: 13, fontWeight: '700' },
-  footnote: { fontSize: 10, color: '#95a5a6', marginTop: 10 }
+  footnote: { fontSize: 10, color: tc.muted2, marginTop: 10 }
 });

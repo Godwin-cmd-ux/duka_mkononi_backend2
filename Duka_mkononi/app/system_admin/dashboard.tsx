@@ -3,7 +3,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ThemeSelector from '../../components/theme-selector';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
     Alert,
     FlatList,
@@ -25,6 +25,7 @@ import { API_BASE_URL } from '../../constants/api';
 import { getCache, setCache } from '../../db/cache';
 import { registerLive, syncNow } from '../../lib/syncer';
 import { fetchWithTimeout, requireNetwork } from '../../lib/network';
+import { useTheme, ThemeColors } from '../../lib/theme';
 
 // Types
 interface User {
@@ -88,6 +89,8 @@ interface OnlineUser {
 }
 
 export default function SystemAdminDashboard() {
+  const { colors: tc } = useTheme();
+  const styles = useMemo(() => makeStyles(tc), [tc]);
   const { t, lang } = useLang();
 
   const localeMap: Record<string, string> = {
@@ -999,7 +1002,7 @@ export default function SystemAdminDashboard() {
           
           <View style={styles.statsGrid}>
             {/* Total Users */}
-            <View style={[styles.statCard, { borderLeftColor: '#3498db' }]}>
+            <View style={[styles.statCard, { borderLeftColor: tc.primary }]}>
               <View style={styles.statHeader}>
                 <View style={[styles.statIconContainer, { backgroundColor: '#3498db20' }]}>
                   <Ionicons name="people" size={20} color="#3498db" />
@@ -1720,10 +1723,10 @@ export default function SystemAdminDashboard() {
 }
 
 // Styles
-const styles = StyleSheet.create({
+const makeStyles = (tc: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
   },
   loadingContainer: {
     flex: 1,
@@ -1750,9 +1753,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 15,
-    backgroundColor: '#fff',
+    backgroundColor: tc.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: tc.line2,
   },
   headerTitle: {
     flex: 1,
@@ -1760,11 +1763,11 @@ const styles = StyleSheet.create({
   headerTitleText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
   },
   headerSubtitle: {
     fontSize: 12,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginTop: 2,
   },
   headerActions: {
@@ -1776,9 +1779,9 @@ const styles = StyleSheet.create({
   },
   tabsContainer: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
+    backgroundColor: tc.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: tc.line2,
   },
   tabButton: {
     flex: 1,
@@ -1791,15 +1794,15 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   tabButtonActive: {
-    borderBottomColor: '#3498db',
+    borderBottomColor: tc.primary,
   },
   tabText: {
     fontSize: 14,
-    color: '#95a5a6',
+    color: tc.muted2,
     fontWeight: '500',
   },
   tabTextActive: {
-    color: '#3498db',
+    color: tc.primary,
     fontWeight: '600',
   },
   content: {
@@ -1809,7 +1812,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: tc.card,
     margin: 16,
     padding: 20,
     borderRadius: 16,
@@ -1825,23 +1828,23 @@ const styles = StyleSheet.create({
   welcomeTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 4,
   },
   welcomeMessage: {
     fontSize: 14,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginBottom: 8,
   },
   welcomeTimestamp: {
     fontSize: 11,
-    color: '#95a5a6',
+    color: tc.muted2,
   },
   welcomeIcon: {
     marginLeft: 10,
   },
   section: {
-    backgroundColor: '#fff',
+    backgroundColor: tc.card,
     marginHorizontal: 16,
     marginBottom: 16,
     padding: 20,
@@ -1861,11 +1864,11 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
   },
   sectionSubtitle: {
     fontSize: 12,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginBottom: 15,
   },
   statsGrid: {
@@ -1875,7 +1878,7 @@ const styles = StyleSheet.create({
   },
   statCard: {
     width: '48%',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     padding: 15,
     borderRadius: 12,
     marginBottom: 12,
@@ -1897,17 +1900,17 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
-    color: '#2c3e50',
+    color: tc.ink,
     fontWeight: '600',
   },
   statSubtitle: {
     fontSize: 10,
-    color: '#7f8c8d',
+    color: tc.muted,
   },
   systemStatusGrid: {
     flexDirection: 'row',
@@ -1927,7 +1930,7 @@ const styles = StyleSheet.create({
   },
   statusLabel: {
     fontSize: 12,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginBottom: 4,
   },
   statusValue: {
@@ -1938,7 +1941,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     padding: 15,
     borderRadius: 10,
     marginTop: 10,
@@ -1955,12 +1958,12 @@ const styles = StyleSheet.create({
   webSocketStatValue: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 2,
   },
   webSocketStatLabel: {
     fontSize: 10,
-    color: '#7f8c8d',
+    color: tc.muted,
     textAlign: 'center',
   },
   filterRow: {
@@ -1974,14 +1977,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: tc.line2,
     marginRight: 10,
   },
   filterButtonActive: {
     backgroundColor: '#3498db',
-    borderColor: '#3498db',
+    borderColor: tc.primary,
   },
   filterButtonText: {
     fontSize: 12,
@@ -1994,12 +1997,12 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     paddingHorizontal: 15,
     paddingVertical: 12,
     borderRadius: 25,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: tc.line2,
     marginBottom: 15,
   },
   searchInput: {
@@ -2021,15 +2024,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: tc.line2,
     marginHorizontal: 4,
     gap: 6,
   },
   logFilterButtonActive: {
     backgroundColor: '#3498db',
-    borderColor: '#3498db',
+    borderColor: tc.primary,
   },
   logFilterText: {
     fontSize: 12,
@@ -2046,7 +2049,7 @@ const styles = StyleSheet.create({
   },
   emptyStateText: {
     marginTop: 10,
-    color: '#95a5a6',
+    color: tc.muted2,
     fontSize: 14,
     fontWeight: '500',
   },
@@ -2057,12 +2060,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   userCard: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     borderRadius: 12,
     padding: 15,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: tc.line2,
   },
   userHeader: {
     flexDirection: 'row',
@@ -2101,12 +2104,12 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 2,
   },
   userEmail: {
     fontSize: 12,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginBottom: 6,
   },
   userMeta: {
@@ -2140,7 +2143,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    borderTopColor: tc.line2,
     marginBottom: 10,
   },
   userDetail: {
@@ -2149,16 +2152,16 @@ const styles = StyleSheet.create({
   },
   userDetailText: {
     fontSize: 12,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginLeft: 6,
   },
   userDate: {
     fontSize: 11,
-    color: '#95a5a6',
+    color: tc.muted2,
   },
   userLastSeen: {
     fontSize: 11,
-    color: '#95a5a6',
+    color: tc.muted2,
   },
   userActions: {
     flexDirection: 'row',
@@ -2179,9 +2182,9 @@ const styles = StyleSheet.create({
     borderColor: '#bbdefb',
   },
   detailsButton: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: tc.line2,
   },
   // ✅ NEW: Disable Button Styles
   disableButton: {
@@ -2221,7 +2224,7 @@ const styles = StyleSheet.create({
   },
   timeFilter: {
     flexDirection: 'row',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     borderRadius: 20,
     padding: 4,
   },
@@ -2242,12 +2245,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   logCard: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     borderRadius: 12,
     padding: 15,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: tc.line2,
   },
   logHeader: {
     flexDirection: 'row',
@@ -2269,39 +2272,39 @@ const styles = StyleSheet.create({
   logUserName: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 2,
   },
   logAction: {
     fontSize: 12,
-    color: '#3498db',
+    color: tc.primary,
     fontWeight: '500',
   },
   logTime: {
     fontSize: 11,
-    color: '#95a5a6',
+    color: tc.muted2,
   },
   logBody: {
     marginBottom: 10,
   },
   logEndpoint: {
     fontSize: 11,
-    color: '#7f8c8d',
+    color: tc.muted,
     fontFamily: 'monospace',
     marginBottom: 6,
   },
   logDetails: {
     fontSize: 10,
-    color: '#95a5a6',
+    color: tc.muted2,
     fontFamily: 'monospace',
-    backgroundColor: '#fff',
+    backgroundColor: tc.card,
     padding: 8,
     borderRadius: 6,
     marginBottom: 6,
   },
   logIp: {
     fontSize: 10,
-    color: '#3498db',
+    color: tc.primary,
     fontFamily: 'monospace',
   },
   logFooter: {
@@ -2310,7 +2313,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    borderTopColor: tc.line2,
   },
   logStatusBadge: {
     flexDirection: 'row',
@@ -2326,7 +2329,7 @@ const styles = StyleSheet.create({
   },
   logDateTime: {
     fontSize: 10,
-    color: '#95a5a6',
+    color: tc.muted2,
   },
   modalOverlay: {
     flex: 1,
@@ -2334,13 +2337,13 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: tc.card,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: '85%',
   },
   logsModalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: tc.card,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: '90%',
@@ -2351,7 +2354,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: tc.line2,
   },
   modalHeaderLeft: {
     flexDirection: 'row',
@@ -2362,16 +2365,16 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
   },
   logsModalTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
   },
   logsModalSubtitle: {
     fontSize: 12,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginTop: 2,
   },
   modalBody: {
@@ -2410,13 +2413,13 @@ const styles = StyleSheet.create({
   modalUserName: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 5,
     textAlign: 'center',
   },
   modalUserEmail: {
     fontSize: 16,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginBottom: 15,
     textAlign: 'center',
   },
@@ -2449,7 +2452,7 @@ const styles = StyleSheet.create({
   modalSectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 15,
   },
   modalDetailRow: {
@@ -2468,7 +2471,7 @@ const styles = StyleSheet.create({
   },
   modalDetailValue: {
     fontSize: 14,
-    color: '#2c3e50',
+    color: tc.ink,
     flex: 1,
     fontWeight: '500',
   },
@@ -2536,26 +2539,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 12,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: tc.line2,
     gap: 8,
   },
   logsCountText: {
     fontSize: 14,
-    color: '#2c3e50',
+    color: tc.ink,
     fontWeight: '500',
   },
   logsList: {
     padding: 16,
   },
   logItem: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     padding: 15,
     borderRadius: 12,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: tc.line2,
   },
   logItemHeader: {
     flexDirection: 'row',
@@ -2566,21 +2569,21 @@ const styles = StyleSheet.create({
   logItemAction: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#2c3e50',
+    color: tc.ink,
   },
   logItemTime: {
     fontSize: 11,
-    color: '#95a5a6',
+    color: tc.muted2,
   },
   logItemEndpoint: {
     fontSize: 12,
-    color: '#7f8c8d',
+    color: tc.muted,
     fontFamily: 'monospace',
     marginBottom: 8,
   },
   logItemDetails: {
     fontSize: 11,
-    color: '#95a5a6',
+    color: tc.muted2,
     marginBottom: 8,
   },
   logItemFooter: {
@@ -2599,7 +2602,7 @@ const styles = StyleSheet.create({
   },
   logItemIp: {
     fontSize: 10,
-    color: '#3498db',
+    color: tc.primary,
     fontFamily: 'monospace',
   },
 });

@@ -16,17 +16,24 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PublicConcierge from '../../components/PublicConcierge';
+import ThemeSelector from '../../components/theme-selector';
 import { useLang, Lang, LANGUAGE_NAMES, LANGUAGE_FLAGS, ALL_LANGUAGES } from '../../context/LanguageContext';
+import { useTheme } from '../../lib/theme';
 
 const { width, height } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const router = useRouter();
   const { lang, changeLang, t, languageNames, languageFlags, availableLanguages } = useLang();
+  // 🎨 The same 5 themes as the website; landing surfaces read these colors.
+  const { theme, colors } = useTheme();
+  const isDark = theme === 'midnight-royal-gold';
   
   // Language selector modal state
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [selectedLang, setSelectedLang] = useState<Lang>(lang);
+  // 🎨 Theme picker modal state ("Badilisha Mandhari")
+  const [showThemeModal, setShowThemeModal] = useState(false);
   
   // Fade in animation — the root layout guarantees this screen only shows when logged out
   useEffect(() => {
@@ -51,6 +58,7 @@ export default function HomeScreen() {
   const buttonScale = useRef(new Animated.Value(1)).current;
   const headerAnim = useRef(new Animated.Value(0)).current;
   const modalAnim = useRef(new Animated.Value(0)).current;
+  const themeModalAnim = useRef(new Animated.Value(0)).current;
   
   const buttons = [
     { 
@@ -128,6 +136,30 @@ export default function HomeScreen() {
     setSelectedLang(l);
   };
 
+  // 🎨 Theme picker ("Badilisha Mandhari") — mirrors the language sheet.
+  // Selecting a theme applies instantly (ThemeSelector -> setTheme), so there
+  // is no separate "apply" step; the close button just dismisses the sheet.
+  const openThemeModal = () => {
+    setShowThemeModal(true);
+    Animated.timing(themeModalAnim, {
+      toValue: 1,
+      duration: 300,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const closeThemeModal = () => {
+    Animated.timing(themeModalAnim, {
+      toValue: 0,
+      duration: 200,
+      easing: Easing.in(Easing.cubic),
+      useNativeDriver: true,
+    }).start(() => {
+      setShowThemeModal(false);
+    });
+  };
+
   const headerTranslateY = headerAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [30, 0]
@@ -138,8 +170,13 @@ export default function HomeScreen() {
     outputRange: [300, 0]
   });
 
+  const themeModalTranslateY = themeModalAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [300, 0]
+  });
+
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.page }]}>
       <Animated.View 
         style={[
           styles.scrollView,
@@ -160,21 +197,38 @@ export default function HomeScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+          <View style={[styles.container, { backgroundColor: colors.page }]}>
+            <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={colors.page} />
             
-            {/* Language Switcher Button - Top Right */}
-            <TouchableOpacity 
-              style={styles.languageSwitcher}
-              onPress={openLanguageModal}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="language-outline" size={20} color="#2c3e50" />
-              <Text style={styles.languageSwitcherText}>
-                {languageFlags[lang]} {languageNames[lang]}
-              </Text>
-              <Ionicons name="chevron-down" size={16} color="#7f8c8d" />
-            </TouchableOpacity>
+            {/* Top-right controls: Language + 🎨 Badilisha Mandhari */}
+            <View style={styles.topControls}>
+              {/* 🎨 Badilisha Mandhari (Change Theme) — same themes as the website */}
+              <TouchableOpacity 
+                style={[styles.pillButton, { backgroundColor: colors.card, borderColor: colors.line2 }]}
+                onPress={openThemeModal}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={t('theme.change')}
+              >
+                <Ionicons name="color-palette-outline" size={20} color={colors.primary} />
+                <Text style={[styles.pillButtonText, { color: colors.ink }]}>
+                  {t('theme.change')}
+                </Text>
+              </TouchableOpacity>
+
+              {/* Language Switcher Button */}
+              <TouchableOpacity 
+                style={[styles.pillButton, { backgroundColor: colors.card, borderColor: colors.line2 }]}
+                onPress={openLanguageModal}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="language-outline" size={20} color={colors.primary} />
+                <Text style={[styles.pillButtonText, { color: colors.ink }]}>
+                  {languageFlags[lang]} {languageNames[lang]}
+                </Text>
+                <Ionicons name="chevron-down" size={16} color={colors.muted} />
+              </TouchableOpacity>
+            </View>
 
             {/* Header */}
             <Animated.View 
@@ -187,15 +241,15 @@ export default function HomeScreen() {
               ]}
             >
               <View style={styles.logoContainer}>
-                <View style={styles.logoCircle}>
+                <View style={[styles.logoCircle, { backgroundColor: colors.primary }]}>
                   <Ionicons name="storefront-outline" size={50} color="#ffffff" />
                 </View>
               </View>
               
-              <Text style={styles.header}>
+              <Text style={[styles.header, { color: colors.ink }]}>
                 {t('home.welcome')}
               </Text>
-              <Text style={styles.subHeader}>
+              <Text style={[styles.subHeader, { color: colors.muted }]}>
                 {t('home.subtitle')}
               </Text>
             </Animated.View>
@@ -291,12 +345,12 @@ export default function HomeScreen() {
                 }
               ]}
             >
-              <View style={styles.infoCard}>
+              <View style={[styles.infoCard, { backgroundColor: colors.card, borderColor: colors.line }]}>
                 <View style={styles.infoIconContainer}>
-                  <Ionicons name="information-circle-outline" size={40} color="#3498db" />
+                  <Ionicons name="information-circle-outline" size={40} color={colors.primary} />
                 </View>
-                <Text style={styles.infoTitle}>{t('instructions.title')}</Text>
-                <Text style={styles.infoText}>
+                <Text style={[styles.infoTitle, { color: colors.ink }]}>{t('instructions.title')}</Text>
+                <Text style={[styles.infoText, { color: colors.muted }]}>
                   {t('instructions.step1')}{"\n"}
                   {t('instructions.step2')}{"\n"}
                   {t('instructions.step3')}
@@ -309,6 +363,10 @@ export default function HomeScreen() {
               style={[
                 styles.warningContainer,
                 {
+                  // Themed: a soft warn-tinted surface (the amber literal was
+                  // unreadable on the dark themes).
+                  backgroundColor: colors.soft,
+                  borderColor: colors.line2,
                   opacity: fadeAnim,
                   transform: [
                     {
@@ -322,21 +380,21 @@ export default function HomeScreen() {
               ]}
             >
               <View style={styles.warningHeader}>
-                <View style={styles.warningIconContainer}>
+                <View style={[styles.warningIconContainer, { backgroundColor: colors.warn }]}>
                   <Ionicons name="shield-checkmark-outline" size={24} color="#ffffff" />
                 </View>
-                <Text style={styles.warningTitle}>{t('security.title')}</Text>
+                <Text style={[styles.warningTitle, { color: colors.ink }]}>{t('security.title')}</Text>
               </View>
               
-              <Text style={styles.warningText}>
+              <Text style={[styles.warningText, { color: colors.muted }]}>
                 {t('security.warning')}
               </Text>
               
               <View style={styles.warningPoints}>
                 {['point1', 'point2', 'point3', 'point4'].map((point, index) => (
                   <View key={index} style={styles.warningPoint}>
-                    <Ionicons name="checkmark-circle" size={18} color="#27ae60" />
-                    <Text style={styles.warningPointText}>{t(`security.${point}`)}</Text>
+                    <Ionicons name="checkmark-circle" size={18} color={colors.success} />
+                    <Text style={[styles.warningPointText, { color: colors.muted }]}>{t(`security.${point}`)}</Text>
                   </View>
                 ))}
               </View>
@@ -347,14 +405,15 @@ export default function HomeScreen() {
               style={[
                 styles.footer,
                 {
+                  borderTopColor: colors.line2,
                   opacity: fadeAnim
                 }
               ]}
             >
-              <Text style={styles.footerText}>
+              <Text style={[styles.footerText, { color: colors.muted }]}>
                 © {new Date().getFullYear()} Dukani App
               </Text>
-              <Text style={styles.footerSubText}>
+              <Text style={[styles.footerSubText, { color: colors.muted2 }]}>
                 {t('footer.security_note')}
               </Text>
             </Animated.View>
@@ -471,6 +530,70 @@ export default function HomeScreen() {
           </Animated.View>
         </TouchableOpacity>
       </Modal>
+
+      {/* 🎨 Theme Selector Modal — "Badilisha Mandhari", same 5 themes as the
+          website. Selecting a card applies instantly and syncs to the account
+          (when logged in) through ThemeSelector -> useTheme().setTheme. */}
+      <Modal
+        visible={showThemeModal}
+        transparent
+        animationType="none"
+        onRequestClose={closeThemeModal}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={closeThemeModal}
+        >
+          <Animated.View 
+            style={[
+              styles.modalContent,
+              {
+                backgroundColor: colors.card,
+                transform: [{ translateY: themeModalTranslateY }],
+                opacity: themeModalAnim,
+              }
+            ]}
+          >
+            <TouchableOpacity activeOpacity={1}>
+              {/* Modal Handle */}
+              <View style={[styles.modalHandle, { backgroundColor: colors.line2 }]} />
+              
+              {/* Modal Header */}
+              <View style={styles.modalHeader}>
+                <View style={[styles.modalIconContainer, { backgroundColor: colors.tint }]}>
+                  <Ionicons name="color-palette-outline" size={28} color={colors.primary} />
+                </View>
+                <Text style={[styles.modalTitle, { color: colors.ink }]}>{t('theme.change') || 'Badilisha Mandhari'}</Text>
+                <Text style={[styles.modalSubtitle, { color: colors.muted }]}>
+                  {t('theme.title')}
+                </Text>
+              </View>
+
+              {/* The five theme cards (live-color preview + selected state) */}
+              <ScrollView 
+                style={styles.themeList}
+                showsVerticalScrollIndicator={false}
+              >
+                <ThemeSelector />
+              </ScrollView>
+
+              {/* Close */}
+              <View style={styles.modalActions}>
+                <TouchableOpacity 
+                  style={[styles.cancelButton, { backgroundColor: colors.soft }]}
+                  onPress={closeThemeModal}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.cancelButtonText, { color: colors.muted }]}>
+                    {t('app.funga') || 'Funga'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </Animated.View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -494,27 +617,38 @@ const styles = StyleSheet.create({
     paddingVertical: 30,
     minHeight: height,
   },
-  // Language Switcher Button
-  languageSwitcher: {
+  // Top-right control row (Language + 🎨 Badilisha Mandhari)
+  topControls: {
+    alignSelf: 'flex-end',
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-end',
-    backgroundColor: '#f0f4f8',
+    gap: 8,
+    marginBottom: 10,
+    flexWrap: 'wrap',
+    justifyContent: 'flex-end',
+  },
+  // Pill toggle used for both the theme and language switchers
+  pillButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    marginBottom: 10,
+    borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 3,
     elevation: 2,
   },
-  languageSwitcherText: {
+  pillButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#2c3e50',
-    marginHorizontal: 6,
+  },
+  // Scroll area for the theme cards inside the 🎨 modal
+  themeList: {
+    marginBottom: 16,
   },
   headerContainer: {
     alignItems: 'center',

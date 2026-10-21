@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
     Alert,
     Modal,
@@ -25,8 +25,11 @@ import { API_BASE_URL } from '../../constants/api';
 import { getCache, setCache } from '../../db/cache';
 import { registerLive, syncNow } from '../../lib/syncer';
 import { fetchWithTimeout, requireNetwork } from '../../lib/network';
+import { useTheme, ThemeColors } from '../../lib/theme';
 
 export default function ProfailiScreen() {
+  const { colors: tc } = useTheme();
+  const styles = useMemo(() => makeStyles(tc), [tc]);
   const router = useRouter();
   const { t, lang } = useLang();
   const { signOut } = useSession();
@@ -1095,37 +1098,37 @@ export default function ProfailiScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (tc: ThemeColors) => StyleSheet.create({
   screenSafe: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
   },
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     padding: 20,
   },
   loadingText: {
     marginTop: 10,
     fontSize: 16,
-    color: '#2c3e50',
+    color: tc.ink,
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     padding: 20,
   },
   errorText: {
     fontSize: 16,
-    color: '#2c3e50',
+    color: tc.ink,
     textAlign: 'center',
     marginTop: 16,
     marginBottom: 12,
@@ -1143,10 +1146,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   header: {
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#ecf0f1',
+    borderBottomColor: tc.line,
   },
   headerTop: {
     flexDirection: 'row',
@@ -1165,7 +1168,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
   },
   profileCard: {
     flexDirection: 'row',
@@ -1217,17 +1220,17 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   roleBadge: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#ecf0f1',
+    borderColor: tc.line,
   },
   roleText: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
   },
   userInfo: {
     flex: 1,
@@ -1235,12 +1238,12 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 4,
   },
   userEmail: {
     fontSize: 14,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginBottom: 8,
   },
   businessInfo: {
@@ -1251,7 +1254,7 @@ const styles = StyleSheet.create({
   },
   businessText: {
     fontSize: 14,
-    color: '#2c3e50',
+    color: tc.ink,
     fontWeight: '500',
   },
   editProfileButton: {
@@ -1266,7 +1269,7 @@ const styles = StyleSheet.create({
   },
   editProfileButtonText: {
     fontSize: 12,
-    color: '#3498db',
+    color: tc.primary,
     fontWeight: '500',
   },
   changePasswordRow: {
@@ -1283,7 +1286,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     fontWeight: '600',
-    color: '#3498db',
+    color: tc.primary,
   },
   statsSection: {
     padding: 20,
@@ -1291,12 +1294,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 16,
   },
   statsSubtitle: {
     fontSize: 14,
-    color: '#7f8c8d',
+    color: tc.muted,
     fontWeight: 'normal',
   },
   statsGrid: {
@@ -1305,7 +1308,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   statCard: {
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -1328,17 +1331,17 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
-    color: '#7f8c8d',
+    color: tc.muted,
     textAlign: 'center',
   },
   statsNote: {
     fontSize: 12,
-    color: '#95a5a6',
+    color: tc.muted2,
     textAlign: 'center',
     marginTop: 12,
     fontStyle: 'italic',
@@ -1347,7 +1350,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   infoCard: {
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     padding: 16,
     borderRadius: 12,
     shadowColor: '#000',
@@ -1372,18 +1375,18 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 14,
-    color: '#7f8c8d',
+    color: tc.muted,
     fontWeight: '500',
   },
   infoValue: {
     fontSize: 14,
-    color: '#2c3e50',
+    color: tc.ink,
     fontWeight: '500',
     flex: 1,
     textAlign: 'right',
   },
   bizDescValue: {
-    color: '#7f8c8d',
+    color: tc.muted,
     fontWeight: '400',
   },
   statusBadge: {
@@ -1404,7 +1407,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalContent: {
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     padding: 24,
     borderRadius: 16,
     width: '100%',
@@ -1413,30 +1416,30 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 8,
     textAlign: 'center',
   },
   modalSubtitle: {
     fontSize: 14,
-    color: '#7f8c8d',
+    color: tc.muted,
     textAlign: 'center',
     marginBottom: 20,
   },
   inputLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 6,
     marginTop: 12,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: tc.line2,
     padding: 12,
     borderRadius: 8,
     fontSize: 16,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
   },
   modalScroll: {
     maxHeight: '70%',
@@ -1496,14 +1499,14 @@ const styles = StyleSheet.create({
   footer: {
     padding: 20,
     alignItems: 'center',
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     marginTop: 10,
     borderTopWidth: 1,
-    borderTopColor: '#ecf0f1',
+    borderTopColor: tc.line,
   },
   footerText: {
     fontSize: 14,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginBottom: 4,
   },
   footerSubText: {

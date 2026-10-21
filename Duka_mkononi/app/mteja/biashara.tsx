@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
     Alert,
     Linking,
@@ -23,6 +23,7 @@ import { API_BASE_URL } from '../../constants/api';
 import { getCache, setCache } from '../../db/cache';
 import { registerLive, syncNow } from '../../lib/syncer';
 import { fetchWithTimeout, requireNetwork } from '../../lib/network';
+import { useTheme, ThemeColors } from '../../lib/theme';
 
 interface Business {
   // NB: business/user ids are UUID STRINGS (Blade makes the same point in
@@ -70,6 +71,8 @@ interface TrustSummaryPayload {
 }
 
 export default function BiasharaScreen() {
+  const { colors: tc } = useTheme();
+  const styles = useMemo(() => makeStyles(tc), [tc]);
   const { t, lang } = useLang();
   const [searchQuery, setSearchQuery] = useState('');
   const [businesses, setBusinesses] = useState<Business[]>([]);
@@ -597,10 +600,10 @@ export default function BiasharaScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (tc: ThemeColors) => StyleSheet.create({
   screenSafe: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
   },
   container: {
     flex: 1,
@@ -614,7 +617,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     fontSize: 16,
-    color: '#7f8c8d',
+    color: tc.muted,
   },
   searchContainer: {
     marginBottom: 20,
@@ -632,12 +635,12 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     height: 50,
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderRadius: 12,
     paddingHorizontal: 16,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: tc.line2,
   },
   scrollView: {
     flex: 1,
@@ -645,12 +648,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 16,
     textAlign: 'center',
   },
   businessCard: {
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -683,7 +686,7 @@ const styles = StyleSheet.create({
   businessName: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     flex: 1,
   },
   twendeButton: {
@@ -740,12 +743,12 @@ const styles = StyleSheet.create({
   },
   detailValue: {
     fontSize: 14,
-    color: '#7f8c8d',
+    color: tc.muted,
     flex: 1,
     textAlign: 'right',
   },
   phoneLink: {
-    color: '#3498db',
+    color: tc.primary,
     fontWeight: '500',
     textDecorationLine: 'underline',
   },
@@ -780,56 +783,56 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#34495e',
     lineHeight: 20,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     borderRadius: 10,
     padding: 11,
     borderWidth: 1,
-    borderColor: '#ecf0f1',
+    borderColor: tc.line,
     marginBottom: 4,
   },
   trustBlock: { marginTop: 10 },
   trustLabel: {
     fontSize: 10.5,
     fontWeight: '800',
-    color: '#95a5a6',
+    color: tc.muted2,
     letterSpacing: 0.6,
     textTransform: 'uppercase',
     marginBottom: 5,
   },
   trustLine: { fontSize: 13, color: '#34495e', lineHeight: 19, marginBottom: 2 },
-  trustMuted: { fontSize: 12.5, color: '#95a5a6', marginTop: 6, textAlign: 'center' },
+  trustMuted: { fontSize: 12.5, color: tc.muted2, marginTop: 6, textAlign: 'center' },
   trustError: { fontSize: 13, color: '#e74c3c', textAlign: 'center' },
   trustReview: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     borderRadius: 9,
     padding: 9,
     marginBottom: 6,
     borderWidth: 1,
-    borderColor: '#ecf0f1',
+    borderColor: tc.line,
   },
   trustReviewHead: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  trustReviewer: { fontSize: 13, fontWeight: '800', color: '#2c3e50' },
+  trustReviewer: { fontSize: 13, fontWeight: '800', color: tc.ink },
   trustStars: { fontSize: 12, color: '#f39c12' },
-  trustDate: { fontSize: 11.5, color: '#95a5a6' },
-  trustBody: { fontSize: 13, color: '#5d6d7e', lineHeight: 18, marginTop: 3 },
+  trustDate: { fontSize: 11.5, color: tc.muted2 },
+  trustBody: { fontSize: 13, color: tc.muted, lineHeight: 18, marginTop: 3 },
   trustLimit: { fontSize: 11.5, color: '#aeb6bf', lineHeight: 16, marginTop: 2 },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     padding: 40,
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderRadius: 12,
   },
   emptyTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 8,
     textAlign: 'center',
   },
   emptyText: {
     fontSize: 14,
-    color: '#7f8c8d',
+    color: tc.muted,
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 16,

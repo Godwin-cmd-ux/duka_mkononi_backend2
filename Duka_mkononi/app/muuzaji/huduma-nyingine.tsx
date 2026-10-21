@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import NlEntry from '../../components/NlEntry';
 import OnboardingAssistant from '../../components/OnboardingAssistant';
 import { useLang } from '../../context/LanguageContext';
+import { useTheme, ThemeColors } from '../../lib/theme';
 
 /**
  * "Other Services" hub (seller mobile screen).
@@ -39,6 +40,8 @@ const SERVICES: ServiceCard[] = [
 ];
 
 export default function HudumaNyingine() {
+  const { colors: tc } = useTheme();
+  const styles = useMemo(() => makeStyles(tc), [tc]);
   const { t } = useLang();
   const router = useRouter();
   // Capability #19 - getting-started checklist + approved onboarding answers.
@@ -107,10 +110,10 @@ export default function HudumaNyingine() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (tc: ThemeColors) => StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
   },
   content: {
     padding: 20,
@@ -122,13 +125,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#2c3e50',
+    color: tc.ink,
   },
   subtitle: {
     marginTop: 8,
     fontSize: 14,
     lineHeight: 20,
-    color: '#7f8c8d',
+    color: tc.muted,
   },
   grid: {
     gap: 14,
@@ -162,7 +165,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontSize: 13,
     lineHeight: 18,
-    color: '#5d6d7e',
+    color: tc.muted,
   },
   chevron: {
     fontSize: 26,

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import {
   Alert,
   Keyboard,
@@ -18,6 +18,7 @@ import { useLang } from '../../context/LanguageContext';
 import { fetchWithTimeout } from '../../lib/network';
 
 import { API_BASE_URL } from '../../constants/api';
+import { useTheme, ThemeColors } from '../../lib/theme';
 
 /**
  * Capability #10 - Seller Copilot Q&A (seller mobile screen).
@@ -115,6 +116,8 @@ const SOURCE_KEY: Record<string, string> = {
 const MONEY_COLUMNS = ['amount', 'revenue', 'profit', 'total_purchases'];
 
 export default function MsaidiziScreen() {
+  const { colors: tc } = useTheme();
+  const styles = useMemo(() => makeStyles(tc), [tc]);
   const { t, lang } = useLang();
   const router = useRouter();
 
@@ -664,54 +667,54 @@ export default function MsaidiziScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f9fa' },
+const makeStyles = (tc: ThemeColors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: tc.page },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#ffffff',
+    backgroundColor: tc.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#ecf0f1',
+    borderBottomColor: tc.line,
   },
   headerMain: { flex: 1 },
-  title: { fontSize: 17, fontWeight: '700', color: '#2c3e50' },
-  subtitle: { fontSize: 11.5, color: '#7f8c8d', marginTop: 2 },
+  title: { fontSize: 17, fontWeight: '700', color: tc.ink },
+  subtitle: { fontSize: 11.5, color: tc.muted, marginTop: 2 },
   headerActions: { flexDirection: 'row', gap: 6 },
   headerBtn: {
     width: 38,
     height: 38,
     borderRadius: 11,
-    backgroundColor: '#f4f6f7',
+    backgroundColor: tc.page,
     alignItems: 'center',
     justifyContent: 'center',
   },
   scroll: { padding: 16, paddingBottom: 30 },
   center: { alignItems: 'center', paddingVertical: 34, paddingHorizontal: 20 },
-  centerText: { marginTop: 10, color: '#7f8c8d', fontSize: 13.5, textAlign: 'center' },
-  emptyTitle: { marginTop: 12, fontSize: 17, fontWeight: '700', color: '#2c3e50' },
+  centerText: { marginTop: 10, color: tc.muted, fontSize: 13.5, textAlign: 'center' },
+  emptyTitle: { marginTop: 12, fontSize: 17, fontWeight: '700', color: tc.ink },
   section: { marginTop: 18 },
-  examplesTitle: { fontSize: 13, fontWeight: '600', color: '#7f8c8d', marginBottom: 8 },
+  examplesTitle: { fontSize: 13, fontWeight: '600', color: tc.muted, marginBottom: 8 },
   chips: { gap: 8 },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#ffffff',
+    backgroundColor: tc.card,
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderWidth: 1,
-    borderColor: '#ecf0f1',
+    borderColor: tc.line,
   },
-  chipText: { flex: 1, fontSize: 13, color: '#2c3e50' },
+  chipText: { flex: 1, fontSize: 13, color: tc.ink },
   bubble: { maxWidth: '92%', borderRadius: 16, padding: 12, marginBottom: 12 },
   userBubble: { alignSelf: 'flex-end', backgroundColor: '#2ecc71', borderBottomRightRadius: 4 },
   assistantBubble: { alignSelf: 'flex-start', backgroundColor: '#f4f9ff', borderBottomLeftRadius: 4 },
   userText: { color: '#ffffff', fontSize: 14, lineHeight: 20 },
-  assistantText: { color: '#2c3e50', fontSize: 14, lineHeight: 20 },
+  assistantText: { color: tc.ink, fontSize: 14, lineHeight: 20 },
   msgMeta: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' },
   badge: {
     flexDirection: 'row',
@@ -723,53 +726,53 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   badgeText: { fontSize: 10.5, fontWeight: '700', color: '#1e8449' },
-  periodText: { fontSize: 10.5, color: '#7f8c8d' },
+  periodText: { fontSize: 10.5, color: tc.muted },
   highlights: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 9 },
   highlight: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
+    backgroundColor: tc.card,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#ecf0f1',
+    borderColor: tc.line,
     paddingHorizontal: 8,
     paddingVertical: 5,
   },
-  highlightLabel: { fontSize: 11, color: '#5d6d7e' },
-  highlightValue: { fontSize: 11, fontWeight: '700', color: '#2c3e50' },
+  highlightLabel: { fontSize: 11, color: tc.muted },
+  highlightValue: { fontSize: 11, fontWeight: '700', color: tc.ink },
   toolCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: tc.card,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#ecf0f1',
+    borderColor: tc.line,
     padding: 11,
     marginTop: 9,
   },
-  toolCardTitle: { fontSize: 12.5, fontWeight: '700', color: '#2c3e50', marginBottom: 7 },
-  tableHeader: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#ecf0f1', paddingBottom: 5 },
-  tableHeaderCell: { fontSize: 11, fontWeight: '700', color: '#2c3e50', paddingRight: 5 },
+  toolCardTitle: { fontSize: 12.5, fontWeight: '700', color: tc.ink, marginBottom: 7 },
+  tableHeader: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: tc.line, paddingBottom: 5 },
+  tableHeaderCell: { fontSize: 11, fontWeight: '700', color: tc.ink, paddingRight: 5 },
   tableRow: { flexDirection: 'row', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#f4f6f7' },
-  tableCell: { fontSize: 11, color: '#5d6d7e', paddingRight: 5 },
+  tableCell: { fontSize: 11, color: tc.muted, paddingRight: 5 },
   barRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 7 },
-  barLabel: { width: 80, fontSize: 10.5, color: '#5d6d7e' },
+  barLabel: { width: 80, fontSize: 10.5, color: tc.muted },
   barTrack: { flex: 1, height: 10, backgroundColor: '#ecf0f1', borderRadius: 5, overflow: 'hidden' },
   barFill: { height: 10, backgroundColor: '#2ecc71', borderRadius: 5 },
-  barValue: { width: 80, fontSize: 10.5, color: '#2c3e50', textAlign: 'right' },
+  barValue: { width: 80, fontSize: 10.5, color: tc.ink, textAlign: 'right' },
   metaBlock: { marginTop: 9 },
-  metaTitle: { fontSize: 11.5, fontWeight: '700', color: '#7f8c8d', marginBottom: 5 },
+  metaTitle: { fontSize: 11.5, fontWeight: '700', color: tc.muted, marginBottom: 5 },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   tag: { backgroundColor: '#eaf4fc', borderRadius: 7, paddingHorizontal: 8, paddingVertical: 3 },
   tagText: { fontSize: 10.5, fontWeight: '600', color: '#2980b9' },
   listRow: { flexDirection: 'row', gap: 7, marginBottom: 5, alignItems: 'flex-start' },
-  listBullet: { fontSize: 13, fontWeight: '700', color: '#95a5a6' },
-  listText: { flex: 1, fontSize: 11.5, color: '#7f8c8d', lineHeight: 16 },
+  listBullet: { fontSize: 13, fontWeight: '700', color: tc.muted2 },
+  listText: { flex: 1, fontSize: 11.5, color: tc.muted, lineHeight: 16 },
   stepText: { flex: 1, fontSize: 12, color: '#1e8449', lineHeight: 17 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 10 },
   actionChip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#ffffff',
+    backgroundColor: tc.card,
     borderWidth: 1,
     borderColor: '#c8f0da',
     borderRadius: 20,
@@ -795,18 +798,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 10,
   },
-  historyTitle: { fontSize: 15, fontWeight: '700', color: '#2c3e50' },
+  historyTitle: { fontSize: 15, fontWeight: '700', color: tc.ink },
   historyRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
+    backgroundColor: tc.card,
     borderRadius: 12,
     marginBottom: 8,
     paddingHorizontal: 12,
   },
   historyMain: { flex: 1, paddingVertical: 11 },
-  historyRowTitle: { fontSize: 13.5, fontWeight: '600', color: '#2c3e50' },
-  historyRowMeta: { fontSize: 11, color: '#95a5a6', marginTop: 2 },
+  historyRowTitle: { fontSize: 13.5, fontWeight: '600', color: tc.ink },
+  historyRowMeta: { fontSize: 11, color: tc.muted2, marginTop: 2 },
   historyDel: { padding: 10 },
   newBtn: {
     flexDirection: 'row',
@@ -825,18 +828,18 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: '#ffffff',
+    backgroundColor: tc.card,
     borderTopWidth: 1,
-    borderBottomColor: '#ecf0f1',
+    borderBottomColor: tc.line,
   },
   input: {
     flex: 1,
-    backgroundColor: '#f4f6f7',
+    backgroundColor: tc.page,
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 14,
-    color: '#2c3e50',
+    color: tc.ink,
   },
   askBtn: {
     width: 44,

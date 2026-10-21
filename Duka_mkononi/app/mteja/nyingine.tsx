@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useMemo } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -20,6 +20,7 @@ import ThemeSelector from '../../components/theme-selector';
 import { fetchWithTimeout } from '../../lib/network';
 
 import { API_BASE_URL } from '../../constants/api';
+import { useTheme, ThemeColors } from '../../lib/theme';
 
 /**
  * Capability #13 - Order & Delivery Q&A (customer mobile screen, "Nyingine").
@@ -88,6 +89,8 @@ const groupDigits = (value: number): string =>
     .replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
 export default function MtejaNyingineScreen() {
+  const { colors: tc } = useTheme();
+  const styles = useMemo(() => makeStyles(tc), [tc]);
   const { t, lang } = useLang();
   const [question, setQuestion] = useState('');
   const [sending, setSending] = useState(false);
@@ -370,12 +373,12 @@ export default function MtejaNyingineScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#f8f9fa' },
+const makeStyles = (tc: ThemeColors) => StyleSheet.create({
+  screen: { flex: 1, backgroundColor: tc.page },
   content: { padding: 16, paddingBottom: 40 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  title: { fontSize: 22, fontWeight: '800', color: '#2c3e50' },
-  subtitle: { fontSize: 13, color: '#7f8c8d', marginTop: 3, marginBottom: 14 },
+  title: { fontSize: 22, fontWeight: '800', color: tc.ink },
+  subtitle: { fontSize: 13, color: tc.muted, marginTop: 3, marginBottom: 14 },
   guideEntry: {
     flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#eef1ff',
     borderColor: '#d6ddff', borderWidth: 1, borderRadius: 12,
@@ -388,12 +391,12 @@ const styles = StyleSheet.create({
   },
   aiChipText: { fontSize: 10.5, fontWeight: '800', color: '#667eea', letterSpacing: 0.4 },
   askCard: {
-    backgroundColor: '#fff', borderColor: '#ecf0f1', borderWidth: 1, borderRadius: 16,
+    backgroundColor: tc.card, borderColor: tc.line, borderWidth: 1, borderRadius: 16,
     padding: 14, marginBottom: 16,
   },
   input: {
-    minHeight: 74, fontSize: 14.5, color: '#2c3e50', lineHeight: 20,
-    backgroundColor: '#f8f9fa', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10,
+    minHeight: 74, fontSize: 14.5, color: tc.ink, lineHeight: 20,
+    backgroundColor: tc.page, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10,
     textAlignVertical: 'top',
   },
   askBtn: {
@@ -402,10 +405,10 @@ const styles = StyleSheet.create({
   },
   askBtnDisabled: { opacity: 0.5 },
   askBtnText: { color: '#fff', fontWeight: '700', fontSize: 14.5 },
-  exampleHint: { fontSize: 12, color: '#95a5a6', marginTop: 9, textAlign: 'center' },
+  exampleHint: { fontSize: 12, color: tc.muted2, marginTop: 9, textAlign: 'center' },
   stateBox: { alignItems: 'center', paddingVertical: 40, paddingHorizontal: 18 },
-  stateTitle: { fontSize: 16, fontWeight: '700', color: '#2c3e50', marginTop: 10 },
-  stateText: { fontSize: 13.5, color: '#7f8c8d', textAlign: 'center', marginTop: 5, lineHeight: 19 },
+  stateTitle: { fontSize: 16, fontWeight: '700', color: tc.ink, marginTop: 10 },
+  stateText: { fontSize: 13.5, color: tc.muted, textAlign: 'center', marginTop: 5, lineHeight: 19 },
   retryBtn: {
     marginTop: 14, backgroundColor: '#667eea', borderRadius: 12, paddingHorizontal: 20, paddingVertical: 10,
   },
@@ -417,40 +420,40 @@ const styles = StyleSheet.create({
   messageLabel: { fontSize: 10.5, fontWeight: '800', color: '#b7861f', letterSpacing: 0.6, textTransform: 'uppercase' },
   messageText: { fontSize: 13.5, color: '#7a5c14', marginTop: 4, lineHeight: 19 },
   answerCard: {
-    backgroundColor: '#fff', borderColor: '#e3e8ff', borderWidth: 1, borderRadius: 16,
+    backgroundColor: tc.card, borderColor: '#e3e8ff', borderWidth: 1, borderRadius: 16,
     padding: 15, marginBottom: 14,
   },
   answerHead: { flexDirection: 'row', alignItems: 'center', gap: 7, flexWrap: 'wrap' },
-  answerLabel: { fontSize: 14.5, fontWeight: '800', color: '#2c3e50' },
+  answerLabel: { fontSize: 14.5, fontWeight: '800', color: tc.ink },
   focusChip: { backgroundColor: '#eef1ff', borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3 },
   focusChipText: { fontSize: 11, fontWeight: '700', color: '#5566d4' },
   answerText: { fontSize: 14.5, color: '#34495e', lineHeight: 22, marginTop: 9 },
-  aiNote: { fontSize: 12, color: '#95a5a6', marginTop: 9, fontStyle: 'italic' },
+  aiNote: { fontSize: 12, color: tc.muted2, marginTop: 9, fontStyle: 'italic' },
   orderCard: {
-    backgroundColor: '#fff', borderColor: '#ecf0f1', borderWidth: 1, borderRadius: 16,
+    backgroundColor: tc.card, borderColor: tc.line, borderWidth: 1, borderRadius: 16,
     padding: 15, marginBottom: 14,
   },
   orderHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  orderRef: { fontSize: 15, fontWeight: '800', color: '#2c3e50', flex: 1 },
+  orderRef: { fontSize: 15, fontWeight: '800', color: tc.ink, flex: 1 },
   statusChip: { backgroundColor: '#eafaf1', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
   statusChipText: { fontSize: 11.5, fontWeight: '800', color: '#27ae60' },
-  orderMeta: { fontSize: 12.5, color: '#7f8c8d', marginTop: 4 },
+  orderMeta: { fontSize: 12.5, color: tc.muted, marginTop: 4 },
   block: { marginTop: 11 },
-  blockLabel: { fontSize: 10.5, fontWeight: '800', color: '#95a5a6', letterSpacing: 0.6, textTransform: 'uppercase', marginBottom: 6 },
+  blockLabel: { fontSize: 10.5, fontWeight: '800', color: tc.muted2, letterSpacing: 0.6, textTransform: 'uppercase', marginBottom: 6 },
   itemRow: {
     flexDirection: 'row', justifyContent: 'space-between', gap: 10,
-    backgroundColor: '#f8f9fa', borderRadius: 9, paddingHorizontal: 10, paddingVertical: 7, marginBottom: 5,
+    backgroundColor: tc.page, borderRadius: 9, paddingHorizontal: 10, paddingVertical: 7, marginBottom: 5,
   },
   itemName: { flex: 1, fontSize: 13, color: '#34495e' },
-  itemTotal: { fontSize: 13, fontWeight: '700', color: '#2c3e50' },
-  totalRow: { fontSize: 14, fontWeight: '800', color: '#2c3e50', marginTop: 9 },
+  itemTotal: { fontSize: 13, fontWeight: '700', color: tc.ink },
+  totalRow: { fontSize: 14, fontWeight: '800', color: tc.ink, marginTop: 9 },
   timelineRow: { flexDirection: 'row', gap: 9, marginBottom: 8, alignItems: 'flex-start' },
   timelineDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#667eea', marginTop: 5 },
   timelineLabel: { fontSize: 13, fontWeight: '700', color: '#34495e' },
-  timelineAt: { fontSize: 11.5, fontWeight: '400', color: '#95a5a6' },
-  timelineNote: { fontSize: 12.5, color: '#7f8c8d', marginTop: 2, lineHeight: 17 },
+  timelineAt: { fontSize: 11.5, fontWeight: '400', color: tc.muted2 },
+  timelineNote: { fontSize: 12.5, color: tc.muted, marginTop: 2, lineHeight: 17 },
   ordersCard: {
-    backgroundColor: '#fff', borderColor: '#ecf0f1', borderWidth: 1, borderRadius: 16,
+    backgroundColor: tc.card, borderColor: tc.line, borderWidth: 1, borderRadius: 16,
     padding: 15, marginBottom: 14,
   },
   miniOrderRow: {
@@ -459,14 +462,14 @@ const styles = StyleSheet.create({
   },
   miniOrderStatus: { fontSize: 12.5, fontWeight: '700', color: '#667eea' },
   guideCard: {
-    backgroundColor: '#fff', borderColor: '#ecf0f1', borderWidth: 1, borderRadius: 16,
+    backgroundColor: tc.card, borderColor: tc.line, borderWidth: 1, borderRadius: 16,
     padding: 15, marginBottom: 14,
   },
   guideWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
   guideChip: { backgroundColor: '#f1f3f8', borderRadius: 999, paddingHorizontal: 11, paddingVertical: 5 },
   guideChipText: { fontSize: 12, fontWeight: '600', color: '#44546a' },
   limitationsBox: { marginTop: 4 },
-  limitationsTitle: { fontSize: 12, fontWeight: '800', color: '#7f8c8d' },
-  limitationsText: { fontSize: 12, color: '#95a5a6', lineHeight: 17, marginTop: 3 },
+  limitationsTitle: { fontSize: 12, fontWeight: '800', color: tc.muted },
+  limitationsText: { fontSize: 12, color: tc.muted2, lineHeight: 17, marginTop: 3 },
   generated: { fontSize: 11.5, color: '#aeb6bf', marginTop: 6 },
 });

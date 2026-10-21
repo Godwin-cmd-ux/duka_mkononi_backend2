@@ -105,7 +105,7 @@ export default function LoginScreen() {
     const role = params.role as string || 'mteja';
     const { lang, changeLang, t } = useLang();
 
-    const { theme, setTheme } = useTheme();
+    const { theme, colors, setTheme } = useTheme();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -331,11 +331,10 @@ export default function LoginScreen() {
                 setTheme(serverTheme);
             }
 
-            // 🔐 Tell the session gate the user is now logged in, so the role
-            // dashboards become accessible and the home screen is locked out.
-            signIn(user.role);
-
-            // ✅ HANDLE REMEMBER ME
+            // ✅ HANDLE REMEMBER ME — every async write completes BEFORE the
+            // session flips, so nothing can interrupt the hand-off to the
+            // dashboard (a mid-flush unmount is what used to cause the blank
+            // white screen after a successful login).
             const keys = getStorageKeys();
             if (rememberMe) {
                 await AsyncStorage.setItem(keys.savedEmail, sanitizedEmail);
@@ -352,16 +351,16 @@ export default function LoginScreen() {
             const dashboardRoute = getDashboardRouteForRole(user.role);
             const userName = user.full_name || user.business_name || user.email.split('@')[0];
 
-            // Show success message
-            Alert.alert(t('login.success_title'), t('login.success_message', { userName }), [
-                {
-                    text: t('login.success_button'),
-                    onPress: () => {
-                        // Navigate to appropriate dashboard
-                        router.replace(dashboardRoute as any);
-                    }
-                }
-            ]);
+            // 🔐➡️ Flip the session and route to the dashboard in the SAME tick.
+            // signIn() unmounts this login screen through the root layout's
+            // <Stack.Protected> guard, so navigation must not wait on the success
+            // Alert's onPress — that gap left the app stuck on a blank white
+            // screen with no alert, no toast and no next screen.
+            signIn(user.role);
+            router.replace(dashboardRoute as any);
+
+            // 🎉 Success feedback (informational only — navigation already ran)
+            Alert.alert(t('login.success_title'), t('login.success_message', { userName }));
 
         } catch (error: any) {
             console.error('❌ Login Error:', error);
@@ -464,7 +463,7 @@ export default function LoginScreen() {
 
     return (
         <KeyboardAvoidingView 
-            style={styles.keyboardAvoid}
+            style={[styles.keyboardAvoid, { backgroundColor: colors.page }]}
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
             <ScrollView 
@@ -472,7 +471,7 @@ export default function LoginScreen() {
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
             >
-                <View style={styles.container}>
+                <View style={[styles.container, { backgroundColor: colors.page }]}>
                     {/* Header Section */}
                     <View style={styles.headerSection}>
                         <TouchableOpacity 
@@ -504,8 +503,8 @@ export default function LoginScreen() {
                                     color="white" 
                                 />
                             </View>
-                            <Text style={styles.welcomeText}>{t('login.welcome_back')}</Text>
-                            <Text style={styles.roleDescription}>{getRoleDescription()}</Text>
+                            <Text style={[styles.welcomeText, { color: colors.ink }]}>{t('login.welcome_back')}</Text>
+                            <Text style={[styles.roleDescription, { color: colors.muted }]}>{getRoleDescription()}</Text>
                         </View>
 
                         {/* Login Form */}
@@ -517,12 +516,12 @@ export default function LoginScreen() {
                                     activeOpacity={0.9}
                                     onPress={() => emailInputRef.current?.focus()}
                                 >
-                                    <Ionicons name="mail-outline" size={20} color="#7f8c8d" />
-                                    <Text style={styles.labelText}>{t('login.email_label')}</Text>
+                                    <Ionicons name="mail-outline" size={20} color={colors.muted} />
+                                    <Text style={[styles.labelText, { color: colors.ink }]}>{t('login.email_label')}</Text>
                                 </TouchableOpacity>
                                 <TextInput
                                     ref={emailInputRef}
-                                    style={[styles.input, formErrors.email && styles.inputError]}
+                                    style={[styles.input, { backgroundColor: colors.soft, borderColor: colors.line2, color: colors.ink }, formErrors.email && styles.inputError]}
                                     placeholder={t('login.email_placeholder')}
                                     value={email}
                                     onChangeText={(text) => {
@@ -553,13 +552,13 @@ export default function LoginScreen() {
                                     activeOpacity={0.9}
                                     onPress={() => passwordInputRef.current?.focus()}
                                 >
-                                    <Ionicons name="lock-closed-outline" size={20} color="#7f8c8d" />
-                                    <Text style={styles.labelText}>{t('login.password_label')}</Text>
+                                    <Ionicons name="lock-closed-outline" size={20} color={colors.muted} />
+                                    <Text style={[styles.labelText, { color: colors.ink }]}>{t('login.password_label')}</Text>
                                 </TouchableOpacity>
                                 <View style={styles.passwordContainer}>
                                     <TextInput
                                         ref={passwordInputRef}
-                                        style={[styles.input, styles.passwordInput, formErrors.password && styles.inputError]}
+                                        style={[styles.input, styles.passwordInput, { backgroundColor: colors.soft, borderColor: colors.line2, color: colors.ink }, formErrors.password && styles.inputError]}
                                         placeholder={t('login.password_placeholder')}
                                         value={password}
                                         onChangeText={(text) => {
@@ -604,7 +603,7 @@ export default function LoginScreen() {
                                             <Ionicons name="checkmark" size={16} color="white" />
                                         )}
                                     </View>
-                                    <Text style={styles.rememberMeText}>{t('login.remember_me')}</Text>
+                                    <Text style={[styles.rememberMeText, { color: colors.ink }]}>{t('login.remember_me')}</Text>
                                 </TouchableOpacity>
 
                                 <TouchableOpacity onPress={handleForgotPassword}>
@@ -633,7 +632,7 @@ export default function LoginScreen() {
 
                             {/* Signup Link */}
                             <View style={styles.signupContainer}>
-                                <Text style={styles.signupText}>{t('login.no_account')}</Text>
+                                <Text style={[styles.signupText, { color: colors.muted }]}>{t('login.no_account')}</Text>
                                 <TouchableOpacity onPress={handleSignup}>
                                     <Text style={[styles.signupLink, { color: getRoleColor() }]}>
                                         {getSignupButtonText()}

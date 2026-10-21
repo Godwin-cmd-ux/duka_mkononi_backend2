@@ -3,7 +3,7 @@ import { ResizeMode, Video } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import * as WebBrowser from 'expo-web-browser';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -30,6 +30,7 @@ import { registerLive } from '../../lib/syncer';
 // Shared helper (not a local copy): it retries reads on the alternate API host,
 // so this page survives carriers where the primary host is unreachable.
 import { fetchWithTimeout, isAbortError, isNetworkStable, requireNetwork } from '../../lib/network';
+import { useTheme, ThemeColors } from '../../lib/theme';
 
 // 🔥 MAX FILE SIZES (in bytes)
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -100,6 +101,8 @@ interface UserMatangazo {
 }
 
 export default function TangazaScreen() {
+  const { colors: tc } = useTheme();
+  const styles = useMemo(() => makeStyles(tc), [tc]);
   const { t, lang } = useLang();
   const router = useRouter();
   const { signOut } = useSession();
@@ -953,7 +956,7 @@ export default function TangazaScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (tc: ThemeColors) => StyleSheet.create({
   screenSafe: {
     flex: 1,
     backgroundColor: '#f8f8f8',
@@ -963,9 +966,9 @@ const styles = StyleSheet.create({
   },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+    borderBottomColor: tc.line2,
   },
   tab: {
     flex: 1,
@@ -991,7 +994,7 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: 25,
     padding: 16,
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderRadius: 12,
   },
   headerTopRow: {
@@ -1061,7 +1064,7 @@ const styles = StyleSheet.create({
   mediaSection: {
     marginBottom: 20,
     padding: 16,
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderRadius: 12,
   },
   sectionTitle: {
@@ -1124,23 +1127,23 @@ const styles = StyleSheet.create({
   descriptionSection: {
     marginBottom: 20,
     padding: 16,
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderRadius: 12,
   },
   textInput: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: tc.line2,
     borderRadius: 10,
     padding: 16,
     fontSize: 16,
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     minHeight: 120,
     textAlignVertical: 'top',
   },
   charCount: {
     textAlign: 'right',
     fontSize: 12,
-    color: '#95a5a6',
+    color: tc.muted2,
     marginTop: 6,
   },
   uploadButton: {
@@ -1183,7 +1186,7 @@ const styles = StyleSheet.create({
   },
   instruction: {
     fontSize: 14,
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 6,
   },
   loadingContainer: {
@@ -1197,11 +1200,11 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   mainHeader: {
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     paddingVertical: 20,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: tc.line2,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -1226,7 +1229,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   adCard: {
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -1245,11 +1248,11 @@ const styles = StyleSheet.create({
   adTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
   },
   adDate: {
     fontSize: 12,
-    color: '#95a5a6',
+    color: tc.muted2,
   },
   adDescription: {
     fontSize: 14,
@@ -1260,7 +1263,7 @@ const styles = StyleSheet.create({
   adMediaPreview: {
     height: 150,
     borderRadius: 8,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     marginBottom: 12,
     overflow: 'hidden',
   },
@@ -1308,7 +1311,7 @@ const styles = StyleSheet.create({
   },
   statText: {
     fontSize: 12,
-    color: '#3498db',
+    color: tc.primary,
     fontWeight: '500',
   },
   statIconWarning: {
@@ -1385,7 +1388,7 @@ const styles = StyleSheet.create({
   },
   processingCard: {
     width: width * 0.8,
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderRadius: 16,
     padding: 24,
     alignItems: 'center',
@@ -1470,6 +1473,8 @@ type ReviewItem = {
 
 function ContentReviewCard() {
   const { t, lang } = useLang();
+  const { colors: tc } = useTheme();
+  const revStyles = useMemo(() => makeRevStyles(tc), [tc]);
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState<'ads' | 'products'>('ads');
@@ -1717,52 +1722,52 @@ function ContentReviewCard() {
   );
 }
 
-const revStyles = StyleSheet.create({
-  card: { backgroundColor: 'white', borderRadius: 16, padding: 16, marginBottom: 16, borderLeftWidth: 4, borderLeftColor: '#667eea' },
+const makeRevStyles = (tc: ThemeColors) => StyleSheet.create({
+  card: { backgroundColor: tc.card, borderRadius: 16, padding: 16, marginBottom: 16, borderLeftWidth: 4, borderLeftColor: '#667eea' },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   sparkle: { fontSize: 15 },
-  title: { flex: 1, fontSize: 15.5, fontWeight: '800', color: '#2c3e50' },
+  title: { flex: 1, fontSize: 15.5, fontWeight: '800', color: tc.ink },
   checkBtn: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, backgroundColor: '#667eea' },
   checkBtnText: { color: 'white', fontSize: 12, fontWeight: '700' },
-  subtitle: { fontSize: 11.5, color: '#7f8c8d', marginTop: 2 },
+  subtitle: { fontSize: 11.5, color: tc.muted, marginTop: 2 },
   centerBox: { alignItems: 'center', paddingVertical: 16, gap: 6 },
-  muted: { fontSize: 12.5, color: '#7f8c8d', textAlign: 'center' },
+  muted: { fontSize: 12.5, color: tc.muted, textAlign: 'center' },
   errorText: { fontSize: 13, color: '#e74c3c', textAlign: 'center' },
   statsRow: { flexDirection: 'row', gap: 8, marginTop: 12, flexWrap: 'wrap' },
-  statBox: { flexGrow: 1, minWidth: 70, backgroundColor: '#f8f9fa', borderRadius: 12, paddingVertical: 8, paddingHorizontal: 6, alignItems: 'center' },
+  statBox: { flexGrow: 1, minWidth: 70, backgroundColor: tc.page, borderRadius: 12, paddingVertical: 8, paddingHorizontal: 6, alignItems: 'center' },
   statValue: { fontSize: 15, fontWeight: '800' },
-  statLabel: { fontSize: 9.5, color: '#7f8c8d', marginTop: 1 },
+  statLabel: { fontSize: 9.5, color: tc.muted, marginTop: 1 },
   tabRow: { flexDirection: 'row', gap: 8, marginTop: 12 },
-  tabChip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, backgroundColor: '#f4f6f7' },
+  tabChip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, backgroundColor: tc.page },
   tabChipActive: { backgroundColor: '#667eea' },
-  tabText: { fontSize: 12, fontWeight: '700', color: '#5d6d7e' },
+  tabText: { fontSize: 12, fontWeight: '700', color: tc.muted },
   tabTextActive: { color: 'white' },
   itemCard: { backgroundColor: '#fafbfc', borderRadius: 14, padding: 12, marginTop: 10, borderWidth: 1, borderColor: '#f1f3f4' },
   itemHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  itemTitle: { flex: 1, fontSize: 13.5, fontWeight: '700', color: '#2c3e50' },
+  itemTitle: { flex: 1, fontSize: 13.5, fontWeight: '700', color: tc.ink },
   stateChip: { paddingHorizontal: 9, paddingVertical: 3, borderRadius: 10 },
   stateText: { fontSize: 10.5, fontWeight: '700' },
-  itemSub: { fontSize: 11.5, color: '#7f8c8d', marginTop: 2 },
+  itemSub: { fontSize: 11.5, color: tc.muted, marginTop: 2 },
   countRow: { flexDirection: 'row', gap: 6, marginTop: 6 },
   countBadge: { fontSize: 11, fontWeight: '700', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, overflow: 'hidden' },
-  findingBox: { borderTopWidth: 1, borderTopColor: '#ecf0f1', borderStyle: 'dashed', marginTop: 8, paddingTop: 8 },
+  findingBox: { borderTopWidth: 1, borderTopColor: tc.line, borderStyle: 'dashed', marginTop: 8, paddingTop: 8 },
   findingHead: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   sevChip: { paddingHorizontal: 9, paddingVertical: 3, borderRadius: 10 },
   sevText: { fontSize: 10.5, fontWeight: '700' },
-  findingMsg: { flex: 1, fontSize: 12.5, color: '#2c3e50' },
-  excerpt: { fontSize: 11, color: '#7f8c8d', backgroundColor: '#f8f9fa', borderLeftWidth: 3, borderLeftColor: '#dfe6e9', marginTop: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
+  findingMsg: { flex: 1, fontSize: 12.5, color: tc.ink },
+  excerpt: { fontSize: 11, color: tc.muted, backgroundColor: tc.page, borderLeftWidth: 3, borderLeftColor: '#dfe6e9', marginTop: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
   aiNote: { fontSize: 11, color: '#667eea', marginTop: 4 },
   noFindings: { fontSize: 12, color: '#27ae60', marginTop: 8 },
   choiceRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
-  choiceChip: { flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 10, borderWidth: 1.5, borderColor: '#ecf0f1', backgroundColor: 'white' },
-  choiceText: { fontSize: 11.5, fontWeight: '700', color: '#7f8c8d', textAlign: 'center' },
-  noteInput: { marginTop: 8, borderWidth: 1, borderColor: '#ecf0f1', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9, fontSize: 12.5, color: '#2c3e50', backgroundColor: 'white' },
+  choiceChip: { flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 10, borderWidth: 1.5, borderColor: tc.line, backgroundColor: tc.card },
+  choiceText: { fontSize: 11.5, fontWeight: '700', color: tc.muted, textAlign: 'center' },
+  noteInput: { marginTop: 8, borderWidth: 1, borderColor: tc.line, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9, fontSize: 12.5, color: tc.ink, backgroundColor: tc.card },
   checkRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 },
-  checkbox: { width: 18, height: 18, borderRadius: 5, borderWidth: 1.5, borderColor: '#bdc3c7', alignItems: 'center', justifyContent: 'center', backgroundColor: 'white' },
+  checkbox: { width: 18, height: 18, borderRadius: 5, borderWidth: 1.5, borderColor: tc.line2, alignItems: 'center', justifyContent: 'center', backgroundColor: tc.card },
   checkboxOn: { backgroundColor: '#667eea', borderColor: '#667eea' },
   checkMark: { color: 'white', fontSize: 12, fontWeight: '800' },
-  checkLabel: { flex: 1, fontSize: 12, color: '#5d6d7e' },
+  checkLabel: { flex: 1, fontSize: 12, color: tc.muted },
   submitBtn: { marginTop: 10, borderRadius: 12, backgroundColor: '#667eea', paddingVertical: 11, alignItems: 'center' },
   submitText: { color: 'white', fontSize: 13, fontWeight: '700' },
-  footnote: { fontSize: 10, color: '#95a5a6', marginTop: 10 }
+  footnote: { fontSize: 10, color: tc.muted2, marginTop: 10 }
 });

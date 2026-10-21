@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   RefreshControl,
   ScrollView,
@@ -16,6 +16,7 @@ import { getCache, setCache } from '../../db/cache';
 import { fetchWithTimeout, requireNetwork } from '../../lib/network';
 
 import { API_BASE_URL } from '../../constants/api';
+import { useTheme, ThemeColors } from '../../lib/theme';
 
 /**
  * Capability #3 - Restock & Stock-Out Plan (seller mobile screen).
@@ -123,6 +124,8 @@ const CONFIDENCE_KEY: Record<string, string> = {
 const ACTIONABLE = ['OUT_OF_STOCK', 'LOW_STOCK', 'RESTOCK', 'OVERSTOCK'];
 
 export default function MpangoStockScreen() {
+  const { colors: tc } = useTheme();
+  const styles = useMemo(() => makeStyles(tc), [tc]);
   const { t, lang } = useLang();
 
   const [loading, setLoading] = useState(true);
@@ -282,7 +285,7 @@ export default function MpangoStockScreen() {
   const renderBadges = (product: PlanProduct) => {
     const badges: { key: string; color: string }[] = [];
     if (product.fast_moving) badges.push({ key: 'badge_fast_moving', color: '#27ae60' });
-    if (product.slow_moving) badges.push({ key: 'badge_slow_moving', color: '#95a5a6' });
+    if (product.slow_moving) badges.push({ key: 'badge_slow_moving', color: tc.muted2 });
     if (product.sparse_data) badges.push({ key: 'badge_sparse', color: '#e67e22' });
 
     if (badges.length === 0) return null;
@@ -476,24 +479,24 @@ export default function MpangoStockScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f9fa' },
+const makeStyles = (tc: ThemeColors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: tc.page },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 14,
-    backgroundColor: '#ffffff',
+    backgroundColor: tc.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#ecf0f1',
+    borderBottomColor: tc.line,
   },
-  title: { fontSize: 18, fontWeight: '700', color: '#2c3e50', flex: 1 },
+  title: { fontSize: 18, fontWeight: '700', color: tc.ink, flex: 1 },
   refreshBtn: { padding: 8 },
   scroll: { padding: 16, paddingBottom: 40 },
   center: { alignItems: 'center', paddingVertical: 60, paddingHorizontal: 20 },
-  centerText: { marginTop: 12, color: '#7f8c8d', fontSize: 14, textAlign: 'center' },
-  emptyTitle: { marginTop: 12, fontSize: 18, fontWeight: '700', color: '#2c3e50' },
+  centerText: { marginTop: 12, color: tc.muted, fontSize: 14, textAlign: 'center' },
+  emptyTitle: { marginTop: 12, fontSize: 18, fontWeight: '700', color: tc.ink },
   retryBtn: {
     marginTop: 16,
     backgroundColor: '#2ecc71',
@@ -511,32 +514,32 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   bannerText: { flex: 1, fontSize: 13, fontWeight: '600' },
-  card: { backgroundColor: '#ffffff', borderRadius: 16, padding: 16, marginBottom: 14 },
-  cardTitle: { fontSize: 15, fontWeight: '700', color: '#2c3e50', marginBottom: 12 },
+  card: { backgroundColor: tc.card, borderRadius: 16, padding: 16, marginBottom: 14 },
+  cardTitle: { fontSize: 15, fontWeight: '700', color: tc.ink, marginBottom: 12 },
   statsGrid: { flexDirection: 'row', justifyContent: 'space-between' },
   statBox: { flex: 1, alignItems: 'center' },
-  statNumber: { fontSize: 20, fontWeight: '700', color: '#2c3e50' },
-  statLabel: { fontSize: 11, color: '#7f8c8d', textAlign: 'center', marginTop: 2 },
+  statNumber: { fontSize: 20, fontWeight: '700', color: tc.ink },
+  statLabel: { fontSize: 11, color: tc.muted, textAlign: 'center', marginTop: 2 },
   divider: { height: 1, backgroundColor: '#ecf0f1', marginVertical: 12 },
   row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3 },
-  rowLabel: { fontSize: 13, color: '#7f8c8d', flex: 1, paddingRight: 8 },
-  rowValue: { fontSize: 13, fontWeight: '600', color: '#2c3e50' },
-  muted: { fontSize: 11, color: '#95a5a6', marginTop: 8 },
-  headline: { fontSize: 14, color: '#2c3e50', fontWeight: '600', lineHeight: 20 },
+  rowLabel: { fontSize: 13, color: tc.muted, flex: 1, paddingRight: 8 },
+  rowValue: { fontSize: 13, fontWeight: '600', color: tc.ink },
+  muted: { fontSize: 11, color: tc.muted2, marginTop: 8 },
+  headline: { fontSize: 14, color: tc.ink, fontWeight: '600', lineHeight: 20 },
   section: { marginBottom: 16 },
-  sectionTitle: { fontSize: 15, fontWeight: '700', color: '#2c3e50', marginBottom: 10 },
-  productCard: { backgroundColor: '#ffffff', borderRadius: 14, padding: 14, marginBottom: 10 },
+  sectionTitle: { fontSize: 15, fontWeight: '700', color: tc.ink, marginBottom: 10 },
+  productCard: { backgroundColor: tc.card, borderRadius: 14, padding: 14, marginBottom: 10 },
   productHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     gap: 8,
   },
-  productName: { flex: 1, fontSize: 15, fontWeight: '700', color: '#2c3e50' },
+  productName: { flex: 1, fontSize: 15, fontWeight: '700', color: tc.ink },
   badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
   badgeText: { fontSize: 11, fontWeight: '700' },
   productMetaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginTop: 8 },
-  productMeta: { fontSize: 12, color: '#5d6d7e' },
+  productMeta: { fontSize: 12, color: tc.muted },
   orderBox: { marginTop: 10, padding: 10, borderRadius: 10, backgroundColor: '#f0f7ff' },
   orderLabel: { fontSize: 12, color: '#2980b9', flex: 1 },
   orderValue: { fontSize: 13, fontWeight: '700', color: '#1f618d' },
@@ -551,12 +554,12 @@ const styles = StyleSheet.create({
   badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   miniBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20 },
   miniBadgeText: { fontSize: 10, fontWeight: '700' },
-  confidence: { fontSize: 11, color: '#95a5a6' },
+  confidence: { fontSize: 11, color: tc.muted2 },
   aiNote: { marginTop: 10, paddingLeft: 10, borderLeftWidth: 3 },
-  aiNoteTitle: { fontSize: 12, fontWeight: '700', color: '#2c3e50' },
-  aiNoteText: { fontSize: 12, color: '#5d6d7e', marginTop: 3, lineHeight: 17 },
+  aiNoteTitle: { fontSize: 12, fontWeight: '700', color: tc.ink },
+  aiNoteText: { fontSize: 12, color: tc.muted, marginTop: 3, lineHeight: 17 },
   listRow: { flexDirection: 'row', gap: 8, marginBottom: 6 },
   listBullet: { fontSize: 14, fontWeight: '700' },
-  listText: { flex: 1, fontSize: 12, color: '#5d6d7e', lineHeight: 17 },
+  listText: { flex: 1, fontSize: 12, color: tc.muted, lineHeight: 17 },
   generated: { textAlign: 'center', fontSize: 11, color: '#bdc3c7', marginTop: 8 },
 });

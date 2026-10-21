@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { File, Paths } from 'expo-file-system';
 import * as Print from 'expo-print';
 import { shareAsync } from 'expo-sharing';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
     Alert,
     ActivityIndicator,
@@ -24,6 +24,7 @@ import { registerLive } from '../../lib/syncer';
 import { fetchWithTimeout } from '../../lib/network';
 
 import { API_BASE_URL } from '../../constants/api';
+import { useTheme, ThemeColors } from '../../lib/theme';
 
 // Admin identity: a promoted platform super admin (or the legacy
 // system_admin spelling) keeps full business-admin behaviour.
@@ -120,6 +121,8 @@ interface BusinessStats {
 }
 
 export default function RipotiScreen() {
+  const { colors: tc } = useTheme();
+  const styles = useMemo(() => makeStyles(tc), [tc]);
   const { t, lang } = useLang();
   const [userData, setUserData] = useState({
     id: '',
@@ -1211,7 +1214,7 @@ export default function RipotiScreen() {
                   </Text>
                   
                   <Text style={styles.productSalesData}>
-                    {t('reports.quantity_sold')}: <Text style={{color: '#3498db', fontWeight: 'bold'}}>{product.total_sold}</Text> • 
+                    {t('reports.quantity_sold')}: <Text style={{color: tc.primary, fontWeight: 'bold'}}>{product.total_sold}</Text> • 
                     {t('reports.total_revenue')}: {formatCurrency(product.total_revenue || 0)} • 
                     {t('reports.total_profit_product')}: {formatCurrency(product.total_profit || 0)}
                   </Text>
@@ -1475,7 +1478,7 @@ export default function RipotiScreen() {
                       <Ionicons name="calendar" size={12} color="#95a5a6" /> {lastPurchase}
                     </Text>
                     {isAdmin && customer.seller_name && (
-                      <Text style={[styles.customerMetaText, { color: '#3498db' }]}>
+                      <Text style={[styles.customerMetaText, { color: tc.primary }]}>
                         <Ionicons name="person" size={12} color="#3498db" /> {customer.seller_name}
                       </Text>
                     )}
@@ -1708,10 +1711,10 @@ export default function RipotiScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (tc: ThemeColors) => StyleSheet.create({
   screenSafe: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
   },
   container: {
     flex: 1,
@@ -1745,16 +1748,16 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
   },
   userEmail: {
     fontSize: 14,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginTop: 4,
   },
   roleBadge: {
     fontSize: 12,
-    color: '#3498db',
+    color: tc.primary,
     marginTop: 2,
     fontWeight: 'bold',
   },
@@ -1766,7 +1769,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   businessHeader: {
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     padding: 20,
     borderRadius: 16,
     marginBottom: 20,
@@ -1779,28 +1782,28 @@ const styles = StyleSheet.create({
   businessName: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
   },
   businessLocation: {
     fontSize: 14,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginTop: 4,
   },
   reportPeriod: {
     fontSize: 12,
-    color: '#95a5a6',
+    color: tc.muted2,
     marginTop: 8,
     fontStyle: 'italic',
   },
   sellersCount: {
     fontSize: 12,
-    color: '#3498db',
+    color: tc.primary,
     marginTop: 4,
     fontWeight: '500',
   },
   reportNav: {
     flexDirection: 'row',
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderRadius: 12,
     padding: 4,
     marginBottom: 20,
@@ -1834,10 +1837,10 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#ecf0f1',
+    borderColor: tc.line,
     paddingHorizontal: 12,
     marginBottom: 16,
   },
@@ -1848,7 +1851,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     fontSize: 14,
-    color: '#2c3e50',
+    color: tc.ink,
   },
   searchClear: {
     padding: 4,
@@ -1862,12 +1865,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 16,
   },
   productTabs: {
     flexDirection: 'row',
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderRadius: 12,
     padding: 4,
     marginBottom: 20,
@@ -1901,7 +1904,7 @@ const styles = StyleSheet.create({
   productTabHeader: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 16,
     textAlign: 'center',
   },
@@ -1909,7 +1912,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     padding: 16,
     borderRadius: 12,
     marginBottom: 8,
@@ -1926,21 +1929,21 @@ const styles = StyleSheet.create({
   productItemTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
   },
   productItemSubtitle: {
     fontSize: 14,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginTop: 2,
   },
   productItemMeta: {
     fontSize: 12,
-    color: '#95a5a6',
+    color: tc.muted2,
     marginTop: 4,
   },
   productSalesData: {
     fontSize: 12,
-    color: '#3498db',
+    color: tc.primary,
     marginTop: 4,
     fontWeight: '500',
   },
@@ -1952,13 +1955,13 @@ const styles = StyleSheet.create({
   },
   productPotential: {
     fontSize: 11,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginTop: 4,
     fontStyle: 'italic',
   },
   productItemSeller: {
     fontSize: 11,
-    color: '#3498db',
+    color: tc.primary,
     marginTop: 2,
     fontStyle: 'italic',
   },
@@ -1973,7 +1976,7 @@ const styles = StyleSheet.create({
   },
   productItemMargin: {
     fontSize: 12,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginTop: 2,
   },
   productItemRevenue: {
@@ -2013,7 +2016,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   productSummary: {
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     padding: 16,
     borderRadius: 12,
     marginTop: 16,
@@ -2026,7 +2029,7 @@ const styles = StyleSheet.create({
   summaryTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 12,
     textAlign: 'center',
   },
@@ -2040,11 +2043,11 @@ const styles = StyleSheet.create({
   summaryStatValue: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
   },
   summaryStatLabel: {
     fontSize: 11,
-    color: '#95a5a6',
+    color: tc.muted2,
     marginTop: 2,
   },
   statsGrid: {
@@ -2054,7 +2057,7 @@ const styles = StyleSheet.create({
   },
   statCard: {
     width: '48%',
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -2076,18 +2079,18 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 4,
     textAlign: 'center',
   },
   statLabel: {
     fontSize: 12,
-    color: '#7f8c8d',
+    color: tc.muted,
     textAlign: 'center',
     marginBottom: 2,
   },
   extraStats: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
     padding: 12,
     borderRadius: 8,
     marginTop: 8,
@@ -2099,14 +2102,14 @@ const styles = StyleSheet.create({
   },
   extraStatText: {
     fontSize: 13,
-    color: '#2c3e50',
+    color: tc.ink,
     marginLeft: 8,
   },
   saleItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     padding: 16,
     borderRadius: 12,
     marginBottom: 8,
@@ -2122,21 +2125,21 @@ const styles = StyleSheet.create({
   saleProduct: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
   },
   saleDate: {
     fontSize: 14,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginTop: 4,
   },
   saleMeta: {
     fontSize: 12,
-    color: '#95a5a6',
+    color: tc.muted2,
     marginTop: 4,
   },
   sellerName: {
     fontSize: 12,
-    color: '#3498db',
+    color: tc.primary,
     fontWeight: '500',
   },
   saleAmount: {
@@ -2157,7 +2160,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     padding: 16,
     borderRadius: 12,
     marginBottom: 8,
@@ -2174,16 +2177,16 @@ const styles = StyleSheet.create({
   reportItemTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
   },
   reportItemSubtitle: {
     fontSize: 14,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginTop: 2,
   },
   reportItemMeta: {
     fontSize: 12,
-    color: '#95a5a6',
+    color: tc.muted2,
     marginTop: 4,
   },
   reportItemCost: {
@@ -2202,7 +2205,7 @@ const styles = StyleSheet.create({
   },
   reportItemMargin: {
     fontSize: 12,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginTop: 2,
   },
   reportItemRevenue: {
@@ -2213,12 +2216,12 @@ const styles = StyleSheet.create({
   },
   reportItemQuantity: {
     fontSize: 11,
-    color: '#95a5a6',
+    color: tc.muted2,
     marginTop: 2,
   },
   customerItem: {
     flexDirection: 'row',
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     padding: 16,
     borderRadius: 12,
     marginBottom: 12,
@@ -2228,7 +2231,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
     borderWidth: 1,
-    borderColor: '#ecf0f1',
+    borderColor: tc.line,
   },
   customerAvatar: {
     marginRight: 12,
@@ -2240,7 +2243,7 @@ const styles = StyleSheet.create({
   customerName: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 6,
   },
   customerContact: {
@@ -2253,7 +2256,7 @@ const styles = StyleSheet.create({
   },
   contactText: {
     fontSize: 13,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginLeft: 6,
   },
   customerMeta: {
@@ -2263,7 +2266,7 @@ const styles = StyleSheet.create({
   },
   customerMetaText: {
     fontSize: 12,
-    color: '#95a5a6',
+    color: tc.muted2,
   },
   customerStats: {
     alignItems: 'flex-end',
@@ -2278,7 +2281,7 @@ const styles = StyleSheet.create({
   },
   customerLabel: {
     fontSize: 11,
-    color: '#95a5a6',
+    color: tc.muted2,
   },
   customerNote: {
     fontSize: 10,
@@ -2290,13 +2293,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 40,
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderRadius: 12,
     marginVertical: 8,
   },
   noDataText: {
     fontSize: 16,
-    color: '#95a5a6',
+    color: tc.muted2,
     marginTop: 12,
     fontWeight: '500',
     textAlign: 'center',
@@ -2318,7 +2321,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 12,
@@ -2339,12 +2342,12 @@ const styles = StyleSheet.create({
   exportButtonText: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
   },
   statusCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     padding: 16,
     borderRadius: 12,
     marginTop: 16,
@@ -2358,7 +2361,7 @@ const styles = StyleSheet.create({
   statusText: {
     flex: 1,
     fontSize: 14,
-    color: '#2c3e50',
+    color: tc.ink,
     marginLeft: 12,
     fontWeight: '500',
   },
@@ -2373,6 +2376,8 @@ type AiSummaryPeriod = 'last_7_days' | 'last_30_days' | 'last_90_days';
 
 function AiReportSummaryCard({ token }: { token: string | null }) {
   const { t, lang } = useLang();
+  const { colors: tc } = useTheme();
+  const aiStyles = useMemo(() => makeAiStyles(tc), [tc]);
   const [period, setPeriod] = useState<AiSummaryPeriod>('last_7_days');
   const [data, setData] = useState<any>(null);
   const [loadingSummary, setLoadingSummary] = useState(false);
@@ -2527,31 +2532,31 @@ function AiReportSummaryCard({ token }: { token: string | null }) {
   );
 }
 
-const aiStyles = StyleSheet.create({
-  card: { backgroundColor: 'white', borderRadius: 16, padding: 16, marginTop: 16, borderLeftWidth: 4, borderLeftColor: '#667eea' },
+const makeAiStyles = (tc: ThemeColors) => StyleSheet.create({
+  card: { backgroundColor: tc.card, borderRadius: 16, padding: 16, marginTop: 16, borderLeftWidth: 4, borderLeftColor: '#667eea' },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  title: { fontSize: 16, fontWeight: '800', color: '#2c3e50' },
-  subtitle: { fontSize: 11.5, color: '#7f8c8d', marginTop: 2, marginBottom: 10 },
+  title: { fontSize: 16, fontWeight: '800', color: tc.ink },
+  subtitle: { fontSize: 11.5, color: tc.muted, marginTop: 2, marginBottom: 10 },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, backgroundColor: '#f4f6f7', borderWidth: 1, borderColor: '#ecf0f1' },
+  chip: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, backgroundColor: tc.page, borderWidth: 1, borderColor: tc.line },
   chipActive: { backgroundColor: '#667eea', borderColor: '#667eea' },
-  chipText: { fontSize: 12, fontWeight: '600', color: '#5d6d7e' },
+  chipText: { fontSize: 12, fontWeight: '600', color: tc.muted },
   chipTextActive: { color: 'white' },
   loadingBox: { alignItems: 'center', paddingVertical: 18 },
-  loadingText: { marginTop: 8, fontSize: 12.5, color: '#7f8c8d' },
+  loadingText: { marginTop: 8, fontSize: 12.5, color: tc.muted },
   errorText: { fontSize: 13, color: '#e74c3c', textAlign: 'center' },
-  prose: { fontSize: 13, lineHeight: 20, color: '#2c3e50', backgroundColor: '#f8f9fa', borderRadius: 12, padding: 12, marginTop: 10 },
+  prose: { fontSize: 13, lineHeight: 20, color: tc.ink, backgroundColor: tc.page, borderRadius: 12, padding: 12, marginTop: 10 },
   metricsRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
-  metricBox: { flex: 1, backgroundColor: '#f8f9fa', borderRadius: 12, padding: 10, alignItems: 'center' },
-  metricValue: { fontSize: 13, fontWeight: '700', color: '#2c3e50' },
-  metricLabel: { fontSize: 10, color: '#7f8c8d', marginTop: 2, textAlign: 'center' },
+  metricBox: { flex: 1, backgroundColor: tc.page, borderRadius: 12, padding: 10, alignItems: 'center' },
+  metricValue: { fontSize: 13, fontWeight: '700', color: tc.ink },
+  metricLabel: { fontSize: 10, color: tc.muted, marginTop: 2, textAlign: 'center' },
   dirPill: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, marginTop: 10 },
   dirText: { fontSize: 12, fontWeight: '700' },
   block: { marginTop: 10 },
-  blockTitle: { fontSize: 12.5, fontWeight: '700', color: '#2c3e50', marginBottom: 4 },
+  blockTitle: { fontSize: 12.5, fontWeight: '700', color: tc.ink, marginBottom: 4 },
   contributorRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 10, paddingVertical: 3 },
-  contributorName: { flex: 1, fontSize: 12.5, color: '#5d6d7e' },
+  contributorName: { flex: 1, fontSize: 12.5, color: tc.muted },
   contributorChange: { fontSize: 12.5, fontWeight: '600' },
-  limitationText: { fontSize: 11.5, color: '#7f8c8d', marginTop: 3 },
-  footnote: { fontSize: 10, color: '#95a5a6', marginTop: 10 }
+  limitationText: { fontSize: 11.5, color: tc.muted, marginTop: 3 },
+  footnote: { fontSize: 10, color: tc.muted2, marginTop: 10 }
 });

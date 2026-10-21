@@ -10,7 +10,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
     Alert,
     FlatList,
@@ -31,6 +31,7 @@ import { getCache, setCache } from '../../db/cache';
 import { useLang } from '../../context/LanguageContext';
 import { useSession } from '../../context/SessionContext';
 import { fetchWithTimeout, requireNetwork } from '../../lib/network';
+import { useTheme, ThemeColors } from '../../lib/theme';
 
 const CACHE_KEY = 'system_admin:inquiries:queue';
 
@@ -87,6 +88,8 @@ const URGENCY_COLOR: Record<string, string> = {
 };
 
 export default function SystemAdminInquiries() {
+  const { colors: tc } = useTheme();
+  const styles = useMemo(() => makeStyles(tc), [tc]);
   const router = useRouter();
   const { t, lang } = useLang();
   const { signOut } = useSession();
@@ -436,7 +439,7 @@ export default function SystemAdminInquiries() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (tc: ThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8fafc' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   header: {
@@ -445,20 +448,20 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    backgroundColor: '#fff',
+    backgroundColor: tc.card,
     borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
   },
   title: { fontSize: 18, fontWeight: '800', color: '#0f172a' },
   subtitle: { fontSize: 12.5, color: '#64748b', marginTop: 2 },
-  refreshBtn: { width: 42, height: 42, borderRadius: 12, borderWidth: 1, borderColor: '#e2e8f0', alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' },
+  refreshBtn: { width: 42, height: 42, borderRadius: 12, borderWidth: 1, borderColor: '#e2e8f0', alignItems: 'center', justifyContent: 'center', backgroundColor: tc.card },
   statsRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingTop: 14 },
-  stat: { flex: 1, backgroundColor: '#fff', borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 12, padding: 12 },
+  stat: { flex: 1, backgroundColor: tc.card, borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 12, padding: 12 },
   statLabel: { fontSize: 11, color: '#64748b', textTransform: 'uppercase' },
   statValue: { fontSize: 20, fontWeight: '800', color: '#0f172a', marginTop: 4 },
   policyNote: { margin: 16, marginBottom: 0, backgroundColor: '#eff6ff', color: '#1e40af', padding: 10, borderRadius: 10, fontSize: 12.5 },
   list: { padding: 16, paddingBottom: 40, gap: 12 },
-  card: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 14, padding: 14, gap: 6 },
+  card: { backgroundColor: tc.card, borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 14, padding: 14, gap: 6 },
   cardHead: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
   cardTitle: { flex: 1, fontSize: 15, fontWeight: '700', color: '#0f172a' },
   cardMeta: { fontSize: 12.5, color: '#64748b' },
@@ -477,7 +480,7 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 13, fontWeight: '700', color: '#334155' },
   bullet: { fontSize: 13, color: '#475569' },
   fieldLabel: { fontSize: 12.5, fontWeight: '600', color: '#334155', marginTop: 8 },
-  input: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14.5, color: '#0f172a' },
+  input: { backgroundColor: tc.card, borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14.5, color: '#0f172a' },
   textarea: { minHeight: 180 },
   approveRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
   approveText: { flex: 1, fontSize: 13, color: '#334155' },

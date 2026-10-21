@@ -1,6 +1,7 @@
 {
   "theme": {
     "title": "主题",
+    "change": "切换主题",
     "selected": "已选择",
     "white_desc": "简洁明亮的专业风格 — Duka Mkononi 原始设计。",
     "royal_desc": "温暖的皇家香槟金 — 高端优雅外观。",

@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
     Alert,
     Modal,
@@ -28,6 +28,7 @@ import { fetchWithTimeout, requireNetwork } from '../../lib/network';
 
 // ✅ KUBADILISHWA: Tumia ngrok URL mpya
 import { API_BASE_URL } from '../../constants/api';
+import { useTheme, ThemeColors } from '../../lib/theme';
 
 // Aina zinazoruhusiwa za biashara (normalized keys — the same list as the
 // AI-import page and the Laravel BUSINESS_TYPES, so the stored value stays
@@ -53,6 +54,8 @@ const pickSellers = (rows: any): any[] =>
   );
 
 export default function MsimamiziHomeScreen() {
+  const { colors: tc } = useTheme();
+  const styles = useMemo(() => makeStyles(tc), [tc]);
   const { t, lang } = useLang();
   const router = useRouter();
   const { signOut } = useSession();
@@ -1428,10 +1431,10 @@ export default function MsimamiziHomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (tc: ThemeColors) => StyleSheet.create({
   screenSafe: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
   },
   container: {
     flex: 1,
@@ -1470,12 +1473,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     lineHeight: 24,
   },
   subtitle: {
     fontSize: 12,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginTop: 2,
     lineHeight: 16,
   },
@@ -1518,7 +1521,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   businessCard: {
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     padding: 16,
     borderRadius: 12,
     marginBottom: 16,
@@ -1561,17 +1564,17 @@ const styles = StyleSheet.create({
   businessName: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 2,
   },
   businessLocation: {
     fontSize: 13,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginBottom: 2,
   },
   businessInfo: {
     fontSize: 13,
-    color: '#95a5a6',
+    color: tc.muted2,
     marginBottom: 8,
   },
   statusIndicator: {
@@ -1620,7 +1623,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     fontWeight: '600',
-    color: '#3498db',
+    color: tc.primary,
   },
   filterInfo: {
     flexDirection: 'row',
@@ -1658,7 +1661,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
   },
   sellerCountBadge: {
     backgroundColor: '#3498db',
@@ -1675,7 +1678,7 @@ const styles = StyleSheet.create({
   },
   // Seller Card Styles
   sellerCard: {
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     padding: 14,
     borderRadius: 10,
     marginBottom: 10,
@@ -1718,23 +1721,23 @@ const styles = StyleSheet.create({
   sellerName: {
     fontSize: 15,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
     flex: 1,
     lineHeight: 18,
   },
   sellerEmail: {
     fontSize: 13,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginBottom: 2,
   },
   sellerPhone: {
     fontSize: 13,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginBottom: 2,
   },
   sellerBusiness: {
     fontSize: 11,
-    color: '#95a5a6',
+    color: tc.muted2,
     marginTop: 4,
     lineHeight: 14,
   },
@@ -1761,7 +1764,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
   },
   otherBadge: {
-    backgroundColor: '#f0f0f0',
+    backgroundColor: tc.page,
   },
   approvedText: {
     fontSize: 10,
@@ -1783,13 +1786,13 @@ const styles = StyleSheet.create({
   },
   inactiveText: {
     fontSize: 10,
-    color: '#95a5a6',
+    color: tc.muted2,
     marginLeft: 3,
     fontWeight: '500',
   },
   otherText: {
     fontSize: 10,
-    color: '#7f8c8d',
+    color: tc.muted,
     marginLeft: 3,
     fontWeight: '500',
   },
@@ -1843,18 +1846,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 32,
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     borderRadius: 10,
   },
   noSellersTitle: {
     fontSize: 17,
-    color: '#2c3e50',
+    color: tc.ink,
     marginTop: 10,
     fontWeight: 'bold',
   },
   noSellersText: {
     fontSize: 13,
-    color: '#95a5a6',
+    color: tc.muted2,
     marginTop: 6,
     textAlign: 'center',
     lineHeight: 18,
@@ -1868,7 +1871,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   modalContent: {
-    backgroundColor: 'white',
+    backgroundColor: tc.card,
     padding: 20,
     borderRadius: 14,
     width: '100%',
@@ -1883,7 +1886,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: tc.ink,
   },
   closeButton: {
     padding: 4,
@@ -1894,7 +1897,7 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#2c3e50',
+    color: tc.ink,
     marginBottom: 5,
   },
   inputHelper: {
@@ -1906,11 +1909,11 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: tc.line2,
     padding: 10,
     borderRadius: 6,
     fontSize: 15,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: tc.page,
   },
   modalScroll: {
     maxHeight: '70%',
@@ -1925,8 +1928,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#ddd',
-    backgroundColor: 'white',
+    borderColor: tc.line2,
+    backgroundColor: tc.card,
   },
   bizTypeChipActive: {
     backgroundColor: '#2ecc71',
@@ -1934,7 +1937,7 @@ const styles = StyleSheet.create({
   },
   bizTypeText: {
     fontSize: 13,
-    color: '#7f8c8d',
+    color: tc.muted,
   },
   bizTypeTextActive: {
     color: 'white',
@@ -1945,7 +1948,7 @@ const styles = StyleSheet.create({
   },
   descriptionHint: {
     fontSize: 12,
-    color: '#95a5a6',
+    color: tc.muted2,
     fontStyle: 'italic',
     marginTop: 6,
   },
