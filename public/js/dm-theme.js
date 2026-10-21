@@ -30,6 +30,12 @@
     // Pre-release key: read once and migrated (see readStored) so an early
     // tester's saved choice is not lost when the brand-corrected key shipped.
     var LEGACY_STORAGE_KEY = 'lukamkononi_theme';
+    // Session flag: the visitor picked a theme in THIS tab (the picker was
+    // used). It is what tells the login form that the local value is a fresh,
+    // explicit choice — not just the theme restored from an earlier page — so
+    // the account's stored preference must not overwrite it on sign-in.
+    // sessionStorage keeps it across that tab's navigations only.
+    var PICKED_KEY = 'dukamkononi_theme_picked';
     var SYNC_URL = '/api/user/theme';
     var DEFAULT = 'white-professional';
     var ALLOWED = ['white-professional', 'royal-champagne-cream', 'midnight-royal-gold', 'emerald-bazaar', 'oceanic-sapphire'];
@@ -74,6 +80,26 @@
         } catch (e) { /* private mode / quota — the in-page theme still holds */ }
     }
 
+    function markPicked() {
+        try {
+            if (global.sessionStorage) sessionStorage.setItem(PICKED_KEY, '1');
+        } catch (e) { /* storage unavailable: login falls back to the account value */ }
+    }
+
+    function wasPicked() {
+        try {
+            return !!(global.sessionStorage && sessionStorage.getItem(PICKED_KEY) === '1');
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function clearPicked() {
+        try {
+            if (global.sessionStorage) sessionStorage.removeItem(PICKED_KEY);
+        } catch (e) { /* nothing to clear */ }
+    }
+
     function notify() {
         var theme = current();
         listeners.slice().forEach(function (fn) {
@@ -112,6 +138,7 @@
         if (!isValid(theme)) return current();
         apply(theme);
         persist(theme);
+        markPicked();
         notify();
         syncToServer(theme);
         return theme;
@@ -175,6 +202,8 @@
         set: set,
         adopt: adopt,
         clearSession: clearSession,
+        wasPicked: wasPicked,
+        clearPicked: clearPicked,
         syncToServer: syncToServer,
         onChange: function (fn) {
             if (typeof fn !== 'function') return;

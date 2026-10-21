@@ -559,6 +559,10 @@ class AuthController extends BaseController
         $role = $request->input('role');
         $language = $request->input('language');
         $theme = $request->input('theme');
+        // True when the client's theme is a choice the visitor just made in
+        // the picker (see DMTheme.wasPicked on the web / ThemeProvider.picked
+        // in the app), as opposed to the value simply restored from storage.
+        $themeExplicit = filter_var($request->input('theme_explicit'), FILTER_VALIDATE_BOOLEAN);
 
         if (!$email || !$password || !$role) {
             $this->log(null, 'LOGIN_FAILED', '/api/login', ['reason' => 'Missing fields', 'email' => $email, 'role' => $role], $ip, 'failed');
@@ -617,46 +621,38 @@ class AuthController extends BaseController
                 }
             }
 
-            // Theme preference synchronization. The stored value comes in two
-            // different kinds, and each kind has its own rule:
-            //   - a NON-DEFAULT stored theme can only exist because somebody
-            //     chose it explicitly (the column default and the migration
-            //     backfill both write White Professional), so it always wins
-            //     and is never overwritten on login — that is what carries a
-            //     theme picked on one device to every other device;
-            //   - the DEFAULT value, or no stored value at all, means "the
-            //     account has never chosen", so the theme the visitor is
-            //     actively using in this browser wins and is persisted,
-            //     best effort. Without this second rule every login answered
-            //     White Professional and wiped the visitor's Midnight Royal
-            //     Gold (or any other choice) a moment before redirecting to
-            //     the authenticated portals — the theme looked like it was
-            //     "lost during login".
+            // Theme preference synchronization (same shape as the language
+            // preference above, two ways in, one truth out):
+            //   - a theme the visitor picked in the picker just before
+            //     signing in (theme_explicit) is the freshest expression of
+            //     intent, so it wins over the stored value and is persisted;
+            //   - otherwise the account's established VALID preference wins,
+            //     which is what carries a choice made on the phone or another
+            //     browser into this one — a NON-DEFAULT stored theme can only
+            //     exist because somebody chose it explicitly (the column
+            //     default and the migration backfill both write White
+            //     Professional), so it is never overwritten on login;
+            //   - the browser value is also adopted when the account has no
+            //     valid stored theme yet.
             // Neither present -> White Professional (reported, but not
             // written, so a later explicit choice can still be adopted).
             // Every step is guarded: a failed preference sync must never fail
             // the login itself, and the visitor keeps their local theme either
             // way.
-            $storedTheme = ThemePreference::normalize($user->preferred_theme ?? null);
-            $browserTheme = ThemePreference::normalize($theme);
-            $preferredTheme = null;
+            // The conflict rule itself lives in ThemePreference::resolve so
+            // the website and the app are covered by the same unit test.
+            $resolved = ThemePreference::resolve($user->preferred_theme ?? null, $theme, $themeExplicit);
+            $preferredTheme = $resolved['theme'];
 
-            if ($storedTheme && $storedTheme !== ThemePreference::DEFAULT) {
-                $preferredTheme = $storedTheme;
-            } elseif ($browserTheme) {
-                $preferredTheme = $browserTheme;
-
-                if ($browserTheme !== $storedTheme) {
-                    try {
-                        User::where('id', $user->id)->update(['preferred_theme' => $browserTheme]);
-                    } catch (\Throwable $themeError) {
-                        // Column missing (migration not run yet) or API unavailable:
-                        // local preference survives, login proceeds normally.
-                        $this->log($user->id, 'LOGIN_THEME_SYNC_SKIPPED', '/api/login', ['error' => $themeError->getMessage()], $ip, 'failed');
-                    }
+            if ($resolved['persist']) {
+                try {
+                    User::where('id', $user->id)->update(['preferred_theme' => $preferredTheme]);
+                } catch (\Throwable $themeError) {
+                    // Column missing (migration not run yet) or API unavailable:
+                    // the answer below still carries the visitor's choice, so the
+                    // session keeps it and login proceeds normally.
+                    $this->log($user->id, 'LOGIN_THEME_SYNC_SKIPPED', '/api/login', ['error' => $themeError->getMessage()], $ip, 'failed');
                 }
-            } else {
-                $preferredTheme = $storedTheme ?: ThemePreference::DEFAULT;
             }
 
             $now = $this->isoNow();

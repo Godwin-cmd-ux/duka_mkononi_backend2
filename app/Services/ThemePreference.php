@@ -51,4 +51,42 @@ class ThemePreference
 
         return in_array($theme, self::ALLOWED, true) ? $theme : null;
     }
+
+    /**
+     * Resolves which theme a login answers with (and whether the account row
+     * needs writing). One rule for every theme, web and mobile:
+     *
+     *   1. A theme the client marks as explicit — the visitor just used the
+     *      picker — is the freshest expression of intent, so it wins over the
+     *      stored value. Without this, picking a dark theme on the login page
+     *      and then signing in would snap back to the account's older choice.
+     *   2. Otherwise the account's stored preference wins, which is what makes
+     *      a theme picked on the phone apply in this browser.
+     *   3. When the account has no valid preference yet, the client's value is
+     *      adopted instead.
+     *   4. Otherwise White Professional — reported but not written, so a later
+     *      explicit choice can still be adopted.
+     *
+     * @param  mixed  $stored    the account's preferred_theme column
+     * @param  mixed  $browser   the theme the client sent with the login
+     * @param  bool   $explicit  true when the client says it was just picked
+     * @return array{theme: string, persist: bool}
+     */
+    public static function resolve($stored, $browser, bool $explicit = false): array
+    {
+        $storedTheme = self::normalize($stored);
+        $browserTheme = self::normalize($browser);
+
+        if ($browserTheme !== null && ($explicit || $storedTheme === null)) {
+            return [
+                'theme' => $browserTheme,
+                'persist' => $browserTheme !== $storedTheme,
+            ];
+        }
+
+        return [
+            'theme' => $storedTheme ?? self::DEFAULT,
+            'persist' => false,
+        ];
+    }
 }

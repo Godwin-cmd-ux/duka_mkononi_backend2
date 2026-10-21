@@ -167,6 +167,13 @@ export function normalizeThemeId(value: unknown): ThemeId | null {
 interface ThemeContextValue {
   theme: ThemeId;
   colors: ThemeColors;
+  /**
+   * True once the user picked a theme in this app session — the picker was
+   * used, so the value is a fresh explicit choice and not merely the theme
+   * restored from storage. Login sends it so the backend does not overwrite
+   * that choice with the account's older stored preference.
+   */
+  picked: boolean;
   /** Switch theme: persists locally and best-effort syncs to the backend. */
   setTheme: (id: ThemeId) => void;
 }
@@ -201,6 +208,7 @@ async function syncThemeToServer(id: ThemeId): Promise<void> {
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<ThemeId>('white-professional');
+  const [picked, setPicked] = useState(false);
 
   // Hydrate the stored preference before the first paint decision is made.
   useEffect(() => {
@@ -231,13 +239,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const setTheme = useCallback((id: ThemeId) => {
     if (!normalizeThemeId(id)) return;
     setThemeState(id);
+    setPicked(true);
     AsyncStorage.setItem(THEME_STORAGE_KEY, id).catch(() => {});
     syncThemeToServer(id).catch(() => {});
   }, []);
 
   const value = useMemo<ThemeContextValue>(
-    () => ({ theme, colors: PALETTES[theme], setTheme }),
-    [theme, setTheme]
+    () => ({ theme, colors: PALETTES[theme], picked, setTheme }),
+    [theme, picked, setTheme]
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
@@ -248,7 +257,7 @@ export function useTheme(): ThemeContextValue {
   if (!ctx) {
     // A screen rendered outside the provider must not crash; default to the
     // original design so behaviour is identical to before the theme system.
-    return { theme: 'white-professional', colors: PALETTES['white-professional'], setTheme: () => {} };
+    return { theme: 'white-professional', colors: PALETTES['white-professional'], picked: false, setTheme: () => {} };
   }
   return ctx;
 }

@@ -105,7 +105,7 @@ export default function LoginScreen() {
     const role = params.role as string || 'mteja';
     const { lang, changeLang, t } = useLang();
 
-    const { theme, colors, setTheme } = useTheme();
+    const { theme, colors, picked: themePicked, setTheme } = useTheme();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -251,12 +251,13 @@ export default function LoginScreen() {
                     password: password,
                     role: backendRole,
                     language: lang,
-                    // 🎨 The theme this device is actively using. The backend
-                    // only adopts it when the account has no explicit choice
-                    // of its own yet (a non-default stored theme still wins),
-                    // so a dark theme chosen before signing in survives login
-                    // instead of being replaced by the server's default.
-                    theme
+                    // 🎨 Same contract as the website: the theme this device is
+                    // actively using plus whether the user picked it in this
+                    // session. Without the flag the backend keeps the account's
+                    // stored preference, so a fresh choice made on this device
+                    // is never dropped.
+                    theme,
+                    theme_explicit: themePicked
                 }),
             }, API_FETCH_TIMEOUT_MS);
 
@@ -324,10 +325,12 @@ export default function LoginScreen() {
             await AsyncStorage.multiSet(storageEntries as [string, string][]);
 
             // 🎨 Adopt the account's saved theme (the same preference the
-            // website syncs); a missing or invalid value keeps the current
+            // website syncs). The backend already resolved the conflict: a
+            // theme picked here wins and is stored, otherwise the account's
+            // value is returned. A missing or invalid value keeps the current
             // theme, so login never flashes or resets the user's choice.
             const serverTheme = normalizeThemeId(data.preferred_theme);
-            if (serverTheme) {
+            if (serverTheme && serverTheme !== theme) {
                 setTheme(serverTheme);
             }
 
