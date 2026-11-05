@@ -159,7 +159,9 @@
     try { user = JSON.parse(localStorage.getItem('userData') || '{}'); } catch (e) { user = {}; }
     var role = (user.role || '').toLowerCase();
     if (!token) { window.location.href = '/login?role=system_admin'; return; }
-    if (['admin', 'system_admin'].indexOf(role) === -1) { window.location.href = '/home'; return; }
+    // 'super_admin' is the canonical database role; 'system_admin' is the
+    // legacy spelling. Both are platform roles; 'admin' is kept as before.
+    if (['super_admin', 'system_admin', 'admin'].indexOf(role) === -1) { window.location.href = '/home'; return; }
 
     function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]; }); }
     function fmtDate(s) { if (!s) return '-'; var d = new Date(s); return isNaN(d) ? String(s) : d.toLocaleString((window.DM && DM.locale()) || 'sw'); }

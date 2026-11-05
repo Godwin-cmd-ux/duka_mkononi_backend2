@@ -140,7 +140,11 @@
     try { user = JSON.parse(localStorage.getItem('userData') || '{}'); } catch (e) { user = {}; }
     var role = (user.role || '').toLowerCase();
     if (!token) { window.location.href = '/login?role=system_admin'; return; }
-    if (['admin', 'system_admin'].indexOf(role) === -1) { window.location.href = '/home'; return; }
+    // Platform access is a database role: 'super_admin' is canonical and
+    // 'system_admin' is the legacy spelling (the backend's isSuperAdmin()
+    // accepts the same pair). Checking only 'admin' sent a promoted super
+    // admin back to /home.
+    if (['super_admin', 'system_admin', 'admin'].indexOf(role) === -1) { window.location.href = '/home'; return; }
 
     function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]; }); }
     function auth() { return { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' }; }
