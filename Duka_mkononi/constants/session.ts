@@ -19,6 +19,13 @@ export const SESSION_KEYS = [
   'isLoggedIn',
 ] as const;
 
+// Platform super admin check — 'super_admin' is the canonical role (promoted by
+// the technician in the database) and 'system_admin' is the legacy spelling of
+// the same role. Mirrors Roles::isSuperAdmin() on the backend and the guard used
+// by the web system-admin views, so a promoted super admin is never denied.
+export const isSystemAdminRole = (userRole: string | null | undefined): boolean =>
+  userRole === 'super_admin' || userRole === 'system_admin';
+
 // Cached role → the exact screen the user should land on.
 //   admin    → msimamizi dashboard (index)
 //   seller   → muuzaji profile

@@ -20,6 +20,7 @@ import {
 import SmartCartLoader from '../../components/SmartCartLoader';
 import { useLang } from '../../context/LanguageContext';
 import { useSession } from '../../context/SessionContext';
+import { isSystemAdminRole } from '../../constants/session';
 
 import { API_BASE_URL } from '../../constants/api';
 import { getCache, setCache } from '../../db/cache';
@@ -226,8 +227,12 @@ export default function SystemAdminDashboard() {
 
       const userData = JSON.parse(userDataStr);
       
-      // Check if user is admin
-      if (userData.role !== 'admin') {
+      // Platform access is a database role: 'super_admin' is canonical and
+      // 'system_admin' is the legacy spelling (the same pair the web system-admin
+      // dashboard and the backend's Roles::isSuperAdmin() accept). Checking for
+      // 'admin' alone denied a promoted super admin on mobile while the web let
+      // them straight in.
+      if (!isSystemAdminRole(userData.role)) {
         Alert.alert(t('system_admin.access_denied'), t('system_admin.admin_required'));
         router.back();
         return;
