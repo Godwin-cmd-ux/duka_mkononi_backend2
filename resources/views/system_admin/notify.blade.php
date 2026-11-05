@@ -59,6 +59,35 @@
         textarea { min-height: 100px; resize: vertical; }
         .char-count { font-size: 11px; color: #95a5a6; text-align: right; margin-top: 4px; }
 
+        /* Language chooser - one tab per language, mirrors the mobile app */
+        .language-status {
+            display: flex; justify-content: space-between; align-items: center;
+            gap: 12px; flex-wrap: wrap; margin-bottom: 12px;
+        }
+        .language-status-text { font-size: 13px; font-weight: 600; color: #2c3e50; }
+        .language-dots { display: flex; gap: 6px; }
+        .language-dot {
+            width: 9px; height: 9px; border-radius: 50%;
+            background: #e0e0e0; display: inline-block;
+        }
+        .language-dot.partial { background: #f39c12; }
+        .language-dot.complete { background: #2ecc71; }
+        .language-dot.active { box-shadow: 0 0 0 2px #3498db; }
+        .language-tabs {
+            display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px;
+            margin-bottom: 16px;
+        }
+        .language-tab {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 8px 14px; border-radius: 30px; border: 1.5px solid #ddd;
+            background: white; cursor: pointer; white-space: nowrap;
+            font-size: 13px; font-weight: 600; color: #555; font-family: inherit;
+        }
+        .language-tab.active { background: #3498db; border-color: #3498db; color: white; }
+        .language-tab.complete:not(.active) { border-color: #2ecc71; color: #27ae60; }
+        .language-tab-check { color: #2ecc71; font-size: 12px; }
+        .language-tab.active .language-tab-check { color: white; }
+
         /* Type Selector */
         .type-selector {
             display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px;
@@ -199,6 +228,9 @@
         const SW = {
             page_title: 'Notisi - DukaMkononi System Admin',
             loading: 'Inapakia...',
+            language_status: 'Lugha: {n}/{total} imekamilika',
+            language_incomplete: 'Lugha Hazijakamilika',
+            language_incomplete_msg: 'Tafadhali jaza kichwa na ujumbe kwa lugha zifuatazo:',
             modal_select_recipients: 'Chagua Wapokeaji',
             close_x: '✖',
             search_placeholder: 'Tafuta watumiaji...',
@@ -293,11 +325,48 @@
         let notifications = [];
         let stats = { totalSent: 0, sentToday: 0, recipientsCount: 0, successRate: 100 };
         
-        let notificationTitle = '';
-        let notificationMessage = '';
+        // Notification content is written once per language, exactly like the
+        // mobile app's notify screen, so every recipient gets the message in
+        // their own language instead of one text copied into all eight.
+        const ALL_LANGUAGES = ['sw', 'en', 'fr', 'hi', 'es', 'ur', 'de', 'zh'];
+        const LANGUAGE_NAMES = { sw: 'Kiswahili', en: 'English', fr: 'Français', hi: 'हिन्दी', es: 'Español', ur: 'اردو', de: 'Deutsch', zh: '中文' };
+        const LANGUAGE_FLAGS = { sw: '🇹🇿', en: '🇬🇧', fr: '🇫🇷', hi: '🇮🇳', es: '🇪🇸', ur: '🇵🇰', de: '🇩🇪', zh: '🇨🇳' };
+
+        function emptyTranslations() {
+            const all = {};
+            ALL_LANGUAGES.forEach(code => { all[code] = { title: '', message: '' }; });
+            return all;
+        }
+
+        let translations = emptyTranslations();
+        let activeLanguage = 'sw';
         let notificationType = 'all';
         let selectedUsers = [];
         let sending = false;
+
+        function currentTranslation() {
+            if (!translations[activeLanguage]) translations[activeLanguage] = { title: '', message: '' };
+            return translations[activeLanguage];
+        }
+
+        function languageStatus(code) {
+            const entry = translations[code] || { title: '', message: '' };
+            const hasTitle = !!entry.title.trim();
+            const hasMessage = !!entry.message.trim();
+            if (hasTitle && hasMessage) return 'complete';
+            if (hasTitle || hasMessage) return 'partial';
+            return 'empty';
+        }
+
+        function completedLanguages() {
+            return ALL_LANGUAGES.filter(code => languageStatus(code) === 'complete').length;
+        }
+
+        function setActiveLanguage(code) {
+            if (ALL_LANGUAGES.indexOf(code) === -1) return;
+            activeLanguage = code;
+            render();
+        }
         
         let searchQuery = '';
         let showAdmins = true;
@@ -371,8 +440,13 @@
         }
 
         async function sendNotification() {
-            if (!notificationTitle.trim()) { showToast(t('err_title_required'), 'warning'); return; }
-            if (!notificationMessage.trim()) { showToast(t('err_message_required'), 'warning'); return; }
+            const missing = ALL_LANGUAGES.filter(code => languageStatus(code) !== 'complete');
+            if (missing.length) {
+                showToast(t('language_incomplete') + ': ' + missing.map(code => LANGUAGE_NAMES[code]).join(', '), 'warning');
+                activeLanguage = missing[0];
+                render();
+                return;
+            }
             if (notificationType === 'specific' && selectedUsers.length === 0) {
                 showToast(t('err_select_user'), 'warning');
                 return;
@@ -382,21 +456,17 @@
             render();
             
             const token = localStorage.getItem('userToken');
-            // Server requires translations object with 6+ language keys
-            const titleText = notificationTitle;
-            const messageText = notificationMessage;
-            const translations = {
-                sw: { title: titleText, message: messageText },
-                en: { title: titleText, message: messageText },
-                fr: { title: titleText, message: messageText },
-                de: { title: titleText, message: messageText },
-                zh: { title: titleText, message: messageText },
-                es: { title: titleText, message: messageText },
-                hi: { title: titleText, message: messageText },
-                ur: { title: titleText, message: messageText }
-            };
+            // Send every language tab so each recipient receives the
+            // notification in their own language (the server wants 6+ keys).
+            const translationsPayload = {};
+            ALL_LANGUAGES.forEach(code => {
+                translationsPayload[code] = {
+                    title: translations[code].title.trim(),
+                    message: translations[code].message.trim()
+                };
+            });
             const body = {
-                translations,
+                translations: translationsPayload,
                 notification_type: notificationType,
                 delivery_method: 'email'
             };
@@ -410,8 +480,8 @@
                 });
                 if (res.ok) {
                     showToast(t('msg_sent'), 'success');
-                    notificationTitle = '';
-                    notificationMessage = '';
+                    translations = emptyTranslations();
+                    activeLanguage = 'sw';
                     notificationType = 'all';
                     selectedUsers = [];
                     await fetchNotifications();
@@ -564,7 +634,7 @@
             }
             
             const recipientCount = getRecipientCount();
-            const isFormValid = notificationTitle.trim() && notificationMessage.trim() && (notificationType !== 'specific' || selectedUsers.length > 0);
+            const isFormValid = completedLanguages() === ALL_LANGUAGES.length && (notificationType !== 'specific' || selectedUsers.length > 0);
             
             container.innerHTML = `
                 <div class="header">
@@ -584,8 +654,21 @@
                 
                 <div class="form-card">
                     <div class="section-title">${t('section_new')}</div>
-                    <div class="input-group"><label class="input-label">${t('label_title')}</label><input type="text" id="notifTitle" placeholder="${t('placeholder_title')}" maxlength="100"><div class="char-count" id="titleCount">${t('char_count_title', { count: notificationTitle.length })}</div></div>
-                    <div class="input-group"><label class="input-label">${t('label_message')}</label><textarea id="notifMessage" placeholder="${t('placeholder_message')}" maxlength="500"></textarea><div class="char-count" id="msgCount">${t('char_count_message', { count: notificationMessage.length })}</div></div>
+                    <div class="language-status">
+                        <div class="language-status-text">${t('language_status', { n: completedLanguages(), total: ALL_LANGUAGES.length })}</div>
+                        <div class="language-dots">${ALL_LANGUAGES.map(code => `<span class="language-dot ${languageStatus(code)} ${code === activeLanguage ? 'active' : ''}"></span>`).join('')}</div>
+                    </div>
+                    <div class="language-tabs" role="tablist">
+                        ${ALL_LANGUAGES.map(code => `
+                            <button type="button" class="language-tab ${code === activeLanguage ? 'active' : ''} ${languageStatus(code)}" role="tab" aria-selected="${code === activeLanguage}" onclick="setActiveLanguage('${code}')">
+                                <span class="language-tab-flag">${LANGUAGE_FLAGS[code]}</span>
+                                <span class="language-tab-name">${LANGUAGE_NAMES[code]}</span>
+                                <span class="language-tab-check" style="visibility:${languageStatus(code) === 'complete' ? 'visible' : 'hidden'}">✓</span>
+                            </button>
+                        `).join('')}
+                    </div>
+                    <div class="input-group"><label class="input-label">${t('label_title')} · ${LANGUAGE_NAMES[activeLanguage]}</label><input type="text" id="notifTitle" placeholder="${t('placeholder_title')}" maxlength="100"><div class="char-count" id="titleCount">${t('char_count_title', { count: currentTranslation().title.length })}</div></div>
+                    <div class="input-group"><label class="input-label">${t('label_message')} · ${LANGUAGE_NAMES[activeLanguage]}</label><textarea id="notifMessage" placeholder="${t('placeholder_message')}" maxlength="500"></textarea><div class="char-count" id="msgCount">${t('char_count_message', { count: currentTranslation().message.length })}</div></div>
                     <div class="input-group"><label class="input-label">${t('label_recipients')}</label>
                         <div class="type-selector">
                             <div class="type-btn ${notificationType === 'all' ? 'active' : ''}" onclick="setType('all')">${t('type_all_icon')}</div>
@@ -636,36 +719,49 @@
             // are updated in place instead.
             const updateSendBtn = () => {
                 const btn = document.getElementById('sendNotifBtn');
-                if (!btn) return;
-                const valid = notificationTitle.trim() && notificationMessage.trim() && (notificationType !== 'specific' || selectedUsers.length > 0);
-                btn.disabled = !valid || sending;
-                btn.classList.toggle('disabled', !valid || sending);
+                const valid = completedLanguages() === ALL_LANGUAGES.length && (notificationType !== 'specific' || selectedUsers.length > 0);
+                if (btn) {
+                    btn.disabled = !valid || sending;
+                    btn.classList.toggle('disabled', !valid || sending);
+                }
+                // Live language progress while typing, without re-rendering
+                // the form (which would throw the cursor out mid-word).
+                const statusText = document.querySelector('.language-status-text');
+                if (statusText) statusText.innerText = t('language_status', { n: completedLanguages(), total: ALL_LANGUAGES.length });
+                const dots = document.querySelector('.language-dots');
+                if (dots) dots.innerHTML = ALL_LANGUAGES.map(code => `<span class="language-dot ${languageStatus(code)} ${code === activeLanguage ? 'active' : ''}"></span>`).join('');
+                const activeTab = document.querySelector('.language-tab.active');
+                if (activeTab) {
+                    activeTab.classList.toggle('complete', languageStatus(activeLanguage) === 'complete');
+                    activeTab.classList.toggle('partial', languageStatus(activeLanguage) === 'partial');
+                    const check = activeTab.querySelector('.language-tab-check');
+                    if (check) check.style.visibility = languageStatus(activeLanguage) === 'complete' ? 'visible' : 'hidden';
+                }
             };
             const titleInput = document.getElementById('notifTitle');
             const msgInput = document.getElementById('notifMessage');
             if (titleInput) {
-                titleInput.value = notificationTitle;
+                titleInput.value = currentTranslation().title;
                 titleInput.addEventListener('input', (e) => {
-                    notificationTitle = e.target.value;
+                    currentTranslation().title = e.target.value;
                     const cc = document.getElementById('titleCount');
-                    if (cc) cc.innerText = t('char_count_title', { count: notificationTitle.length });
+                    if (cc) cc.innerText = t('char_count_title', { count: e.target.value.length });
                     updateSendBtn();
                 });
-                document.getElementById('titleCount').innerText = t('char_count_title', { count: notificationTitle.length });
             }
             if (msgInput) {
-                msgInput.value = notificationMessage;
+                msgInput.value = currentTranslation().message;
                 msgInput.addEventListener('input', (e) => {
-                    notificationMessage = e.target.value;
+                    currentTranslation().message = e.target.value;
                     const cc = document.getElementById('msgCount');
-                    if (cc) cc.innerText = t('char_count_message', { count: notificationMessage.length });
+                    if (cc) cc.innerText = t('char_count_message', { count: e.target.value.length });
                     updateSendBtn();
                 });
-                document.getElementById('msgCount').innerText = t('char_count_message', { count: notificationMessage.length });
             }
         }
 
         window.setType = (type) => { notificationType = type; if (type !== 'specific') selectedUsers = []; render(); };
+        window.setActiveLanguage = setActiveLanguage;
         window.sendNotification = sendNotification;
         window.openRecipientModal = openRecipientModal;
         window.closeRecipientModal = closeRecipientModal;

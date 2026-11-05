@@ -258,6 +258,9 @@
       "system_admin_notify": {
         "page_title": "Notisi - DukaMkononi System Admin",
         "loading": "Inapakia...",
+        "language_status": "Lugha: {n}/{total} imekamilika",
+        "language_incomplete": "Lugha Hazijakamilika",
+        "language_incomplete_msg": "Tafadhali jaza kichwa na ujumbe kwa lugha zifuatazo:",
         "modal_select_recipients": "Chagua Wapokeaji",
         "close_x": "✖",
         "search_placeholder": "Tafuta watumiaji...",
@@ -2997,6 +3000,9 @@
       "system_admin_notify": {
         "page_title": "Notifications - DukaMkononi System Admin",
         "loading": "Loading...",
+        "language_status": "Languages: {n}/{total} completed",
+        "language_incomplete": "Languages Incomplete",
+        "language_incomplete_msg": "Please fill in the title and message for the following languages:",
         "modal_select_recipients": "Select Recipients",
         "close_x": "✖",
         "search_placeholder": "Search users...",
@@ -5736,6 +5742,9 @@
       "system_admin_notify": {
         "page_title": "Notificaciones - Administrador del Sistema de DukaMkononi",
         "loading": "Cargando...",
+        "language_status": "Idiomas: {n}/{total} completados",
+        "language_incomplete": "Idiomas Incompletos",
+        "language_incomplete_msg": "Por favor complete el título y el mensaje para los siguientes idiomas:",
         "modal_select_recipients": "Seleccionar Destinatarios",
         "close_x": "✖",
         "search_placeholder": "Buscar usuarios...",
@@ -8475,6 +8484,9 @@
       "system_admin_notify": {
         "page_title": "Notifications - Administrateur Système DukaMkononi",
         "loading": "Chargement...",
+        "language_status": "Langues: {n}/{total} complétées",
+        "language_incomplete": "Langues Incomplètes",
+        "language_incomplete_msg": "Veuillez remplir le titre et le message pour les langues suivantes:",
         "modal_select_recipients": "Sélectionner les Destinataires",
         "close_x": "✖",
         "search_placeholder": "Rechercher des utilisateurs...",
@@ -11214,6 +11226,9 @@
       "system_admin_notify": {
         "page_title": "通知 - DukaMkononi 系统管理员",
         "loading": "正在加载……",
+        "language_status": "语言：{n}/{total}已完成",
+        "language_incomplete": "语言不完整",
+        "language_incomplete_msg": "请为以下语言填写标题和消息：",
         "modal_select_recipients": "选择收件人",
         "close_x": "✖",
         "search_placeholder": "搜索用户……",
@@ -13953,6 +13968,9 @@
       "system_admin_notify": {
         "page_title": "सूचनाएँ - DukaMkononi सिस्टम प्रशासक",
         "loading": "लोड हो रहा है...",
+        "language_status": "भाषाएँ: {n}/{total} पूरी हुईं",
+        "language_incomplete": "भाषाएँ अपूर्ण",
+        "language_incomplete_msg": "कृपया निम्नलिखित भाषाओं के लिए शीर्षक और संदेश भरें:",
         "modal_select_recipients": "प्राप्तकर्ता चुनें",
         "close_x": "✖",
         "search_placeholder": "उपयोगकर्ता खोजें...",
@@ -16692,6 +16710,9 @@
       "system_admin_notify": {
         "page_title": "اطلاعات - DukaMkononi سسٹم منتظم",
         "loading": "لوڈ ہو رہا ہے...",
+        "language_status": "زبانیں: {n}/{total} مکمل ہوئیں",
+        "language_incomplete": "زبانیں نامکمل",
+        "language_incomplete_msg": "براہ کرم درج ذیل زبانوں کے لیے عنوان اور پیغام پُر کریں:",
         "modal_select_recipients": "وصول کنندگان منتخب کریں",
         "close_x": "✖",
         "search_placeholder": "صارفین تلاش کریں...",
@@ -19431,6 +19452,9 @@
       "system_admin_notify": {
         "page_title": "Benachrichtigungen - DukaMkononi Systemadministrator",
         "loading": "Wird geladen...",
+        "language_status": "Sprachen: {n}/{total} abgeschlossen",
+        "language_incomplete": "Sprachen Unvollständig",
+        "language_incomplete_msg": "Bitte füllen Sie den Titel und die Nachricht für die folgenden Sprachen aus:",
         "modal_select_recipients": "Empfänger Auswählen",
         "close_x": "✖",
         "search_placeholder": "Benutzer suchen...",
