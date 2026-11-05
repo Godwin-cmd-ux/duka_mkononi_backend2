@@ -331,7 +331,7 @@ class ServiceController extends BaseController
         if (!is_array($payload) && $request->input('product_id')) {
             $payload = [[
                 'product_id' => $request->input('product_id'),
-                'required_quantity' => $request->input('required_quantity', 1),
+                'required_quantity' => $request->input('required_quantity', 0),
             ]];
         }
 
@@ -567,7 +567,7 @@ class ServiceController extends BaseController
                 return ['error' => 'Bidhaa iliyochaguliwa si sahihi'];
             }
 
-            $quantity = $row['required_quantity'] ?? $row['quantity'] ?? 1;
+            $quantity = $row['required_quantity'] ?? $row['quantity'] ?? 0;
 
             if (!is_numeric($quantity) || (float) $quantity < 0 || (float) $quantity > 1000000) {
                 return ['error' => 'Kiasi kinachohitajika si sahihi (kianze 0)'];

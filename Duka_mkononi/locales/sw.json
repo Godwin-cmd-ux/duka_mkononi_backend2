@@ -2540,6 +2540,8 @@
     "check_missing": "Jaza sehemu zilizoonyeshwa kama zinazokosekana."
   },
   "huduma": {
+    "tab_products": "Bidhaa",
+    "tab_services": "Huduma",
     "title": "Huduma",
     "new_service": "Huduma Mpya",
     "existing_services": "Huduma Zilizopo",

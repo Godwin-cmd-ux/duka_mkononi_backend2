@@ -2548,6 +2548,8 @@
     "check_missing": "جو فیلڈز غائب بتائی گئی ہیں انہیں بھریں۔"
   },
   "huduma": {
+    "tab_products": "مصنوعات",
+    "tab_services": "خدمات",
     "title": "Services",
     "new_service": "New Service",
     "existing_services": "Existing Services",

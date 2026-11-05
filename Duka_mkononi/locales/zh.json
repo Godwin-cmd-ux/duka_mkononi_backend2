@@ -2539,6 +2539,8 @@
     "check_missing": "请填写标记为缺失的字段。"
   },
   "huduma": {
+    "tab_products": "商品",
+    "tab_services": "服务",
     "title": "Services",
     "new_service": "New Service",
     "existing_services": "Existing Services",

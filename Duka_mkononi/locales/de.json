@@ -2540,6 +2540,8 @@
     "check_missing": "Fülle die als fehlend markierten Felder aus."
   },
   "huduma": {
+    "tab_products": "Produkte",
+    "tab_services": "Dienstleistungen",
     "title": "Services",
     "new_service": "New Service",
     "existing_services": "Existing Services",

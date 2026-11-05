@@ -1556,34 +1556,22 @@ export default function BidhaaMpyaScreen() {
             </Text>
           </View>
 
-          {/* Huduma (services): its own hidden route so this product form is
-              untouched. Products stay independently sellable. */}
-          <TouchableOpacity
-            style={{
-              backgroundColor: tc.card,
-              borderRadius: 16,
-              borderWidth: 1,
-              borderColor: tc.line,
-              padding: 14,
-              marginBottom: 14,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 12,
-            }}
-            onPress={() => router.push('/msimamizi/huduma' as any)}
-            activeOpacity={0.85}
-          >
-            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: `${tc.primary}18`, alignItems: 'center', justifyContent: 'center' }}>
-              <Ionicons name="cut-outline" size={22} color={tc.primary} />
+          {/* Top-level tabs: Bidhaa (this screen, active by default) and
+              Huduma (its own hidden route, so the product form is untouched). */}
+          <View style={{ flexDirection: 'row', backgroundColor: tc.soft, borderRadius: 16, padding: 5, marginBottom: 14, gap: 6 }}>
+            <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 11, borderRadius: 12, backgroundColor: tc.card }}>
+              <Ionicons name="cube-outline" size={16} color={tc.primary} />
+              <Text style={{ fontSize: 14, fontWeight: '800', color: tc.primary }}>{t('huduma.tab_products')}</Text>
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 15, fontWeight: '800', color: tc.ink }}>{t('huduma.title')}</Text>
-              <Text style={{ fontSize: 12, color: tc.muted, marginTop: 2 }}>
-                {t('huduma.new_service')} · {t('huduma.existing_services')}
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={tc.muted2} />
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 11, borderRadius: 12 }}
+              onPress={() => router.push('/msimamizi/huduma' as any)}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="cut-outline" size={16} color={tc.muted} />
+              <Text style={{ fontSize: 14, fontWeight: '700', color: tc.muted }}>{t('huduma.tab_services')}</Text>
+            </TouchableOpacity>
+          </View>
 
           {/* Form Section */}
           <View style={styles.formContainer}>

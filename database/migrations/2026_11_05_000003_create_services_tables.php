@@ -40,7 +40,7 @@ return new class extends Migration
                 $table->uuid('id')->primary();
                 $table->uuid('service_id');
                 $table->uuid('product_id');
-                $table->decimal('required_quantity', 14, 3)->default(1);
+                $table->decimal('required_quantity', 14, 3)->default(0);
                 $table->timestamps();
 
                 $table->unique(['service_id', 'product_id']);

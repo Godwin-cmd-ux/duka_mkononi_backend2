@@ -2548,6 +2548,8 @@
     "check_missing": "Remplissez les champs signalés comme manquants."
   },
   "huduma": {
+    "tab_products": "Produits",
+    "tab_services": "Services",
     "title": "Services",
     "new_service": "New Service",
     "existing_services": "Existing Services",

@@ -2801,6 +2801,8 @@
         "check_missing": "Jaza sehemu zilizoonyeshwa kama zinazokosekana."
       },
       "msimamizi_huduma": {
+        "tab_products": "Bidhaa",
+        "tab_services": "Huduma",
         "eyebrow": "Bizampia · Huduma",
         "title": "Usimamizi wa Huduma",
         "subtitle": "Unda huduma na chagua bidhaa zinazotumika kila huduma inapotolewa. Stoo itapunguzwa kiotomatiki mauzo yanapofanyika.",
@@ -5648,6 +5650,8 @@
         "check_missing": "Fill in the fields marked as missing."
       },
       "msimamizi_huduma": {
+        "tab_products": "Products",
+        "tab_services": "Services",
         "eyebrow": "Bizampia · Services",
         "title": "Service Management",
         "subtitle": "Create services and choose the products each service consumes. Stock is deducted automatically when a service is sold.",
@@ -8495,6 +8499,8 @@
         "check_missing": "Completa los campos marcados como faltantes."
       },
       "msimamizi_huduma": {
+        "tab_products": "Productos",
+        "tab_services": "Servicios",
         "eyebrow": "Bizampia · Services",
         "title": "Service Management",
         "subtitle": "Create services and choose the products each service consumes. Stock is deducted automatically when a service is sold.",
@@ -11342,6 +11348,8 @@
         "check_missing": "Remplissez les champs signalés comme manquants."
       },
       "msimamizi_huduma": {
+        "tab_products": "Produits",
+        "tab_services": "Services",
         "eyebrow": "Bizampia · Services",
         "title": "Service Management",
         "subtitle": "Create services and choose the products each service consumes. Stock is deducted automatically when a service is sold.",
@@ -14189,6 +14197,8 @@
         "check_missing": "请填写标记为缺失的字段。"
       },
       "msimamizi_huduma": {
+        "tab_products": "商品",
+        "tab_services": "服务",
         "eyebrow": "Bizampia · Services",
         "title": "Service Management",
         "subtitle": "Create services and choose the products each service consumes. Stock is deducted automatically when a service is sold.",
@@ -17036,6 +17046,8 @@
         "check_missing": "छूटे हुए बताए गए फ़ील्ड भरें।"
       },
       "msimamizi_huduma": {
+        "tab_products": "उत्पाद",
+        "tab_services": "सेवाएँ",
         "eyebrow": "Bizampia · Services",
         "title": "Service Management",
         "subtitle": "Create services and choose the products each service consumes. Stock is deducted automatically when a service is sold.",
@@ -19883,6 +19895,8 @@
         "check_missing": "جو فیلڈز غائب بتائی گئی ہیں انہیں بھریں۔"
       },
       "msimamizi_huduma": {
+        "tab_products": "مصنوعات",
+        "tab_services": "خدمات",
         "eyebrow": "Bizampia · Services",
         "title": "Service Management",
         "subtitle": "Create services and choose the products each service consumes. Stock is deducted automatically when a service is sold.",
@@ -22730,6 +22744,8 @@
         "check_missing": "Fülle die als fehlend markierten Felder aus."
       },
       "msimamizi_huduma": {
+        "tab_products": "Produkte",
+        "tab_services": "Dienstleistungen",
         "eyebrow": "Bizampia · Services",
         "title": "Service Management",
         "subtitle": "Create services and choose the products each service consumes. Stock is deducted automatically when a service is sold.",

@@ -387,7 +387,7 @@ CREATE TABLE public.service_consumables (
     id UUID PRIMARY KEY,
     service_id UUID,
     product_id UUID,
-    required_quantity NUMERIC(14, 3) DEFAULT 1,
+    required_quantity NUMERIC(14, 3) DEFAULT 0,
     created_at TIMESTAMP,
     updated_at TIMESTAMP
 );

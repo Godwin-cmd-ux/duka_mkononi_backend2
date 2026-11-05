@@ -60,7 +60,7 @@ export default function HudumaScreen() {
 
   const [addFor, setAddFor] = useState<Service | null>(null);
   const [addProductId, setAddProductId] = useState('');
-  const [addQty, setAddQty] = useState('1');
+  const [addQty, setAddQty] = useState('0');
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -110,7 +110,7 @@ export default function HudumaScreen() {
       if (next[productId] !== undefined) {
         delete next[productId];
       } else {
-        next[productId] = 1;
+        next[productId] = 0;
       }
       return next;
     });
@@ -290,7 +290,7 @@ export default function HudumaScreen() {
 
     setAddFor(null);
     setAddProductId('');
-    setAddQty('1');
+    setAddQty('0');
     await refresh();
   };
 
@@ -312,6 +312,22 @@ export default function HudumaScreen() {
             </TouchableOpacity>
             <Text style={styles.headerTitle}>✂️ {t('huduma.title')}</Text>
             <LogoutButton iconOnly />
+          </View>
+
+          {/* Top-level tabs: Bidhaa (this screen) and Huduma (active here). */}
+          <View style={{ flexDirection: 'row', backgroundColor: tc.soft, borderRadius: 16, padding: 5, marginBottom: 14, gap: 6 }}>
+            <TouchableOpacity
+              style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 11, borderRadius: 12 }}
+              onPress={() => router.back()}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="cube-outline" size={16} color={tc.muted} />
+              <Text style={{ fontSize: 14, fontWeight: '700', color: tc.muted }}>{t('huduma.tab_products')}</Text>
+            </TouchableOpacity>
+            <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 11, borderRadius: 12, backgroundColor: tc.card }}>
+              <Ionicons name="cut-outline" size={16} color={tc.primary} />
+              <Text style={{ fontSize: 14, fontWeight: '800', color: tc.primary }}>{t('huduma.tab_services')}</Text>
+            </View>
           </View>
 
           <View style={styles.tabs}>

@@ -2548,6 +2548,8 @@
     "check_missing": "छूटे हुए बताए गए फ़ील्ड भरें।"
   },
   "huduma": {
+    "tab_products": "उत्पाद",
+    "tab_services": "सेवाएँ",
     "title": "Services",
     "new_service": "New Service",
     "existing_services": "Existing Services",

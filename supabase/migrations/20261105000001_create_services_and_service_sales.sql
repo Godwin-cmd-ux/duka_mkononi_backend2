@@ -97,7 +97,7 @@ create table if not exists public.service_consumables (
     id                 uuid primary key default gen_random_uuid(),
     service_id         uuid not null references public.services (id) on delete cascade,
     product_id         uuid not null references public.products (id) on delete restrict,
-    required_quantity  numeric(14, 3) not null default 1,
+    required_quantity  numeric(14, 3) not null default 0,
     created_at         timestamptz not null default now(),
     updated_at         timestamptz not null default now(),
     constraint service_consumables_quantity_check check (required_quantity >= 0),
