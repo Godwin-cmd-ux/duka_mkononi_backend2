@@ -7,6 +7,8 @@ use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
+use App\Models\ServiceSale;
+use App\Models\ServiceSaleItem;
 use App\Models\User;
 use App\Models\UserLog;
 use App\Services\BusinessResolver;
@@ -18,6 +20,72 @@ class AdminController extends BaseController
     private function jsIso(): string
     {
         return gmdate('Y-m-d\TH:i:s.v\Z');
+    }
+
+    /**
+     * The service half of the sales report.
+     *
+     * Kept separate from product sales on purpose: the consumables used by a
+     * service are inventory consumption, not product sales, so folding them
+     * into sale_items would double-count both revenue and cost. Every row here
+     * carries its own snapshotted revenue/cost/profit, which is why historical
+     * service profit never changes when a product's buying price changes later.
+     *
+     * @return array{sales: list<array>, summary: array{count:int,revenue:float,cost:float,profit:float}}
+     */
+    private function serviceSalesForReport(?string $businessId, string $dateFrom, string $dateTo): array
+    {
+        $empty = ['sales' => [], 'summary' => ['count' => 0, 'revenue' => 0.0, 'cost' => 0.0, 'profit' => 0.0]];
+
+        if (!$businessId) {
+            return $empty;
+        }
+
+        $query = ServiceSale::where('business_id', $businessId);
+
+        if ($dateFrom !== '') {
+            $query->where('sale_date', '>=', $dateFrom);
+        }
+        if ($dateTo !== '') {
+            $query->where('sale_date', '<=', $dateTo);
+        }
+
+        $sales = $query->orderByDesc('sale_date')->get()->toArray();
+
+        if ($sales === []) {
+            return $empty;
+        }
+
+        $ids = array_column($sales, 'id');
+        $itemsBySale = [];
+        if ($ids) {
+            foreach (ServiceSaleItem::whereIn('service_sale_id', $ids)->get() as $item) {
+                $itemsBySale[(string) $item->service_sale_id][] = $item->toArray();
+            }
+        }
+
+        $revenue = 0.0;
+        $cost = 0.0;
+        $profit = 0.0;
+
+        foreach ($sales as &$sale) {
+            $sale['items'] = $itemsBySale[(string) $sale['id']] ?? [];
+            $sale['transaction_type'] = 'service';
+            $revenue += (float) ($sale['selling_price'] ?? 0);
+            $cost += (float) ($sale['total_cost'] ?? 0);
+            $profit += (float) ($sale['profit'] ?? 0);
+        }
+        unset($sale);
+
+        return [
+            'sales' => array_values($sales),
+            'summary' => [
+                'count' => count($sales),
+                'revenue' => round($revenue, 2),
+                'cost' => round($cost, 2),
+                'profit' => round($profit, 2),
+            ],
+        ];
     }
 
     private function fiveMinutesAgo(): string
@@ -228,6 +296,10 @@ class AdminController extends BaseController
             // empty the whole report.
             $salesQuery = Sale::query();
             $callerBusinessId = $this->businessId($request);
+            // The business whose SERVICE sales belong in this report. Set by
+            // the same branches that scope the product query, so both halves of
+            // the report always describe the same shop.
+            $scopeBusinessId = null;
             // Platform-wide scope is OPT-IN: the msimamizi module must look
             // exactly the same for a promoted super admin as for any business
             // admin (their sellers/products/sales stay their own business).
@@ -239,13 +311,16 @@ class AdminController extends BaseController
                 $businessNameFilter = trim((string) $request->query('business_name', ''));
 
                 if (preg_match('/^[0-9a-f-]{36}$/i', $businessIdFilter)) {
+                    $scopeBusinessId = $businessIdFilter;
                     $salesQuery->whereIn('seller_id', BusinessResolver::memberIds($businessIdFilter, ['admin', 'seller'], 'approved')
                         ?: ['00000000-0000-0000-0000-000000000000']);
                 } elseif ($businessNameFilter !== '') {
-                    $salesQuery->whereIn('seller_id', BusinessResolver::memberIds(BusinessResolver::findByName($businessNameFilter)?->id ?? '', ['admin', 'seller'], 'approved')
+                    $scopeBusinessId = BusinessResolver::findByName($businessNameFilter)?->id;
+                    $salesQuery->whereIn('seller_id', BusinessResolver::memberIds($scopeBusinessId ?? '', ['admin', 'seller'], 'approved')
                         ?: ['00000000-0000-0000-0000-000000000000']);
                 }
             } elseif ($callerBusinessId) {
+                $scopeBusinessId = $callerBusinessId;
                 $salesQuery->whereIn('seller_id', BusinessResolver::memberIds($callerBusinessId, ['admin', 'seller'], 'approved')
                     ?: ['00000000-0000-0000-0000-000000000000']);
             } else {
@@ -269,6 +344,13 @@ class AdminController extends BaseController
             // slim=1: skip the per-sale/per-item relation embedding (users,
             // customers, full product objects per item) — report pages map
             // names themselves; only the item columns they use are fetched.
+            // Service sales for the same business and date window. They are
+            // reported separately from product sales (never merged into a
+            // product line: a product consumed by a service is inventory
+            // consumption, not an independent sale) but included in the same
+            // response so every report reads one consistent snapshot.
+            $serviceReport = $this->serviceSalesForReport($scopeBusinessId, $dateFrom, $dateTo);
+
             if ($request->boolean('slim')) {
                 $saleIds = array_column($sales, 'id');
                 $itemsBySaleId = [];
@@ -280,11 +362,37 @@ class AdminController extends BaseController
 
                 $result = array_map(function ($sale) use ($itemsBySaleId) {
                     $sale['sale_items'] = $itemsBySaleId[$sale['id']] ?? [];
+                    $sale['transaction_type'] = 'product';
                     return $sale;
                 }, $sales);
 
-                $this->log($userId, 'ADMIN_SALES_VIEW', '/api/admin/sales', ['count' => count($result), 'slim' => true], $this->ip($request), 'success');
-                return $this->json(['sales' => array_values($result)]);
+                $productRevenue = 0.0;
+                foreach ($sales as $sale) {
+                    $productRevenue += (float) ($sale['total_amount'] ?? 0);
+                }
+
+                $this->log($userId, 'ADMIN_SALES_VIEW', '/api/admin/sales', [
+                    'count' => count($result),
+                    'service_count' => $serviceReport['summary']['count'],
+                    'slim' => true,
+                ], $this->ip($request), 'success');
+
+                return $this->json([
+                    'sales' => array_values($result),
+                    'service_sales' => $serviceReport['sales'],
+                    'service_sales_summary' => $serviceReport['summary'],
+                    // Revenue = products + services. Cost/profit for products
+                    // are computed from per-line buying prices by the report
+                    // page; the service half is authoritative here because it
+                    // was snapshotted at sale time.
+                    'totals' => [
+                        'product_revenue' => round($productRevenue, 2),
+                        'service_revenue' => $serviceReport['summary']['revenue'],
+                        'service_cost' => $serviceReport['summary']['cost'],
+                        'service_profit' => $serviceReport['summary']['profit'],
+                        'revenue' => round($productRevenue + $serviceReport['summary']['revenue'], 2),
+                    ],
+                ]);
             }
 
             $sellerIds = array_values(array_unique(array_filter(array_map(fn($s) => $s['seller_id'] ?? null, $sales))));
@@ -326,6 +434,7 @@ class AdminController extends BaseController
             }
 
             $result = array_map(function ($sale) use ($usersById, $itemsBySaleId, $productsById, $customersById) {
+                $sale['transaction_type'] = 'product';
                 $sale['users'] = isset($sale['seller_id']) && isset($usersById[$sale['seller_id']]) ? $usersById[$sale['seller_id']] : null;
                 $sale['customers'] = isset($sale['customer_id']) && isset($customersById[$sale['customer_id']]) ? $customersById[$sale['customer_id']] : null;
                 $saleItems = [];

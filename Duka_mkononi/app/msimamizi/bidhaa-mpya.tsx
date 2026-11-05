@@ -1556,6 +1556,35 @@ export default function BidhaaMpyaScreen() {
             </Text>
           </View>
 
+          {/* Huduma (services): its own hidden route so this product form is
+              untouched. Products stay independently sellable. */}
+          <TouchableOpacity
+            style={{
+              backgroundColor: tc.card,
+              borderRadius: 16,
+              borderWidth: 1,
+              borderColor: tc.line,
+              padding: 14,
+              marginBottom: 14,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 12,
+            }}
+            onPress={() => router.push('/msimamizi/huduma' as any)}
+            activeOpacity={0.85}
+          >
+            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: `${tc.primary}18`, alignItems: 'center', justifyContent: 'center' }}>
+              <Ionicons name="cut-outline" size={22} color={tc.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 15, fontWeight: '800', color: tc.ink }}>{t('huduma.title')}</Text>
+              <Text style={{ fontSize: 12, color: tc.muted, marginTop: 2 }}>
+                {t('huduma.new_service')} · {t('huduma.existing_services')}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={tc.muted2} />
+          </TouchableOpacity>
+
           {/* Form Section */}
           <View style={styles.formContainer}>
 

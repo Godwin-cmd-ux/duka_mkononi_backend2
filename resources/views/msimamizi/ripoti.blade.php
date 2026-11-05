@@ -381,6 +381,9 @@
         let businessStats = null;
         let allProducts = [], soldProducts = [], unsoldProducts = [];
         let customers = [], sales = [], sellers = [];
+        // Service sales are reported alongside product sales but never inside
+        // the product rows: a consumable is inventory consumption, not a sale.
+        let serviceSales = [];
         let loading = true, refreshing = false;
         let activeReport = 'overview';
         let activeProductTab = 'sold';
@@ -484,6 +487,44 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
 
         function sumProfit(list) {
             return list.reduce((s, sale) => s + (typeof sale.profit === 'number' ? sale.profit : 0), 0);
+        }
+
+        // Normalise a service_sales row to the shape the report rows use. The
+        // financial figures are the server's sale-time snapshots, so a later
+        // buying-price change can never rewrite this report.
+        function normalizeServiceSale(sale) {
+            return {
+                id: sale.id,
+                type: 'service',
+                product_id: 'service:' + (sale.service_id || sale.id),
+                product_name: sale.service_name || '',
+                service_name: sale.service_name || '',
+                quantity: Number(sale.service_quantity || 1),
+                unit_price: Number(sale.selling_price || 0),
+                total_amount: Number(sale.selling_price || 0),
+                sale_date: (sale.sale_date || sale.created_at || '').split('T')[0],
+                customer_name: '',
+                seller_name: sale.seller_name || '',
+                seller_id: sale.seller_id || null,
+                cost_price: null,
+                service_cost: Number(sale.total_cost || 0),
+                profit: Number(sale.profit || 0),
+                items: sale.items || []
+            };
+        }
+
+        function serviceTotals(list, date) {
+            return (list || []).reduce((acc, s) => {
+                acc.revenue += Number(s.selling_price || 0);
+                acc.cost += Number(s.total_cost || 0);
+                acc.profit += Number(s.profit || 0);
+                acc.count += 1;
+                if (date && s.sale_date === date) {
+                    acc.todayRevenue += Number(s.selling_price || 0);
+                    acc.todayProfit += Number(s.profit || 0);
+                }
+                return acc;
+            }, { revenue: 0, cost: 0, profit: 0, count: 0, todayRevenue: 0, todayProfit: 0 });
         }
 
         // The buying price (products.price) is NOT NULL, so this is normally
@@ -595,6 +636,10 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 });
                 allSales = applyProfit(allSales);
                 sales = allSales;
+
+                // Huduma: same window, same business, fetched with the product
+                // report so both halves always describe the same snapshot.
+                serviceSales = (data.service_sales || []).map(normalizeServiceSale);
             }
             
             // Process products
@@ -613,15 +658,19 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             soldProducts = allProducts.filter(p => p.has_sales);
             unsoldProducts = allProducts.filter(p => !p.has_sales);
             
-            // Stats
-            const totalSales = sales.reduce((s, sale) => s + sale.total_amount, 0);
-            const totalProfit = sumProfit(sales);
+            // Stats. Revenue = products + services; profit = product profit +
+            // (service revenue - service consumable cost). The service cost is
+            // already inside the service profit snapshot, so it is added to the
+            // cost base exactly once and never double-counted.
             const today = new Date().toISOString().split('T')[0];
-            const todaySales = sales.filter(s => s.sale_date === today).reduce((s, sale) => s + sale.total_amount, 0);
-            const todayProfit = sumProfit(sales.filter(s => s.sale_date === today));
-            const totalCost = sales.reduce((s, sale) => s + (typeof sale.cost_price === 'number' ? sale.cost_price * sale.quantity : 0), 0);
+            const svc = serviceTotals(serviceSales, today);
+            const totalSales = sales.reduce((s, sale) => s + sale.total_amount, 0) + svc.revenue;
+            const totalProfit = sumProfit(sales) + svc.profit;
+            const todaySales = sales.filter(s => s.sale_date === today).reduce((s, sale) => s + sale.total_amount, 0) + svc.todayRevenue;
+            const todayProfit = sumProfit(sales.filter(s => s.sale_date === today)) + svc.todayProfit;
+            const totalCost = sales.reduce((s, sale) => s + (typeof sale.cost_price === 'number' ? sale.cost_price * sale.quantity : 0), 0) + svc.cost;
             const avgMargin = totalCost > 0 ? (totalProfit / totalCost) * 100 : 0;
-            businessStats = { totalSales, totalProfit, totalCustomers: customers.length + unknownCustomerCount(sales), totalProducts: allProducts.length, totalSellers: sellers.length, todaySales, todayProfit, averageProfitMargin: avgMargin, unknownCostSales: unknownCostCount(sales), unknownCostSalesToday: unknownCostCount(sales.filter(s => s.sale_date === today)) };
+            businessStats = { totalSales, totalProfit, totalCustomers: customers.length + unknownCustomerCount(sales), totalProducts: allProducts.length, totalSellers: sellers.length, todaySales, todayProfit, averageProfitMargin: avgMargin, unknownCostSales: unknownCostCount(sales), unknownCostSalesToday: unknownCostCount(sales.filter(s => s.sale_date === today)), serviceRevenue: svc.revenue, serviceCost: svc.cost, serviceProfit: svc.profit, serviceSalesCount: svc.count };
         }
 
         async function fetchSellerData(headers) {
@@ -659,6 +708,15 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 allSales = applyProfit(allSales);
                 sales = allSales;
             }
+
+            // Huduma: a seller's own service sales are part of their report too.
+            try {
+                const serviceRes = await fetch(`${API_BASE_URL}/api/service-sales/my`, { headers });
+                if (serviceRes.ok) {
+                    const serviceJson = await serviceRes.json();
+                    serviceSales = (Array.isArray(serviceJson) ? serviceJson : []).map(normalizeServiceSale);
+                }
+            } catch (e) { serviceSales = []; }
             // Process products
             const productSalesMap = new Map();
             sales.forEach(sale => {
@@ -680,15 +738,16 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 const data = await customersRes.json();
                 customers = (Array.isArray(data) ? data : []).map(c => ({ ...c, total_purchases: c.total_purchases / 2, purchases_count: Math.round(c.purchases_count / 2) }));
             }
-            // Stats
-            const totalSales = sales.reduce((s, sale) => s + sale.total_amount, 0);
-            const totalProfit = sumProfit(sales);
+            // Stats (products + services, see the admin branch above).
             const today = new Date().toISOString().split('T')[0];
-            const todaySales = sales.filter(s => s.sale_date === today).reduce((s, sale) => s + sale.total_amount, 0);
-            const todayProfit = sumProfit(sales.filter(s => s.sale_date === today));
-            const totalCost = sales.reduce((s, sale) => s + (typeof sale.cost_price === 'number' ? sale.cost_price * sale.quantity : 0), 0);
+            const svc = serviceTotals(serviceSales, today);
+            const totalSales = sales.reduce((s, sale) => s + sale.total_amount, 0) + svc.revenue;
+            const totalProfit = sumProfit(sales) + svc.profit;
+            const todaySales = sales.filter(s => s.sale_date === today).reduce((s, sale) => s + sale.total_amount, 0) + svc.todayRevenue;
+            const todayProfit = sumProfit(sales.filter(s => s.sale_date === today)) + svc.todayProfit;
+            const totalCost = sales.reduce((s, sale) => s + (typeof sale.cost_price === 'number' ? sale.cost_price * sale.quantity : 0), 0) + svc.cost;
             const avgMargin = totalCost > 0 ? (totalProfit / totalCost) * 100 : 0;
-            businessStats = { totalSales, totalProfit, totalCustomers: customers.length + unknownCustomerCount(sales), totalProducts: allProducts.length, totalSellers: 1, todaySales, todayProfit, averageProfitMargin: avgMargin, unknownCostSales: unknownCostCount(sales), unknownCostSalesToday: unknownCostCount(sales.filter(s => s.sale_date === today)) };
+            businessStats = { totalSales, totalProfit, totalCustomers: customers.length + unknownCustomerCount(sales), totalProducts: allProducts.length, totalSellers: 1, todaySales, todayProfit, averageProfitMargin: avgMargin, unknownCostSales: unknownCostCount(sales), unknownCostSalesToday: unknownCostCount(sales.filter(s => s.sale_date === today)), serviceRevenue: svc.revenue, serviceCost: svc.cost, serviceProfit: svc.profit, serviceSalesCount: svc.count };
             sellers = [{ id: userData.id, full_name: userData.businessName, email: userData.email }];
         }
 
@@ -822,6 +881,25 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     <div class="extra-stat">${ic('report', 13)} ${t('msimamizi_ripoti.average_margin', { percent: businessStats.averageProfitMargin.toFixed(1) })}</div>
                 </div>
                 ` : ''}
+                ${serviceSales.length > 0 ? `
+                <div class="section"><div class="section-title">${t('msimamizi_ripoti.service_sales')}</div>
+                    <div class="item-card" style="border-left:4px solid #7c5cbf;">
+                        <div class="item-info">
+                            <div class="item-title">${t('msimamizi_ripoti.service_revenue')}: ${formatCurrency(businessStats.serviceRevenue)}</div>
+                            <div class="item-subtitle">${t('msimamizi_ripoti.service_cost')}: ${formatCurrency(businessStats.serviceCost)} · ${t('msimamizi_ripoti.service_profit')}: ${formatCurrency(businessStats.serviceProfit)}</div>
+                            <div class="item-meta">${t('msimamizi_ripoti.service_count', { count: businessStats.serviceSalesCount })}</div>
+                        </div>
+                    </div>
+                    ${serviceSales.slice().sort((a,b) => (b.sale_date||'').localeCompare(a.sale_date||'')).slice(0,8).map(s => `
+                        <div class="item-card"><div class="item-info">
+                            <div class="item-title">${escapeHtml(s.service_name)}</div>
+                            <div class="item-subtitle">${formatDate(s.sale_date)} - ${escapeHtml(s.seller_name || t('msimamizi_ripoti.customer_generic'))}</div>
+                            <div class="item-meta">${(s.items || []).map(i => escapeHtml(i.product_name) + ' × ' + i.quantity).join(', ') || '—'}</div>
+                        </div>
+                        <div class="item-side"><div class="item-amount">${formatCurrency(s.total_amount)}</div>
+                        <div class="profit-text" style="color:${s.profit >= 0 ? '#27ae60' : '#e74c3c'}">${t('msimamizi_ripoti.profit_amount', { amount: formatCurrency(s.profit) })}</div></div></div>
+                    `).join('')}
+                </div>` : ''}
                 <div class="section"><div class="section-title">${t('msimamizi_ripoti.recent_sales')}</div>
                 ${sales.length > 0 ? sales.slice(0,5).map(sale => `
                     <div class="item-card"><div class="item-info"><div class="item-title">${escapeHtml(sale.product_name)}</div><div class="item-subtitle">${formatDate(sale.sale_date)} - ${escapeHtml(sale.customer_name || t('msimamizi_ripoti.customer_generic'))}</div><div class="item-meta">${sale.quantity} × ${formatCurrency(sale.unit_price)}</div></div>

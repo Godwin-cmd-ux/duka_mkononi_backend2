@@ -45,6 +45,9 @@ export default function MauzoScreen() {
     zh: 'zh-CN',
   };
   const [salesData, setSalesData] = useState<any[]>([]);
+  // Uza Huduma rows for today. Kept separate from product sales: a service
+  // sale has no product line and must never be folded into one.
+  const [serviceSalesData, setServiceSalesData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedSale, setSelectedSale] = useState<any>(null);
@@ -168,6 +171,27 @@ export default function MauzoScreen() {
 
       const cached = await getCache<any>('sales:my');
       if (cached) { setSalesData(cached); setLoading(false); }
+
+      // Service sales (Uza Huduma) for the same day.
+      try {
+        const serviceRes = await fetchWithTimeout(`${API_BASE_URL}/api/service-sales/my`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'ngrok-skip-browser-warning': 'true',
+          },
+        });
+        if (serviceRes.ok) {
+          const serviceJson = await serviceRes.json();
+          const list = Array.isArray(serviceJson) ? serviceJson : [];
+          setServiceSalesData(
+            list.filter((s: any) => (s.sale_date || s.created_at || '').split('T')[0] === today)
+          );
+        }
+      } catch (e) {
+        setServiceSalesData([]);
+      }
 
       // Fetch sales data with better error handling
       console.log('📥 Inapakua data ya mauzo...');
@@ -695,10 +719,49 @@ export default function MauzoScreen() {
     }
   };
 
-  // Calculate total for today
+  // Calculate total for today: products + services, the same rule the reports
+  // use. Service consumable cost already lives inside each service profit.
   const calculateTodayTotal = () => {
-    return salesData.reduce((total, sale) => total + (sale.total_amount || 0), 0);
+    const products = salesData.reduce((total, sale) => total + (sale.total_amount || 0), 0);
+    const services = serviceSalesData.reduce((total, sale) => total + Number(sale.selling_price || 0), 0);
+    return products + services;
   };
+
+  const serviceRevenue = serviceSalesData.reduce((total, sale) => total + Number(sale.selling_price || 0), 0);
+
+  const renderServiceSale = (sale: any) => (
+    <View
+      key={sale.id}
+      style={{
+        backgroundColor: '#ffffff',
+        borderRadius: 12,
+        padding: 12,
+        marginBottom: 10,
+        borderWidth: 1,
+        borderColor: '#ecf0f1',
+        borderLeftWidth: 4,
+        borderLeftColor: '#7c5cbf',
+      }}
+    >
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
+        <Text style={{ fontWeight: '800', color: '#2c3e50', flex: 1 }} numberOfLines={1}>
+          {sale.service_name}
+        </Text>
+        <Text style={{ fontWeight: '800', color: '#7c5cbf' }}>
+          {formatCurrency(sale.selling_price || 0)}
+        </Text>
+      </View>
+      <Text style={{ fontSize: 12, color: '#7f8c8d', marginTop: 4 }}>
+        {(sale.items || []).map((i: any) => `${i.product_name} × ${i.quantity}`).join(', ') || '—'}
+      </Text>
+      <Text style={{ fontSize: 11, color: '#27ae60', marginTop: 4, fontWeight: '700' }}>
+        {t('huduma.cost')}: {formatCurrency(sale.total_cost || 0)} · {t('huduma.expected_profit')}: {formatCurrency(sale.profit || 0)}
+      </Text>
+      <Text style={{ fontSize: 10, color: '#95a5a6', marginTop: 4 }}>
+        #{sale.invoice_number || String(sale.id || '').substring(0, 8)} · {formatDate(sale.sale_date || sale.created_at)}
+      </Text>
+    </View>
+  );
 
   // Format date to readable format
   const formatDate = (dateString: string) => {
@@ -883,7 +946,7 @@ export default function MauzoScreen() {
         {/* STATS SECTION */}
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{salesData.length}</Text>
+            <Text style={styles.statValue}>{salesData.length + serviceSalesData.length}</Text>
             <Text style={styles.statLabel}>{t('seller_dashboard.today_sales')}</Text>
           </View>
           
@@ -903,9 +966,19 @@ export default function MauzoScreen() {
         </View>
       </View>
 
+      {/* SERVICE SALES (Uza Huduma) */}
+      {serviceSalesData.length > 0 && (
+        <View style={{ paddingHorizontal: 16, paddingTop: 12 }}>
+          <Text style={{ fontSize: 14, fontWeight: '800', color: '#5b3fa8', marginBottom: 8 }}>
+            ✂️ {t('huduma.existing_services')} · {formatCurrency(serviceRevenue)}
+          </Text>
+          {serviceSalesData.map(renderServiceSale)}
+        </View>
+      )}
+
       {/* SALES LIST */}
       <View style={styles.salesListContainer}>
-        {salesData.length === 0 ? (
+        {salesData.length === 0 && serviceSalesData.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Ionicons name="receipt-outline" size={64} color="#bdc3c7" />
             <Text style={styles.emptyTitle}>{t('seller_dashboard.no_sales_today')}</Text>

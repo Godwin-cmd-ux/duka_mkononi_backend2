@@ -907,6 +907,10 @@
         }
         
         let salesData = [];
+        // Uza Huduma rows for the same day. Kept apart from salesData because a
+        // service sale has no product line; the product list keeps rendering
+        // exactly as before.
+        let serviceSalesData = [];
         let loading = true;
         let todayClosed = false;
         let selectedSale = null;
@@ -1049,6 +1053,23 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     });
                 }
                 
+                // Service sales (Uza Huduma) for the same day.
+                try {
+                    const serviceRes = await fetch(`${API_BASE_URL}/api/service-sales/my`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (serviceRes.ok) {
+                        const serviceJson = await serviceRes.json();
+                        const list = Array.isArray(serviceJson) ? serviceJson : [];
+                        serviceSalesData = list.filter(s => {
+                            const d = (s.sale_date || s.created_at || '').split('T')[0];
+                            return d === today;
+                        });
+                    } else {
+                        serviceSalesData = [];
+                    }
+                } catch (e) { serviceSalesData = []; }
+
                 checkIfTodaySalesClosed();
             } catch (error) {
                 console.error('Error loading sales:', error);
@@ -1298,6 +1319,82 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             document.getElementById('confirmModal').style.display = 'none';
         }
 
+        /**
+         * Mauzo ya Huduma — clearly separated from product sales, with the
+         * revenue/cost/profit that were snapshotted by the server at sale time.
+         */
+        function renderServiceSalesSection() {
+            if (serviceSalesData.length === 0) { return ''; }
+
+            const rows = serviceSalesData.map(s => {
+                const items = (s.items || []).map(i => `${escapeHtml(i.product_name)} × ${i.quantity}`).join(', ');
+                const date = new Date(s.created_at || s.sale_date);
+                return `
+                    <div class="sale-item service-sale" style="border-left:4px solid #7c5cbf;">
+                        <div class="sale-header">
+                            <div><span class="invoice-number">#${escapeHtml(s.invoice_number || String(s.id || '').substring(0,8))}</span> <span class="sale-time">${date.toLocaleTimeString('sw-TZ', { hour: '2-digit', minute: '2-digit' })}</span></div>
+                            <div class="sale-total">${formatCurrency(s.selling_price)}</div>
+                        </div>
+                        <div class="product-row">${ic('box', 14)}<span class="product-name">${escapeHtml(s.service_name || '')}</span><span class="quantity">×${s.service_quantity || 1}</span></div>
+                        <div style="font-size:11px;color:#7f8c8d;padding:2px 0 4px;">${t('service_badge')}: ${items || '—'}</div>
+                        <div class="customer-row" style="color:#5d6d7e;font-size:12px;">
+                            ${t('service_revenue_label')}: <strong>${formatCurrency(s.selling_price)}</strong>
+                            · ${t('service_cost_label')}: ${formatCurrency(s.total_cost)}
+                            · ${t('service_profit_label')}: <strong style="color:${Number(s.profit) >= 0 ? '#27ae60' : '#e74c3c'}">${formatCurrency(s.profit)}</strong>
+                        </div>
+                        <div class="sale-footer">
+                            <div class="date-text">${formatDate(s.sale_date || s.created_at)}</div>
+                            <div class="sale-actions">
+                                <div class="receipt-btn" onclick='generateServiceReceipt(${JSON.stringify(s).replace(/'/g, "&#39;")})'>${ic('receipt', 12)} ${t('btn_receipt')}</div>
+                            </div>
+                        </div>
+                    </div>`;
+            }).join('');
+
+            return `
+                <div style="margin:22px 0 8px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+                    <div style="font-size:15px;font-weight:800;color:#5b3fa8;">✂️ ${t('service_sales_title')}</div>
+                    <div style="font-size:11px;color:#7f8c8d;">${t('service_totals', { revenue: formatCurrency(serviceRevenue), cost: formatCurrency(serviceCost), profit: formatCurrency(serviceProfit) })}</div>
+                </div>
+                ${rows}`;
+        }
+
+        // Customer-facing receipt. Buying prices and profit are internal and are
+        // deliberately not printed here.
+        function generateServiceReceipt(sale) {
+            const date = new Date(sale.created_at || sale.sale_date);
+            const rows = (sale.items || []).map(i =>
+                `<tr><td>${escapeHtml(i.product_name)}</td><td>${i.quantity}</td></tr>`
+            ).join('');
+            const receiptHtml = `
+                <div style="text-align:center;padding:20px;font-family:Arial;">
+                    <h2>${t('receipt_brand')}</h2>
+                    <h3>${t('service_receipt_title')}</h3>
+                    <hr>
+                    <p><strong>${t('receipt_number')}</strong> ${escapeHtml(sale.invoice_number || String(sale.id || '').substring(0,8))}</p>
+                    <p><strong>${t('receipt_date')}</strong> ${date.toLocaleDateString('sw-TZ')}</p>
+                    <p><strong>${t('receipt_time')}</strong> ${date.toLocaleTimeString('sw-TZ')}</p>
+                    <hr>
+                    <p><strong>${t('service_name_label')}</strong> ${escapeHtml(sale.service_name || '')}</p>
+                    <p><strong>${t('service_qty_label')}</strong> ${sale.service_quantity || 1}</p>
+                    <table style="width:100%;border-collapse:collapse;">
+                        <tr><th style="text-align:left;">${t('service_consumables_label')}</th><th>${t('label_quantity')}</th></tr>
+                        ${rows}
+                    </table>
+                    <hr>
+                    <p><strong>${t('receipt_total')}</strong> ${formatCurrency(sale.selling_price)}</p>
+                    <hr>
+                    <p>${t('receipt_thanks')}</p>
+                    <p style="font-size:12px;">www.dukamkononi.com</p>
+                </div>`;
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html><head><title>${t('receipt_doc_title')} ${sale.invoice_number || sale.id}</title></head>
+                <body onload="window.print();window.close();">${receiptHtml}</body></html>
+            `);
+            printWindow.document.close();
+        }
+
         function render() {
             const container = document.getElementById('mauzoContent');
             
@@ -1306,7 +1403,13 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 return;
             }
             
-            const totalAmount = salesData.reduce((sum, s) => sum + (s.total_amount || 0), 0);
+            const productAmount = salesData.reduce((sum, s) => sum + (s.total_amount || 0), 0);
+            const serviceRevenue = serviceSalesData.reduce((sum, s) => sum + Number(s.selling_price || 0), 0);
+            const serviceCost = serviceSalesData.reduce((sum, s) => sum + Number(s.total_cost || 0), 0);
+            const serviceProfit = serviceSalesData.reduce((sum, s) => sum + Number(s.profit || 0), 0);
+            // The day's turnover includes both kinds of transaction; the
+            // breakdown stays visible so the two are never confused.
+            const totalAmount = productAmount + serviceRevenue;
             const uniqueCustomers = new Set(salesData.map(s => getCustomerName(s))).size;
             
             const salesHtml = salesData.map(sale => {
@@ -1342,13 +1445,15 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     </div>
                     <div class="date-title">${formatDate(today)}${todayClosed ? `<span class="closed-badge"> • ${t('badge_closed')}</span>` : ''}</div>
                     <div class="stats-container">
-                        <div class="stat-item"><div class="stat-value">${salesData.length}</div><div class="stat-label">${t('nav_sales')}</div></div>
+                        <div class="stat-item"><div class="stat-value">${salesData.length + serviceSalesData.length}</div><div class="stat-label">${t('nav_sales')}</div></div>
                         <div class="stat-item"><div class="stat-value">${formatCurrency(totalAmount)}</div><div class="stat-label">${t('stat_total_label')}</div></div>
                         <div class="stat-item"><div class="stat-value">${uniqueCustomers}</div><div class="stat-label">${t('stat_customers_label')}</div></div>
                     </div>
+                    ${(serviceRevenue > 0 || serviceSalesData.length > 0) ? `<div style="font-size:11px;color:#7f8c8d;text-align:center;margin-top:8px;">${t('mauzo_breakdown', { products: formatCurrency(productAmount), services: formatCurrency(serviceRevenue) })}</div>` : ''}
                 </div>
+                ${renderServiceSalesSection()}
                 <div class="sales-list">
-                    ${salesData.length === 0 ? `
+                    ${salesData.length === 0 && serviceSalesData.length === 0 ? `
                         <div class="empty-state">
                         <div class="empty-icon" style="color:#bdc3c7;">${ic('doc', 48)}</div>
                         <div class="empty-title">${t('empty_title')}</div>

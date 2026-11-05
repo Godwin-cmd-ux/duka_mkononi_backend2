@@ -369,6 +369,64 @@ CREATE TABLE public.backups (
     updated_at TIMESTAMP
 );
 
+-- Huduma (services): a sellable activity whose execution consumes existing
+-- inventory products. Kept in parent-before-child order so a restore never
+-- trips a foreign key.
+CREATE TABLE public.services (
+    id UUID PRIMARY KEY,
+    business_id UUID,
+    name TEXT,
+    description TEXT,
+    status TEXT DEFAULT 'active',
+    created_by UUID,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
+);
+
+CREATE TABLE public.service_consumables (
+    id UUID PRIMARY KEY,
+    service_id UUID,
+    product_id UUID,
+    required_quantity NUMERIC(14, 3) DEFAULT 1,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
+);
+
+-- Immutable service-sale history: names and prices are snapshots, so later
+-- product price changes or service edits never rewrite past profit.
+CREATE TABLE public.service_sales (
+    id UUID PRIMARY KEY,
+    invoice_number TEXT,
+    business_id UUID,
+    branch_id UUID,
+    seller_id UUID,
+    service_id UUID,
+    service_name TEXT,
+    service_quantity NUMERIC(14, 3) DEFAULT 1,
+    selling_price NUMERIC(14, 2) DEFAULT 0,
+    total_cost NUMERIC(14, 2) DEFAULT 0,
+    profit NUMERIC(14, 2) DEFAULT 0,
+    customer_id UUID,
+    sale_date DATE,
+    payment_method TEXT DEFAULT 'cash',
+    status TEXT DEFAULT 'completed',
+    notes TEXT,
+    client_key TEXT,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
+);
+
+CREATE TABLE public.service_sale_items (
+    id UUID PRIMARY KEY,
+    service_sale_id UUID,
+    product_id UUID,
+    product_name TEXT,
+    quantity NUMERIC(14, 3),
+    buying_price NUMERIC(14, 2) DEFAULT 0,
+    total_cost NUMERIC(14, 2) DEFAULT 0,
+    created_at TIMESTAMP
+);
+
 -- ---------------------------------------------------------------------------
 -- Indexes (kept outside the CREATE TABLE bodies: the backup service reads
 -- columns from those bodies and must not see index syntax as a column).
@@ -397,3 +455,9 @@ CREATE INDEX IF NOT EXISTS session_activity_user_id_index ON public.session_acti
 CREATE INDEX IF NOT EXISTS security_alerts_rule_index ON public.security_alerts (rule);
 CREATE INDEX IF NOT EXISTS security_alerts_status_index ON public.security_alerts (status);
 CREATE INDEX IF NOT EXISTS backups_backup_date_index ON public.backups (backup_date);
+CREATE INDEX IF NOT EXISTS services_business_status_index ON public.services (business_id, status);
+CREATE UNIQUE INDEX IF NOT EXISTS services_business_name_unique ON public.services (business_id, lower(btrim(name)));
+CREATE INDEX IF NOT EXISTS service_consumables_product_index ON public.service_consumables (product_id);
+CREATE INDEX IF NOT EXISTS service_sales_business_date_index ON public.service_sales (business_id, sale_date);
+CREATE INDEX IF NOT EXISTS service_sales_seller_date_index ON public.service_sales (seller_id, sale_date);
+CREATE INDEX IF NOT EXISTS service_sale_items_sale_index ON public.service_sale_items (service_sale_id);

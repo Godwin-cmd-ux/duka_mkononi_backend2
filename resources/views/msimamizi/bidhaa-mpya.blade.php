@@ -37,7 +37,7 @@ svg.icon{flex-shrink:0}
 <div class="nav-items"><a href="index" class="nav-item"><div class="nav-icon"><i class="fa-solid fa-house"></i></div><span class="nav-label" data-i18n="msimamizi_bidhaa.nav_home">Nyumbani</span></a><a href="ripoti" class="nav-item"><div class="nav-icon"><i class="fa-solid fa-chart-simple"></i></div><span class="nav-label" data-i18n="msimamizi_bidhaa.nav_reports">Ripoti</span></a><a href="preview" class="nav-item"><div class="nav-icon"><i class="fa-solid fa-calendar-days"></i></div><span class="nav-label" data-i18n="msimamizi_bidhaa.nav_reviews">Rejea</span></a><a href="bidhaa-mpya" class="nav-item active"><div class="nav-icon"><i class="fa-solid fa-circle-plus"></i></div><span class="nav-label" data-i18n="msimamizi_bidhaa.nav_new_products">Bidhaa Mpya</span></a><a href="tangaza" class="nav-item"><div class="nav-icon"><i class="fa-solid fa-bullhorn"></i></div><span class="nav-label" data-i18n="msimamizi_bidhaa.nav_advertise">Tangaza</span></a><a href="nyingine" class="nav-item"><div class="nav-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div><span class="nav-label" data-i18n="msimamizi_nyingine.nav_label">Nyingine</span></a></div>
 <div class="sidebar-footer"><div class="user-info"><div class="user-avatar" id="userAvatar">M</div><div class="user-details"><div class="user-name" id="userName" data-i18n="msimamizi_bidhaa.nav_admin">Msimamizi</div><div class="user-role">Msimamizi</div></div></div><div class="logout-btn" id="logoutBtn"><span><i class="fa-solid fa-arrow-right-from-bracket"></i></span><span data-i18n="msimamizi_bidhaa.btn_logout">Ondoka</span></div></div>
 </aside>
-<main class="main-content"><div class="bidhaa-container" id="bidhaaContainer"><div style="text-align:center;padding:60px;"><div class="loading-spinner dm-sc" style="width:46px;height:46px;margin:0 auto 16px;"></div><div data-i18n="msimamizi_bidhaa.loading_products">Loading...</div></div></div></main>
+<main class="main-content"><div id="hudumaModule"></div><div class="bidhaa-container" id="bidhaaContainer"><div style="text-align:center;padding:60px;"><div class="loading-spinner dm-sc" style="width:46px;height:46px;margin:0 auto 16px;"></div><div data-i18n="msimamizi_bidhaa.loading_products">Loading...</div></div></div></main>
 </div>
 <div id="productModal" class="modal-overlay"><div class="modal-content"><div class="modal-header"><div class="modal-title" data-i18n="msimamizi_bidhaa.title_select_sold_product">Chagua Bidhaa Ilipo</div><div class="modal-close" onclick="closeProductModal()">✖</div></div><input type="text" class="modal-search" id="productSearch" placeholder="Tafuta bidhaa..." data-i18n="msimamizi_bidhaa.placeholder_search_products" data-i18n-attr="placeholder" oninput="filterProducts()"><div class="modal-body" id="productModalBody"><div class="no-products"><div class="loading-spinner dm-sc" style="width:28px;height:28px;margin:0 auto 10px;"></div><div data-i18n="msimamizi_bidhaa.loading_products_list">Inapakia bidhaa...</div></div></div></div></div>
 <script>
@@ -832,6 +832,495 @@ window.removeAiImage=removeAiImage;
 window.verifyAiRow=verifyAiRow;
 window.verifyAllAiRows=verifyAllAiRows;
 window.resetAiSession=resetAiSession;
+})();
+</script>
+<!-- =====================================================================
+     HUDUMA (SERVICES)
+     Sits beside the product form rather than inside #bidhaaContainer, whose
+     innerHTML the product renderer rewrites on every keystroke. This module
+     owns its own DOM and its own API calls, so product selling is untouched.
+     ===================================================================== -->
+<style>
+.hd-card{background:#fff;border-radius:22px;padding:22px;box-shadow:0 2px 14px rgba(44,62,80,.06);margin-bottom:24px;border:1px solid #eef1f4}
+.hd-eyebrow{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#7c5cbf;margin-bottom:4px}
+.hd-title{font-size:22px;font-weight:800;color:#2c3e50;margin:0 0 4px}
+.hd-sub{font-size:13px;color:#7f8c8d;margin:0 0 16px;line-height:1.5}
+.hd-tabs{display:flex;gap:8px;background:#f4f6f8;border-radius:14px;padding:5px;margin-bottom:18px}
+.hd-tab{flex:1;border:0;background:transparent;border-radius:11px;padding:10px 12px;font:700 13px 'Inter',sans-serif;color:#5d6d7e;cursor:pointer}
+.hd-tab.active{background:#fff;color:#7c5cbf;box-shadow:0 1px 5px rgba(44,62,80,.1)}
+.hd-row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:639px){.hd-row2{grid-template-columns:1fr}}
+.hd-field{margin-bottom:16px}
+.hd-field label{display:block;font-size:12px;font-weight:700;color:#5d6d7e;margin-bottom:6px}
+.hd-input{width:100%;box-sizing:border-box;padding:12px 14px;border:1px solid #dfe6ec;border-radius:12px;font:400 14px 'Inter',sans-serif;color:#2c3e50;background:#fbfcfd}
+.hd-input:focus{outline:none;border-color:#7c5cbf;background:#fff;box-shadow:0 0 0 3px rgba(124,92,191,.1)}
+.hd-prods{max-height:330px;overflow-y:auto;border:1px solid #eef1f4;border-radius:14px;margin-top:10px}
+.hd-prod{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 13px;border-bottom:1px solid #f2f4f6;transition:background .15s}
+.hd-prod:last-child{border-bottom:0}
+.hd-prod.selected{background:#f7f3ff}
+.hd-prod-main{display:flex;align-items:center;gap:11px;min-width:0}
+.hd-check{width:18px;height:18px;accent-color:#7c5cbf;flex:none}
+.hd-prod-name{font-size:14px;font-weight:700;color:#2c3e50;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:230px}
+.hd-prod-meta{font-size:11px;color:#95a5a6;margin-top:2px}
+.hd-prod-qty{display:none;align-items:center;gap:6px;flex:none}
+.hd-prod.selected .hd-prod-qty{display:flex}
+.hd-prod-qty input{width:64px;padding:7px 8px;border:1px solid #dfe6ec;border-radius:9px;font:600 13px 'Inter',sans-serif;text-align:center}
+.hd-summary{display:flex;justify-content:space-between;align-items:center;background:#f7f3ff;border:1px solid #ece4fb;border-radius:12px;padding:12px 15px;font-size:13px;color:#5b3fa8;margin-bottom:16px}
+.hd-summary strong{font-size:16px}
+.hd-btn{border:0;border-radius:13px;padding:14px 18px;font:800 14px 'Inter',sans-serif;cursor:pointer;transition:opacity .15s}
+.hd-btn:disabled{opacity:.6;cursor:not-allowed}
+.hd-btn.primary{background:#7c5cbf;color:#fff;width:100%}
+.hd-btn.ghost{background:#f4f6f8;color:#5d6d7e}
+.hd-service{border:1px solid #eef1f4;border-radius:16px;margin-bottom:14px;overflow:hidden}
+.hd-service-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;padding:16px 16px 12px}
+.hd-service-name{font-size:16px;font-weight:800;color:#2c3e50;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.hd-service-sub{font-size:12px;color:#7f8c8d;margin-top:3px;line-height:1.45}
+.hd-chip{font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;background:#eafaf1;color:#1e8449;text-transform:uppercase;letter-spacing:.04em}
+.hd-chip.inactive{background:#fdeaea;color:#c0392b}
+.hd-service-total{text-align:right;flex:none}
+.hd-service-total div{font-size:15px;font-weight:800;color:#7c5cbf}
+.hd-service-total small{font-size:10px;color:#95a5a6}
+.hd-table-wrap{overflow-x:auto}
+.hd-table{width:100%;border-collapse:collapse;min-width:520px}
+.hd-table th{background:#f8fafb;color:#7f8c8d;font-size:10px;text-transform:uppercase;letter-spacing:.05em;text-align:left;padding:8px 12px;border-top:1px solid #f2f4f6;border-bottom:1px solid #f2f4f6}
+.hd-table td{padding:9px 12px;border-bottom:1px solid #f6f8f9;font-size:13px;color:#34495e}
+.hd-table td input{width:62px;padding:6px 8px;border:1px solid #dfe6ec;border-radius:8px;font:600 13px 'Inter',sans-serif;text-align:center}
+.hd-service-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:12px 16px;background:#fbfcfd;border-top:1px solid #f2f4f6}
+.hd-service-actions select{flex:1;min-width:160px;padding:9px 11px;border:1px solid #dfe6ec;border-radius:10px;font:400 13px 'Inter',sans-serif;background:#fff;color:#2c3e50}
+.hd-service-actions input[type=number]{width:66px;padding:9px;border:1px solid #dfe6ec;border-radius:10px;font:600 13px 'Inter',sans-serif;text-align:center}
+.hd-mini{border:0;background:#eef1f4;color:#5d6d7e;font:700 12px 'Inter',sans-serif;padding:8px 12px;border-radius:9px;cursor:pointer}
+.hd-mini.primary{background:#7c5cbf;color:#fff}
+.hd-mini.danger{background:#fdeaea;color:#c0392b}
+.hd-spacer{flex:1}
+.hd-empty{text-align:center;padding:38px 16px;color:#95a5a6}
+.hd-empty .hd-empty-ic{font-size:38px;margin-bottom:8px}
+.hd-empty-title{font-weight:800;color:#5d6d7e;margin-bottom:4px}
+.hd-empty-text{font-size:13px;line-height:1.5}
+.hd-loading{text-align:center;padding:32px;color:#95a5a6;font-size:13px}
+.hd-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:2400;background:#2c3e50;color:#fff;padding:13px 20px;border-radius:14px;font:700 13px 'Inter',sans-serif;max-width:88%;box-shadow:0 8px 26px rgba(0,0,0,.22);opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;text-align:center}
+.hd-toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+.hd-toast.error{background:#c0392b}
+.hd-toast.success{background:#1e8449}
+.hd-modal{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2300;display:flex;align-items:center;justify-content:center;padding:18px}
+.hd-modal-card{background:#fff;border-radius:20px;padding:22px;width:100%;max-width:400px}
+.hd-modal-title{font-size:17px;font-weight:800;color:#2c3e50;margin-bottom:14px}
+.hd-modal-actions{display:flex;gap:10px;margin-top:8px}
+.hd-modal-actions button{flex:1}
+</style>
+<script>
+(function () {
+    'use strict';
+    var API = '';
+    var host = document.getElementById('hudumaModule');
+    if (!host) { return; }
+
+    var state = { tab: 'new', services: [], products: [], loading: true, busy: false, editing: null };
+
+    function tr(key, fallback) {
+        try {
+            var value = (typeof t === 'function') ? t(key) : '';
+            if (value && value !== key) { return value; }
+        } catch (e) {}
+        return fallback;
+    }
+    function esc(value) {
+        return String(value === null || value === undefined ? '' : value).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    }
+    function money(value) {
+        var n = Number(value || 0);
+        if (!isFinite(n)) { n = 0; }
+        return 'TZS ' + n.toLocaleString(undefined, { maximumFractionDigits: 0 });
+    }
+    function token() { return localStorage.getItem('userToken') || ''; }
+
+    function toast(message, type) {
+        var el = document.createElement('div');
+        el.className = 'hd-toast ' + (type || '') + ' show';
+        el.textContent = message;
+        document.body.appendChild(el);
+        setTimeout(function () { el.classList.remove('show'); }, 3200);
+        setTimeout(function () { el.remove(); }, 3600);
+    }
+
+    function confirmBox(title, message, onYes) {
+        if (typeof showConfirm === 'function') {
+            showConfirm(title, message, onYes);
+            return;
+        }
+        if (window.confirm(message)) { onYes(); }
+    }
+
+    async function api(path, options) {
+        var opts = options || {};
+        opts.headers = Object.assign({ 'Authorization': 'Bearer ' + token() }, opts.headers || {});
+        try {
+            var response = await fetch(API + path, opts);
+            var data = null;
+            try { data = await response.json(); } catch (e) { data = null; }
+            return { ok: response.ok, status: response.status, data: data };
+        } catch (e) {
+            return { ok: false, status: 0, data: null, network: true };
+        }
+    }
+
+    function message(res, fallback) {
+        if (res && res.network) { return tr('msimamizi_huduma.err_network', 'Mtandao haupatikani. Jaribu tena.'); }
+        if (res && res.data && res.data.error) { return res.data.error; }
+        return fallback;
+    }
+
+    async function load() {
+        state.loading = true;
+        render();
+        var services = await api('/api/services');
+        if (services.ok && Array.isArray(services.data)) { state.services = services.data; }
+        var products = await api('/api/business/my/all-products');
+        if (products.ok && Array.isArray(products.data)) { state.products = products.data; }
+        state.loading = false;
+        render();
+    }
+
+    function render() {
+        var tabs = [
+            ['new', tr('msimamizi_huduma.tab_new', 'Huduma Mpya')],
+            ['list', tr('msimamizi_huduma.tab_existing', 'Huduma Zilizopo')]
+        ].map(function (tab) {
+            return '<button type="button" class="hd-tab ' + (state.tab === tab[0] ? 'active' : '') + '" onclick="hudumaTab(\'' + tab[0] + '\')">' + esc(tab[1]) + '</button>';
+        }).join('');
+
+        var body = state.loading
+            ? '<div class="hd-loading">' + esc(tr('msimamizi_huduma.loading', 'Inapakia...')) + '</div>'
+            : (state.tab === 'new' ? renderNew() : renderList());
+
+        host.innerHTML = '<section class="hd-card">'
+            + '<div class="hd-eyebrow">' + esc(tr('msimamizi_huduma.eyebrow', 'Bizampia · Huduma')) + '</div>'
+            + '<h2 class="hd-title">' + esc(tr('msimamizi_huduma.title', 'Usimamizi wa Huduma')) + '</h2>'
+            + '<p class="hd-sub">' + esc(tr('msimamizi_huduma.subtitle', 'Unda huduma na chagua bidhaa zinazotumika kila huduma inapotolewa. Stoo itapunguzwa kiotomatiki mauzo yanapofanyika.')) + '</p>'
+            + '<div class="hd-tabs">' + tabs + '</div>'
+            + '<div class="hd-body">' + body + '</div>'
+            + '</section>';
+    }
+
+    function renderNew() {
+        if (state.products.length === 0) {
+            return '<div class="hd-empty"><div class="hd-empty-ic">📦</div><div class="hd-empty-title">'
+                + esc(tr('msimamizi_huduma.no_products', 'Hakuna bidhaa kwenye biashara yako'))
+                + '</div><div class="hd-empty-text">'
+                + esc(tr('msimamizi_huduma.no_products_hint', 'Ongeza bidhaa kwa kutumia fomu ya Bidhaa Mpya kwanza, kisha urudi hapa kuunda huduma.'))
+                + '</div></div>';
+        }
+
+        var rows = state.products.map(function (product) {
+            var id = esc(product.id);
+            return '<div class="hd-prod" data-name="' + esc(String(product.name || '').toLowerCase()) + '">'
+                + '<div class="hd-prod-main"><input type="checkbox" class="hd-check" data-pid="' + id + '" onchange="hudumaToggleProduct(this)">'
+                + '<div><div class="hd-prod-name">' + esc(product.name) + '</div>'
+                + '<div class="hd-prod-meta">' + esc(tr('msimamizi_huduma.buying_price', 'Bei ya kununua')) + ': ' + money(product.price)
+                + ' · ' + esc(tr('msimamizi_huduma.stock', 'Stoo')) + ': ' + esc(product.stock === null || product.stock === undefined ? 0 : product.stock) + '</div></div></div>'
+                + '<div class="hd-prod-qty"><input type="number" min="0" step="1" value="1" data-qty="' + id + '" oninput="hudumaRecalc()"></div>'
+                + '</div>';
+        }).join('');
+
+        return '<div class="hd-form">'
+            + '<div class="hd-row2">'
+            + '<div class="hd-field"><label>' + esc(tr('msimamizi_huduma.label_name', 'Jina la huduma')) + '</label>'
+            + '<input class="hd-input" id="hdName" maxlength="120" placeholder="' + esc(tr('msimamizi_huduma.placeholder_name', 'Mfano: Hair Treatment')) + '"></div>'
+            + '<div class="hd-field"><label>' + esc(tr('msimamizi_huduma.label_description', 'Maelezo (hiari)')) + '</label>'
+            + '<input class="hd-input" id="hdDesc" maxlength="500" placeholder="' + esc(tr('msimamizi_huduma.placeholder_description', 'Maelezo mafupi ya huduma')) + '"></div>'
+            + '</div>'
+            + '<div class="hd-field"><label>' + esc(tr('msimamizi_huduma.label_products', 'Bidhaa Zitumikazo')) + '</label>'
+            + '<input class="hd-input" id="hdSearch" placeholder="' + esc(tr('msimamizi_huduma.search_products', 'Tafuta bidhaa...')) + '" oninput="hudumaFilter(this.value)">'
+            + '<div class="hd-prods" id="hdProdList">' + rows + '</div></div>'
+            + '<div class="hd-summary"><span id="hdSelected">' + esc(tr('msimamizi_huduma.selected_none', 'Hakuna bidhaa iliyochaguliwa')) + '</span><strong id="hdEstimate">TZS 0</strong></div>'
+            + '<button type="button" class="hd-btn primary" id="hdCreateBtn" onclick="hudumaCreate()">' + esc(tr('msimamizi_huduma.btn_create', 'Unda Huduma')) + '</button>'
+            + '</div>';
+    }
+
+    function renderList() {
+        if (state.services.length === 0) {
+            return '<div class="hd-empty"><div class="hd-empty-ic">✂️</div><div class="hd-empty-title">'
+                + esc(tr('msimamizi_huduma.empty_title', 'Hakuna huduma bado')) + '</div><div class="hd-empty-text">'
+                + esc(tr('msimamizi_huduma.empty_text', 'Anza kwa kuunda huduma mpya kwenye kichupo cha Huduma Mpya.'))
+                + '</div></div>';
+        }
+
+        return state.services.map(function (service) {
+            var sid = esc(service.id);
+            var status = service.status === 'inactive' ? 'inactive' : 'active';
+
+            var rows = (service.consumables || []).map(function (item) {
+                return '<tr>'
+                    + '<td>' + esc(item.product_name || '—') + '</td>'
+                    + '<td><input type="number" min="0" step="1" value="' + esc(item.required_quantity) + '" data-sid="' + sid + '" data-pid="' + esc(item.product_id) + '" onchange="hudumaSaveQty(this)"></td>'
+                    + '<td>' + money(item.buying_price) + '</td>'
+                    + '<td>' + esc(item.stock === null || item.stock === undefined ? '—' : item.stock) + '</td>'
+                    + '<td style="text-align:right;"><button type="button" class="hd-mini danger" onclick="hudumaRemoveProduct(\'' + sid + '\',\'' + esc(item.product_id) + '\')">✕</button></td>'
+                    + '</tr>';
+            }).join('');
+
+            var used = {};
+            (service.consumables || []).forEach(function (item) { used[item.product_id] = true; });
+            var options = state.products.filter(function (product) { return !used[product.id]; }).map(function (product) {
+                return '<option value="' + esc(product.id) + '">' + esc(product.name) + ' — ' + money(product.price) + '</option>';
+            }).join('');
+
+            return '<div class="hd-service">'
+                + '<div class="hd-service-head"><div>'
+                + '<div class="hd-service-name">' + esc(service.name)
+                + '<span class="hd-chip ' + status + '">' + esc(status === 'active' ? tr('msimamizi_huduma.status_active', 'Hai') : tr('msimamizi_huduma.status_inactive', 'Imezimwa')) + '</span></div>'
+                + '<div class="hd-service-sub">' + esc(service.description || tr('msimamizi_huduma.no_description', 'Hakuna maelezo')) + '</div></div>'
+                + '<div class="hd-service-total"><div>' + money(service.estimated_cost) + '</div><small>'
+                + esc(tr('msimamizi_huduma.default_cost', 'Gharama ya bidhaa kwa huduma moja')) + '</small></div></div>'
+                + (rows
+                    ? '<div class="hd-table-wrap"><table class="hd-table"><thead><tr>'
+                        + '<th>' + esc(tr('msimamizi_huduma.product', 'Bidhaa')) + '</th>'
+                        + '<th>' + esc(tr('msimamizi_huduma.qty', 'Kiasi Kinachohitajika')) + '</th>'
+                        + '<th>' + esc(tr('msimamizi_huduma.buying_price_short', 'Bei ya Kununua')) + '</th>'
+                        + '<th>' + esc(tr('msimamizi_huduma.stock', 'Stoo')) + '</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>'
+                    : '<div class="hd-empty" style="padding:20px;">' + esc(tr('msimamizi_huduma.no_consumables', 'Huduma hii haina bidhaa bado. Ongeza bidhaa chini.')) + '</div>')
+                + '<div class="hd-service-actions">'
+                + '<select id="hdAddProd-' + sid + '"><option value="">' + esc(tr('msimamizi_huduma.select_product', 'Chagua bidhaa...')) + '</option>' + options + '</select>'
+                + '<input type="number" min="0" step="1" value="1" id="hdAddQty-' + sid + '">'
+                + '<button type="button" class="hd-mini primary" onclick="hudumaAddProduct(\'' + sid + '\')">+ ' + esc(tr('msimamizi_huduma.btn_add', 'Ongeza')) + '</button>'
+                + '<span class="hd-spacer"></span>'
+                + '<button type="button" class="hd-mini" onclick="hudumaEdit(\'' + sid + '\')">' + esc(tr('msimamizi_huduma.btn_edit', 'Hariri')) + '</button>'
+                + '<button type="button" class="hd-mini danger" onclick="hudumaDelete(\'' + sid + '\')">' + esc(tr('msimamizi_huduma.btn_delete', 'Futa')) + '</button>'
+                + '</div></div>';
+        }).join('');
+    }
+
+    function selectedRows() {
+        var rows = [];
+        document.querySelectorAll('#hdProdList .hd-check:checked').forEach(function (checkbox) {
+            var pid = checkbox.getAttribute('data-pid');
+            var input = document.querySelector('[data-qty="' + pid + '"]');
+            var quantity = input ? parseFloat(input.value) : 1;
+            if (!isFinite(quantity) || quantity < 0) { quantity = 0; }
+            var product = state.products.find(function (p) { return p.id === pid; });
+            rows.push({ product: product, product_id: pid, quantity: quantity });
+        });
+        return rows;
+    }
+
+    window.hudumaTab = function (tab) {
+        state.tab = tab === 'list' ? 'list' : 'new';
+        render();
+    };
+
+    window.hudumaFilter = function (query) {
+        var needle = String(query || '').toLowerCase().trim();
+        document.querySelectorAll('#hdProdList .hd-prod').forEach(function (row) {
+            row.style.display = !needle || (row.getAttribute('data-name') || '').indexOf(needle) !== -1 ? '' : 'none';
+        });
+    };
+
+    window.hudumaToggleProduct = function (checkbox) {
+        var row = checkbox.closest('.hd-prod');
+        if (row) { row.classList.toggle('selected', checkbox.checked); }
+        window.hudumaRecalc();
+    };
+
+    window.hudumaRecalc = function () {
+        var rows = selectedRows();
+        var cost = rows.reduce(function (sum, row) {
+            var buying = row.product ? Number(row.product.price || 0) : 0;
+            return sum + buying * row.quantity;
+        }, 0);
+        var selected = document.getElementById('hdSelected');
+        var estimate = document.getElementById('hdEstimate');
+        if (selected) {
+            selected.textContent = rows.length
+                ? tr('msimamizi_huduma.selected_count', '{count} bidhaa zimechaguliwa').replace('{count}', rows.length)
+                : tr('msimamizi_huduma.selected_none', 'Hakuna bidhaa iliyochaguliwa');
+        }
+        if (estimate) { estimate.textContent = money(cost); }
+    };
+
+    window.hudumaCreate = async function () {
+        if (state.busy) { return; }
+        var nameEl = document.getElementById('hdName');
+        var descEl = document.getElementById('hdDesc');
+        var name = nameEl ? nameEl.value.trim() : '';
+        var description = descEl ? descEl.value.trim() : '';
+        var rows = selectedRows();
+
+        if (!name) { toast(tr('msimamizi_huduma.err_name', 'Jina la huduma linahitajika'), 'error'); return; }
+        if (rows.length === 0) { toast(tr('msimamizi_huduma.err_products', 'Chagua angalau bidhaa moja'), 'error'); return; }
+
+        state.busy = true;
+        var button = document.getElementById('hdCreateBtn');
+        if (button) { button.disabled = true; button.textContent = tr('msimamizi_huduma.btn_saving', 'Inahifadhi...'); }
+
+        var res = await api('/api/services', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: name,
+                description: description,
+                consumables: rows.map(function (row) { return { product_id: row.product_id, required_quantity: row.quantity }; })
+            })
+        });
+
+        state.busy = false;
+
+        if (res.ok) {
+            toast((res.data && res.data.message) || tr('msimamizi_huduma.msg_created', 'Huduma imeundwa'), 'success');
+            state.tab = 'list';
+            await load();
+            return;
+        }
+
+        if (button) { button.disabled = false; button.textContent = tr('msimamizi_huduma.btn_create', 'Unda Huduma'); }
+        toast(message(res, tr('msimamizi_huduma.err_save', 'Imeshindikana kuhifadhi huduma')), 'error');
+    };
+
+    function replaceService(updated) {
+        if (!updated) { load(); return; }
+        var index = state.services.findIndex(function (s) { return s.id === updated.id; });
+        if (index === -1) { state.services.push(updated); } else { state.services[index] = updated; }
+        render();
+    }
+
+    window.hudumaSaveQty = async function (input) {
+        var serviceId = input.getAttribute('data-sid');
+        var productId = input.getAttribute('data-pid');
+        var quantity = parseFloat(input.value);
+
+        if (!isFinite(quantity) || quantity < 0) {
+            toast(tr('msimamizi_huduma.err_qty', 'Kiasi si sahihi'), 'error');
+            return;
+        }
+
+        input.disabled = true;
+        var res = await api('/api/services/' + serviceId + '/consumables/' + productId, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ required_quantity: quantity })
+        });
+        input.disabled = false;
+
+        if (res.ok) {
+            replaceService(res.data && res.data.service);
+            toast(tr('msimamizi_huduma.msg_qty_saved', 'Kiasi kimehifadhiwa'), 'success');
+        } else {
+            toast(message(res, tr('msimamizi_huduma.err_save', 'Imeshindikana kuhifadhi')), 'error');
+        }
+    };
+
+    window.hudumaAddProduct = async function (serviceId) {
+        var select = document.getElementById('hdAddProd-' + serviceId);
+        var qtyInput = document.getElementById('hdAddQty-' + serviceId);
+        var productId = select ? select.value : '';
+        var quantity = qtyInput ? parseFloat(qtyInput.value) : 1;
+
+        if (!productId) { toast(tr('msimamizi_huduma.err_no_product', 'Chagua bidhaa'), 'error'); return; }
+        if (!isFinite(quantity) || quantity < 0) { toast(tr('msimamizi_huduma.err_qty', 'Kiasi si sahihi'), 'error'); return; }
+
+        var res = await api('/api/services/' + serviceId + '/consumables', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ product_id: productId, required_quantity: quantity })
+        });
+
+        if (res.ok) {
+            replaceService(res.data && res.data.service);
+            toast(tr('msimamizi_huduma.msg_added', 'Bidhaa imeongezwa kwenye huduma'), 'success');
+        } else {
+            toast(message(res, tr('msimamizi_huduma.err_save', 'Imeshindikana kuhifadhi')), 'error');
+        }
+    };
+
+    window.hudumaRemoveProduct = function (serviceId, productId) {
+        var service = state.services.find(function (s) { return s.id === serviceId; });
+        var item = service ? (service.consumables || []).find(function (c) { return c.product_id === productId; }) : null;
+
+        confirmBox(
+            tr('msimamizi_huduma.confirm_remove_title', 'Ondoa bidhaa?'),
+            tr('msimamizi_huduma.confirm_remove_msg', 'Bidhaa {name} itaondolewa kwenye huduma hii. Bidhaa yenyewe itabaki kwenye stoo.').replace('{name}', item ? item.product_name : ''),
+            async function () {
+                var res = await api('/api/services/' + serviceId + '/consumables/' + productId, { method: 'DELETE' });
+                if (res.ok) {
+                    replaceService(res.data && res.data.service);
+                    toast(tr('msimamizi_huduma.msg_removed', 'Bidhaa imeondolewa kwenye huduma'), 'success');
+                } else {
+                    toast(message(res, tr('msimamizi_huduma.err_save', 'Imeshindikana kuondoa')), 'error');
+                }
+            }
+        );
+    };
+
+    window.hudumaDelete = function (serviceId) {
+        var service = state.services.find(function (s) { return s.id === serviceId; });
+        if (!service) { return; }
+
+        confirmBox(
+            tr('msimamizi_huduma.confirm_delete_title', 'Futa huduma?'),
+            tr('msimamizi_huduma.confirm_delete_msg', 'Huduma {name} itafutwa. Mauzo ya nyuma ya huduma hii hayatabadilishwa, na bidhaa zake hazitafutwa kwenye stoo.').replace('{name}', service.name),
+            async function () {
+                var res = await api('/api/services/' + serviceId, { method: 'DELETE' });
+                if (res.ok) {
+                    state.services = state.services.filter(function (s) { return s.id !== serviceId; });
+                    render();
+                    toast(tr('msimamizi_huduma.msg_deleted', 'Huduma imefutwa'), 'success');
+                } else {
+                    toast(message(res, tr('msimamizi_huduma.err_delete', 'Imeshindikana kufuta huduma')), 'error');
+                }
+            }
+        );
+    };
+
+    window.hudumaEdit = function (serviceId) {
+        var service = state.services.find(function (s) { return s.id === serviceId; });
+        if (!service) { return; }
+
+        var overlay = document.createElement('div');
+        overlay.className = 'hd-modal';
+        overlay.innerHTML = '<div class="hd-modal-card">'
+            + '<div class="hd-modal-title">' + esc(tr('msimamizi_huduma.edit_title', 'Hariri huduma')) + '</div>'
+            + '<div class="hd-field"><label>' + esc(tr('msimamizi_huduma.label_name', 'Jina la huduma')) + '</label>'
+            + '<input class="hd-input" id="hdEditName" maxlength="120" value="' + esc(service.name) + '"></div>'
+            + '<div class="hd-field"><label>' + esc(tr('msimamizi_huduma.label_description', 'Maelezo (hiari)')) + '</label>'
+            + '<input class="hd-input" id="hdEditDesc" maxlength="500" value="' + esc(service.description || '') + '"></div>'
+            + '<div class="hd-field"><label>' + esc(tr('msimamizi_huduma.label_status', 'Hali')) + '</label>'
+            + '<select class="hd-input" id="hdEditStatus">'
+            + '<option value="active"' + (service.status === 'active' ? ' selected' : '') + '>' + esc(tr('msimamizi_huduma.status_active', 'Hai')) + '</option>'
+            + '<option value="inactive"' + (service.status === 'inactive' ? ' selected' : '') + '>' + esc(tr('msimamizi_huduma.status_inactive', 'Imezimwa')) + '</option>'
+            + '</select></div>'
+            + '<div class="hd-modal-actions"><button type="button" class="hd-btn ghost" id="hdEditCancel">' + esc(tr('msimamizi_huduma.cancel', 'Ghairi')) + '</button>'
+            + '<button type="button" class="hd-btn primary" id="hdEditSave">' + esc(tr('msimamizi_huduma.btn_save', 'Hifadhi')) + '</button></div>'
+            + '</div>';
+        document.body.appendChild(overlay);
+
+        function close() { overlay.remove(); }
+
+        overlay.querySelector('#hdEditCancel').onclick = close;
+        overlay.querySelector('#hdEditSave').onclick = async function () {
+            var name = overlay.querySelector('#hdEditName').value.trim();
+            if (!name) { toast(tr('msimamizi_huduma.err_name', 'Jina linahitajika'), 'error'); return; }
+
+            var res = await api('/api/services/' + serviceId, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: name,
+                    description: overlay.querySelector('#hdEditDesc').value.trim(),
+                    status: overlay.querySelector('#hdEditStatus').value
+                })
+            });
+
+            if (res.ok) {
+                close();
+                replaceService(res.data && res.data.service);
+                toast(tr('msimamizi_huduma.msg_updated', 'Huduma imehaririwa'), 'success');
+            } else {
+                toast(message(res, tr('msimamizi_huduma.err_save', 'Imeshindikana kuhifadhi')), 'error');
+            }
+        };
+    };
+
+    load();
 })();
 </script>
 </body>

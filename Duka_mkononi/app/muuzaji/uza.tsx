@@ -1106,6 +1106,34 @@ export default function UzaScreen() {
         </View>
 
 
+        {/* Uza Huduma: a sibling route so the product cart flow below is
+            untouched and keeps working exactly as before. */}
+        <TouchableOpacity
+          style={{
+            backgroundColor: '#fff',
+            borderRadius: 16,
+            borderWidth: 1,
+            borderColor: '#eef1f4',
+            padding: 14,
+            marginHorizontal: 16,
+            marginBottom: 16,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 12,
+          }}
+          onPress={() => router.push('/muuzaji/uza-huduma' as any)}
+          activeOpacity={0.85}
+        >
+          <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#f3eefc', alignItems: 'center', justifyContent: 'center' }}>
+            <Ionicons name="cut-outline" size={22} color="#7c5cbf" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 15, fontWeight: '800', color: '#2c3e50' }}>{t('huduma.sell_title')}</Text>
+            <Text style={{ fontSize: 12, color: '#7f8c8d', marginTop: 2 }}>{t('huduma.sell_subtitle')}</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#95a5a6" />
+        </TouchableOpacity>
+
         <View style={styles.formContainer}>
           {/* Sehemu ya Kuchagua Bidhaa */}
           <View style={styles.inputGroup}>

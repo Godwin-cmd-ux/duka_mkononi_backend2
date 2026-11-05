@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Sale;
+use App\Models\ServiceSale;
 use Illuminate\Http\Request;
 
 class RevenueController extends BaseController
@@ -51,6 +52,25 @@ class RevenueController extends BaseController
                 return (float)($sale->total_amount ?? 0);
             });
 
+            // Huduma (services) are real revenue too. Revenue is the amount
+            // charged for the service; its consumable cost is not deducted here
+            // because this endpoint reports turnover, not profit.
+            $todayServiceRevenue = (float) ServiceSale::where('seller_id', $userId)->where('sale_date', $today)->sum('selling_price');
+            $weeklyServiceRevenue = (float) ServiceSale::where('seller_id', $userId)
+                ->where('sale_date', '>=', $startOfWeek->toDateString())
+                ->where('sale_date', '<=', $endOfWeek->toDateString())
+                ->sum('selling_price');
+            $monthlyServiceRevenue = (float) ServiceSale::where('seller_id', $userId)
+                ->where('sale_date', '>=', $startOfMonth)
+                ->where('sale_date', '<=', $endOfMonth)
+                ->sum('selling_price');
+            $totalServiceRevenue = (float) ServiceSale::where('seller_id', $userId)->sum('selling_price');
+
+            $todayRevenue += $todayServiceRevenue;
+            $weeklyRevenue += $weeklyServiceRevenue;
+            $monthlyRevenue += $monthlyServiceRevenue;
+            $totalRevenue += $totalServiceRevenue;
+
             $this->log($userId, 'REVENUE_VIEW', '/api/revenue/my', [
                 'today' => $todayRevenue,
                 'weekly' => $weeklyRevenue,
@@ -63,6 +83,12 @@ class RevenueController extends BaseController
                 'weekly' => round($weeklyRevenue, 2),
                 'monthly' => round($monthlyRevenue, 2),
                 'total' => round($totalRevenue, 2),
+                'service_revenue' => [
+                    'today' => round($todayServiceRevenue, 2),
+                    'weekly' => round($weeklyServiceRevenue, 2),
+                    'monthly' => round($monthlyServiceRevenue, 2),
+                    'total' => round($totalServiceRevenue, 2),
+                ],
             ]);
         } catch (\Throwable $e) {
             $this->log($this->userId($request), 'REVENUE_VIEW_ERROR', '/api/revenue/my', ['error' => $e->getMessage()], $this->ip($request), 'failed');

@@ -46,6 +46,8 @@ use App\Http\Controllers\Api\ReactionController;
 use App\Http\Controllers\Api\ResetPasswordController;
 use App\Http\Controllers\Api\RevenueController;
 use App\Http\Controllers\Api\SaleController;
+use App\Http\Controllers\Api\ServiceController;
+use App\Http\Controllers\Api\ServiceSaleController;
 use App\Http\Controllers\Api\ShopController;
 use App\Http\Controllers\Api\SystemAdminController;
 use App\Http\Controllers\Api\UserActivityController;
@@ -260,6 +262,23 @@ Route::middleware('auth.jwt')->group(function () {
     Route::get('sales/my', [SaleController::class, 'my']);
     Route::post('sales', [SaleController::class, 'store']);
     Route::put('sales/{id}', [SaleController::class, 'update']);
+
+    // Huduma (services): the recipe an admin configures and the seller sells.
+    // Reads are open to every business member (a seller needs the recipe);
+    // ServiceController enforces admin-only on every mutation, and every query
+    // is scoped by the caller's JWT business id.
+    Route::get('services', [ServiceController::class, 'index']);
+    Route::post('services', [ServiceController::class, 'store']);
+    Route::get('services/{id}', [ServiceController::class, 'show']);
+    Route::put('services/{id}', [ServiceController::class, 'update']);
+    Route::delete('services/{id}', [ServiceController::class, 'destroy']);
+    Route::post('services/{id}/consumables', [ServiceController::class, 'addConsumables']);
+    Route::put('services/{id}/consumables/{productId}', [ServiceController::class, 'updateConsumable']);
+    Route::delete('services/{id}/consumables/{productId}', [ServiceController::class, 'removeConsumable']);
+
+    // Uza Huduma: seller history + the atomic service-sale write path.
+    Route::get('service-sales/my', [ServiceSaleController::class, 'my']);
+    Route::post('service-sales', [ServiceSaleController::class, 'store']);
     Route::get('customers/my', [CustomerController::class, 'my']);
     Route::post('customers', [CustomerController::class, 'store']);
     Route::put('customers/{id}', [CustomerController::class, 'update']);
@@ -344,6 +363,7 @@ Route::middleware('auth.jwt')->group(function () {
     Route::get('admin/users', [AdminController::class, 'users']);
     Route::get('admin/products', [AdminController::class, 'products']);
     Route::get('admin/sales', [AdminController::class, 'sales']);
+    Route::get('admin/service-sales', [ServiceSaleController::class, 'adminIndex']);
     Route::get('admin/customers', [AdminController::class, 'customers']);
     Route::get('admin/stats', [AdminController::class, 'stats']);
     Route::get('admin/payments', [PaymentController::class, 'adminIndex']);

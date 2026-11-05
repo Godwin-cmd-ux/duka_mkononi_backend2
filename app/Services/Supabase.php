@@ -386,6 +386,48 @@ class Supabase
     /* Writes                                                             */
     /* ------------------------------------------------------------------ */
 
+    /**
+     * Static entry point for a database function. `Supabase::table('...')`
+     * has no meaning for RPC, so callers use this instead of inventing one.
+     */
+    public static function callFunction(string $function, array $params = [])
+    {
+        return (new static('rpc'))->rpc($function, $params);
+    }
+
+    /**
+     * Call a PostgreSQL function exposed by PostgREST (POST /rest/v1/rpc/fn).
+     *
+     * This is the only way to run multi-table work atomically through
+     * Supabase: the function executes in a single database transaction, so a
+     * service sale that deducts several products either completes entirely or
+     * leaves every stock row untouched. A function that raises comes back as a
+     * non-2xx response; only its SQL message is surfaced, because the rest of
+     * the PostgREST envelope (code/details/hint) is not user-facing.
+     */
+    public function rpc(string $function, array $params = [])
+    {
+        $response = Http::withHeaders(array_merge(
+            $this->authHeaders(),
+            [
+                'Prefer' => 'return=representation',
+                'Content-Type' => 'application/json',
+            ]
+        ))->timeout(config('supabase.timeout'))
+            ->post($this->absoluteUrl('/rpc/' . $function), $params);
+
+        if (!$response->successful()) {
+            $body = $response->json();
+            $message = is_array($body) && isset($body['message'])
+                ? (string) $body['message']
+                : $response->body();
+
+            throw new RuntimeException($message ?: "Supabase rpc {$function} failed: {$response->status()}", $response->status());
+        }
+
+        return $response->json();
+    }
+
     public function insert(array $data)
     {
         $rows = $this->request('POST', $this->absoluteUrl('/' . $this->table), $this->writeHeaders('return=representation'), $data);

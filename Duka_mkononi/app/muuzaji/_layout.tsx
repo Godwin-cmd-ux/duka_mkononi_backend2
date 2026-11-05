@@ -69,6 +69,8 @@ export default function MuuzajiLayout() {
       <Tabs.Screen name="msaidizi" options={{ href: null }} />
       <Tabs.Screen name="afya-biashara" options={{ href: null }} />
       <Tabs.Screen name="tangaza" options={{ href: null }} />
+      {/* Uza Huduma is opened from the Uza page. */}
+      <Tabs.Screen name="uza-huduma" options={{ href: null }} />
     </Tabs>
     </TabSwipe>
   );

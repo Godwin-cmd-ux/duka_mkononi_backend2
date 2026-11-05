@@ -265,7 +265,14 @@
                 <div class="logout-btn" id="logoutBtn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 3H19C20.1 3 21 3.9 21 5V19C21 20.1 20.1 21 19 21H15M10 17L15 12L10 7M15 12H3"/></svg> <span data-i18n="muuzaji_uza.btn_logout">Ondoka</span></div>
             </div>
         </aside>
-        <main class="main-content"><div class="page-container" id="uzaContent"></div></main>
+        <main class="main-content">
+            <div class="svc-modebar" id="uzaModeBar">
+                <button type="button" class="svc-mode active" data-mode="products" onclick="uzaSetMode('products')"><span>🛒</span> <span data-i18n="muuzaji_uza_huduma.mode_products">Uza Bidhaa</span></button>
+                <button type="button" class="svc-mode" data-mode="services" onclick="uzaSetMode('services')"><span>✂️</span> <span data-i18n="muuzaji_uza_huduma.mode_services">Uza Huduma</span></button>
+            </div>
+            <div class="page-container" id="uzaContent"></div>
+            <div class="page-container" id="uzaHudumaHost" style="display:none;"></div>
+        </main>
     </div>
 
     <!-- Cart Modal -->
@@ -996,6 +1003,375 @@ function resetSession(){if(aiProcessing)return;aiRows=[];aiImages=[];$('aiSaleRe
 function openModal(){var m=$('aiSaleModal');if(m)m.classList.add('show');initUploadHandlers();refreshUploadUi();var uw=$('aiSaleResultsWrap');if(uw)uw.style.display=aiRows.length?'block':'none';hideBanner();}
 function closeModal(){var m=$('aiSaleModal');if(m)m.classList.remove('show');stopProgress();}
 window.refreshAiSaleUi=function(){refreshUploadUi();if(aiRows.length){renderResults();}};window.openAiSaleModal=openModal;window.closeAiSaleModal=closeModal;window.startAiSaleProcess=startProcess;window.captureAiSaleImage=captureImage;window.removeAiSaleImage=removeImage;window.commitAiSaleRow=commitRow;window.commitAllAiSaleRows=commitAll;window.resetAiSaleSession=resetSession;
+})();
+</script>
+<!-- =====================================================================
+     UZA HUDUMA
+     A sibling of #uzaContent, which the product renderer rewrites on every
+     keystroke. The product flow keeps running exactly as before; this panel
+     is only shown when the seller picks the "Uza Huduma" mode above.
+     ===================================================================== -->
+<style>
+.svc-modebar{display:flex;gap:8px;background:#f1f4f7;border-radius:16px;padding:5px;margin:0 0 16px;max-width:520px}
+.svc-mode{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;border:0;background:transparent;border-radius:12px;padding:11px 10px;font:800 13px 'Inter',sans-serif;color:#5d6d7e;cursor:pointer;transition:all .15s}
+.svc-mode.active{background:#fff;color:#e74c3c;box-shadow:0 1px 6px rgba(44,62,80,.12)}
+.svc-card{background:#fff;border-radius:20px;padding:20px;border:1px solid #eef1f4;box-shadow:0 2px 12px rgba(44,62,80,.05);margin-bottom:16px}
+.svc-title{font-size:19px;font-weight:800;color:#2c3e50;margin:0 0 3px}
+.svc-sub{font-size:12px;color:#7f8c8d;margin:0 0 16px;line-height:1.5}
+.svc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.svc-pick{text-align:left;border:2px solid #eef1f4;background:#fbfcfd;border-radius:14px;padding:13px;cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif}
+.svc-pick:hover{border-color:#f5b7b1;background:#fff}
+.svc-pick.active{border-color:#e74c3c;background:#fdf3f2;box-shadow:0 0 0 3px rgba(231,76,60,.08)}
+.svc-pick-name{font-size:14px;font-weight:800;color:#2c3e50;line-height:1.3}
+.svc-pick-meta{font-size:11px;color:#7f8c8d;margin-top:5px}
+.svc-pick-cost{font-size:12px;font-weight:800;color:#7c5cbf;margin-top:7px}
+.svc-empty{text-align:center;padding:34px 16px;color:#95a5a6}
+.svc-empty-ic{font-size:36px;margin-bottom:8px}
+.svc-empty-title{font-weight:800;color:#5d6d7e;margin-bottom:4px}
+.svc-empty-text{font-size:13px;line-height:1.5}
+.svc-rows{overflow-x:auto;border:1px solid #eef1f4;border-radius:12px}
+.svc-table{width:100%;border-collapse:collapse;min-width:520px}
+.svc-table th{background:#f8fafb;color:#7f8c8d;font-size:10px;text-transform:uppercase;letter-spacing:.05em;text-align:left;padding:9px 12px;border-bottom:1px solid #eef1f4;white-space:nowrap}
+.svc-table td{padding:10px 12px;border-bottom:1px solid #f5f7f8;font-size:13px;color:#34495e}
+.svc-table tr:last-child td{border-bottom:0}
+.svc-table tr.short{background:#fdf3f2}
+.svc-table input{width:70px;padding:7px 8px;border:1px solid #dfe6ec;border-radius:9px;font:700 13px 'Inter',sans-serif;text-align:center}
+.svc-warn{font-size:10px;color:#c0392b;font-weight:700;margin-top:3px}
+.svc-pricefield{margin-top:16px}
+.svc-pricefield label{display:block;font-size:12px;font-weight:700;color:#5d6d7e;margin-bottom:6px}
+.svc-price-wrap{display:flex;align-items:center;border:1px solid #dfe6ec;border-radius:12px;background:#fbfcfd;padding:0 14px}
+.svc-price-wrap span{font-size:12px;font-weight:800;color:#95a5a6}
+.svc-price-wrap input{flex:1;border:0;background:transparent;padding:14px 10px;font:800 17px 'Inter',sans-serif;color:#2c3e50;outline:none}
+.svc-preview{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.svc-preview-box{background:#f8fafb;border-radius:12px;padding:12px 14px;border:1px solid #eef1f4}
+.svc-preview-box .lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#95a5a6}
+.svc-preview-box .val{font-size:16px;font-weight:800;color:#2c3e50;margin-top:3px}
+.svc-preview-box.profit{background:#f2fbf6;border-color:#d5f5e3}
+.svc-preview-box.profit .val{color:#1e8449}
+.svc-preview-box.loss{background:#fdf3f2;border-color:#fadbd8}
+.svc-preview-box.loss .val{color:#c0392b}
+.svc-meta-row{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.svc-meta-row .field{flex:1;min-width:130px}
+.svc-meta-row label{display:block;font-size:11px;font-weight:700;color:#7f8c8d;margin-bottom:5px}
+.svc-meta-row input{width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid #dfe6ec;border-radius:10px;font:400 13px 'Inter',sans-serif;background:#fbfcfd;color:#2c3e50}
+.svc-submit{width:100%;margin-top:16px;border:0;border-radius:14px;padding:15px;background:#e74c3c;color:#fff;font:800 15px 'Inter',sans-serif;cursor:pointer;transition:opacity .15s}
+.svc-submit:disabled{opacity:.55;cursor:not-allowed}
+.svc-hint{font-size:11px;color:#95a5a6;margin-top:10px;line-height:1.5}
+.svc-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:2400;background:#2c3e50;color:#fff;padding:13px 20px;border-radius:14px;font:700 13px 'Inter',sans-serif;max-width:88%;box-shadow:0 8px 26px rgba(0,0,0,.22);opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;text-align:center}
+.svc-toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+.svc-toast.error{background:#c0392b}
+.svc-toast.success{background:#1e8449}
+</style>
+<script>
+(function () {
+    'use strict';
+    var host = document.getElementById('uzaHudumaHost');
+    if (!host) { return; }
+
+    var state = { mode: 'products', services: [], selectedId: null, units: 1, qtys: {}, loading: true, busy: false };
+
+    function tr(key, fallback) {
+        try {
+            var value = (typeof t === 'function') ? t(key) : '';
+            if (value && value !== key) { return value; }
+        } catch (e) {}
+        return fallback;
+    }
+    function esc(value) {
+        return String(value === null || value === undefined ? '' : value).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    }
+    function money(value) {
+        var n = Number(value || 0);
+        if (!isFinite(n)) { n = 0; }
+        return 'TZS ' + n.toLocaleString(undefined, { maximumFractionDigits: 0 });
+    }
+    function token() { return localStorage.getItem('userToken') || ''; }
+
+    function toast(message, type) {
+        var el = document.createElement('div');
+        el.className = 'svc-toast ' + (type || '') + ' show';
+        el.textContent = message;
+        document.body.appendChild(el);
+        setTimeout(function () { el.classList.remove('show'); }, 3400);
+        setTimeout(function () { el.remove(); }, 3800);
+    }
+
+    async function api(path, options) {
+        var opts = options || {};
+        opts.headers = Object.assign({ 'Authorization': 'Bearer ' + token() }, opts.headers || {});
+        try {
+            var response = await fetch(path, opts);
+            var data = null;
+            try { data = await response.json(); } catch (e) { data = null; }
+            return { ok: response.ok, status: response.status, data: data };
+        } catch (e) {
+            return { ok: false, status: 0, data: null, network: true };
+        }
+    }
+
+    function selected() {
+        return state.services.find(function (s) { return s.id === state.selectedId; }) || null;
+    }
+
+    async function loadServices() {
+        state.loading = true;
+        render();
+        var res = await api('/api/services');
+        state.services = (res.ok && Array.isArray(res.data)) ? res.data.filter(function (s) { return s.status !== 'inactive'; }) : [];
+        state.loading = false;
+        render();
+    }
+
+    function render() {
+        if (state.loading) {
+            host.innerHTML = '<div class="svc-card"><div class="svc-empty"><div class="svc-empty-ic">⏳</div><div class="svc-empty-text">'
+                + esc(tr('muuzaji_uza_huduma.loading', 'Inapakia huduma...')) + '</div></div></div>';
+            return;
+        }
+
+        if (state.services.length === 0) {
+            host.innerHTML = '<div class="svc-card"><div class="svc-empty"><div class="svc-empty-ic">✂️</div><div class="svc-empty-title">'
+                + esc(tr('muuzaji_uza_huduma.no_services', 'Hakuna huduma zilizowekwa')) + '</div><div class="svc-empty-text">'
+                + esc(tr('muuzaji_uza_huduma.no_services_hint', 'Msimamizi wa biashara anahitaji kuunda huduma kwanza kabla ya kuuza.'))
+                + '</div></div></div>';
+            return;
+        }
+
+        var picks = state.services.map(function (service) {
+            return '<button type="button" class="svc-pick ' + (service.id === state.selectedId ? 'active' : '') + '" onclick="uzaPickService(\'' + esc(service.id) + '\')">'
+                + '<div class="svc-pick-name">' + esc(service.name) + '</div>'
+                + '<div class="svc-pick-meta">' + esc((service.consumables || []).length) + ' ' + esc(tr('muuzaji_uza_huduma.consumables', 'bidhaa zitumikazo')) + '</div>'
+                + '<div class="svc-pick-cost">' + money(service.estimated_cost) + '</div></button>';
+        }).join('');
+
+        host.innerHTML = '<div class="svc-card">'
+            + '<h2 class="svc-title">' + esc(tr('muuzaji_uza_huduma.title', 'Uza Huduma')) + '</h2>'
+            + '<p class="svc-sub">' + esc(tr('muuzaji_uza_huduma.subtitle', 'Chagua huduma, rekebisha kiasi kilichotumika, kisha weka bei uliyomtoza mteja. Stoo itapunguzwa kiotomatiki.')) + '</p>'
+            + '<div class="svc-grid">' + picks + '</div>'
+            + '</div>'
+            + (state.selectedId ? renderDetails() : '');
+
+        recalc();
+    }
+
+    function renderDetails() {
+        var service = selected();
+        if (!service) { return ''; }
+
+        var rows = (service.consumables || []).map(function (item) {
+            var qty = state.qtys[item.product_id] === undefined ? defaultQty(item) : state.qtys[item.product_id];
+            var stock = Number(item.stock || 0);
+            return '<tr data-row="' + esc(item.product_id) + '" class="' + (qty > stock ? 'short' : '') + '">'
+                + '<td><div style="font-weight:700;">' + esc(item.product_name) + '</div>'
+                + '<div style="font-size:10px;color:#95a5a6;">' + esc(tr('muuzaji_uza_huduma.available', 'Zilizopo')) + ': ' + stock + '</div></td>'
+                + '<td><input type="number" min="0" step="1" value="' + esc(qty) + '" data-pid="' + esc(item.product_id) + '" oninput="uzaQty(this)"></td>'
+                + '<td>' + money(item.buying_price) + '</td>'
+                + '<td data-line="' + esc(item.product_id) + '">' + money(qty * Number(item.buying_price || 0)) + '</td>'
+                + '</tr>';
+        }).join('');
+
+        return '<div class="svc-card">'
+            + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:14px;">'
+            + '<div><div class="svc-title" style="font-size:17px;">' + esc(service.name) + '</div>'
+            + '<div class="svc-sub" style="margin:0;">' + esc(service.description || '') + '</div></div>'
+            + '<div style="min-width:110px;"><label style="display:block;font-size:11px;font-weight:700;color:#7f8c8d;margin-bottom:5px;">' + esc(tr('muuzaji_uza_huduma.units', 'Idadi ya huduma')) + '</label>'
+            + '<input type="number" min="1" step="1" value="' + state.units + '" id="svcUnits" onchange="uzaUnits(this)" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid #dfe6ec;border-radius:10px;font:700 14px Inter,sans-serif;text-align:center;"></div>'
+            + '</div>'
+            + '<div class="svc-rows"><table class="svc-table"><thead><tr>'
+            + '<th>' + esc(tr('muuzaji_uza_huduma.consumable', 'Bidhaa Zitumikazo')) + '</th>'
+            + '<th>' + esc(tr('muuzaji_uza_huduma.qty_used', 'Kiasi Kilichotumika')) + '</th>'
+            + '<th>' + esc(tr('muuzaji_uza_huduma.buying_price', 'Bei ya Kununua')) + '</th>'
+            + '<th>' + esc(tr('muuzaji_uza_huduma.line_cost', 'Gharama')) + '</th></tr></thead><tbody>' + rows + '</tbody></table></div>'
+            + '<div class="svc-pricefield"><label>' + esc(tr('muuzaji_uza_huduma.service_price', 'Bei ya Huduma (kiasi ulichomtoza mteja)')) + '</label>'
+            + '<div class="svc-price-wrap"><span>TZS</span><input type="number" min="0" id="svcPrice" placeholder="0" oninput="uzaRecalc()"></div></div>'
+            + '<div class="svc-preview">'
+            + '<div class="svc-preview-box"><div class="lbl">' + esc(tr('muuzaji_uza_huduma.consumable_cost', 'Gharama za Bidhaa')) + '</div><div class="val" id="svcCost">TZS 0</div></div>'
+            + '<div class="svc-preview-box profit" id="svcProfitBox"><div class="lbl">' + esc(tr('muuzaji_uza_huduma.expected_profit', 'Faida Inayotarajiwa')) + '</div><div class="val" id="svcProfit">TZS 0</div></div>'
+            + '</div>'
+            + '<div class="svc-meta-row">'
+            + '<div class="field"><label>' + esc(tr('muuzaji_uza_huduma.sale_date', 'Tarehe')) + '</label><input type="date" id="svcDate" value="' + new Date().toISOString().split('T')[0] + '"></div>'
+            + '<div class="field"><label>' + esc(tr('muuzaji_uza_huduma.notes', 'Maelezo (hiari)')) + '</label><input type="text" id="svcNotes" maxlength="500" placeholder="' + esc(tr('muuzaji_uza_huduma.notes_placeholder', 'Mfano: mteja wa kudumu')) + '"></div>'
+            + '</div>'
+            + '<button type="button" class="svc-submit" id="svcSubmit" onclick="uzaSubmitService()">' + esc(tr('muuzaji_uza_huduma.btn_sell', 'Kamilisha Mauzo ya Huduma')) + '</button>'
+            + '<div class="svc-hint" id="svcHint">' + esc(tr('muuzaji_uza_huduma.hint', 'Faida inahesabiwa kwa bei ya kununua iliyopo kwenye mfumo. Server itahesabu tena kabla ya kuhifadhi.')) + '</div>'
+            + '</div>';
+    }
+
+    function defaultQty(item) {
+        return Number(item.required_quantity || 0) * state.units;
+    }
+
+    function recalc() {
+        var service = selected();
+        if (!service) { return; }
+
+        var cost = 0;
+        var hasShortage = false;
+
+        (service.consumables || []).forEach(function (item) {
+            var qty = state.qtys[item.product_id];
+            if (qty === undefined) { qty = defaultQty(item); }
+            cost += qty * Number(item.buying_price || 0);
+
+            var line = document.querySelector('[data-line="' + item.product_id + '"]');
+            if (line) { line.textContent = money(qty * Number(item.buying_price || 0)); }
+
+            var row = document.querySelector('[data-row="' + item.product_id + '"]');
+            var short = qty > Number(item.stock || 0);
+            if (row) { row.classList.toggle('short', short); }
+            if (short) { hasShortage = true; }
+        });
+
+        var priceInput = document.getElementById('svcPrice');
+        var price = priceInput ? parseFloat(priceInput.value) : 0;
+        if (!isFinite(price) || price < 0) { price = 0; }
+
+        var profit = price - cost;
+        var costEl = document.getElementById('svcCost');
+        var profitEl = document.getElementById('svcProfit');
+        var box = document.getElementById('svcProfitBox');
+
+        if (costEl) { costEl.textContent = money(cost); }
+        if (profitEl) { profitEl.textContent = money(profit); }
+        if (box) {
+            box.classList.toggle('loss', profit < 0);
+            box.classList.toggle('profit', profit >= 0);
+        }
+
+        var submit = document.getElementById('svcSubmit');
+        var hint = document.getElementById('svcHint');
+        if (submit) { submit.disabled = state.busy || hasShortage; }
+        if (hint) {
+            hint.textContent = hasShortage
+                ? tr('muuzaji_uza_huduma.shortage', 'Bidhaa moja au zaidi hazipo kwenye stoo kwa kiasi hiki. Punguza kiasi kabla ya kuendelea.')
+                : tr('muuzaji_uza_huduma.hint', 'Faida inahesabiwa kwa bei ya kununua iliyopo kwenye mfumo. Server itahesabu tena kabla ya kuhifadhi.');
+            hint.style.color = hasShortage ? '#c0392b' : '#95a5a6';
+            hint.style.fontWeight = hasShortage ? '700' : '400';
+        }
+    }
+
+    window.uzaSetMode = function (mode) {
+        state.mode = mode === 'services' ? 'services' : 'products';
+
+        var productHost = document.getElementById('uzaContent');
+        if (productHost) { productHost.style.display = state.mode === 'services' ? 'none' : ''; }
+        host.style.display = state.mode === 'services' ? '' : 'none';
+
+        document.querySelectorAll('#uzaModeBar .svc-mode').forEach(function (button) {
+            button.classList.toggle('active', button.getAttribute('data-mode') === state.mode);
+        });
+
+        if (state.mode === 'services') { loadServices(); }
+    };
+
+    window.uzaPickService = function (serviceId) {
+        state.selectedId = serviceId;
+        state.units = 1;
+        state.qtys = {};
+        render();
+    };
+
+    window.uzaUnits = function (input) {
+        var units = parseInt(input.value, 10);
+        if (!isFinite(units) || units < 1) { units = 1; }
+        state.units = units;
+        state.qtys = {};
+        render();
+    };
+
+    window.uzaQty = function (input) {
+        var productId = input.getAttribute('data-pid');
+        var qty = parseFloat(input.value);
+        if (!isFinite(qty) || qty < 0) { qty = 0; }
+        state.qtys[productId] = qty;
+        recalc();
+    };
+
+    window.uzaRecalc = recalc;
+
+    window.uzaSubmitService = async function () {
+        if (state.busy) { return; }
+        var service = selected();
+        if (!service) { return; }
+
+        var priceInput = document.getElementById('svcPrice');
+        var price = priceInput ? parseFloat(priceInput.value) : NaN;
+        if (!isFinite(price) || price < 0) {
+            toast(tr('muuzaji_uza_huduma.err_price', 'Weka bei ya huduma (0 au zaidi)'), 'error');
+            return;
+        }
+
+        var lines = [];
+        (service.consumables || []).forEach(function (item) {
+            var qty = state.qtys[item.product_id];
+            if (qty === undefined) { qty = defaultQty(item); }
+            if (qty > 0) { lines.push({ product_id: item.product_id, quantity: qty }); }
+        });
+
+        if (lines.length === 0) {
+            toast(tr('muuzaji_uza_huduma.err_empty', 'Hakuna bidhaa iliyotumika kwenye huduma hii'), 'error');
+            return;
+        }
+
+        state.busy = true;
+        var submit = document.getElementById('svcSubmit');
+        if (submit) { submit.disabled = true; submit.textContent = tr('muuzaji_uza_huduma.btn_selling', 'Inahifadhi...'); }
+
+        var payload = {
+            service_id: service.id,
+            service_quantity: state.units,
+            selling_price: price,
+            consumables: lines,
+            payment_method: 'cash',
+            sale_date: (document.getElementById('svcDate') || {}).value || '',
+            notes: (document.getElementById('svcNotes') || {}).value || '',
+            clientSaleKey: 'srv-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8)
+        };
+
+        var send = function () {
+            return api('/api/service-sales', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+        };
+
+        var res = await send();
+        if (!res.ok && res.network) { res = await send(); }
+
+        state.busy = false;
+
+        if (res.ok) {
+            var sale = (res.data && res.data.sale) || {};
+            toast(tr('muuzaji_uza_huduma.msg_success', 'Mauzo ya huduma yamekamilika')
+                + (sale.invoice_number ? ' • ' + sale.invoice_number : '') 
+                + ' • ' + tr('muuzaji_uza_huduma.profit', 'Faida') + ': ' + money(sale.profit), 'success');
+
+            state.selectedId = null;
+            state.qtys = {};
+            state.units = 1;
+            await loadServices();
+            return;
+        }
+
+        if (submit) { submit.disabled = false; submit.textContent = tr('muuzaji_uza_huduma.btn_sell', 'Kamilisha Mauzo ya Huduma'); }
+
+        var error = res.data && res.data.error ? res.data.error : tr('muuzaji_uza_huduma.err_failed', 'Imeshindikana kukamilisha mauzo');
+        if (res.data && res.data.code === 'STOCK_ISSUES' && res.data.stockIssues && res.data.stockIssues[0]) {
+            var issue = res.data.stockIssues[0];
+            error = tr('muuzaji_uza_huduma.err_stock', 'Stoo haitoshi');
+            if (issue.available !== undefined && issue.available !== null) {
+                error += ' (' + issue.available + ')';
+            }
+        }
+        toast(error, 'error');
+        recalc();
+    };
+
+    // Products stay the default mode; services load only when picked.
+    window.uzaSetMode('products');
 })();
 </script>
 </body>

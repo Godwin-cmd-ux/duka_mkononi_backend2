@@ -140,6 +140,9 @@ export default function RipotiScreen() {
   // Sales with no customer data — each counts as one "unknown customer".
   const [unknownCustomers, setUnknownCustomers] = useState(0);
   const [sales, setSales] = useState<Sale[]>([]);
+  // Huduma (service) sales come from the same admin/sales snapshot and are
+  // reported next to product sales, never as a product line of their own.
+  const [serviceSales, setServiceSales] = useState<any[]>([]);
   const [sellers, setSellers] = useState<User[]>([]);
   
   const [loading, setLoading] = useState(true);
@@ -561,6 +564,7 @@ export default function RipotiScreen() {
 
       // 4. Pata mauzo yote ya biashara (server-filtered + slim=1).
       let salesRaw: any[] | null = await getCache<any[]>('admin:sales');
+      let serviceSalesRaw: any[] = [];
       try {
         const salesResponse = await fetchWithTimeout(
           `${API_BASE_URL}/api/admin/sales?business_name=${encodeURIComponent(businessName)}&slim=1`,
@@ -572,6 +576,8 @@ export default function RipotiScreen() {
         if (salesResponse.ok) {
           const responseData = await salesResponse.json();
           salesRaw = Array.isArray(responseData) ? responseData : responseData.sales || [];
+          serviceSalesRaw = Array.isArray(responseData) ? [] : (responseData.service_sales || []);
+          setServiceSales(serviceSalesRaw);
           setCache('admin:sales', salesRaw).catch(() => {});
         }
       } catch (error) {
@@ -596,14 +602,22 @@ export default function RipotiScreen() {
       setUnsoldProducts(unsoldProducts);
       console.log('📊 Bidhaa zimeuzwa:', soldProducts.length, '| Hazijauzwa:', unsoldProducts.length);
 
-      // 6. Hesabu takwimu za biashara
-      if (allSales.length > 0) {
-        const totalSalesAmount = allSales.reduce((sum, sale) => sum + sale.total_amount, 0);
-        const totalProfit = allSales.reduce((sum, sale) => sum + (sale.profit || 0), 0);
-        const today = new Date().toISOString().split('T')[0];
+      // 6. Hesabu takwimu za biashara (bidhaa + huduma)
+      const today = new Date().toISOString().split('T')[0];
+      const serviceRevenue = serviceSalesRaw.reduce((sum, s) => sum + Number(s.selling_price || 0), 0);
+      const serviceProfit = serviceSalesRaw.reduce((sum, s) => sum + Number(s.profit || 0), 0);
+      const serviceToday = serviceSalesRaw.filter(
+        s => (s.sale_date || s.created_at || '').split('T')[0] === today
+      );
+      const serviceTodayRevenue = serviceToday.reduce((sum, s) => sum + Number(s.selling_price || 0), 0);
+      const serviceTodayProfit = serviceToday.reduce((sum, s) => sum + Number(s.profit || 0), 0);
+
+      if (allSales.length > 0 || serviceSalesRaw.length > 0) {
+        const totalSalesAmount = allSales.reduce((sum, sale) => sum + sale.total_amount, 0) + serviceRevenue;
+        const totalProfit = allSales.reduce((sum, sale) => sum + (sale.profit || 0), 0) + serviceProfit;
         const todaySales = allSales.filter(s => s.sale_date === today);
-        const todaySalesAmount = todaySales.reduce((sum, sale) => sum + sale.total_amount, 0);
-        const todayProfit = todaySales.reduce((sum, sale) => sum + (sale.profit || 0), 0);
+        const todaySalesAmount = todaySales.reduce((sum, sale) => sum + sale.total_amount, 0) + serviceTodayRevenue;
+        const todayProfit = todaySales.reduce((sum, sale) => sum + (sale.profit || 0), 0) + serviceTodayProfit;
         
         const totalCost = allSales.reduce((sum, sale) => {
           const cost = sale.cost_price || 0;
@@ -1136,7 +1150,37 @@ export default function RipotiScreen() {
           {t('reports.sales_report')} - {isAdmin ? userData.businessName : t('reports.personal_report')}
           {isAdmin && dataSource === 'admin' && ` (${t('reports.sellers_count', { n: sellers.length })}`}
         </Text>
-        {sales.length > 0 ? (
+        {serviceSales.length > 0 && (
+          <View style={{ marginBottom: 12 }}>
+            <Text style={styles.reportItemTitle}>
+              ✂️ {t('huduma.existing_services')} ({serviceSales.length})
+            </Text>
+            {serviceSales.slice(0, 20).map((s: any) => (
+              <View key={s.id} style={styles.reportItem}>
+                <View style={styles.reportItemMain}>
+                  <Text style={styles.reportItemTitle}>{s.service_name}</Text>
+                  <Text style={styles.reportItemSubtitle}>
+                    {(s.items || []).map((i: any) => `${i.product_name} × ${i.quantity}`).join(', ') || '—'}
+                  </Text>
+                  <Text style={styles.reportItemMeta}>
+                    {formatDate(s.sale_date || s.created_at)}{s.invoice_number ? ` • ${s.invoice_number}` : ''}
+                  </Text>
+                </View>
+                <View style={styles.reportItemSide}>
+                  <Text style={styles.reportItemAmount}>{formatCurrency(s.selling_price || 0)}</Text>
+                  <Text style={[styles.profitText, { color: Number(s.profit || 0) < 0 ? '#e74c3c' : '#27ae60' }]}>
+                    {t('reports.profit_label')} {formatCurrency(s.profit || 0)}
+                  </Text>
+                  <Text style={styles.reportItemMargin}>
+                    {t('huduma.cost')}: {formatCurrency(s.total_cost || 0)}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {sales.length > 0 || serviceSales.length > 0 ? (
           getFilteredSales().length > 0 ? (
           getFilteredSales().map((sale, index) => (
             <View key={`${sale.id}-${index}`} style={styles.reportItem}>

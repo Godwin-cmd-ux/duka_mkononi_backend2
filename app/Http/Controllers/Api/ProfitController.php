@@ -6,6 +6,7 @@ use App\Models\OfficeExpense;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
+use App\Models\ServiceSale;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -75,6 +76,31 @@ class ProfitController extends BaseController
                 }
             }
 
+            // Huduma (services). Revenue is what the customer paid; cost is the
+            // buying price snapshot of every consumed product. A product used
+            // by a service is NOT in sale_items, so adding this cost here does
+            // not double-count it.
+            $productRevenue = $grossRevenue;
+            $serviceRevenue = 0.0;
+            $serviceCost = 0.0;
+            $serviceSalesCount = 0;
+
+            if (count($userIds) > 0) {
+                $serviceSales = ServiceSale::whereIn('seller_id', $userIds)
+                    ->where('sale_date', $targetDate)
+                    ->select(['selling_price', 'total_cost'])
+                    ->get();
+
+                foreach ($serviceSales as $serviceSale) {
+                    $serviceRevenue += (float) ($serviceSale->selling_price ?? 0);
+                    $serviceCost += (float) ($serviceSale->total_cost ?? 0);
+                    $serviceSalesCount++;
+                }
+
+                $grossRevenue += $serviceRevenue;
+                $costOfGoods += $serviceCost;
+            }
+
             $grossProfit = $grossRevenue - $costOfGoods;
 
             $expenses = OfficeExpense::where('business_name', $businessName)->where('expense_date', $targetDate)->select('amount', 'category', 'description', 'user_id')->get();
@@ -115,9 +141,13 @@ class ProfitController extends BaseController
                 'revenue' => [
                     'gross' => round($grossRevenue, 2),
                     'cost_of_goods' => round($costOfGoods, 2),
+                    'product_gross' => round($productRevenue, 2),
+                    'service_gross' => round($serviceRevenue, 2),
+                    'service_cost' => round($serviceCost, 2),
                 ],
                 'gross_profit' => round($grossProfit, 2),
                 'items_with_unknown_buying_price' => $unknownBuyingPriceItems,
+                'service_sales_count' => $serviceSalesCount,
                 'expenses' => [
                     'total' => round($totalExpenses, 2),
                     'by_category' => $expensesByCategory ?: new \stdClass(),
@@ -201,6 +231,29 @@ class ProfitController extends BaseController
                 }
             }
 
+            // Service revenue/cost for the same month, snapshotted per sale.
+            $productRevenue = $totalRevenue;
+            $serviceRevenue = 0.0;
+            $serviceCost = 0.0;
+            $serviceSalesCount = 0;
+
+            if (count($userIds) > 0) {
+                $serviceSales = ServiceSale::whereIn('seller_id', $userIds)
+                    ->where('sale_date', '>=', $startDate)
+                    ->where('sale_date', '<=', $endDate)
+                    ->select(['selling_price', 'total_cost'])
+                    ->get();
+
+                foreach ($serviceSales as $serviceSale) {
+                    $serviceRevenue += (float) ($serviceSale->selling_price ?? 0);
+                    $serviceCost += (float) ($serviceSale->total_cost ?? 0);
+                    $serviceSalesCount++;
+                }
+
+                $totalRevenue += $serviceRevenue;
+                $totalCostOfGoods += $serviceCost;
+            }
+
             $expenses = OfficeExpense::where('business_name', $businessName)
                 ->where('expense_date', '>=', $startDate)
                 ->where('expense_date', '<=', $endDate)
@@ -230,6 +283,10 @@ class ProfitController extends BaseController
                     'total_sales' => 0,
                     'total_revenue' => round($totalRevenue, 2),
                     'total_cost_of_goods' => round($totalCostOfGoods, 2),
+                    'product_revenue' => round($productRevenue, 2),
+                    'service_revenue' => round($serviceRevenue, 2),
+                    'service_cost_of_goods' => round($serviceCost, 2),
+                    'service_sales_count' => $serviceSalesCount,
                     'gross_profit' => round($grossProfit, 2),
                     'total_expenses' => round($totalExpenses, 2),
                     'net_profit' => round($netProfit, 2),

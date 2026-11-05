@@ -1,0 +1,727 @@
+# TASK: IMPLEMENT A COMPLETE SERVICES MANAGEMENT AND SERVICE SALES MODULE IN DUKAMKONONI
+
+You are acting as a senior software architect, senior Laravel engineer, database architect, inventory management specialist, and full-stack developer.
+
+Your assignment is to extend the existing DukaMkononi application to support BOTH product-oriented businesses and service-oriented businesses.
+
+This is a major feature enhancement. It must be implemented professionally, following the existing application's architecture, database conventions, authorization rules, UI design system, business logic, and coding standards.
+
+**IMPORTANT: Do not treat this as an isolated feature. Integrate it into the existing inventory, sales, stock deduction, profit calculation, transaction history, and reporting systems.**
+
+---
+
+# 1. FIRST: INVESTIGATE THE EXISTING APPLICATION
+
+Before modifying anything, conduct a comprehensive investigation of the existing codebase.
+
+Identify:
+
+1. The current technology stack and application architecture.
+2. The database structure, migrations, models, and relationships.
+3. The business administration module.
+4. The page known as `Bizampia`.
+5. The existing `Bidhaa Mpya` section.
+6. The seller module and its `Uza` page.
+7. The existing product sales processing mechanism.
+8. How product buying prices and selling prices are stored.
+9. How inventory quantities are managed.
+10. How stock deductions are performed.
+11. How branches and business ownership are represented.
+12. How sellers are associated with businesses and branches.
+13. All sales reports in both the seller and administrator modules.
+14. How transactions, receipts, and sales histories are stored.
+15. How the system calculates sales revenue, costs, and profits.
+16. Existing permissions and authorization policies.
+
+Search the entire application for every place where product sales, sales totals, stock deductions, transaction histories, and sales reports are implemented.
+
+Do not assume that the main sales page is the only place requiring modification.
+
+**Preserve all existing product-selling functionality. Existing users must continue selling products exactly as they do today.**
+
+Do not introduce unnecessary architectural changes or duplicate existing functionality.
+
+---
+
+# 2. NEW FEATURE: HUDUMA MANAGEMENT
+
+Introduce a new service management capability inside the business administrator module.
+
+The functionality will be integrated into the existing `Bizampia` page, specifically around the existing `Bidhaa Mpya` section.
+
+There must be two main service management sections.
+
+## 2.1. Huduma Mpya
+
+Introduce a section called:
+
+`Huduma Mpya`
+
+When an administrator opens this section, the system should allow them to create a new service by selecting products that will be consumed when that service is performed.
+
+### Workflow
+
+1. Display all products registered under the current business.
+2. Allow the administrator to select one or multiple products.
+3. Each selected product becomes a consumable associated with the service.
+4. Allow the administrator to save the service.
+5. Ask for the service name and any other essential information required by the existing application design.
+
+For example:
+
+Service name: Hair Treatment
+
+Consumable products:
+
+| Product | Buying price |
+|---|---:|
+| Shampoo | 5,000 |
+| Hair Oil | 3,000 |
+| Conditioner | 4,000 |
+
+The resulting service configuration should recognize that Hair Treatment consumes Shampoo, Hair Oil, and Conditioner.
+
+### CRITICAL QUANTITY REQUIREMENT
+
+The system must support defining the required quantity of each consumable per service unit.
+
+For example:
+
+| Product | Required quantity |
+|---|---:|
+| Shampoo | 2 |
+| Hair Oil | 1 |
+| Conditioner | 1 |
+
+These quantities represent the default consumption recipe for one unit of the service.
+
+Allow zero quantities where appropriate, but do not allow negative quantities.
+
+If the business has more products, the administrator should be able to select additional products without an artificial limitation.
+
+A product may belong to multiple services.
+
+A product must also remain independently sellable through the existing product sales functionality.
+
+**Important:** Do not create separate inventory records for service consumables. Service consumables must reference the existing product inventory records.
+
+## 2.2. Huduma Zilizopo
+
+Introduce another section called:
+
+`Huduma Zilizopo`
+
+When clicked, display all services registered under the current business.
+
+For every service, display:
+
+- Service name.
+- Associated consumable products.
+- Required quantity of each consumable per service unit.
+- Relevant service information.
+
+The administrator must be able to:
+
+1. View a service.
+2. Add a new product to an existing service.
+3. Remove a product from an existing service.
+4. Update the required quantity of an existing consumable.
+
+The administrator must NOT be required to recreate the entire service when making these modifications.
+
+Apply proper confirmation before deleting a service or removing a consumable.
+
+Do not delete the actual product from inventory when removing it from a service.
+
+### Business isolation
+
+Services must belong to the correct business.
+
+An administrator must never be able to view, edit, delete, or associate products belonging to another business.
+
+Respect the existing business ownership and branch architecture.
+
+---
+
+# 3. DATABASE ARCHITECTURE
+
+Design a proper relational database structure for services.
+
+Do not store service consumables as comma-separated product IDs or JSON arrays when relational tables are appropriate.
+
+A recommended structure is:
+
+### services
+
+- id
+- business_id
+- name
+- description (nullable)
+- status
+- created_at
+- updated_at
+
+### service_consumables
+
+- id
+- service_id
+- product_id
+- required_quantity
+- created_at
+- updated_at
+
+Adapt these structures to the existing database conventions.
+
+Requirements:
+
+1. Use foreign keys where appropriate.
+2. Add suitable indexes.
+3. Prevent duplicate product associations within the same service.
+4. Ensure proper cascading or restricted deletion behavior.
+5. Ensure business isolation.
+6. Use decimal quantities if the existing inventory system supports fractional products.
+7. Do not introduce destructive migrations.
+8. Existing product records and sales history must remain untouched.
+
+The database must also support recording historical service transactions independently of future changes to service configurations.
+
+---
+
+# 4. NEW FEATURE: UZA HUDUMA
+
+Now integrate service selling into the seller module.
+
+Inside the existing `Uza` page, introduce a new section called:
+
+`Uza Huduma`
+
+This must coexist with the existing product-selling functionality.
+
+Do not replace or interfere with the existing product sales interface.
+
+## 4.1. Service selection
+
+When a seller clicks `Uza Huduma`:
+
+1. Display all available services belonging to the seller's business.
+2. Allow the seller to select the service they intend to perform.
+3. Display all consumable products associated with that service.
+4. Display their default required quantities.
+
+For example:
+
+Selected service: Hair Treatment
+
+| Consumable | Default quantity |
+|---|---:|
+| Shampoo | 2 |
+| Hair Oil | 1 |
+| Conditioner | 1 |
+
+## 4.2. Quantity input
+
+The seller must be able to enter the quantity of each consumable required for the transaction.
+
+For example, the seller may change the quantities depending on the actual service being performed.
+
+If the selected service requires three different products, the system must provide three corresponding quantity inputs.
+
+Allow the seller to adjust quantities according to actual usage.
+
+The system must validate quantities against available inventory.
+
+It must never allow stock to become negative.
+
+If a required consumable is unavailable or insufficient, clearly inform the seller before the transaction is completed.
+
+Do not silently ignore missing consumables.
+
+## 4.3. Manual service pricing
+
+The seller must manually enter the amount charged to the customer for the service.
+
+Do not assume that a service has a fixed selling price.
+
+The entered price will represent the total revenue generated by the service transaction.
+
+Validate that the selling price is greater than or equal to zero, following the existing application's financial validation rules.
+
+## 4.4. REAL-TIME PROFIT CALCULATION
+
+This is one of the most important requirements.
+
+The system must calculate and display the expected profit immediately as the seller enters or modifies the service price and consumable quantities.
+
+Use the following formula:
+
+**Total consumable cost = Sum of (actual quantity consumed × product buying price).**
+
+**Expected service profit = Service selling price − Total consumable cost.**
+
+Example:
+
+| Product | Quantity | Buying price | Total cost |
+|---|---:|---:|---:|
+| Shampoo | 2 | 5,000 | 10,000 |
+| Hair Oil | 1 | 3,000 | 3,000 |
+| Conditioner | 1 | 4,000 | 4,000 |
+| **Total** | | | **17,000** |
+
+If the seller enters a service price of TZS 35,000:
+
+Revenue = TZS 35,000
+
+Consumable cost = TZS 17,000
+
+Expected profit = TZS 18,000
+
+Display these values dynamically while the seller is typing.
+
+The profit preview must update whenever:
+
+- The service price changes.
+- A consumable quantity changes.
+- The selected service changes.
+
+Use frontend calculations for immediate feedback, but NEVER trust frontend calculations for financial transactions.
+
+The backend must independently recalculate the actual cost and profit using trusted database values.
+
+### Financial precision
+
+Use the existing application's currency and decimal precision conventions.
+
+Avoid floating-point arithmetic errors when calculating money.
+
+Use appropriate decimal or integer monetary representations.
+
+---
+
+# 5. SERVICE SALE CONFIRMATION AND AUTOMATIC STOCK DEDUCTION
+
+When the seller confirms the service sale, the backend must execute the entire transaction safely.
+
+The process must:
+
+1. Validate the seller's authorization.
+2. Validate business and branch ownership.
+3. Validate the selected service.
+4. Validate the consumable products.
+5. Retrieve the latest product buying prices from the database.
+6. Validate the actual quantities.
+7. Check available inventory.
+8. Calculate total consumable cost.
+9. Calculate service revenue.
+10. Calculate actual profit.
+11. Save the service sale.
+12. Save the individual consumables used.
+13. Deduct the consumed quantities from the appropriate inventory records.
+14. Record the inventory movements.
+15. Save the transaction date, seller, business, and branch.
+16. Return a successful transaction response.
+
+### DATABASE TRANSACTION REQUIREMENT
+
+All financial and inventory operations must execute inside a database transaction.
+
+Use appropriate row-level locking where supported.
+
+If any operation fails, roll back the entire transaction.
+
+For example, if a service requires three products and the third product has insufficient stock, the system must not deduct the first two products.
+
+Never allow partial service transactions.
+
+Prevent duplicate sales caused by accidental repeated submissions.
+
+Follow the existing transaction and inventory movement conventions wherever possible.
+
+### Stock deduction
+
+Deduct actual quantities consumed, not simply the default service recipe quantities.
+
+For example:
+
+If one Hair Treatment consumes:
+
+- Shampoo: 2 units.
+- Hair Oil: 1 unit.
+- Conditioner: 1 unit.
+
+And the seller performs three Hair Treatments, the stock deductions should reflect the actual quantities recorded for all three services.
+
+Do not deduct stock twice.
+
+If the existing application has multiple branches, deduct stock from the correct selling branch's inventory, following its established stock management rules.
+
+---
+
+# 6. SERVICE SALES DATABASE HISTORY
+
+Service sales must have their own properly structured transaction records, or use an existing unified sales architecture if it can safely accommodate service transactions.
+
+Every completed service sale must preserve:
+
+- Service ID.
+- Service name snapshot.
+- Business ID.
+- Branch ID.
+- Seller ID.
+- Service quantity, if multiple service units are supported.
+- Total service revenue.
+- Total consumable cost.
+- Calculated profit.
+- Transaction date.
+- Transaction status.
+
+For each consumable used, preserve:
+
+- Product ID.
+- Product name snapshot.
+- Actual consumed quantity.
+- Buying price at the time of sale.
+- Total cost at the time of sale.
+
+### CRITICAL HISTORICAL DATA REQUIREMENT
+
+Never calculate historical service profits using current product buying prices.
+
+Suppose Shampoo originally cost TZS 5,000 and later its buying price changes to TZS 7,000.
+
+An old service transaction must continue reporting its original cost of TZS 5,000 per unit.
+
+Likewise, changing or deleting a service configuration must never alter historical sales records.
+
+Historical financial reports must remain accurate permanently.
+
+---
+
+# 7. INTEGRATE SERVICE SALES INTO ALL SALES REPORTS
+
+This requirement must be treated as a system-wide integration, not just a modification to one reporting page.
+
+Search the entire codebase for every page, component, endpoint, query, and report that displays sales information.
+
+Identify where service transactions must be included.
+
+At minimum, inspect the following areas.
+
+## 7.1. Seller module: Mauzo
+
+The seller's `Mauzo` page must display both:
+
+- Products sold.
+- Services sold.
+
+Service transactions must be clearly distinguishable from product transactions.
+
+For a service sale, display:
+
+- Service name.
+- Consumables used.
+- Revenue.
+- Consumable cost.
+- Profit.
+- Seller.
+- Date and time.
+- Transaction reference.
+
+Preserve the existing product sales display.
+
+## 7.2. Administrator module: Mauzo
+
+The business administrator's `Mauzo` page must include service sales.
+
+Administrators should be able to distinguish:
+
+- Product sales.
+- Service sales.
+
+Provide relevant transaction details, including the consumables used in each service.
+
+Ensure that service sales are included in the appropriate sales totals.
+
+## 7.3. Other reporting areas
+
+Search for all other places where sales-related data is presented.
+
+Examples include:
+
+- Daily sales summaries.
+- Weekly sales reports.
+- Monthly sales reports.
+- Sales analytics.
+- Revenue summaries.
+- Profit reports.
+- Seller performance reports.
+- Branch performance reports.
+- Business dashboards.
+- Exportable sales reports.
+- Transaction histories.
+- Any charts or visualizations based on sales data.
+
+These are investigation targets, not permission to add unnecessary new pages.
+
+Wherever product sales are included in an overall sales metric, determine whether service sales should also be included.
+
+Ensure the correct treatment of each metric.
+
+### Reporting calculations
+
+Total revenue:
+
+Product sales revenue + Service sales revenue.
+
+Total cost:
+
+Product cost of goods sold + Service consumable costs.
+
+Total profit:
+
+Product sales profit + Service sales profit.
+
+Do not include service revenue without including its corresponding consumable costs when calculating profit.
+
+Avoid double-counting consumables.
+
+A product consumed during a service must count as inventory consumption and service cost, not as an independent product sale.
+
+Provide suitable filters for transaction type where the existing reporting design supports them.
+
+Maintain existing date filters, seller filters, branch filters, and business filters.
+
+---
+
+# 8. RECEIPTS AND TRANSACTION DETAILS
+
+Investigate the existing receipt generation and transaction details mechanisms.
+
+If the application supports receipts, service sales should also have appropriate receipts.
+
+A service receipt should identify:
+
+- Service name.
+- Service selling price.
+- Consumable products used.
+- Relevant quantities.
+- Total consumable cost where appropriate for internal reporting.
+- Transaction reference.
+- Transaction date.
+- Seller.
+
+Do not expose internal buying prices or profit to customers unless the existing receipt permissions and business rules explicitly allow it.
+
+---
+
+# 9. USER INTERFACE AND EXPERIENCE
+
+Follow the existing DukaMkononi UI design language.
+
+Do not introduce a completely different visual style.
+
+The implementation must be:
+
+- Mobile-first.
+- Responsive.
+- Clean and professional.
+- Consistent with existing navigation.
+- Consistent with the existing light and dark themes.
+- Compatible with the existing English and Swahili language system.
+
+Use the existing translations infrastructure.
+
+Suggested labels:
+
+| English | Swahili |
+|---|---|
+| New Service | Huduma Mpya |
+| Existing Services | Huduma Zilizopo |
+| Sell Service | Uza Huduma |
+| Service Sales | Mauzo ya Huduma |
+| Consumable Products | Bidhaa Zitumikazo |
+| Required Quantity | Kiasi Kinachohitajika |
+| Quantity Used | Kiasi Kilichotumika |
+| Service Price | Bei ya Huduma |
+| Consumable Cost | Gharama za Bidhaa |
+| Expected Profit | Faida Inayotarajiwa |
+
+The service-selling interface must clearly display the live profit preview.
+
+Use suitable loading states, empty states, validation messages, and success/error notifications.
+
+Do not use browser alerts as a substitute for the application's existing notification system.
+
+---
+
+# 10. SECURITY AND AUTHORIZATION
+
+This feature must respect the existing application's security architecture.
+
+Enforce:
+
+1. Business-level data isolation.
+2. Branch-level inventory isolation.
+3. Seller authorization.
+4. Administrator authorization.
+5. Server-side price calculations.
+6. Server-side stock validation.
+7. CSRF protection where applicable.
+8. Input validation.
+9. Protection against IDOR vulnerabilities.
+10. Protection against unauthorized service modification.
+11. Protection against unauthorized inventory deductions.
+12. Protection against duplicate transaction submissions.
+
+Never trust business IDs, branch IDs, seller IDs, product prices, costs, or profit values supplied by the frontend.
+
+Resolve these values from authenticated users and trusted database relationships.
+
+---
+
+# 11. TESTING REQUIREMENTS
+
+Do not consider this feature complete simply because the interface looks functional.
+
+Create and execute appropriate automated tests following the existing testing framework.
+
+At minimum, test the following scenarios:
+
+### Service management
+
+- Creating a service with one consumable.
+- Creating a service with multiple consumables.
+- Adding consumables to an existing service.
+- Removing consumables.
+- Updating required quantities.
+- Preventing duplicate product associations.
+- Preventing access to another business's services.
+
+### Service selling
+
+- Selling a service successfully.
+- Selling a service with multiple consumables.
+- Selling multiple units of a service.
+- Modifying actual consumable quantities.
+- Correct real-time profit calculation.
+- Correct backend profit calculation.
+- Correct inventory deductions.
+- Rejecting insufficient inventory.
+- Rejecting invalid quantities.
+- Rejecting unauthorized sales.
+- Preventing duplicate submissions.
+
+### Financial accuracy
+
+- Correct revenue calculation.
+- Correct consumable cost calculation.
+- Correct profit calculation.
+- Preserving historical buying prices.
+- Preserving historical sales after service modification.
+- Correct decimal precision.
+
+### Reporting
+
+- Seller Mauzo displays products and services.
+- Administrator Mauzo displays products and services.
+- Daily sales include both transaction types.
+- Monthly sales include both transaction types.
+- Profit reports include consumable costs.
+- Branch reports use the correct branch.
+- No double-counting occurs.
+
+### Regression testing
+
+Existing product sales must continue working.
+
+Existing stock deductions must continue working.
+
+Existing reports must not break.
+
+Existing user permissions must remain intact.
+
+---
+
+# 12. IMPLEMENTATION STRATEGY
+
+Implement this feature in a controlled sequence.
+
+Phase 1: Architecture investigation and implementation plan.
+
+Phase 2: Database migrations, models, and relationships.
+
+Phase 3: Administrator service management (`Huduma Mpya` and `Huduma Zilizopo`).
+
+Phase 4: Seller service sales (`Uza Huduma`).
+
+Phase 5: Transaction processing and atomic inventory deductions.
+
+Phase 6: Seller and administrator sales reports.
+
+Phase 7: Receipts and other affected sales-related interfaces.
+
+Phase 8: Translations, responsive styling, and UI integration.
+
+Phase 9: Automated testing, regression testing, and bug fixing.
+
+Do not skip phases.
+
+Do not perform unnecessary refactoring.
+
+Do not remove existing functionality to make the new feature easier to implement.
+
+Do not create duplicate tables, models, controllers, or endpoints if suitable existing structures can be extended safely.
+
+---
+
+# 13. FINAL ACCEPTANCE CRITERIA
+
+The feature is complete only when the following workflow works from beginning to end:
+
+1. A business administrator opens `Bizampia`.
+2. The administrator opens `Huduma Mpya`.
+3. The administrator creates a service called Hair Treatment.
+4. The administrator associates Shampoo, Hair Oil, and Conditioner with that service.
+5. The administrator defines the required quantity of each consumable.
+6. The service becomes available under `Huduma Zilizopo`.
+7. A seller opens `Uza`.
+8. The seller selects `Uza Huduma`.
+9. The seller selects Hair Treatment.
+10. The system displays its consumable products and default quantities.
+11. The seller enters the actual quantities consumed.
+12. The seller enters the price charged to the customer.
+13. The system immediately displays the expected profit.
+14. The seller confirms the sale.
+15. The system calculates the final cost and profit on the backend.
+16. The system deducts the correct quantities from the correct branch inventory.
+17. The system saves the transaction and consumable history.
+18. The transaction appears in the seller's `Mauzo`.
+19. The transaction appears in the administrator's `Mauzo`.
+20. All relevant sales reports include the service transaction and its associated costs.
+21. Existing product sales continue operating normally.
+
+---
+
+# 14. FINAL DEVELOPMENT REPORT
+
+When implementation is complete, provide a concise but technically detailed report containing:
+
+1. Architecture discovered.
+2. Database migrations created.
+3. Models and relationships introduced.
+4. Controllers, services, routes, and endpoints modified or created.
+5. Administrator interfaces implemented.
+6. Seller interfaces implemented.
+7. Reporting areas updated.
+8. Security and authorization measures implemented.
+9. Tests executed and their results.
+10. Any remaining limitations or unresolved issues.
+
+List the actual files modified.
+
+Do not claim a test passed unless you actually executed it.
+
+Do not claim a feature is complete if any required integration remains unfinished.
+
+**ULTIMATE OBJECTIVE: Transform DukaMkononi into a unified commerce management platform where businesses can sell physical products independently and provide services that consume inventory products, with accurate stock management, financial calculations, transaction history, and comprehensive reporting.**
+
+Begin with Phase 1: investigate the existing codebase and present your implementation plan before making changes. Do not modify files until the investigation and plan are complete.
