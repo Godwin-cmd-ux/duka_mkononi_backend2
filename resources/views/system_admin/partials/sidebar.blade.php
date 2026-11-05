@@ -22,6 +22,16 @@
             <span data-i18n="system_admin_sidebar.nav_dashboard">Dashbodi</span>
         </a>
 
+        <a class="sa-nav-item {{ $saActive === 'users' ? 'active' : '' }}" href="/system_admin/users">
+            <span class="sa-nav-icon">👥</span>
+            <span>Watumiaji</span>
+        </a>
+
+        <a class="sa-nav-item {{ $saActive === 'logs' ? 'active' : '' }}" href="/system_admin/logs">
+            <span class="sa-nav-icon">☰</span>
+            <span>Rekodi</span>
+        </a>
+
         <a class="sa-nav-item {{ $saActive === 'inquiries' ? 'active' : '' }}" href="/system_admin/inquiries">
             <span class="sa-nav-icon">✉</span>
             <span data-i18n="system_admin_inquiries.nav_inquiries">Inquiries</span>

@@ -80,6 +80,10 @@ Route::view('/muuzaji/tangaza', 'muuzaji.tangaza');
 Route::view('/system_admin', 'system_admin.index');
 Route::view('/system_admin/index', 'system_admin.index');
 Route::view('/system_admin/dashboard', 'system_admin.dashboard');
+// Watumiaji and Rekodi are full pages of their own. They used to be tabs on
+// the dashboard; the sidebar links to them instead.
+Route::view('/system_admin/users', 'system_admin.users');
+Route::view('/system_admin/logs', 'system_admin.logs');
 Route::view('/system_admin/notify', 'system_admin.notify');
 Route::view('/system_admin/inquiries', 'system_admin.inquiries');
 Route::view('/system_admin/certification', 'system_admin.certification');
