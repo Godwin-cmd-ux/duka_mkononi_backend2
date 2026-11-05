@@ -1326,6 +1326,10 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         function renderServiceSalesSection() {
             if (serviceSalesData.length === 0) { return ''; }
 
+            const serviceRevenue = serviceSalesData.reduce((sum, s) => sum + Number(s.selling_price || 0), 0);
+            const serviceCost = serviceSalesData.reduce((sum, s) => sum + Number(s.total_cost || 0), 0);
+            const serviceProfit = serviceSalesData.reduce((sum, s) => sum + Number(s.profit || 0), 0);
+
             const rows = serviceSalesData.map(s => {
                 const items = (s.items || []).map(i => `${escapeHtml(i.product_name)} × ${i.quantity}`).join(', ');
                 const date = new Date(s.created_at || s.sale_date);
