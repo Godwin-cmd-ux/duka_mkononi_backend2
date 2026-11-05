@@ -35,6 +35,12 @@
 
         .container {
             flex: 1;
+            width: 100%;
+            /* 600px wide with the 25px side padding leaves 550px for the
+               fields — the exact width of a /home action button — instead of
+               stretching the inputs across a desktop monitor. */
+            max-width: 600px;
+            margin: 0 auto;
             background-color: var(--pg-page, #ffffff);
             min-height: 800px;
             display: flex;
@@ -353,6 +359,36 @@
             text-align: center;
             cursor: pointer;
             color: white;
+        }
+
+        /* Desktop: the same 550px column as the home buttons, but presented as
+           a centred card on the page background instead of a full-bleed form. */
+        @media (min-width: 860px) {
+            body {
+                background-color: var(--pg-soft, #f4f6f8);
+            }
+            .scroll-container {
+                justify-content: center;
+                padding: 36px 20px;
+            }
+            .container {
+                flex: 0 1 auto;
+                min-height: 0;
+                background-color: var(--pg-surface, #ffffff);
+                border: 1px solid var(--pg-line, #e5e7eb);
+                border-radius: 28px;
+                box-shadow: 0 30px 70px -35px rgba(15, 23, 42, .45);
+                overflow: hidden;
+            }
+            .header-section {
+                padding: 26px 25px 8px;
+            }
+            .content {
+                padding: 12px 25px 30px;
+            }
+            .avatar-container {
+                margin-bottom: 28px;
+            }
         }
 
         @media (max-width: 550px) {
