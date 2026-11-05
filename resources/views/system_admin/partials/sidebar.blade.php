@@ -27,6 +27,11 @@
             <span>Watumiaji</span>
         </a>
 
+        <a class="sa-nav-item {{ $saActive === 'businesses' ? 'active' : '' }}" href="/system_admin/businesses">
+            <span class="sa-nav-icon">🏢</span>
+            <span>Biashara</span>
+        </a>
+
         <a class="sa-nav-item {{ $saActive === 'logs' ? 'active' : '' }}" href="/system_admin/logs">
             <span class="sa-nav-icon">☰</span>
             <span>Rekodi</span>

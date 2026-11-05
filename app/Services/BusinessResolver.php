@@ -70,9 +70,24 @@ class BusinessResolver
             return null;
         }
 
-        $user = User::where('id', $userId)->select('id', 'business_id')->first();
+        $user = User::where('id', $userId)->select('id', 'business_id', 'business_name')->first();
 
-        return $user?->business_id ?: null;
+        if (! $user) {
+            return null;
+        }
+
+        if ($user->business_id) {
+            return $user->business_id;
+        }
+
+        // Pre-migration accounts only carry the display name. Resolve it so a
+        // business block also applies to them, and so their requests get the
+        // same tenant scope as linked accounts.
+        if (self::key($user->business_name) === '') {
+            return null;
+        }
+
+        return self::findByName($user->business_name)?->id;
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\User;
+use App\Services\BusinessBlock;
 use App\Services\BusinessResolver;
 use App\Services\JwtToken;
 use App\Services\ThemePreference;
@@ -599,6 +600,21 @@ class AuthController extends BaseController
             if (!$isValid) {
                 $this->log($user->id, 'LOGIN_FAILED', '/api/login', ['reason' => 'Invalid password', 'email' => $email, 'role' => $role], $ip, 'failed');
                 return $this->json(['error' => 'Password si sahihi'], 401);
+            }
+
+            // A blocked business takes every account beneath it out of service,
+            // including accounts created after the block. Checked before the
+            // per-user approval rules so the reason shown is the real one.
+            $accountBusinessId = $user->business_id ?: BusinessResolver::idForUser($user->id);
+            if (BusinessBlock::isBlocked($accountBusinessId)) {
+                $this->log($user->id, 'LOGIN_FAILED', '/api/login', [
+                    'reason' => 'Business blocked',
+                    'business_id' => $accountBusinessId,
+                ], $ip, 'failed');
+                return $this->json([
+                    'error' => 'Biashara yako imezuiwa. Tafadhali wasiliana na msimamizi wa mfumo.',
+                    'code' => 'BUSINESS_BLOCKED',
+                ], 403);
             }
 
             if ($user->role === 'seller' && $user->status !== 'approved') {

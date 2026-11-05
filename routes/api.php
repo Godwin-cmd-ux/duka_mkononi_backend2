@@ -335,6 +335,10 @@ Route::middleware('auth.jwt')->group(function () {
     Route::get('ai/platform-analytics/examples', [AiAdminAnalyticsController::class, 'examples']);
 
     Route::get('system-admin/businesses', [SystemAdminController::class, 'businesses']);
+    Route::get('system-admin/businesses/{id}', [SystemAdminController::class, 'show']);
+    Route::get('system-admin/businesses/{id}/activity', [SystemAdminController::class, 'activity']);
+    Route::put('system-admin/businesses/{id}/status', [SystemAdminController::class, 'updateStatus']);
+    Route::delete('system-admin/businesses/{id}', [SystemAdminController::class, 'destroy']);
     Route::put('system-admin/businesses/{id}/certify', [SystemAdminController::class, 'certify']);
 
     Route::get('admin/users', [AdminController::class, 'users']);

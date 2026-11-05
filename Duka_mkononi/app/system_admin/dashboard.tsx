@@ -89,7 +89,11 @@ interface OnlineUser {
   has_live_connection?: boolean;
 }
 
-export default function SystemAdminDashboard() {
+export default function SystemAdminDashboard({
+  initialTab = 'dashboard',
+}: {
+  initialTab?: 'dashboard' | 'users' | 'logs';
+}) {
   const { colors: tc } = useTheme();
   const styles = useMemo(() => makeStyles(tc), [tc]);
   const { t, lang } = useLang();
@@ -110,8 +114,14 @@ export default function SystemAdminDashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const [user, setUser] = useState<any>(null);
   
-  // Tabs state
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'online' | 'logs'>('dashboard');
+  // The sidebar owns navigation now; each route renders one view.
+  const activeTab = initialTab;
+  const headerTitleKey =
+    activeTab === 'users'
+      ? 'system_admin.nav_users'
+      : activeTab === 'logs'
+        ? 'system_admin.nav_logs'
+        : 'system_admin.admin_dashboard_title';
   
   // Data states
   const [users, setUsers] = useState<User[]>([]);
@@ -604,6 +614,46 @@ export default function SystemAdminDashboard() {
     }
   };
 
+  const deleteUser = async (userId: string, userName: string) => {
+    Alert.alert(
+      t('system_admin.delete_user_title'),
+      t('system_admin.delete_user_confirm').replace('{name}', userName),
+      [
+        { text: t('app.cancel'), style: 'cancel' },
+        {
+          text: t('system_admin.delete_user'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              if (!(await requireNetwork())) return;
+              const token = await AsyncStorage.getItem('userToken');
+              if (!token) return;
+
+              const response = await fetchWithTimeout(`${API_BASE_URL}/api/admin/users/${userId}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` },
+              });
+              const data = await response.json().catch(() => ({}));
+
+              if (response.ok) {
+                setUserDetailModal(false);
+                Alert.alert(
+                  t('app.success'),
+                  t('system_admin.delete_user_success').replace('{name}', userName),
+                );
+                await loadAllData();
+              } else {
+                Alert.alert(t('app.error'), data.error || t('system_admin.delete_user_failed'));
+              }
+            } catch {
+              Alert.alert(t('app.error'), t('system_admin.delete_user_failed'));
+            }
+          },
+        },
+      ],
+    );
+  };
+
   // Updated updateUserStatus function to include enable/disable options
   const updateUserStatus = async (userId: string, status: 'approved' | 'rejected' | 'suspended' | 'pending') => {
     try {
@@ -941,42 +991,6 @@ export default function SystemAdminDashboard() {
 
   // ========================== RENDERING FUNCTIONS ==========================
 
-  const renderTabs = () => {
-    const tabs = [
-      { id: 'dashboard', label: t('system_admin.dashboard'), icon: 'grid' },
-      { id: 'users', label: t('system_admin.all_users').replace(' ({n})', ''), icon: 'people' },
-      { id: 'online', label: t('system_admin.online_now'), icon: 'wifi' },
-      { id: 'logs', label: t('system_admin.system_logs').replace(' ({n})', ''), icon: 'time' },
-    ];
-
-    return (
-      <View style={styles.tabsContainer}>
-        {tabs.map(tab => (
-          <TouchableOpacity
-            key={tab.id}
-            style={[
-              styles.tabButton,
-              activeTab === tab.id && styles.tabButtonActive
-            ]}
-            onPress={() => setActiveTab(tab.id as any)}
-          >
-            <Ionicons 
-              name={tab.icon as any} 
-              size={20} 
-              color={activeTab === tab.id ? '#3498db' : '#95a5a6'} 
-            />
-            <Text style={[
-              styles.tabText,
-              activeTab === tab.id && styles.tabTextActive
-            ]}>
-              {tab.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-    );
-  };
-
   const renderDashboardTab = () => {
     return (
       <>
@@ -1244,6 +1258,13 @@ export default function SystemAdminDashboard() {
                       <Text style={styles.enableButtonText}>{t('system_admin.enable')}</Text>
                     </TouchableOpacity>
                   )}
+                  <TouchableOpacity
+                    style={[styles.userActionButton, styles.deleteButton]}
+                    onPress={() => deleteUser(item.id, item.full_name || item.email)}
+                  >
+                    <Ionicons name="trash-outline" size={14} color="#c0392b" />
+                    <Text style={styles.deleteButtonText}>{t('system_admin.delete_user')}</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             )}
@@ -1472,7 +1493,7 @@ export default function SystemAdminDashboard() {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTitle}>
-          <Text style={styles.headerTitleText}>{t('system_admin.admin_dashboard_title')}</Text>
+          <Text style={styles.headerTitleText}>{t(headerTitleKey)}</Text>
           <Text style={styles.headerSubtitle}>{t('system_admin.real_data')}</Text>
         </View>
         
@@ -1486,9 +1507,6 @@ export default function SystemAdminDashboard() {
         </View>
       </View>
 
-      {/* Tabs Navigation */}
-      {renderTabs()}
-
       <ScrollView 
         style={styles.content}
         refreshControl={
@@ -1498,8 +1516,8 @@ export default function SystemAdminDashboard() {
       >
         {/* Render Active Tab Content */}
         {activeTab === 'dashboard' && renderDashboardTab()}
+        {activeTab === 'dashboard' && renderOnlineTab()}
         {activeTab === 'users' && renderUsersTab()}
-        {activeTab === 'online' && renderOnlineTab()}
         {activeTab === 'logs' && renderLogsTab()}
       </ScrollView>
 
@@ -1635,6 +1653,13 @@ export default function SystemAdminDashboard() {
                         <Text style={styles.enableModalButtonText}>{t('system_admin.enable')}</Text>
                       </TouchableOpacity>
                     )}
+                    <TouchableOpacity
+                      style={[styles.modalActionButton, styles.deleteModalButton]}
+                      onPress={() => deleteUser(selectedUser.id, selectedUser.full_name || selectedUser.email)}
+                    >
+                      <Ionicons name="trash-outline" size={18} color="#c0392b" />
+                      <Text style={styles.deleteModalButtonText}>{t('system_admin.delete_user')}</Text>
+                    </TouchableOpacity>
                   </View>
                 </ScrollView>
               </>
@@ -2170,10 +2195,12 @@ const makeStyles = (tc: ThemeColors) => StyleSheet.create({
   },
   userActions: {
     flexDirection: 'row',
-    gap: 10,
+    flexWrap: 'wrap',
+    gap: 8,
   },
   userActionButton: {
-    flex: 1,
+    flexGrow: 1,
+    flexBasis: '45%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -2209,6 +2236,16 @@ const makeStyles = (tc: ThemeColors) => StyleSheet.create({
   },
   enableButtonText: {
     color: '#27ae60',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  deleteButton: {
+    backgroundColor: '#fdf0ee',
+    borderWidth: 1,
+    borderColor: '#f5c6c0',
+  },
+  deleteButtonText: {
+    color: '#c0392b',
     fontSize: 12,
     fontWeight: '600',
   },
@@ -2482,12 +2519,14 @@ const makeStyles = (tc: ThemeColors) => StyleSheet.create({
   },
   modalActions: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
     gap: 10,
     marginTop: 20,
   },
   modalActionButton: {
-    flex: 1,
+    flexGrow: 1,
+    flexBasis: '45%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -2523,6 +2562,16 @@ const makeStyles = (tc: ThemeColors) => StyleSheet.create({
   },
   enableModalButtonText: {
     color: '#27ae60',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  deleteModalButton: {
+    backgroundColor: '#fdf0ee',
+    borderWidth: 1,
+    borderColor: '#f5c6c0',
+  },
+  deleteModalButtonText: {
+    color: '#c0392b',
     fontSize: 14,
     fontWeight: '600',
   },

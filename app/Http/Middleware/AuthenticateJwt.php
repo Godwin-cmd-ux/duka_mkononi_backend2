@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\User;
 use App\Services\AuditLogger;
+use App\Services\BusinessBlock;
 use App\Services\JwtToken;
 use Closure;
 use Illuminate\Http\Request;
@@ -30,12 +31,25 @@ class AuthenticateJwt
                 return response()->json(['error' => 'Token si sahihi'], 401);
             }
 
+            $businessId = $user->business_id ?: \App\Services\BusinessResolver::idForUser($user->id);
+
+            if (BusinessBlock::isBlocked($businessId)) {
+                AuditLogger::log($user->id, 'AUTH_BLOCKED_BUSINESS', $request->getRequestUri(), [
+                    'business_id' => $businessId,
+                ], $ip, 'failed');
+
+                return response()->json([
+                    'error' => 'Biashara yako imezuiwa. Tafadhali wasiliana na msimamizi wa mfumo.',
+                    'code' => 'BUSINESS_BLOCKED',
+                ], 403);
+            }
+
             $request->attributes->set('jwt_user', $user);
             $request->attributes->set('jwt_user_id', $user->id);
             $request->attributes->set('jwt_email', $user->email);
             $request->attributes->set('jwt_role', $user->role);
             $request->attributes->set('jwt_business_name', $user->business_name);
-            $request->attributes->set('jwt_business_id', $user->business_id ?: \App\Services\BusinessResolver::idForUser($user->id));
+            $request->attributes->set('jwt_business_id', $businessId);
             $request->attributes->set('jwt_ip', $ip);
             // Capability #22: the caller's stored account language, used by
             // BaseController::resolveLocale() when the client omits `locale`.

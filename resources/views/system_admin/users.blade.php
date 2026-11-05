@@ -137,6 +137,10 @@
             action_activity: 'Shughuli',
             action_block: 'Zuia',
             action_enable: 'Wezesha',
+            action_delete: 'Futa',
+            confirm_delete: 'Una uhakika unataka kufuta {userName}? Hatua hii haiwezi kutenduliwa.',
+            status_deleted: '{userName} amefutwa kikamilifu!',
+            err_delete_failed: 'Imeshindwa kufuta mtumiaji',
             modal_title: 'Maelezo ya Mtumiaji',
             without_name: 'Bila Jina',
             label_phone: 'Simu',
@@ -221,6 +225,7 @@
             pulse: '<svg viewBox="0 0 24 24"><path d="M3 12h4l2.5-6 5 12L17 12h4"/></svg>',
             lock: '<svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
             unlock: '<svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 7.3-2.2"/></svg>',
+            trash: '<svg viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/><path d="M6 7l1 13h10l1-13"/><path d="M10 11v5M14 11v5"/></svg>',
         };
 
         let users = [];
@@ -338,6 +343,7 @@
                         <button type="button" class="sa-icon-btn" title="${t('action_details')}" aria-label="${t('action_details')}" onclick="openUser('${id}')">${ICONS.eye}</button>
                         <a class="sa-icon-btn" title="${t('action_activity')}" aria-label="${t('action_activity')}" href="/system_admin/logs?user=${encodeURIComponent(user.id)}">${ICONS.pulse}</a>
                         <button type="button" class="sa-icon-btn ${toggleClass}" title="${toggleLabel}" aria-label="${toggleLabel}" onclick="toggleStatus('${id}')">${toggleIcon}</button>
+                        <button type="button" class="sa-icon-btn danger" title="${t('action_delete')}" aria-label="${t('action_delete')}" onclick="deleteUser('${id}')">${ICONS.trash}</button>
                     </div>
                 </div>`;
         }
@@ -415,6 +421,7 @@
                 <div class="modal-actions">
                     <a class="sa-btn" href="/system_admin/logs?user=${encodeURIComponent(user.id)}">${ICONS.pulse} ${t('open_activity')}</a>
                     <button type="button" class="sa-btn ${canBlock ? '' : 'primary'}" onclick="toggleStatus('${escapeAttr(user.id)}')">${canBlock ? ICONS.lock + ' ' + t('action_block') : ICONS.unlock + ' ' + t('action_enable')}</button>
+                    <button type="button" class="sa-btn" style="color:#b91c1c;border-color:#fecaca;" onclick="deleteUser('${escapeAttr(user.id)}')">${ICONS.trash} ${t('action_delete')}</button>
                 </div>
             `;
             document.getElementById('userModal').style.display = 'flex';
@@ -453,6 +460,32 @@
             }
         }
         window.toggleStatus = toggleStatus;
+
+        async function deleteUser(id) {
+            const user = usersById[String(id)];
+            if (!user) return;
+            const userName = user.full_name || user.email || t('user_generic');
+            if (!confirm(t('confirm_delete', { userName }))) return;
+
+            const token = localStorage.getItem('userToken');
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/admin/users/${encodeURIComponent(user.id)}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                });
+                const data = await res.json().catch(() => ({}));
+                if (res.ok) {
+                    showToast(t('status_deleted', { userName }), 'success');
+                    closeUserModal();
+                    await loadUsers();
+                } else {
+                    showToast(data.error || t('err_delete_failed'), 'error');
+                }
+            } catch (e) {
+                showToast(t('err_network'), 'error');
+            }
+        }
+        window.deleteUser = deleteUser;
 
         async function loadUsers() {
             loading = true;

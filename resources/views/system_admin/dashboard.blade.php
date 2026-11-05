@@ -77,7 +77,7 @@
         }
         .welcome-title { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
 
-        /* Today users */
+        /* Users in the last 24 hours */
         .today-list { display: flex; flex-direction: column; }
         .today-row {
             display: flex; align-items: center; gap: 12px;
@@ -189,9 +189,9 @@
             sellers: 'Wauzaji',
             customers: 'Wateja',
             administrators: 'Wasimamizi',
-            today_users_title: 'Today users',
-            today_users_sub: 'Watumiaji waliotembelea akaunti zao kuanzia saa sita usiku hadi sasa.',
-            today_users_empty: 'Hakuna mtumiaji aliyetembelea akaunti yake leo.',
+            today_users_title: 'Users in the last 24 hours',
+            today_users_sub: 'Watumiaji waliotembelea akaunti zao katika saa 24 zilizopita.',
+            today_users_empty: 'Hakuna mtumiaji aliyetembelea akaunti yake katika saa 24 zilizopita.',
             today_users_online: 'Online',
             today_last_seen: 'Mwisho:',
             view_more: 'View more',
@@ -334,11 +334,10 @@
             } catch (e) { console.error(e); }
         }
 
-        // Users whose account was visited since local midnight, most recent
+        // Users whose account was visited in the last 24 hours, most recent
         // first. last_seen is the timestamp the API already keeps on every hit.
         function todayUsers() {
-            const start = new Date();
-            start.setHours(0, 0, 0, 0);
+            const start = new Date(Date.now() - 24 * 60 * 60 * 1000);
             return users
                 .filter((u) => {
                     if (!u.last_seen) return false;
