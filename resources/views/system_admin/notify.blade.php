@@ -157,12 +157,13 @@
         }
     </style>
 </head>
-<body>
+<body class="sa-shell">
 @endverbatim
 @include('partials.dm-lang-widget', ['dmLangHideButton' => true])
 @include('partials.dm-theme-widget', ['dmThemePlacement' => 'bottom'])
 @include('partials.toast')
 @include('partials.photo-viewer')
+@include('system_admin.partials.sidebar', ['saActive' => 'notify'])
 @verbatim
     <div class="page-content" id="notifyContent">
         <div class="loading-spinner dm-sc"></div>

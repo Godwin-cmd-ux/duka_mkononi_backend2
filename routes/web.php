@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\SuperAdmin\BackupsController;
+use App\Http\Middleware\AuthenticateSuperAdmin;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -83,6 +85,27 @@ Route::view('/system_admin/inquiries', 'system_admin.inquiries');
 Route::view('/system_admin/certification', 'system_admin.certification');
 // Analytics: natural-language platform analytics (capability #20).
 Route::view('/system_admin/analytics', 'system_admin.analytics');
+
+// Backups: the nightly snapshot plus backups induced on demand, filed in
+// Cloudinary as a constant schema + a freshly fetched seed. The page renders
+// server-side; every action is re-authorized server-side because it can stream
+// the whole database (the rest of /system_admin guards itself in the browser).
+Route::get('/system_admin/backup', [BackupsController::class, 'index'])
+    ->name('system_admin.backup.index');
+
+Route::middleware(AuthenticateSuperAdmin::class)->group(function () {
+    Route::post('/system_admin/backup/induce', [BackupsController::class, 'induce'])
+        ->name('system_admin.backup.induce');
+
+    // A backup is addressed by its stamp: a date for the nightly one, date plus
+    // time for an induced one. `file` is schema or seed.
+    Route::get('/system_admin/backup/{stamp}/download/{file}', [BackupsController::class, 'download'])
+        ->where('file', 'schema|seed')
+        ->name('system_admin.backup.download');
+
+    Route::delete('/system_admin/backup/{stamp}', [BackupsController::class, 'destroy'])
+        ->name('system_admin.backup.destroy');
+});
 
 Route::redirect('/bidhaa-mpya', '/msimamizi/bidhaa-mpya');
 Route::redirect('/ripoti', '/msimamizi/ripoti');

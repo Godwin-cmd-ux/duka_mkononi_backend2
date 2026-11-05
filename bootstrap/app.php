@@ -18,6 +18,10 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->encryptCookies([
             'XSRF-TOKEN',
+            // Set by the super-admin pages from the JWT in localStorage so the
+            // backup actions can be authorized server-side. It is intentionally
+            // readable by the app (not encrypted) and scoped to this origin.
+            'dm_admin_token',
         ]);
 
         // Trusted reverse proxy list (TRUSTED_PROXIES env, comma-separated

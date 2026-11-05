@@ -1,700 +1,134 @@
-@include('partials.dm-locale')
-<link rel="stylesheet" href="/css/smartcart-loader.css">
-@verbatim
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title data-i18n="system_admin_sidebar.page_title">Dukamkononi - System Admin</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: #f8f9fa;
-            overflow-x: hidden;
-        }
-
-        /* Main layout wrapper - sidebar + content */
-        .system-admin-layout {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        /* SIDEBAR - Persistent navigation */
-        .sidebar {
-            width: 280px;
-            background-color: #ffffff;
-            border-right: 1px solid #ecf0f1;
-            display: flex;
-            flex-direction: column;
-            position: fixed;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            z-index: 100;
-            transition: transform 0.3s ease;
-            box-shadow: 2px 0 12px rgba(0, 0, 0, 0.05);
-        }
-
-        /* Sidebar header / logo area */
-        .sidebar-header {
-            padding: 30px 24px;
-            border-bottom: 1px solid #ecf0f1;
-            margin-bottom: 20px;
-        }
-
-        .logo-area {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .logo-icon {
-            width: 45px;
-            height: 45px;
-            background: linear-gradient(135deg, #9b59b6, #8e44ad);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 24px;
-            font-weight: bold;
-        }
-
-        .logo-text h2 {
-            font-size: 18px;
-            font-weight: 800;
-            color: #2c3e50;
-        }
-
-        .logo-text p {
-            font-size: 12px;
-            color: #7f8c8d;
-        }
-
-        /* Navigation items */
-        .nav-items {
-            flex: 1;
-            padding: 0 16px;
-        }
-
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            padding: 14px 18px;
-            margin-bottom: 8px;
-            border-radius: 14px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            color: #5d6d7e;
-            font-weight: 500;
-            text-decoration: none;
-        }
-
-        .nav-item:hover {
-            background-color: #f3e8ff;
-        }
-
-        .nav-item.active {
-            background-color: #f3e8ff;
-            color: #9b59b6;
-        }
-
-        .nav-item.active .nav-icon {
-            color: #9b59b6;
-        }
-
-        .nav-icon {
-            width: 28px;
-            height: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 22px;
-        }
-
-        .nav-label {
-            font-size: 15px;
-            font-weight: 600;
-        }
-
-        /* Sidebar footer (user info / logout) */
-        .sidebar-footer {
-            padding: 20px 16px;
-            border-top: 1px solid #ecf0f1;
-            margin-top: auto;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 15px;
-        }
-
-        .user-avatar {
-            width: 45px;
-            height: 45px;
-            background-color: #f3e8ff;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #9b59b6;
-            font-weight: bold;
-            font-size: 18px;
-        }
-
-        .user-details {
-            flex: 1;
-        }
-
-        .user-name {
-            font-size: 14px;
-            font-weight: 700;
-            color: #2c3e50;
-        }
-
-        .user-role {
-            font-size: 12px;
-            color: #9b59b6;
-            font-weight: 600;
-        }
-
-        .logout-btn {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 12px 16px;
-            background-color: #f8f9fa;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-            color: #e74c3c;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .logout-btn:hover {
-            background-color: #fdeaea;
-        }
-
-        /* MAIN CONTENT AREA */
-        .main-content {
-            flex: 1;
-            margin-left: 280px;
-            min-height: 100vh;
-            background-color: #f8f9fa;
-        }
-
-        /* Top bar for mobile responsive */
-        .mobile-menu-toggle {
-            display: none;
-            position: fixed;
-            top: 16px;
-            left: 16px;
-            z-index: 200;
-            background: white;
-            padding: 12px;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            cursor: pointer;
-        }
-
-        /* Page container */
-        .page-container {
-            padding: 24px 32px;
-            width: 100%;
-            min-height: 100vh;
-        }
-
-        /* Loading overlay */
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-        
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: #9b59b6;
-            animation: spin 0.8s linear infinite;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-                width: 260px;
-            }
-            .sidebar.open {
-                transform: translateX(0);
-            }
-            .main-content {
-                margin-left: 0;
-            }
-            .mobile-menu-toggle {
-                display: block;
-            }
-            .page-container {
-                padding: 20px 16px;
-                padding-top: 70px;
-            }
-        }
-
-        /* Active link indicator */
-        .nav-item {
-            position: relative;
-        }
-    </style>
-</head>
-<body>
-@endverbatim
-@include('partials.dm-lang-widget', ['dmLangHideButton' => true])
-@include('partials.toast')
-@verbatim
-    <!-- Mobile menu toggle button -->
-    <div class="mobile-menu-toggle" id="mobileMenuToggle">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9b59b6" stroke-width="2">
-            <path d="M3 12H21M3 6H21M3 18H21"/>
-        </svg>
+@php
+    // Which nav item is current. Each page passes its own key, so the sidebar
+    // never has to guess from the URL (and stays correct for both
+    // /system_admin/x and the folder-relative links the older pages used).
+    $saActive = $saActive ?? '';
+@endphp
+<link rel="stylesheet" href="/css/system-admin.css?v={{ filemtime(public_path('css/system-admin.css')) }}">
+<aside class="sa-sidebar" id="dmSidebar">
+    <div class="sa-brand">
+        <div class="sa-brand-badge">D</div>
+        <div>
+            <h2 data-i18n="system_admin_sidebar.logo_brand">DukaMkononi</h2>
+            <p data-i18n="system_admin_sidebar.logo_tagline">System Admin</p>
+        </div>
     </div>
 
-    <div class="system-admin-layout">
-        <!-- Sidebar (persistent navigation) -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <div class="logo-area">
-                    <div class="logo-icon" data-i18n="system_admin_sidebar.logo_short">D</div>
-                    <div class="logo-text">
-                        <h2 data-i18n="system_admin_sidebar.logo_brand">DukaMkononi</h2>
-                        <p data-i18n="system_admin_sidebar.logo_tagline">System Admin</p>
-                    </div>
-                </div>
+    <nav class="sa-nav">
+        <div class="sa-nav-label">Platform</div>
+
+        <a class="sa-nav-item {{ $saActive === 'dashboard' ? 'active' : '' }}" href="/system_admin/dashboard">
+            <span class="sa-nav-icon">▦</span>
+            <span data-i18n="system_admin_sidebar.nav_dashboard">Dashbodi</span>
+        </a>
+
+        <a class="sa-nav-item {{ $saActive === 'inquiries' ? 'active' : '' }}" href="/system_admin/inquiries">
+            <span class="sa-nav-icon">✉</span>
+            <span data-i18n="system_admin_inquiries.nav_inquiries">Inquiries</span>
+        </a>
+
+        <a class="sa-nav-item {{ $saActive === 'certification' ? 'active' : '' }}" href="/system_admin/certification">
+            <span class="sa-nav-icon">✔</span>
+            <span data-i18n="certification_ai.nav_certification">Certification</span>
+        </a>
+
+        <a class="sa-nav-item {{ $saActive === 'analytics' ? 'active' : '' }}" href="/system_admin/analytics">
+            <span class="sa-nav-icon">▤</span>
+            <span data-i18n="admin_analytics.nav_analytics">Analytics</span>
+        </a>
+
+        <a class="sa-nav-item {{ $saActive === 'notify' ? 'active' : '' }}" href="/system_admin/notify">
+            <span class="sa-nav-icon">◎</span>
+            <span data-i18n="system_admin_sidebar.nav_notify">Notisi</span>
+        </a>
+
+        <div class="sa-nav-label">System</div>
+
+        <a class="sa-nav-item {{ $saActive === 'backup' ? 'active' : '' }}" href="/system_admin/backup">
+            <span class="sa-nav-icon">⬒</span>
+            <span>Backups</span>
+        </a>
+
+        <a class="sa-nav-item" href="/home">
+            <span class="sa-nav-icon">⌂</span>
+            <span data-i18n="system_admin_sidebar.nav_home">Nyumbani</span>
+        </a>
+    </nav>
+
+    <div class="sa-sidebar-foot">
+        <div class="sa-user">
+            <div class="sa-avatar" id="dmAvatar">A</div>
+            <div>
+                <b id="dmUserName">Super Admin</b>
+                <span data-i18n="system_admin_inquiries.user_role">Super Admin</span>
             </div>
-
-            <div class="nav-items">
-                <!-- Navigation items for System Admin -->
-                <a href="dashboard" class="nav-item" data-page="dashboard">
-                    <div class="nav-icon">📊</div>
-                    <span class="nav-label" data-i18n="system_admin_sidebar.nav_dashboard">Dashbodi</span>
-                </a>
-
-                <a href="index" class="nav-item" data-page="index">
-                    <div class="nav-icon">🏠</div>
-                    <span class="nav-label" data-i18n="system_admin_sidebar.nav_home">Nyumbani</span>
-                </a>
-
-                <a href="notify" class="nav-item" data-page="notify">
-                    <div class="nav-icon">🔔</div>
-                    <span class="nav-label" data-i18n="system_admin_sidebar.nav_notify">Notisi</span>
-                </a>
-            </div>
-
-            <div class="sidebar-footer">
-                <div class="user-info" id="userInfo">
-                    <div class="user-avatar" id="userAvatar">A</div>
-                    <div class="user-details">
-                        <div class="user-name" id="userName">System Admin</div>
-                        <div class="user-role" data-i18n="system_admin_sidebar.user_role">Msimamizi Mkuu</div>
-                    </div>
-                </div>
-                <div class="logout-btn" id="logoutBtn">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                        <path d="M15 3H19C20.1 3 21 3.9 21 5V19C21 20.1 20.1 21 19 21H15M10 17L15 12L10 7M15 12H3"/>
-                    </svg>
-                    <span data-i18n="system_admin_sidebar.btn_logout">Ondoka</span>
-                </div>
-            </div>
-        </aside>
-
-        <!-- Main Content: Dynamic page loader -->
-        <main class="main-content">
-            <div class="page-container" id="pageContainer">
-                <!-- Dynamic content loads here -->
-                <div style="text-align: center; padding: 60px 20px;">
-                    <div class="spinner dm-sc"></div>
-                    <p style="margin-top: 20px; color: #7f8c8d;" data-i18n="system_admin_sidebar.loading">Loading...</p>
-                </div>
-            </div>
-        </main>
+        </div>
+        <button type="button" class="sa-logout" id="dmLogout">
+            <span data-i18n="system_admin_inquiries.logout">Logout</span>
+        </button>
     </div>
+</aside>
 
-    <!-- Loading overlay -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="spinner dm-sc dm-sc--light"></div>
-    </div>
+<button type="button" class="sa-mobile-toggle" id="saMenuBtn" aria-label="Menu">☰</button>
 
-    <script>
-        // ============================================
-        // SYSTEM ADMIN LAYOUT
-        // Handles: 
-        // - Navigation between pages (dashboard, index, notify)
-        // - Authentication check (user must be logged in as system admin)
-        // - Active state for sidebar items
-        // - Page loading without full refresh
-        // - Logout functionality
-        // - Mobile sidebar toggle
-        // ============================================
+<script>
+    (function () {
+        // Sidebar behaviour shared by every super-admin page: mobile toggle,
+        // the signed-in user in the footer, and logout. Page scripts keep their
+        // own handlers; everything here is idempotent so running twice is safe.
+        var sidebar = document.getElementById('dmSidebar');
+        var toggle = document.getElementById('saMenuBtn');
 
-        const API_BASE_URL = '';
-
-        // Swahili fallback used when the language widget is not present (and
-        // for script-built strings). Values mirror the sw catalog of the
-        // system_admin_sidebar section in locales.json.
-        const SW = {
-            page_title: 'Dukamkononi - System Admin',
-            logo_short: 'D',
-            logo_brand: 'DukaMkononi',
-            logo_tagline: 'System Admin',
-            nav_dashboard: 'Dashbodi',
-            nav_home: 'Nyumbani',
-            nav_notify: 'Notisi',
-            btn_logout: 'Ondoka',
-            loading: 'Loading...',
-            err_no_permission: 'Huna ruhusa ya kuingia kwenye eneo la System Admin.',
-            err_title: 'Hitilafu',
-            err_page_load: 'Huwezi kupakia ukurasa huu. Hakikisha faili zote zipo.',
-            btn_try_again: 'Jaribu Tena',
-            confirm_logout: 'Una uhakika unataka kutoka?',
-            user_role: 'Msimamizi Mkuu',
-            title_default: 'DukaMkononi - System Admin',
-            title_dashboard: 'Dashbodi - DukaMkononi System Admin',
-            title_home: 'Nyumbani - DukaMkononi System Admin',
-            title_notify: 'Notisi - DukaMkononi System Admin',
-        };
-
-        function t(key, params) {
-            const full = key.indexOf('system_admin_sidebar.') === 0 ? key : 'system_admin_sidebar.' + key;
-            if (window.DM && typeof window.DM.t === 'function') {
-                const hit = window.DM.t(full, params);
-                if (hit !== full) return hit;
-            }
-            const bare = key.indexOf('.') > -1 ? key.split('.').pop() : key;
-            let value = Object.prototype.hasOwnProperty.call(SW, bare) ? SW[bare] : key;
-            if (params) {
-                for (const k in params) value = String(value).split('{' + k + '}').join(String(params[k]));
-            }
-            return value;
+        if (toggle && sidebar) {
+            toggle.addEventListener('click', function () { sidebar.classList.toggle('open'); });
         }
 
-        // Get current user from localStorage (set during login)
-        function getCurrentUser() {
-            const token = localStorage.getItem('userToken');
-            const userData = localStorage.getItem('userData');
-            if (token && userData) {
-                try {
-                    return JSON.parse(userData);
-                } catch(e) {
-                    return null;
-                }
-            }
-            return null;
+        if (sidebar) {
+            document.addEventListener('click', function (event) {
+                if (window.innerWidth > 1024) return;
+                if (!sidebar.classList.contains('open')) return;
+                if (sidebar.contains(event.target)) return;
+                if (toggle && toggle.contains(event.target)) return;
+                sidebar.classList.remove('open');
+            });
         }
 
-        // Check authentication and role (must be system admin)
-        function checkAuth() {
-            const user = getCurrentUser();
-            if (!user) {
-                // Not logged in, redirect to login
-                window.location.href = '/login?role=msimamizi';
-                return false;
-            }
-            
-            // Super admin is a database role (promoted by the technician),
-            // never a hardcoded email. 'system_admin' is the legacy spelling.
-            const isSystemAdmin = ['super_admin', 'system_admin'].includes(user.role || '');
-            
-            if (!isSystemAdmin) {
-                showToast(t('err_no_permission'), 'error');
-                window.location.href = '/home';
-                return false;
-            }
-            
-            // Update sidebar with user info
-            updateUserInfo(user);
-            return true;
-        }
-
-        function updateUserInfo(user) {
-            const userNameEl = document.getElementById('userName');
-            const userAvatarEl = document.getElementById('userAvatar');
-            const displayName = user.full_name || user.email?.split('@')[0] || t('logo_tagline');
-            if (userNameEl) userNameEl.textContent = displayName;
-            if (userAvatarEl) {
-                if (user.business_logo_url) {
-                    userAvatarEl.innerHTML = `<img src="${user.business_logo_url}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
-                } else {
-                    userAvatarEl.textContent = displayName.charAt(0).toUpperCase();
-                }
-            }
-        }
-
-        // Page routes mapping (paths relative to system_admin folder)
-        const routes = {
-            dashboard: '/system_admin/dashboard',
-            index: '/system_admin/index',
-            notify: '/system_admin/notify'
-        };
-
-        // Page titles (resolved through t() so they follow the language)
-        const pageTitleKeys = {
-            dashboard: 'title_dashboard',
-            index: 'title_home',
-            notify: 'title_notify'
-        };
-
-        let currentPage = 'dashboard';
-
-        // Show loading overlay
-        function showLoading(show) {
-            const overlay = document.getElementById('loadingOverlay');
-            if (overlay) {
-                overlay.style.display = show ? 'flex' : 'none';
-            }
-        }
-
-        // Load page content dynamically via fetch
-        async function loadPage(pageName) {
-            const pageUrl = routes[pageName];
-            if (!pageUrl) {
-                console.error('Page not found:', pageName);
-                return;
-            }
-
-            showLoading(true);
-            currentPage = pageName;
-
+        function currentUser() {
             try {
-                // Fetch the HTML content of the page
-                const response = await fetch(pageUrl);
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                let html = await response.text();
-                
-                // Extract content inside body or main area
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                
-                // Try to find the main content
-                let content = doc.querySelector('.page-content') || doc.querySelector('.container') || doc.querySelector('body');
-                
-                let contentHtml = '';
-                if (content && content.tagName === 'BODY') {
-                    contentHtml = content.innerHTML;
-                } else if (content) {
-                    contentHtml = content.outerHTML;
-                } else {
-                    contentHtml = html;
-                }
-                
-                // Inject into page container
-                const pageContainer = document.getElementById('pageContainer');
-                if (pageContainer) {
-                    pageContainer.innerHTML = contentHtml;
-                    
-                    // Re-execute any scripts that were in the loaded content
-                    const scripts = pageContainer.querySelectorAll('script');
-                    scripts.forEach(oldScript => {
-                        const newScript = document.createElement('script');
-                        if (oldScript.src) {
-                            newScript.src = oldScript.src;
-                        } else {
-                            newScript.textContent = oldScript.textContent;
-                        }
-                        document.body.appendChild(newScript);
-                        oldScript.remove();
-                    });
-                }
-                
-                // Update page title
-                document.title = pageTitleKeys[pageName] ? t(pageTitleKeys[pageName]) : t('title_default');
-                
-                // Update active state in sidebar
-                updateActiveNavItem(pageName);
-                
-                // Update URL without reload
-                const newUrl = `/system_admin/${pageName}`;
-                window.history.pushState({ page: pageName }, '', newUrl);
-                
-            } catch (error) {
-                console.error('Failed to load page:', error);
-                const pageContainer = document.getElementById('pageContainer');
-                if (pageContainer) {
-                    pageContainer.innerHTML = `
-                        <div style="text-align: center; padding: 60px 20px; background: white; border-radius: 20px;">
-                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#9b59b6" stroke-width="1.5">
-                                <circle cx="12" cy="12" r="10"/>
-                                <path d="M12 8V12M12 16H12.01"/>
-                            </svg>
-                            <h3 style="margin-top: 20px; color: #9b59b6;">${t('err_title')}</h3>
-                            <p style="margin-top: 10px; color: #7f8c8d;">${t('err_page_load')}</p>
-                            <p style="margin-top: 8px; font-size: 12px; color: #95a5a6;">${error.message}</p>
-                            <button onclick="location.reload()" style="margin-top: 20px; padding: 10px 24px; background: #9b59b6; color: white; border: none; border-radius: 8px; cursor: pointer;">${t('btn_try_again')}</button>
-                        </div>
-                    `;
-                }
-            } finally {
-                showLoading(false);
+                var raw = localStorage.getItem('userData');
+                return raw ? JSON.parse(raw) : null;
+            } catch (e) {
+                return null;
             }
         }
 
-        // Update active navigation item
-        function updateActiveNavItem(pageName) {
-            const navItems = document.querySelectorAll('.nav-item');
-            navItems.forEach(item => {
-                const itemPage = item.getAttribute('data-page');
-                if (itemPage === pageName) {
-                    item.classList.add('active');
-                } else {
-                    item.classList.remove('active');
+        var user = currentUser();
+        if (user) {
+            var name = user.full_name || (user.email ? user.email.split('@')[0] : null);
+            var nameEl = document.getElementById('dmUserName');
+            var avatarEl = document.getElementById('dmAvatar');
+
+            if (nameEl && name) nameEl.textContent = name;
+            if (avatarEl) {
+                if (user.business_logo_url) {
+                    avatarEl.innerHTML = '<img src="' + user.business_logo_url + '" alt="">';
+                } else if (name) {
+                    avatarEl.textContent = name.charAt(0).toUpperCase();
                 }
-            });
+            }
         }
 
-        // Navigation handler
-        function navigateTo(pageName) {
-            if (pageName === currentPage) return;
-            loadPage(pageName);
-        }
-
-        // Logout function
-        function handleLogout() {
-            if (confirm(t('confirm_logout'))) {
-                // Clear all auth data
-                localStorage.removeItem('userToken');
-                localStorage.removeItem('userData');
-                localStorage.removeItem('userId');
-                localStorage.removeItem('userEmail');
-                localStorage.removeItem('userRole');
-                localStorage.removeItem('userStatus');
-                localStorage.removeItem('userName');
-                localStorage.removeItem('userBusiness');
-                
-                // Also clear any saved credentials from login
-                const keys = ['savedEmail_msimamizi', 'savedPassword_msimamizi', 'rememberMe_msimamizi'];
-                keys.forEach(key => localStorage.removeItem(key));
-                
-                // Redirect to home
+        var logout = document.getElementById('dmLogout');
+        if (logout) {
+            logout.addEventListener('click', function () {
+                if (!confirm('Una uhakika unataka kutoka?')) return;
+                ['userToken', 'userData', 'userId', 'userEmail', 'userRole',
+                 'userStatus', 'userName', 'userBusiness'].forEach(function (key) {
+                    localStorage.removeItem(key);
+                });
+                document.cookie = 'dm_admin_token=; path=/; max-age=0';
                 window.location.href = '/home';
-            }
-        }
-
-        // Setup event listeners
-        function setupEventListeners() {
-            // Navigation clicks
-            const navItems = document.querySelectorAll('.nav-item');
-            navItems.forEach(item => {
-                item.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const page = item.getAttribute('data-page');
-                    if (page) {
-                        navigateTo(page);
-                    }
-                    // Close sidebar on mobile after click
-                    if (window.innerWidth <= 768) {
-                        document.getElementById('sidebar')?.classList.remove('open');
-                    }
-                });
-            });
-            
-            // Logout button
-            const logoutBtn = document.getElementById('logoutBtn');
-            if (logoutBtn) {
-                logoutBtn.addEventListener('click', handleLogout);
-            }
-            
-            // Mobile menu toggle
-            const menuToggle = document.getElementById('mobileMenuToggle');
-            const sidebar = document.getElementById('sidebar');
-            if (menuToggle && sidebar) {
-                menuToggle.addEventListener('click', () => {
-                    sidebar.classList.toggle('open');
-                });
-            }
-            
-            // Close sidebar when clicking outside on mobile
-            document.addEventListener('click', (e) => {
-                if (window.innerWidth <= 768) {
-                    const sidebar = document.getElementById('sidebar');
-                    const toggle = document.getElementById('mobileMenuToggle');
-                    if (sidebar && sidebar.classList.contains('open') && 
-                        !sidebar.contains(e.target) && 
-                        toggle && !toggle.contains(e.target)) {
-                        sidebar.classList.remove('open');
-                    }
-                }
-            });
-            
-            // Handle browser back/forward buttons
-            window.addEventListener('popstate', (event) => {
-                const path = window.location.pathname;
-                if (path.includes('/system_admin/')) {
-                    const pageName = path.split('/').pop();
-                    if (routes[pageName]) {
-                        loadPage(pageName);
-                    }
-                }
             });
         }
-
-        // Initialize: check auth, then load default page (dashboard)
-        async function init() {
-            if (!checkAuth()) return;
-            
-            setupEventListeners();
-            
-            // Determine which page to load from URL path
-            let initialPage = 'dashboard';
-            const path = window.location.pathname;
-            if (path.includes('/system_admin/')) {
-                const pageFromUrl = path.split('/').pop();
-                if (routes[pageFromUrl]) {
-                    initialPage = pageFromUrl;
-                }
-            }
-            
-            await loadPage(initialPage);
-        }
-        
-        // Follow the language: static markup is handled by data-i18n, but the
-        // document title and sidebar user info are script-built.
-        if (window.DM && typeof window.DM.onChange === 'function') {
-            window.DM.onChange(() => {
-                document.title = pageTitleKeys[currentPage] ? t(pageTitleKeys[currentPage]) : t('title_default');
-                const u = getCurrentUser();
-                if (u) updateUserInfo(u);
-            });
-        }
-
-        // Run init
-        init();
-        
-        // Expose navigateTo for any dynamic links inside loaded pages
-        window.systemAdminNavigate = navigateTo;
-    </script>
-</body>
-</html>
-@endverbatim
+    })();
+</script>

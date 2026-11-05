@@ -76,39 +76,13 @@
         }
     </style>
 </head>
-<body>
+<body class="sa-shell">
 @endverbatim
 @include('partials.dm-lang-widget', ['dmLangHideButton' => true])
 @include('partials.dm-theme-widget', ['dmThemePlacement' => 'bottom'])
+@include('system_admin.partials.sidebar', ['saActive' => 'analytics'])
 @verbatim
 <div class="layout">
-    <aside class="sidebar" id="dmSidebar">
-        <div class="sidebar-header">
-            <div class="logo-icon">D</div>
-            <div class="logo-text">
-                <h2 data-i18n="system_admin_inquiries.brand">DukaMkononi</h2>
-                <p data-i18n="system_admin_inquiries.portal">Super Admin</p>
-            </div>
-        </div>
-        <nav class="nav-items">
-            <a class="nav-item" href="/system_admin/dashboard"><i class="fa-solid fa-gauge-high"></i><span data-i18n="system_admin_inquiries.nav_dashboard">Dashboard</span></a>
-            <a class="nav-item" href="/system_admin/inquiries"><i class="fa-solid fa-envelope-open-text"></i><span data-i18n="system_admin_inquiries.nav_inquiries">Inquiries</span></a>
-            <a class="nav-item" href="/system_admin/certification"><i class="fa-solid fa-certificate"></i><span data-i18n="certification_ai.nav_certification">Certification</span></a>
-            <a class="nav-item active" href="/system_admin/analytics"><i class="fa-solid fa-chart-line"></i><span data-i18n="admin_analytics.nav_analytics">Analytics</span></a>
-            <a class="nav-item" href="/system_admin/notify"><i class="fa-solid fa-bullhorn"></i><span data-i18n="system_admin_inquiries.nav_notify">Notifications</span></a>
-        </nav>
-        <div class="sidebar-footer">
-            <div class="user-chip">
-                <div class="user-avatar" id="dmAvatar">A</div>
-                <div class="user-meta">
-                    <b id="dmUserName">-</b>
-                    <span data-i18n="system_admin_inquiries.user_role">Super Admin</span>
-                </div>
-            </div>
-            <button class="logout-btn" id="dmLogout" data-i18n="system_admin_inquiries.logout">Logout</button>
-        </div>
-    </aside>
-
     <div class="main">
         <div class="topbar">
             <button class="hamburger" id="dmMenuBtn" aria-label="Menu"><i class="fa-solid fa-bars"></i></button>

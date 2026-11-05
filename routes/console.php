@@ -1,5 +1,6 @@
 <?php
 
+use App\Services\DatabaseBackupService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -128,3 +129,21 @@ Schedule::command('monitoring:prune')
     ->daily()
     ->withoutOverlapping()
     ->name('monitoring:prune');
+
+/*
+|--------------------------------------------------------------------------
+| Nightly database backup
+|--------------------------------------------------------------------------
+| Every table is dumped to seed_<date>.sql and filed in Cloudinary next to the
+| constant schema_<date>.sql it belongs to (see DatabaseBackupService). The
+| schema is copied, never regenerated; only the seed is refetched each run.
+|
+| Midnight here is Tanzania midnight, not the server's.
+*/
+Schedule::call(function () {
+    app(DatabaseBackupService::class)->run();
+})
+    ->name('database-backup')
+    ->dailyAt('00:00')
+    ->timezone(DatabaseBackupService::TIMEZONE)
+    ->withoutOverlapping(120);
