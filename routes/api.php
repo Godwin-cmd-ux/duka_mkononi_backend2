@@ -49,6 +49,7 @@ use App\Http\Controllers\Api\SaleController;
 use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\ServiceSaleController;
 use App\Http\Controllers\Api\ShopController;
+use App\Http\Controllers\Api\SystemAdminBackupController;
 use App\Http\Controllers\Api\SystemAdminController;
 use App\Http\Controllers\Api\UserActivityController;
 use Illuminate\Support\Facades\Route;
@@ -352,6 +353,14 @@ Route::middleware('auth.jwt')->group(function () {
     // sentence. No SQL is ever generated and every answer is platform-wide.
     Route::post('ai/platform-analytics/ask', [AiAdminAnalyticsController::class, 'ask']);
     Route::get('ai/platform-analytics/examples', [AiAdminAnalyticsController::class, 'examples']);
+
+    // Super Admin backups: the same Cloudinary snapshots the website lists
+    // (nightly + induced), with schema/seed downloads and deletion.
+    Route::get('system-admin/backups', [SystemAdminBackupController::class, 'index']);
+    Route::post('system-admin/backups/induce', [SystemAdminBackupController::class, 'induce']);
+    Route::get('system-admin/backups/{stamp}/download/{file}', [SystemAdminBackupController::class, 'download'])
+        ->where('file', 'schema|seed');
+    Route::delete('system-admin/backups/{stamp}', [SystemAdminBackupController::class, 'destroy']);
 
     Route::get('system-admin/businesses', [SystemAdminController::class, 'businesses']);
     Route::get('system-admin/businesses/{id}', [SystemAdminController::class, 'show']);
