@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Print from 'expo-print';
 import React, { useEffect, useState, useMemo } from 'react';
 import {
     Alert,
@@ -915,6 +916,83 @@ export default function PreviewScreen() {
     }
   };
 
+  const escapeHtml = (value: unknown) => String(value ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  // Mirrors printDayReport() in resources/views/msimamizi/preview.blade.php:
+  // the web page opens a standalone document in the browser's print dialog,
+  // while the phone hands the same HTML to the native print sheet.
+  const handlePrintDayReport = async (day: DailySummary) => {
+    const esc = (value: unknown) => escapeHtml(value);
+    const row = (label: string, value: string | number, color?: string) =>
+      `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #ecf0f1;"><span>${esc(label)}</span><strong${color ? ` style="color:${color}"` : ''}>${esc(value)}</strong></div>`;
+    const th = (label: string) =>
+      `<th style="border:1px solid #bdc3c7;padding:6px 10px;background:#f4f6f7;text-align:left;">${esc(label)}</th>`;
+    const td = (value: string | number) =>
+      `<td style="border:1px solid #ecf0f1;padding:6px 10px;">${esc(value)}</td>`;
+
+    const salesRows = day.sales.map((sale) =>
+      `<tr>${td(sale.product_name)}${td(sale.customer_name || t('preview.customer_generic'))}${td(sale.seller_name || '')}${td(sale.quantity)}${td(formatCurrency(sale.unit_price))}${td(formatCurrency(sale.total_amount))}</tr>`
+    ).join('');
+
+    const expensesSection = day.expenses.length ? `
+      <h3 style="margin:18px 0 8px;">${esc(t('preview.office_expenses'))}</h3>
+      ${day.expenses.map(expense => row(
+        expense.description ? `${expense.category}: ${expense.description}` : expense.category,
+        formatCurrency(expense.amount),
+        '#e67e22'
+      )).join('')}
+      ${row(t('preview.total_expenses'), formatCurrency(day.totalExpenses), '#e67e22')}
+    ` : '';
+
+    const localeMap: Record<string, string> = { sw: 'sw-TZ', en: 'en-US', fr: 'fr-FR', hi: 'hi-IN', ur: 'ur-PK', es: 'es-ES', de: 'de-DE', zh: 'zh-CN' };
+    const printedAt = new Date().toLocaleString(localeMap[lang] || 'sw-TZ');
+
+    const html = `<html><head><meta charset="UTF-8"><title>${esc(t('preview.day_report_title_dated', { date: day.date }))}</title></head>
+      <body style="font-family:sans-serif;color:#2c3e50;max-width:800px;margin:0 auto;padding:20px;">
+        <div style="text-align:center;border-bottom:3px solid #3498db;padding-bottom:12px;margin-bottom:16px;">
+          <h2 style="margin:0;">${esc(t('preview.day_report_title'))}</h2>
+          <div style="font-size:14px;color:#3498db;font-weight:700;">${esc(userData.businessName)}</div>
+          <div style="font-size:13px;color:#7f8c8d;">${esc(formatDate(day.date))}</div>
+          ${userData.businessLocation ? `<div style="font-size:12px;color:#95a5a6;">${esc(userData.businessLocation)}</div>` : ''}
+        </div>
+
+        <h3 style="margin:0 0 8px;">${esc(t('preview.summary_heading'))}</h3>
+        ${row(t('preview.total_products_sold'), day.totalProducts)}
+        ${row(t('preview.total_sales'), formatCurrency(day.totalSales), '#27ae60')}
+        ${row(t('preview.gross_profit'), formatCurrency(day.totalProfit), '#27ae60')}
+        ${day.expenses.length ? row(t('preview.total_expenses'), formatCurrency(day.totalExpenses), '#e67e22') : ''}
+        ${row(t('preview.net_profit'), formatCurrency(day.netProfit), day.netProfit >= 0 ? '#27ae60' : '#e74c3c')}
+        ${day.unknownProfitItems ? `<div style="display:flex;justify-content:space-between;margin-top:8px;color:#f39c12;font-size:12px;"><span>${esc(t('preview.note_label'))}</span><span style="text-align:right;">${esc(t('preview.unknown_profit_note', { count: day.unknownProfitItems }))}</span></div>` : ''}
+
+        ${expensesSection}
+
+        <h3 style="margin:18px 0 8px;">${esc(t('preview.day_customers_heading'))}</h3>
+        ${day.customers.length
+          ? day.customers.map(customer => `<div style="padding:4px 0;border-bottom:1px solid #ecf0f1;">${esc(customer)}</div>`).join('')
+          : `<div style="color:#95a5a6;">${esc(t('preview.no_customer_names'))}</div>`}
+
+        <h3 style="margin:18px 0 8px;">${esc(t('preview.all_day_sales', { count: day.sales.length }))}</h3>
+        ${day.sales.length
+          ? `<table style="border-collapse:collapse;width:100%;font-size:12px;">
+              <thead><tr>${th(t('preview.product_generic'))}${th(t('preview.customer_generic'))}${th(t('preview.th_seller'))}${th(t('preview.th_quantity'))}${th(t('preview.th_price'))}${th(t('preview.th_total'))}</tr></thead>
+              <tbody>${salesRows}</tbody>
+            </table>`
+          : `<div style="color:#95a5a6;font-size:13px;">${esc(t('preview.no_sales_day_print'))}</div>`}
+
+        <div style="margin-top:20px;padding-top:10px;border-top:1px solid #ecf0f1;font-size:11px;color:#95a5a6;text-align:center;">
+          ${esc(t('preview.printed_at', { datetime: printedAt }))}
+        </div>
+      </body></html>`;
+
+    try {
+      await Print.printAsync({ html });
+    } catch (error) {
+      console.error('Error printing day report:', error);
+      Alert.alert(t('app.error'), t('preview.print_error'));
+    }
+  };
+
   const getEventIcon = (type: BusinessEvent['type']) => {
     switch (type) {
       case 'sale':
@@ -1047,10 +1125,23 @@ export default function PreviewScreen() {
               </Text>
             </View>
 
-            {/* More Info */}
+            {/* More Info + per-day print */}
             <View style={styles.moreInfo}>
-              <Text style={styles.moreInfoText}>{t('preview.more_info')}</Text>
-              <Ionicons name="chevron-forward" size={16} color="#3498db" />
+              <View style={styles.moreInfoHint}>
+                <Text style={styles.moreInfoText}>{t('preview.more_info')}</Text>
+                <Ionicons name="chevron-forward" size={16} color="#3498db" />
+              </View>
+              <TouchableOpacity
+                style={styles.printDayButton}
+                onPress={(event) => {
+                  event.stopPropagation();
+                  handlePrintDayReport(day);
+                }}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="print" size={13} color="white" />
+                <Text style={styles.printDayButtonText}>{t('preview.print_report')}</Text>
+              </TouchableOpacity>
             </View>
           </TouchableOpacity>
         ))
@@ -1923,11 +2014,32 @@ const makeStyles = (tc: ThemeColors) => StyleSheet.create({
     paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: tc.line,
+    gap: 8,
+  },
+  moreInfoHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    flexShrink: 1,
   },
   moreInfoText: {
     fontSize: 12,
     color: tc.primary,
     fontStyle: 'italic',
+  },
+  printDayButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#3498db',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 20,
+  },
+  printDayButtonText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '700',
   },
   noData: {
     alignItems: 'center',
