@@ -44,6 +44,15 @@ class AiCertificationOnboardingRouteTest extends TestCase
         );
     }
 
+    public function test_registration_score_route_is_registered_for_get_behind_auth(): void
+    {
+        $this->assertRouteIsRegistered(
+            'api/admin/registration-score',
+            'GET',
+            'GET api/admin/registration-score must stay registered.'
+        );
+    }
+
     public function test_onboarding_guide_route_is_registered_for_get_behind_auth(): void
     {
         $this->assertRouteIsRegistered(

@@ -12,6 +12,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Image,
   Modal,
   RefreshControl,
   SafeAreaView,
@@ -314,12 +315,25 @@ export default function SystemAdminBusinessesScreen() {
       return [
         business.business_name,
         business.business_location,
-        business.business_type,
         business.owner_name,
         business.owner_email,
       ].some((value) => String(value || '').toLowerCase().includes(q));
     });
   }, [businesses, filter, search]);
+
+  const blockedCount = useMemo(
+    () => businesses.filter((business) => business.is_blocked).length,
+    [businesses],
+  );
+
+  const memberCount = useMemo(
+    () =>
+      businesses.reduce(
+        (sum, business) => sum + (Number(business.users_count) || 0),
+        0,
+      ),
+    [businesses],
+  );
 
   const formatDate = (value?: string | null): string => {
     if (!value) return t('system_admin.biz_not_set');
@@ -394,7 +408,13 @@ export default function SystemAdminBusinessesScreen() {
             {t('system_admin.biz_title')}
           </Text>
           <Text style={[styles.subtitle, { color: tc.muted }]}>
-            {t('system_admin.biz_subtitle')}
+            {loading && businesses.length === 0
+              ? t('system_admin.biz_loading')
+              : t('system_admin.biz_subtitle_count', {
+                  total: businesses.length,
+                  blocked: blockedCount,
+                  users: memberCount,
+                })}
           </Text>
         </View>
         <TouchableOpacity
@@ -511,11 +531,18 @@ export default function SystemAdminBusinessesScreen() {
               >
                 <View style={styles.cardHead}>
                   <View style={[styles.avatar, { backgroundColor: tc.tint }]}>
-                    <Text style={[styles.avatarText, { color: tc.primary }]}>
-                      {String(business.business_name || '?')
-                        .charAt(0)
-                        .toUpperCase()}
-                    </Text>
+                    {business.business_logo_url ? (
+                      <Image
+                        source={{ uri: business.business_logo_url }}
+                        style={styles.avatarImage}
+                      />
+                    ) : (
+                      <Text style={[styles.avatarText, { color: tc.primary }]}>
+                        {String(business.business_name || '?')
+                          .charAt(0)
+                          .toUpperCase()}
+                      </Text>
+                    )}
                   </View>
                   <View style={styles.cardTitleWrap}>
                     <Text
@@ -552,19 +579,28 @@ export default function SystemAdminBusinessesScreen() {
                   <Text style={[styles.ownerLabel, { color: tc.muted }]}>
                     {t('system_admin.biz_owner')}
                   </Text>
-                  <Text
-                    style={[styles.ownerValue, { color: tc.ink }]}
-                    numberOfLines={1}
-                  >
-                    {business.owner_name ||
-                      business.owner_email ||
-                      t('system_admin.biz_no_owner')}
-                  </Text>
+                  <View style={styles.ownerMain}>
+                    <Text
+                      style={[styles.ownerValue, { color: tc.ink }]}
+                      numberOfLines={1}
+                    >
+                      {business.owner_name ||
+                        business.owner_email ||
+                        t('system_admin.biz_no_owner')}
+                    </Text>
+                    {business.owner_name && business.owner_email ? (
+                      <Text
+                        style={[styles.ownerEmail, { color: tc.muted }]}
+                        numberOfLines={1}
+                      >
+                        {business.owner_email}
+                      </Text>
+                    ) : null}
+                  </View>
                   <Text style={[styles.usersCount, { color: tc.muted }]}>
-                    {t('system_admin.biz_users').replace(
-                      '{n}',
-                      String(Number(business.users_count) || 0),
-                    )}
+                    {t('system_admin.biz_users', {
+                      n: Number(business.users_count) || 0,
+                    })}
                   </Text>
                 </View>
 
@@ -659,9 +695,16 @@ export default function SystemAdminBusinessesScreen() {
               <ScrollView contentContainerStyle={styles.modalBody}>
                 <View style={styles.detailIdentity}>
                   <View style={[styles.detailAvatar, { backgroundColor: tc.tint }]}>
-                    <Text style={[styles.detailAvatarText, { color: tc.primary }]}>
-                      {String(detail.business_name || '?').charAt(0).toUpperCase()}
-                    </Text>
+                    {detail.business_logo_url ? (
+                      <Image
+                        source={{ uri: detail.business_logo_url }}
+                        style={styles.avatarImage}
+                      />
+                    ) : (
+                      <Text style={[styles.detailAvatarText, { color: tc.primary }]}>
+                        {String(detail.business_name || '?').charAt(0).toUpperCase()}
+                      </Text>
+                    )}
                   </View>
                   <Text style={[styles.detailName, { color: tc.ink }]}>
                     {detail.business_name || '—'}
@@ -670,26 +713,40 @@ export default function SystemAdminBusinessesScreen() {
                     {detail.business_location || t('system_admin.biz_not_set')}
                     {detail.business_type ? ` · ${detail.business_type}` : ''}
                   </Text>
-                  <View
-                    style={[
-                      styles.statusBadge,
-                      { backgroundColor: `${statusOf(detail).color}18`, marginTop: 8 },
-                    ]}
-                  >
+                  <View style={styles.detailBadges}>
                     <View
                       style={[
-                        styles.statusDot,
-                        { backgroundColor: statusOf(detail).color },
-                      ]}
-                    />
-                    <Text
-                      style={[
-                        styles.statusText,
-                        { color: statusOf(detail).color },
+                        styles.statusBadge,
+                        { backgroundColor: `${statusOf(detail).color}14` },
                       ]}
                     >
-                      {statusOf(detail).label}
-                    </Text>
+                      <View
+                        style={[
+                          styles.statusDot,
+                          { backgroundColor: statusOf(detail).color },
+                        ]}
+                      />
+                      <Text
+                        style={[
+                          styles.statusText,
+                          { color: statusOf(detail).color },
+                        ]}
+                      >
+                        {statusOf(detail).label}
+                      </Text>
+                    </View>
+                    <View
+                      style={[styles.statusBadge, { backgroundColor: tc.tint }]}
+                    >
+                      <Text style={[styles.statusText, { color: tc.primary }]}>
+                        {t('system_admin.biz_users', {
+                          n:
+                            detail.counts?.users ??
+                            detail.users_count ??
+                            (detail.users || []).length,
+                        })}
+                      </Text>
+                    </View>
                   </View>
                 </View>
 
@@ -710,8 +767,6 @@ export default function SystemAdminBusinessesScreen() {
                       t('system_admin.biz_expenses_total'),
                       formatMoney(detail.counts?.expenses_total),
                     ],
-                    [t('system_admin.biz_customers'), detail.counts?.customers],
-                    [t('system_admin.biz_orders'), detail.counts?.orders],
                   ].map(([label, value], index) => (
                     <View
                       key={`${label}-${index}`}
@@ -739,6 +794,25 @@ export default function SystemAdminBusinessesScreen() {
                     {detail.owner_name ||
                       detail.owner_email ||
                       t('system_admin.biz_no_owner')}
+                    {detail.owner_name && detail.owner_email
+                      ? ` · ${detail.owner_email}`
+                      : ''}
+                  </Text>
+                </View>
+                <View style={[styles.detailRow, { borderBottomColor: tc.line }]}>
+                  <Text style={[styles.detailLabel, { color: tc.muted }]}>
+                    {t('system_admin.biz_location')}
+                  </Text>
+                  <Text style={[styles.detailValue, { color: tc.ink }]}>
+                    {detail.business_location || t('system_admin.biz_not_set')}
+                  </Text>
+                </View>
+                <View style={[styles.detailRow, { borderBottomColor: tc.line }]}>
+                  <Text style={[styles.detailLabel, { color: tc.muted }]}>
+                    {t('system_admin.biz_type')}
+                  </Text>
+                  <Text style={[styles.detailValue, { color: tc.ink }]}>
+                    {detail.business_type || t('system_admin.biz_not_set')}
                   </Text>
                 </View>
                 <View style={[styles.detailRow, { borderBottomColor: tc.line }]}>
@@ -1002,7 +1076,9 @@ const makeStyles = (tc: ThemeColors) =>
       borderRadius: 13,
       alignItems: 'center',
       justifyContent: 'center',
+      overflow: 'hidden',
     },
+    avatarImage: { width: '100%', height: '100%' },
     avatarText: { fontSize: 17, fontWeight: '800' },
     cardTitleWrap: { flex: 1, minWidth: 0 },
     cardTitle: { fontSize: 14.5, fontWeight: '800' },
@@ -1019,7 +1095,9 @@ const makeStyles = (tc: ThemeColors) =>
     statusText: { fontSize: 10.5, fontWeight: '800' },
     ownerRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
     ownerLabel: { fontSize: 11.5 },
-    ownerValue: { flex: 1, fontSize: 12, fontWeight: '600' },
+    ownerMain: { flex: 1, minWidth: 0 },
+    ownerValue: { fontSize: 12, fontWeight: '600' },
+    ownerEmail: { fontSize: 10.5, marginTop: 1 },
     usersCount: { fontSize: 11.5 },
     actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
     action: {
@@ -1065,10 +1143,19 @@ const makeStyles = (tc: ThemeColors) =>
       alignItems: 'center',
       justifyContent: 'center',
       marginBottom: 10,
+      overflow: 'hidden',
     },
     detailAvatarText: { fontSize: 28, fontWeight: '800' },
     detailName: { fontSize: 18, fontWeight: '800', textAlign: 'center' },
     detailMeta: { fontSize: 12.5, marginTop: 3, textAlign: 'center' },
+    detailBadges: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      marginTop: 8,
+      flexWrap: 'wrap',
+    },
     statGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     stat: {
       flexGrow: 1,

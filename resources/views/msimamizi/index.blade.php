@@ -283,6 +283,88 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
 
+        /* Registration success score */
+        .registration-score-card {
+            background: white;
+            border-radius: 20px;
+            padding: 18px 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .registration-score-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+        }
+
+        .registration-score-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .registration-score-title {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .registration-score-value {
+            font-size: 22px;
+            font-weight: 800;
+        }
+
+        .registration-score-track {
+            height: 9px;
+            border-radius: 999px;
+            background: #ecf0f1;
+            overflow: hidden;
+            margin-top: 12px;
+        }
+
+        .registration-score-fill {
+            height: 100%;
+            border-radius: 999px;
+            transition: width 0.3s ease;
+        }
+
+        .registration-score-hint {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 9px;
+        }
+
+        .registration-score-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 9px;
+        }
+
+        .registration-score-chip {
+            background: #fef3e2;
+            color: #b9770e;
+            border-radius: 999px;
+            padding: 3px 9px;
+            font-size: 11px;
+        }
+
+        .registration-score-action {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 5px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-top: 8px;
+        }
+
         .business-name {
             font-size: 18px;
             font-weight: 800;
@@ -708,6 +790,15 @@
             sellers_of_business: "Wauzaji Wa Biashara Hii",
             no_sellers: "Hakuna Wauzaji",
             no_sellers_registered: "Hakuna wauzaji waliosajiliwa kwenye biashara {business_name} bado.",
+            registration_score: "Alama ya usajili",
+            registration_missing: "Sehemu {count} zinahitaji kukamilishwa",
+            registration_complete: "Usajili umekamilika 100%",
+            registration_unavailable: "Alama ya usajili haipatikani kwa sasa",
+            registration_finish: "Kamilisha usajili",
+            registration_view: "Tazama wasifu",
+            registration_missing_title: "Sehemu zinazokosekana",
+            registration_upload_logo: "Pakia nembo ya biashara",
+            registration_update_location: "Weka eneo la biashara",
             status_verified: "amethibitishwa",
             status_unverified: "amebatilishwa",
             remove_seller: "Ondoa Muuzaji",
@@ -757,6 +848,8 @@
         let deletingSellerId = null;
         let updatingProfile = false;
         let refreshing = false;
+        let registrationScore = null;
+        let scoreLoading = false;
         
         let editFormData = { name: '', phone: '', businessName: '', businessLocation: '', businessType: '', businessDescription: '' };
         let logoUploading = false;
@@ -1031,7 +1124,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     
                     closeEditModal();
                     showAlert(t('msimamizi_index.alert_success_title'), t('msimamizi_index.msg_profile_updated'));
-                    await loadSellersData();
+                    await Promise.all([loadSellersData(), loadRegistrationScore()]);
                     renderDashboard();
                 } else {
                     // Was a blanket 'Imeshindikana kusasisha wasifu', which hid
@@ -1079,6 +1172,22 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             }
             const descEl = document.getElementById('editBusinessDescription');
             if (descEl) descEl.value = editFormData.businessDescription || '';
+
+            // Show exactly which registration details are still missing, and
+            // expose the logo/pin actions when those are among them.
+            const missing = registrationScore && Array.isArray(registrationScore.missing_labels) ? registrationScore.missing_labels : [];
+            const missingIds = missing.map(item => item.id);
+            const banner = document.getElementById('editMissingBanner');
+            const chips = document.getElementById('editMissingChips');
+            if (banner && chips) {
+                banner.style.display = missing.length ? 'block' : 'none';
+                chips.innerHTML = missing.map(item => `<span class="registration-score-chip">${escapeHtml(item.label)}</span>`).join('');
+            }
+            const logoAction = document.getElementById('editLogoAction');
+            if (logoAction) logoAction.style.display = missingIds.includes('logo') ? 'flex' : 'none';
+            const locationAction = document.getElementById('editLocationAction');
+            if (locationAction) locationAction.style.display = missingIds.includes('pinned') ? 'flex' : 'none';
+
             setSaveBtnState(false);
         }
 
@@ -1182,7 +1291,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             refreshing = true;
             renderDashboard();
             try {
-                const ok = await loadSellersData();
+                const [ok] = await Promise.all([loadSellersData(), loadRegistrationScore()]);
                 if (!ok) {
                     showAlert(t('msimamizi_index.alert_error_title'), t('msimamizi_index.err_refresh_data'));
                 }
@@ -1239,6 +1348,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
 
                 showAlert(t('msimamizi_index.alert_success_title'), t('msimamizi_index.msg_business_photo_updated'));
                 renderDashboard();
+                loadRegistrationScore();
             } catch(e) { showAlert(t('msimamizi_index.alert_error_title'), t('msimamizi_index.err_upload_photo', {message: e.message})); }
             finally { logoUploading = false; }
         }
@@ -1288,6 +1398,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
 
                 showAlert(t('msimamizi_index.alert_success_title'), t('msimamizi_index.msg_location_saved', {area_name: areaName || lat.toFixed(5) + ', ' + lng.toFixed(5)}));
                 renderDashboard();
+                loadRegistrationScore();
             } catch(e) { showAlert(t('msimamizi_index.alert_error_title'), t('msimamizi_index.err_get_location', {message: e.message || e})); }
             finally { locationTracking = false; renderDashboard(); }
         }
@@ -1305,6 +1416,23 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
 
         function renderDashboard() {
             const container = document.getElementById('dashboardContainer');
+            const score = registrationScore ? Number(registrationScore.completeness) || 0 : 0;
+            const missingLabels = registrationScore && Array.isArray(registrationScore.missing_labels) ? registrationScore.missing_labels : [];
+            const scoreColor = score >= 100 ? '#2ecc71' : score >= 60 ? '#f39c12' : '#e74c3c';
+            const registrationScoreHtml = (scoreLoading && !registrationScore) ? '' : `
+                <div class="registration-score-card" id="registrationScoreCard" role="button" tabindex="0">
+                    <div class="registration-score-head">
+                        <div class="registration-score-title">${ic('shield', 14)} ${t('msimamizi_index.registration_score')}</div>
+                        <div class="registration-score-value" style="color:${scoreColor}">${score}%</div>
+                    </div>
+                    <div class="registration-score-track">
+                        <div class="registration-score-fill" style="width:${Math.max(0, Math.min(100, score))}%;background:${scoreColor};"></div>
+                    </div>
+                    <div class="registration-score-hint">${!registrationScore ? t('msimamizi_index.registration_unavailable') : missingLabels.length ? t('msimamizi_index.registration_missing', {count: missingLabels.length}) : t('msimamizi_index.registration_complete')}</div>
+                    ${missingLabels.length ? `<div class="registration-score-chips">${missingLabels.map(item => `<span class="registration-score-chip">${escapeHtml(item.label)}</span>`).join('')}</div>` : ''}
+                    <div class="registration-score-action" style="color:${scoreColor};">${missingLabels.length ? t('msimamizi_index.registration_finish') : t('msimamizi_index.registration_view')} ${ic('edit', 12)}</div>
+                </div>
+            `;
             
             const allSellersHtml = sellersData.map(seller => {
                 let statusClass = '', statusText = '', statusIcon = '';
@@ -1397,6 +1525,8 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                         </button>
                     </div>
                 
+                ${registrationScoreHtml}
+
                 <div class="section-header">
                     <h2 class="section-title">${t('msimamizi_index.sellers_of_business')}</h2>
                     <div class="seller-count">${sellersData.length}</div>
@@ -1414,6 +1544,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             if (isSystemAdmin) document.getElementById('systemAdminBtn')?.addEventListener('click', goToSystemAdmin);
             document.getElementById('refreshBtn')?.addEventListener('click', () => refreshData());
             document.getElementById('editProfileBtn')?.addEventListener('click', () => openEditModal());
+            document.getElementById('registrationScoreCard')?.addEventListener('click', () => openEditModal());
             document.getElementById('logoutArea')?.addEventListener('click', handleLogout);
         }
         
@@ -1486,6 +1617,30 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             } catch (e) { /* offline: modal falls back to cached values */ }
         }
 
+        // Registration completeness for this admin's own business. Computed by
+        // the server from real rows, so the bar always matches the profile.
+        async function loadRegistrationScore() {
+            const token = localStorage.getItem('userToken');
+            if (!token) return;
+            scoreLoading = true;
+            if (!loading) renderDashboard();
+            try {
+                const locale = document.documentElement.getAttribute('data-dm-locale') || 'sw';
+                const res = await fetch(`${API_BASE_URL}/api/admin/registration-score?locale=${encodeURIComponent(locale)}`, {
+                    headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                if (!data || !data.success) return;
+                registrationScore = data;
+            } catch (e) {
+                console.error('Registration score failed:', e);
+            } finally {
+                scoreLoading = false;
+                if (!loading) renderDashboard();
+            }
+        }
+
         async function init() {
             setupSidebar();
             const success = await loadUserData();
@@ -1495,6 +1650,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             // the dashboard's first paint — run it in the background.
             const sellersPromise = loadSellersData();
             loadProfileIntoEditForm();
+            loadRegistrationScore();
             await sellersPromise;
             loading = false;
             renderDashboard();
@@ -1503,7 +1659,12 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         // renderDashboard() rebuilds every dynamic string on this page (seller
         // cards, header, badges, GPS button), so one call covers a locale switch.
         if (window.DM && typeof window.DM.onChange === 'function') {
-            window.DM.onChange(() => { if (!loading) renderDashboard(); });
+            window.DM.onChange(() => {
+                if (!loading) {
+                    renderDashboard();
+                    loadRegistrationScore();
+                }
+            });
         }
 
         init();
@@ -1515,6 +1676,18 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             <div class="modal-header">
                 <h3 class="modal-title" data-i18n="msimamizi_index.edit_profile">Hariri Wasifu</h3>
                 <span style="cursor:pointer; font-size:24px;" onclick="closeEditModal()">✖</span>
+            </div>
+            <div id="editMissingBanner" style="display:none;background:#fff8e1;border:1px solid #ffe0a3;border-radius:10px;padding:10px;margin-bottom:14px;">
+                <div style="font-size:12px;font-weight:700;color:#b9770e;margin-bottom:6px;" data-i18n="msimamizi_index.registration_missing_title">Sehemu zinazokosekana</div>
+                <div id="editMissingChips" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+            </div>
+            <div id="editLogoAction" style="display:none;align-items:center;gap:8px;padding:12px;background:#e8f4fd;border-radius:10px;cursor:pointer;font-weight:600;color:#3498db;margin-bottom:8px;" onclick="document.getElementById('logoFileInput').click()">
+                <i class="fa-solid fa-camera" aria-hidden="true"></i>
+                <span data-i18n="msimamizi_index.registration_upload_logo">Pakia nembo ya biashara</span>
+            </div>
+            <div id="editLocationAction" style="display:none;align-items:center;gap:8px;padding:12px;background:#e8f4fd;border-radius:10px;cursor:pointer;font-weight:600;color:#3498db;margin-bottom:8px;" onclick="handleTrackLocation()">
+                <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+                <span data-i18n="msimamizi_index.registration_update_location">Weka eneo la biashara</span>
             </div>
             <div class="input-group">
                 <label class="input-label" data-i18n="msimamizi_index.label_full_name">Jina Kamili</label>

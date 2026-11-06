@@ -172,6 +172,10 @@ Route::middleware('auth.jwt')->group(function () {
 
     Route::get('user/profile', [ProfileController::class, 'show']);
     Route::put('user/profile', [ProfileController::class, 'update']);
+    // The business owner's own registration completeness (name, type,
+    // location, description, logo, map pin, staff). Drives the score bar on
+    // the msimamizi dashboard; it never certifies anything.
+    Route::get('admin/registration-score', [AiCertificationController::class, 'registrationScore']);
     Route::put('user/password', [ProfileController::class, 'changePassword']);
     // Theme preference: written when an authenticated visitor explicitly picks
     // a theme on a public page (Phase 1 selector). Validation lives server-side

@@ -25,8 +25,9 @@ import { ALL_LANGUAGES, LANGUAGE_FLAGS, LANGUAGE_NAMES, useLang, type Lang } fro
 import { useSession } from '../../context/SessionContext';
 
 import { API_BASE_URL } from '../../constants/api';
+import { isSystemAdminRole } from '../../constants/session';
 import { getCache, setCache } from '../../db/cache';
-import { registerLive, syncNow } from '../../lib/syncer';
+import { registerLive } from '../../lib/syncer';
 import { fetchWithTimeout, requireNetwork } from '../../lib/network';
 import { useTheme, ThemeColors } from '../../lib/theme';
 
@@ -137,6 +138,7 @@ export default function NotifyScreen() {
 
   const completedCount = ALL_LANGUAGES.filter(l => getLanguageStatus(l) === 'complete').length;
   const allLanguagesComplete = completedCount === ALL_LANGUAGES.length;
+  const canSend = allLanguagesComplete && (notificationType !== 'specific' || selectedUsers.length > 0);
 
   const updateTranslation = (field: 'title' | 'message', value: string) => {
     setTranslations(prev => ({
@@ -151,6 +153,7 @@ export default function NotifyScreen() {
   useEffect(() => {
     initializeScreen();
     setupPushNotifications();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lang]);
 
   useEffect(() => {
@@ -184,7 +187,7 @@ export default function NotifyScreen() {
 
   const initializeScreen = async () => {
     try {
-      console.log('📨 Inaanzisha skrini ya taarifa...');
+      console.log('ðŸ“¨ Inaanzisha skrini ya taarifa...');
       
       // Check authentication
       const token = await AsyncStorage.getItem('userToken');
@@ -200,10 +203,8 @@ export default function NotifyScreen() {
       const userData = JSON.parse(userDataStr);
       
       // Super admin is a database role (promoted by the technician), never
-      // a hardcoded email. Business admins may also send notifications.
-      const isAdmin = ['super_admin', 'system_admin', 'admin'].includes(userData.role || '');
-      
-      if (!isAdmin) {
+      // a hardcoded email. This portal is gated on the platform role.
+      if (!isSystemAdminRole(userData.role)) {
         Alert.alert(
           t('notify.error_permission'),
           t('notify.error_permission_text'),
@@ -225,7 +226,7 @@ export default function NotifyScreen() {
       ]);
       
     } catch (error) {
-      console.error('❌ Error initializing screen:', error);
+      console.error('âŒ Error initializing screen:', error);
       Alert.alert(t('app.error'), t('notify.error_init'));
       setLoading(false);
     }
@@ -247,7 +248,7 @@ export default function NotifyScreen() {
         setCache('admin:notifications:check', data).catch(() => {});
         if (data.exists) {
           setSystemReady(true);
-          console.log('✅ Notification system is ready');
+          console.log('âœ… Notification system is ready');
         } else {
           // Try to setup the system
           await setupNotificationSystem();
@@ -274,7 +275,7 @@ export default function NotifyScreen() {
 
       if (response.ok) {
         setSystemReady(true);
-        console.log('✅ Notification system setup successful');
+        console.log('âœ… Notification system setup successful');
       }
     } catch (error) {
       console.error('Failed to setup notification system:', error);
@@ -325,7 +326,7 @@ export default function NotifyScreen() {
       const cached = await getCache<any>('system:users');
       if (Array.isArray(cached)) { setUsers(cached.filter((u: User) => u.status === 'approved')); }
 
-      console.log('📡 Inapakua watumiaji...');
+      console.log('ðŸ“¡ Inapakua watumiaji...');
       
       const response = await fetchWithTimeout(`${API_BASE_URL}/api/admin/users?scope=platform`, {
         headers: {
@@ -342,36 +343,12 @@ export default function NotifyScreen() {
         setCache('system:users', Array.isArray(usersArray) ? usersArray : []).catch(() => {});
       } else {
         console.error('Failed to fetch users:', response.status);
-        // Use sample data as fallback
-        setUsers(getSampleUsers());
       }
     } catch (error) {
-      console.error('❌ Error fetching users:', error);
+      console.error('âŒ Error fetching users:', error);
       const cached = await getCache<any>('system:users');
-      if (Array.isArray(cached)) { setUsers(cached.filter((u: User) => u.status === 'approved')); return; }
-      setUsers(getSampleUsers());
+      if (Array.isArray(cached)) { setUsers(cached.filter((u: User) => u.status === 'approved')); }
     }
-  };
-
-  const getSampleUsers = (): User[] => {
-    return [
-      {
-        id: '1',
-        email: 'cosmavictorini1994@gmail.com',
-        role: 'admin',
-        full_name: 'Victorini Cosma',
-        phone: '0712345678',
-        status: 'approved'
-      },
-      {
-        id: '2',
-        email: 'godwinfranklin419@gmail.com',
-        role: 'admin',
-        full_name: 'Godwin Franklin',
-        phone: '0756789123',
-        status: 'approved'
-      }
-    ];
   };
 
   const fetchNotifications = async () => {
@@ -392,34 +369,15 @@ export default function NotifyScreen() {
         const data = await response.json();
         setNotifications(data);
         setCache('admin:notifications', data).catch(() => {});
-        console.log(`✅ Loaded ${data.length} notifications from server`);
-      } else {
-        console.log('⚠️ Using sample notifications');
-        setNotifications(getSampleNotifications());
+        console.log(`âœ… Loaded ${data.length} notifications from server`);
       }
     } catch (error) {
       console.error('Error fetching notifications:', error);
       const cached = await getCache<any>('admin:notifications');
-      if (cached) { setNotifications(cached); return; }
-      setNotifications(getSampleNotifications());
+      if (cached) { setNotifications(cached); }
     } finally {
       setLoading(false);
     }
-  };
-
-  const getSampleNotifications = (): Notification[] => {
-    return [
-      {
-        id: '1',
-        title: 'Mfumo wa Taarifa Umewashwa',
-        message: 'Mfumo mpya wa kutuma taarifa kwa watumiaji wote umewashwa kikamilifu. Sasa unaweza kutuma taarifa kupitia mfumo huu.',
-        notification_type: 'all',
-        recipients: [{ id: 'all', email: 'all@dukamkononi.com', name: 'Watumiaji Wote' }],
-        sent_at: new Date().toISOString(),
-        status: 'sent',
-        sender_name: 'System Admin'
-      }
-    ];
   };
 
   const handleSendNotification = async () => {
@@ -466,7 +424,7 @@ export default function NotifyScreen() {
         requestBody.recipient_ids = selectedUsers;
       }
 
-      console.log('📤 Sending multilingual notification to server...', requestBody);
+      console.log('ðŸ“¤ Sending multilingual notification to server...', requestBody);
 
       // Send to backend API
       const response = await fetchWithTimeout(`${API_BASE_URL}/api/admin/notifications`, {
@@ -480,13 +438,13 @@ export default function NotifyScreen() {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('❌ Server response error:', response.status, errorText);
+        console.error('âŒ Server response error:', response.status, errorText);
         throw new Error(`Server returned ${response.status}: ${errorText}`);
       }
 
       const result = await response.json();
       
-      console.log('✅ Notification sent successfully:', result);
+      console.log('âœ… Notification sent successfully:', result);
 
       // Also send local push notification
       await sendLocalNotification();
@@ -510,7 +468,7 @@ export default function NotifyScreen() {
       );
 
     } catch (error: any) {
-      console.error('❌ Error sending notification:', error.message || error);
+      console.error('âŒ Error sending notification:', error.message || error);
       
       Alert.alert(
         t('app.error'),
@@ -527,7 +485,7 @@ export default function NotifyScreen() {
       const firstTitle = translations.sw.title || translations.en.title || 'Notification';
       await Notifications.scheduleNotificationAsync({
         content: {
-          title: '📢 Taarifa Imetumwa',
+          title: 'ðŸ“¢ Taarifa Imetumwa',
           body: `"${firstTitle}" imetumwa kikamilifu kwa lugha ${completedCount}/${ALL_LANGUAGES.length}`,
           data: { type: 'admin_notification_sent' },
         },
@@ -607,7 +565,7 @@ export default function NotifyScreen() {
                 } else {
                   Alert.alert(t('app.error'), t('notify.send_test_error'));
                 }
-              } catch (error) {
+              } catch {
                 Alert.alert(t('app.error'), t('notify.error_network'));
               }
             }
@@ -647,11 +605,9 @@ export default function NotifyScreen() {
   const getFilteredUsers = () => {
     return users.filter(user => {
       // Filter by search query
-      const matchesSearch = 
+      const matchesSearch =
         user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.phone?.includes(searchQuery) ||
-        user.business_name?.toLowerCase().includes(searchQuery.toLowerCase());
+        user.full_name?.toLowerCase().includes(searchQuery.toLowerCase());
       
       // Filter by role toggles
       const matchesRole = 
@@ -1105,11 +1061,11 @@ export default function NotifyScreen() {
             <TouchableOpacity 
               style={[
                 styles.sendButton, 
-                sending && styles.sendButtonDisabled,
+                (!canSend || sending) && styles.sendButtonDisabled,
                 !allLanguagesComplete && styles.sendButtonWarning
               ]}
               onPress={handleSendNotification}
-              disabled={sending}
+              disabled={!canSend || sending}
             >
               {sending ? (
                 <SmartCartLoader size="compact" color="#ffffff" />

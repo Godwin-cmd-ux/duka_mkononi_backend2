@@ -46,6 +46,13 @@ const BIZ_TYPES = [
 // from background sync). Reading it here surfaced admins and other roles under
 // "Wauzaji". The sellers list keeps its own key and always re-applies the
 // seller rule to both the cached and the freshly fetched payload.
+type RegistrationScore = {
+  completeness: number;
+  missing: string[];
+  missing_labels: { id: string; label: string; severity: string }[];
+  requirements: { id: string; label: string; status: string; severity: string }[];
+};
+
 const SELLERS_CACHE_KEY = 'admin:sellers';
 
 const pickSellers = (rows: any): any[] =>
@@ -88,6 +95,12 @@ export default function MsimamiziHomeScreen() {
     businessDescription: ''
   });
   const [updatingProfile, setUpdatingProfile] = useState(false);
+  const [editFromScore, setEditFromScore] = useState(false);
+
+  // Registration success score (same checklist mechanics as the super-admin
+  // certification page, limited to the fields an owner can fill here).
+  const [registrationScore, setRegistrationScore] = useState<RegistrationScore | null>(null);
+  const [scoreLoading, setScoreLoading] = useState(false);
 
   // Badilisha nenosiri modal
   const [passwordModalVisible, setPasswordModalVisible] = useState(false);
@@ -189,6 +202,7 @@ export default function MsimamiziHomeScreen() {
         // stored business type/description. Runs in the background (it only
         // feeds the edit modal) so it never delays the first paint.
         loadProfileIntoEditForm();
+        loadRegistrationScore();
       }
     } catch (error) {
       console.error('Error loading user data:', error);
@@ -293,10 +307,47 @@ export default function MsimamiziHomeScreen() {
     }
   };
 
+  // Registration completeness for this admin's own business. The server
+  // computes it from real rows, so the bar cannot drift from the profile.
+  const loadRegistrationScore = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) return;
+
+      setScoreLoading(true);
+      const res = await fetchWithTimeout(
+        `${API_BASE_URL}/api/admin/registration-score?locale=${encodeURIComponent(lang)}`,
+        {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'ngrok-skip-browser-warning': 'true',
+            'Accept': 'application/json'
+          },
+        }
+      );
+      if (!res.ok) return;
+
+      const data = await res.json();
+      if (!data?.success) return;
+
+      setRegistrationScore({
+        completeness: Number(data.completeness) || 0,
+        missing: Array.isArray(data.missing) ? data.missing : [],
+        missing_labels: Array.isArray(data.missing_labels) ? data.missing_labels : [],
+        requirements: Array.isArray(data.requirements) ? data.requirements : [],
+      });
+    } catch (error) {
+      console.error('Error loading registration score:', error);
+    } finally {
+      setScoreLoading(false);
+    }
+  };
+
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      await loadSellersData();
+      await Promise.all([loadSellersData(), loadRegistrationScore()]);
     } catch (error) {
       console.error('Error refreshing data:', error);
       const errorMessage = error instanceof Error ? error.message : t('admin_dashboard.error_update');
@@ -308,6 +359,12 @@ export default function MsimamiziHomeScreen() {
 
   // Edit Profile Functions
   const handleEditProfile = () => {
+    setEditFromScore(false);
+    setEditModalVisible(true);
+  };
+
+  const handleOpenRegistration = () => {
+    setEditFromScore(true);
     setEditModalVisible(true);
   };
 
@@ -377,7 +434,7 @@ export default function MsimamiziHomeScreen() {
         Alert.alert(t('app.success'), t('admin_dashboard.success_update'));
         
         // ✅ KUBADILISHWA: Reload wauzaji baada ya kubadilisha jina la biashara
-        await loadSellersData();
+        await Promise.all([loadSellersData(), loadRegistrationScore()]);
       } else {
         const errorText = await response.text();
         console.error('❌ Profile update failed:', response.status, errorText);
@@ -817,6 +874,7 @@ export default function MsimamiziHomeScreen() {
       }
 
       Alert.alert(t('admin_dashboard.track_location_success_title'), t('admin_dashboard.track_location_success'));
+      loadRegistrationScore();
     } catch (error: any) {
       console.error('❌ Save location error:', error);
       Alert.alert(t('app.error'), error?.message || t('admin_dashboard.track_location_error'));
@@ -880,6 +938,7 @@ export default function MsimamiziHomeScreen() {
       }
 
       Alert.alert(t('admin_dashboard.logo_success_title'), t('admin_dashboard.logo_success'));
+      loadRegistrationScore();
     } catch (error: any) {
       console.error('❌ Logo upload error:', error);
       Alert.alert(t('app.error'), error?.message || t('admin_dashboard.logo_error'));
@@ -925,6 +984,11 @@ export default function MsimamiziHomeScreen() {
       </SafeAreaView>
     );
   }
+
+  const score = registrationScore?.completeness ?? 0;
+  const missingLabels = registrationScore?.missing_labels ?? [];
+  const missingIdSet = new Set(missingLabels.map((item) => item.id));
+  const scoreColor = score >= 100 ? '#2ecc71' : score >= 60 ? '#f39c12' : '#e74c3c';
 
   return (
     <SafeAreaView style={styles.screenSafe} edges={['top']}>
@@ -1040,6 +1104,61 @@ export default function MsimamiziHomeScreen() {
           )}
         </TouchableOpacity>
       </View>
+
+      {/* Registration success score */}
+      <TouchableOpacity
+        style={styles.scoreCard}
+        onPress={handleOpenRegistration}
+        activeOpacity={0.85}
+      >
+        <View style={styles.scoreHeader}>
+          <View style={styles.scoreTitleRow}>
+            <Ionicons name="ribbon-outline" size={18} color={scoreColor} />
+            <Text style={styles.scoreTitle}>{t('admin_dashboard.registration_score')}</Text>
+          </View>
+          {scoreLoading ? (
+            <SmartCartLoader size="compact" color={scoreColor} />
+          ) : (
+            <Text style={[styles.scoreValue, { color: scoreColor }]}>{score}%</Text>
+          )}
+        </View>
+
+        <View style={styles.scoreBar}>
+          <View
+            style={[
+              styles.scoreBarFill,
+              { width: `${Math.max(0, Math.min(100, score))}%`, backgroundColor: scoreColor },
+            ]}
+          />
+        </View>
+
+        <Text style={styles.scoreHint}>
+          {!registrationScore
+            ? t('admin_dashboard.registration_unavailable')
+            : missingLabels.length
+              ? t('admin_dashboard.registration_missing', { count: missingLabels.length })
+              : t('admin_dashboard.registration_complete')}
+        </Text>
+
+        {missingLabels.length > 0 && (
+          <View style={styles.scoreChips}>
+            {missingLabels.map((item) => (
+              <View key={item.id} style={styles.scoreChip}>
+                <Text style={styles.scoreChipText}>{item.label}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        <View style={styles.scoreActionRow}>
+          <Text style={[styles.scoreAction, { color: scoreColor }]}>
+            {missingLabels.length
+              ? t('admin_dashboard.registration_finish')
+              : t('admin_dashboard.registration_view')}
+          </Text>
+          <Ionicons name="chevron-forward" size={16} color={scoreColor} />
+        </View>
+      </TouchableOpacity>
 
       {/* Sellers List Section */}
       <View style={styles.section}>
@@ -1220,7 +1339,11 @@ export default function MsimamiziHomeScreen() {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{t('admin_dashboard.edit_profile')}</Text>
+              <Text style={styles.modalTitle}>
+                {editFromScore
+                  ? t('admin_dashboard.registration_modal_title')
+                  : t('admin_dashboard.edit_profile')}
+              </Text>
               <TouchableOpacity 
                 onPress={() => setEditModalVisible(false)}
                 style={styles.closeButton}
@@ -1234,6 +1357,21 @@ export default function MsimamiziHomeScreen() {
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
             >
+            {editFromScore && missingLabels.length > 0 && (
+              <View style={styles.missingBanner}>
+                <Text style={styles.missingBannerTitle}>
+                  {t('admin_dashboard.registration_missing_title')}
+                </Text>
+                <View style={styles.scoreChips}>
+                  {missingLabels.map((item) => (
+                    <View key={item.id} style={styles.scoreChip}>
+                      <Text style={styles.scoreChipText}>{item.label}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>{t('admin_dashboard.profile_full_name')}</Text>
               <TextInput
@@ -1316,6 +1454,42 @@ export default function MsimamiziHomeScreen() {
               />
               <Text style={styles.descriptionHint}>{t('profile.business_description_hint')}</Text>
             </View>
+
+            {editFromScore && missingIdSet.has('logo') && (
+              <TouchableOpacity
+                style={styles.registrationAction}
+                onPress={handleChangeLogo}
+                disabled={logoUploading}
+              >
+                {logoUploading ? (
+                  <SmartCartLoader size="compact" color="#3498db" />
+                ) : (
+                  <Ionicons name="image-outline" size={18} color="#3498db" />
+                )}
+                <Text style={styles.registrationActionText}>
+                  {t('admin_dashboard.registration_upload_logo')}
+                </Text>
+                <Ionicons name="chevron-forward" size={18} color="#bdc3c7" />
+              </TouchableOpacity>
+            )}
+
+            {editFromScore && missingIdSet.has('pinned') && (
+              <TouchableOpacity
+                style={styles.registrationAction}
+                onPress={handleTrackLocation}
+                disabled={locationTracking}
+              >
+                {locationTracking ? (
+                  <SmartCartLoader size="compact" color="#3498db" />
+                ) : (
+                  <Ionicons name="navigate-outline" size={18} color="#3498db" />
+                )}
+                <Text style={styles.registrationActionText}>
+                  {t('admin_dashboard.registration_update_location')}
+                </Text>
+                <Ionicons name="chevron-forward" size={18} color="#bdc3c7" />
+              </TouchableOpacity>
+            )}
 
             {/* Badilisha nenosiri */}
             <TouchableOpacity
@@ -1530,6 +1704,106 @@ const makeStyles = (tc: ThemeColors) => StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 4,
     elevation: 2,
+  },
+  scoreCard: {
+    backgroundColor: tc.card,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  scoreHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  scoreTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  scoreTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: tc.ink,
+    marginLeft: 6,
+  },
+  scoreValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  scoreBar: {
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: tc.soft,
+    overflow: 'hidden',
+    marginTop: 12,
+  },
+  scoreBarFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  scoreHint: {
+    fontSize: 12,
+    color: tc.muted,
+    marginTop: 8,
+  },
+  scoreChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 8,
+  },
+  scoreChip: {
+    backgroundColor: '#fef3e2',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    marginRight: 6,
+    marginBottom: 6,
+  },
+  scoreChipText: {
+    fontSize: 11,
+    color: '#b9770e',
+  },
+  scoreActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    marginTop: 2,
+  },
+  scoreAction: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginRight: 2,
+  },
+  missingBanner: {
+    backgroundColor: '#fff8e1',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#ffe0a3',
+  },
+  missingBannerTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#b9770e',
+  },
+  registrationAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: tc.line,
+  },
+  registrationActionText: {
+    flex: 1,
+    fontSize: 14,
+    color: tc.ink,
+    marginLeft: 10,
   },
   businessCardHeader: {
     flexDirection: 'row',

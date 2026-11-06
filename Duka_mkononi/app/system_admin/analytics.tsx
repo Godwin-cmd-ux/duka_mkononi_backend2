@@ -9,9 +9,11 @@
 // decides which allow-listed metric it may run.
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   SafeAreaView,
   ScrollView,
   StatusBar,
@@ -23,8 +25,10 @@ import {
 } from 'react-native';
 import SmartCartLoader from '../../components/SmartCartLoader';
 import { API_BASE_URL } from '../../constants/api';
+import { isSystemAdminRole } from '../../constants/session';
 import { getCache, setCache } from '../../db/cache';
-import { useLang } from '../../context/LanguageContext';
+import { LOCALE_TAGS, useLang } from '../../context/LanguageContext';
+import { useSession } from '../../context/SessionContext';
 import { fetchWithTimeout } from '../../lib/network';
 import { useTheme, ThemeColors } from '../../lib/theme';
 
@@ -82,13 +86,40 @@ interface AskResponse {
 export default function SystemAdminAnalytics() {
   const { colors: tc } = useTheme();
   const styles = useMemo(() => makeStyles(tc), [tc]);
+  const router = useRouter();
   const { t, lang } = useLang();
+  const { signOut } = useSession();
 
+  const [ready, setReady] = useState(false);
   const [question, setQuestion] = useState('');
   const [examples, setExamples] = useState<string[]>([]);
   const [answer, setAnswer] = useState<AskResponse | null>(null);
   const [asking, setAsking] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    (async () => {
+      const cachedToken = await AsyncStorage.getItem('userToken');
+      const userDataStr = await AsyncStorage.getItem('userData');
+      if (!cachedToken || !userDataStr) {
+        await signOut();
+        router.replace('/(tabs)');
+        return;
+      }
+      let role = '';
+      try {
+        role = JSON.parse(userDataStr)?.role || '';
+      } catch {
+        role = '';
+      }
+      if (!isSystemAdminRole(role)) {
+        Alert.alert(t('system_admin.access_denied'), t('system_admin.err_no_permission'));
+        router.replace('/(tabs)');
+        return;
+      }
+      setReady(true);
+    })();
+  }, [router, signOut, t]);
 
   const token = useCallback(() => AsyncStorage.getItem('userToken'), []);
 
@@ -102,14 +133,14 @@ export default function SystemAdminAnalytics() {
       if (!res.ok) return;
       const data = await res.json();
       setExamples(Array.isArray(data.examples) ? data.examples : []);
-    } catch (err) {
+    } catch {
       // Examples are a convenience; the ask form still works.
     }
   }, [lang, token]);
 
   useEffect(() => {
-    loadExamples();
-  }, [loadExamples]);
+    if (ready) loadExamples();
+  }, [loadExamples, ready]);
 
   useEffect(() => {
     (async () => {
@@ -141,7 +172,7 @@ export default function SystemAdminAnalytics() {
       }
       setAnswer(data);
       setCache(CACHE_KEY, data).catch(() => {});
-    } catch (err) {
+    } catch {
       setError(t('admin_analytics.error'));
     } finally {
       setAsking(false);
@@ -182,17 +213,30 @@ export default function SystemAdminAnalytics() {
       );
     }
 
+    const displayValue = (() => {
+      if (r.value === null || r.value === undefined || r.value === '') return '-';
+      const numeric = Number(r.value);
+      return Number.isNaN(numeric)
+        ? String(r.value)
+        : numeric.toLocaleString(LOCALE_TAGS[lang] || 'sw-TZ');
+    })();
+
     return (
       <View style={styles.card}>
         <View style={styles.cardHead}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.valueLabel}>{r.value_label}</Text>
-            <Text style={styles.value}>{r.value === null ? '-' : String(r.value)}</Text>
+            <Text style={styles.valueLabel}>{r.value_label || data.parsed?.tool_label || ''}</Text>
+            <Text style={styles.value}>{displayValue}</Text>
             <Text style={styles.muted}>{r.range_label}</Text>
           </View>
-          <Text style={[styles.badge, r.live ? styles.badgeOk : styles.badgeMuted]}>
-            {r.live ? t('admin_analytics.live_badge') : t('admin_analytics.period_badge')}
-          </Text>
+          <View style={styles.badgeCol}>
+            <Text style={[styles.badge, r.live ? styles.badgeOk : styles.badgeMuted]}>
+              {r.live ? t('admin_analytics.live_badge') : t('admin_analytics.period_badge')}
+            </Text>
+            {data.parsed?.tool_label ? (
+              <Text style={[styles.badge, styles.badgeMuted]}>{data.parsed.tool_label}</Text>
+            ) : null}
+          </View>
         </View>
 
         <Text style={styles.explain}>{r.explanation}</Text>
@@ -236,7 +280,9 @@ export default function SystemAdminAnalytics() {
 
         <Text style={styles.muted}>{data.scope_note} {data.notice_no_sql}</Text>
         {data.truncated ? (
-          <Text style={styles.muted}>{t('admin_analytics.limitations_title')}: {data.rows_read}</Text>
+          <Text style={styles.muted}>
+            {t('admin_analytics.rows_read', { n: data.rows_read })}
+          </Text>
         ) : null}
       </View>
     );
@@ -362,6 +408,7 @@ const makeStyles = (tc: ThemeColors) => StyleSheet.create({
   ghostBtnText: { color: '#334155', fontWeight: '600', fontSize: 14 },
   card: { backgroundColor: tc.card, borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 14, padding: 14, gap: 8 },
   cardHead: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  badgeCol: { alignItems: 'flex-end', gap: 6 },
   valueLabel: { fontSize: 12, color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.4 },
   value: { fontSize: 30, fontWeight: '800', color: '#0f172a' },
   explain: { fontSize: 14.5, color: '#334155', lineHeight: 21 },

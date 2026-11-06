@@ -11,6 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
+    Alert,
     FlatList,
     Modal,
     SafeAreaView,
@@ -23,8 +24,9 @@ import {
 } from 'react-native';
 import SmartCartLoader from '../../components/SmartCartLoader';
 import { API_BASE_URL } from '../../constants/api';
+import { isSystemAdminRole } from '../../constants/session';
 import { getCache, setCache } from '../../db/cache';
-import { useLang } from '../../context/LanguageContext';
+import { LOCALE_TAGS, useLang } from '../../context/LanguageContext';
 import { useSession } from '../../context/SessionContext';
 import { fetchWithTimeout } from '../../lib/network';
 import { useTheme, ThemeColors } from '../../lib/theme';
@@ -63,6 +65,7 @@ interface ReviewDetail {
     business_location: string;
     business_type: string;
     is_certified: boolean;
+    created_at?: string | null;
     certified_at?: string | null;
     is_public?: unknown;
   };
@@ -104,14 +107,21 @@ export default function SystemAdminCertification() {
 
   const [selected, setSelected] = useState<QueueItem | null>(null);
   const [detail, setDetail] = useState<ReviewDetail | null>(null);
+  const [detailError, setDetailError] = useState(false);
   const [reviewing, setReviewing] = useState(false);
 
   const load = useCallback(async () => {
     try {
       const token = await AsyncStorage.getItem('userToken');
-      const userData = await AsyncStorage.getItem('userData');
-      if (!token || !userData) {
+      const userDataStr = await AsyncStorage.getItem('userData');
+      if (!token || !userDataStr) {
         await signOut();
+        router.replace('/(tabs)');
+        return;
+      }
+      const userData = JSON.parse(userDataStr);
+      if (!isSystemAdminRole(userData.role)) {
+        Alert.alert(t('system_admin.access_denied'), t('system_admin.err_no_permission'));
         router.replace('/(tabs)');
         return;
       }
@@ -129,7 +139,7 @@ export default function SystemAdminCertification() {
       setTruncated(!!data.truncated);
       setCapped(!!data.reads_capped);
       setCache(CACHE_KEY, { items: data.items || [], counts: data.counts }).catch(() => {});
-    } catch (error) {
+    } catch {
       const cached = await getCache<any>(CACHE_KEY);
       if (cached && Array.isArray(cached.items)) {
         setItems(cached.items);
@@ -141,7 +151,7 @@ export default function SystemAdminCertification() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [lang, router, signOut]);
+  }, [lang, router, signOut, t]);
 
   useEffect(() => {
     load();
@@ -150,39 +160,67 @@ export default function SystemAdminCertification() {
   const openReview = async (item: QueueItem) => {
     setSelected(item);
     setDetail(null);
+    setDetailError(false);
     setReviewing(true);
     try {
       const token = await AsyncStorage.getItem('userToken');
-      const res = await fetchWithTimeout(`${API_BASE_URL}/api/ai/certification/${encodeURIComponent(item.id)}/review`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ locale: lang }),
-      });
-      const data = await res.json();
+      const res = await fetchWithTimeout(
+        `${API_BASE_URL}/api/ai/certification/${encodeURIComponent(item.id)}/review?locale=${encodeURIComponent(lang)}`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ locale: lang }),
+        },
+      );
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setSelected(null);
+        setDetailError(true);
         return;
       }
       setDetail(data);
-    } catch (error) {
-      setSelected(null);
+    } catch {
+      setDetailError(true);
     } finally {
       setReviewing(false);
     }
   };
 
+  const formatDate = (value?: string | null) => {
+    if (!value) return '-';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value);
+    return date.toLocaleString(LOCALE_TAGS[lang] || 'sw-TZ', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
   const renderItem = ({ item }: { item: QueueItem }) => (
     <TouchableOpacity style={styles.card} onPress={() => openReview(item)}>
       <View style={styles.cardHead}>
-        <Text style={styles.cardTitle} numberOfLines={2}>{item.business_name}</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.cardTitle} numberOfLines={2}>{item.business_name}</Text>
+          <Text style={styles.cardId} numberOfLines={1}>{item.id}</Text>
+        </View>
         <View style={[styles.badge, { backgroundColor: (item.completeness || 0) >= 100 ? '#059669' : '#d97706' }]}>
           <Text style={styles.badgeText}>{item.completeness}%</Text>
         </View>
       </View>
       <Text style={styles.cardMeta} numberOfLines={1}>{item.business_location || '-'}</Text>
+      <View style={styles.bar}>
+        <View
+          style={[
+            styles.barFill,
+            { width: `${Math.max(0, Math.min(100, Number(item.completeness) || 0))}%` },
+          ]}
+        />
+      </View>
       <View style={styles.cardFoot}>
         {item.missing_labels && item.missing_labels.length > 0 ? (
-          item.missing_labels.slice(0, 4).map((m, index) => (
+          item.missing_labels.map((m, index) => (
             <Text key={`${item.id}-m-${index}`} style={[styles.chip, styles.chipWarn]}>{m.label}</Text>
           ))
         ) : (
@@ -194,6 +232,10 @@ export default function SystemAdminCertification() {
           </Text>
         ) : null}
       </View>
+      <TouchableOpacity style={styles.reviewBtn} onPress={() => openReview(item)}>
+        <Ionicons name="shield-checkmark-outline" size={16} color="#fff" />
+        <Text style={styles.reviewBtnText}>{t('certification_ai.btn_review')}</Text>
+      </TouchableOpacity>
     </TouchableOpacity>
   );
 
@@ -285,30 +327,87 @@ export default function SystemAdminCertification() {
               </View>
             ) : null}
 
+            {!reviewing && detailError ? (
+              <Text style={styles.errorNote}>{t('certification_ai.error')}</Text>
+            ) : null}
+
             {detail ? (
               <View>
                 <Text style={[styles.badgeText, styles.aiBadge]}>{t('certification_ai.ai_badge')}</Text>
                 <Text style={styles.infoNote}>{detail.notice || t('certification_ai.notice_no_decision')}</Text>
                 <Text style={styles.infoNote}>{t('certification_ai.notice_decision_endpoint')}</Text>
-                <Text style={styles.infoNote}>{t('certification_ai.notice_documents')}</Text>
+                {detail.reads_capped ? (
+                  <Text style={styles.infoNote}>{t('certification_ai.reads_capped_note')}</Text>
+                ) : null}
 
                 <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>{t('certification_ai.col_location')}</Text>
-                  <Text style={styles.detailValue}>{detail.business.business_location || '-'}</Text>
+                  <Text style={styles.detailLabel}>{t('certification_ai.col_business')}</Text>
+                  <Text style={styles.detailValue}>{detail.business.business_name || '-'}</Text>
                 </View>
                 <View style={styles.detailRow}>
                   <Text style={styles.detailLabel}>{t('certification_ai.label_type')}</Text>
                   <Text style={styles.detailValue}>{detail.business.business_type || '-'}</Text>
                 </View>
                 <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>{t('certification_ai.label_status')}</Text>
-                  <Text style={styles.detailValue}>
-                    {detail.business.is_certified ? t('certification_ai.badge_certified') : t('certification_ai.badge_pending')}
-                  </Text>
+                  <Text style={styles.detailLabel}>{t('certification_ai.col_location')}</Text>
+                  <Text style={styles.detailValue}>{detail.business.business_location || '-'}</Text>
                 </View>
                 <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>{t('certification_ai.label_created')}</Text>
+                  <Text style={styles.detailValue}>{formatDate(detail.business.created_at)}</Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>{t('certification_ai.label_status')}</Text>
+                  <View
+                    style={[
+                      styles.badge,
+                      { backgroundColor: detail.business.is_certified ? '#ecfdf5' : '#fffbeb' },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.badgeText,
+                        { color: detail.business.is_certified ? '#047857' : '#b45309' },
+                      ]}
+                    >
+                      {detail.business.is_certified
+                        ? t('certification_ai.badge_certified')
+                        : t('certification_ai.badge_pending')}
+                    </Text>
+                  </View>
+                </View>
+                {detail.business.certified_at ? (
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>{t('certification_ai.label_certified_at')}</Text>
+                    <Text style={styles.detailValue}>{formatDate(detail.business.certified_at)}</Text>
+                  </View>
+                ) : null}
+                <View style={styles.detailRow}>
                   <Text style={styles.detailLabel}>{t('certification_ai.col_completeness')}</Text>
-                  <Text style={styles.detailValue}>{detail.review.completeness}%</Text>
+                  <View style={styles.detailValueRow}>
+                    <Text style={styles.detailValue}>{detail.review.completeness || 0}%</Text>
+                    <View
+                      style={[
+                        styles.badge,
+                        {
+                          backgroundColor:
+                            (detail.review.completeness || 0) >= 100 ? '#ecfdf5' : '#fffbeb',
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.badgeText,
+                          {
+                            color:
+                              (detail.review.completeness || 0) >= 100 ? '#047857' : '#b45309',
+                          },
+                        ]}
+                      >
+                        {t('certification_ai.col_missing')}: {(detail.review.missing || []).length}
+                      </Text>
+                    </View>
+                  </View>
                 </View>
 
                 <Text style={[styles.sectionTitle, { marginTop: 16 }]}>{t('certification_ai.section_requirements')}</Text>
@@ -332,7 +431,7 @@ export default function SystemAdminCertification() {
                     <Text style={styles.sectionTitle}>{t('certification_ai.section_human_checks')}</Text>
                     {detail.review.human_checks.map((h) => (
                       <Text key={`h-${h.id}`} style={styles.bullet}>
-                        {'• '}{h.label}{h.why ? ` - ${h.why}` : ''}
+                        {'â€¢ '}{h.label}{h.why ? ` - ${h.why}` : ''}
                       </Text>
                     ))}
                   </View>
@@ -351,7 +450,7 @@ export default function SystemAdminCertification() {
                   <View style={styles.section}>
                     <Text style={styles.sectionTitle}>{t('certification_ai.section_limitations')}</Text>
                     {detail.review.limitations.map((l, index) => (
-                      <Text key={`l-${index}`} style={styles.bullet}>{'• '}{l}</Text>
+                      <Text key={`l-${index}`} style={styles.bullet}>{'â€¢ '}{l}</Text>
                     ))}
                   </View>
                 ) : null}
@@ -383,8 +482,28 @@ const makeStyles = (tc: ThemeColors) => StyleSheet.create({
   list: { padding: 16, paddingBottom: 40, gap: 12 },
   card: { backgroundColor: tc.card, borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 14, padding: 14, gap: 6 },
   cardHead: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-  cardTitle: { flex: 1, fontSize: 15, fontWeight: '700', color: '#0f172a' },
+  cardTitle: { fontSize: 15, fontWeight: '700', color: '#0f172a' },
+  cardId: { fontSize: 11, color: '#94a3b8', marginTop: 2 },
   cardMeta: { fontSize: 12.5, color: '#64748b' },
+  bar: {
+    height: 8,
+    borderRadius: 999,
+    backgroundColor: '#eef2f7',
+    overflow: 'hidden',
+    marginTop: 4,
+  },
+  barFill: { height: '100%', backgroundColor: '#4f46e5' },
+  reviewBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: '#4f46e5',
+    borderRadius: 10,
+    paddingVertical: 9,
+    marginTop: 8,
+  },
+  reviewBtnText: { color: '#fff', fontSize: 12.5, fontWeight: '700' },
   cardFoot: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 2 },
   chip: { fontSize: 11.5, color: '#334155', backgroundColor: '#f1f5f9', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, overflow: 'hidden' },
   chipWarn: { backgroundColor: '#fff7ed', color: '#9a3412' },
@@ -396,6 +515,16 @@ const makeStyles = (tc: ThemeColors) => StyleSheet.create({
   detailRow: { flexDirection: 'row', gap: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#eef2f7' },
   detailLabel: { width: 120, fontSize: 12.5, color: '#64748b', fontWeight: '600' },
   detailValue: { flex: 1, fontSize: 14, color: '#0f172a' },
+  detailValueRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
+  errorNote: {
+    backgroundColor: '#fef2f2',
+    color: '#991b1b',
+    padding: 10,
+    borderRadius: 10,
+    fontSize: 12.5,
+    marginHorizontal: 16,
+    marginTop: 10,
+  },
   section: { marginTop: 16, gap: 6 },
   sectionTitle: { fontSize: 13, fontWeight: '700', color: '#334155' },
   bullet: { fontSize: 13, color: '#475569' },

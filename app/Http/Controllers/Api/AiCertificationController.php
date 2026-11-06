@@ -224,6 +224,112 @@ class AiCertificationController extends BaseController
     }
 
     /* ------------------------------------------------------------------ */
+    /* Registration score (a business owner's own dashboard)               */
+    /* ------------------------------------------------------------------ */
+
+    /**
+     * GET /api/admin/registration-score
+     *
+     * The signed-in business owner's own registration completeness. It reuses
+     * the certification checklist mechanics but only the details an owner can
+     * supply from the profile/logo/location controls - so a completed profile
+     * really reaches 100%. Platform-wide evidence (public visibility, products,
+     * documents) is not part of this self-service score.
+     */
+    public function registrationScore(Request $request): JsonResponse
+    {
+        $userId = $this->userId($request);
+        $ip = $this->ip($request);
+
+        if (! $this->isAdmin($request)) {
+            return $this->json(['error' => 'Ruhusa haitoshi.', 'code' => 'FORBIDDEN_ROLE'], 403);
+        }
+
+        $businessId = (string) ($this->businessId($request) ?? '');
+        if ($businessId === '') {
+            return $this->json([
+                'error' => 'Biashara haipatikani.',
+                'code' => 'BUSINESS_NOT_FOUND',
+            ], 404);
+        }
+
+        $business = $this->findBusiness($businessId);
+        if (! $business) {
+            return $this->json([
+                'error' => 'Biashara haipatikani.',
+                'code' => 'BUSINESS_NOT_FOUND',
+            ], 404);
+        }
+
+        $locale = $this->resolveLocale($request);
+
+        try {
+            $membersResult = $this->membersFor($businessId);
+            $review = $this->reviewOne(
+                $business,
+                $membersResult['rows'],
+                null,
+                $locale,
+                ! $membersResult['capped'],
+                $membersResult['capped'],
+                $this->registrationRequirements()
+            );
+
+            $this->log($userId, 'ADMIN_REGISTRATION_SCORE', '/api/admin/registration-score', [
+                'business_id' => $businessId,
+                'completeness' => $review['completeness'],
+                'missing' => $review['missing'],
+            ], $ip, 'success');
+
+            return $this->json([
+                'success' => true,
+                'scope' => 'registration',
+                'locale' => $locale,
+                'business' => [
+                    'id' => (string) ($business['id'] ?? ''),
+                    'business_name' => (string) ($business['business_name'] ?? ''),
+                    'business_location' => (string) ($business['business_location'] ?? ''),
+                    'business_type' => (string) ($business['business_type'] ?? ''),
+                ],
+                'completeness' => $review['completeness'],
+                'required_total' => $review['counts']['required_total'],
+                'required_met' => $review['counts']['required_met'],
+                'missing' => $review['missing'],
+                'missing_labels' => $this->labelsFor($review, $review['missing']),
+                'requirements' => $review['requirements'],
+                'summary' => $review['summary'],
+                'generated_at' => now()->toISOString(true),
+            ]);
+        } catch (\Throwable $error) {
+            $this->log($userId, 'ADMIN_REGISTRATION_SCORE_ERROR', '/api/admin/registration-score', [
+                'error' => $error->getMessage(),
+            ], $ip, 'failed');
+
+            return $this->dbError($error);
+        }
+    }
+
+    /**
+     * The requirements an owner can complete from the admin dashboard: the
+     * registration details plus the logo, map pin and staff member. The
+     * operator's configured requirement list is honoured when it covers them.
+     *
+     * @return array<int, array<string, mixed>>|null
+     */
+    private function registrationRequirements(): ?array
+    {
+        $ids = ['name', 'type', 'location', 'description', 'logo', 'pinned', 'staff'];
+        $configured = config('ai.certification.requirements');
+        $source = is_array($configured) && $configured !== [] ? $configured : CertificationReview::REQUIREMENTS;
+
+        $filtered = array_values(array_filter($source, static function ($line) use ($ids): bool {
+            return is_array($line) && in_array((string) ($line['id'] ?? ''), $ids, true);
+        }));
+
+        return $filtered !== [] ? $filtered : null;
+    }
+
+    /* ------------------------------------------------------------------ */
     /* Helpers                                                             */
     /* ------------------------------------------------------------------ */
 
@@ -428,9 +534,9 @@ class AiCertificationController extends BaseController
     }
 
     /** The deterministic review for one row. */
-    private function reviewOne(array $business, array $members, ?int $productCount, string $locale, bool $membersRead = true, bool $readsCapped = false): array
+    private function reviewOne(array $business, array $members, ?int $productCount, string $locale, bool $membersRead = true, bool $readsCapped = false, ?array $requirements = null): array
     {
-        $requirements = config('ai.certification.requirements');
+        $requirements = $requirements ?? config('ai.certification.requirements');
 
         return CertificationReview::review([
             'locale' => $locale,
