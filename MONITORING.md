@@ -141,8 +141,21 @@ resolved and the resolution.
 
 Runs are bounded (batches of 1000, max 50 batches/night), delete in
 sub-chunks of 100 ids, and write their own `MONITORING_PRUNED` audit record
-(counts only) - the retention policy is itself auditable. Legacy
-`user_logs` retention continues to use the existing admin cleanup endpoint.
+(counts only) - the retention policy is itself auditable.
+
+### Legacy user logs (`user_logs`)
+
+`php artisan logs:prune` runs **hourly from 01:00 to 23:00** Tanzania time,
+after the nightly backup window. Each run first checks the `backups` table for
+that day's automatic backup (folder `backup_<date>`, status `complete`, with a
+seed file). If it is missing or incomplete, the command stops without deleting
+anything; a later hourly run picks the backup up once it finishes.
+
+When the gate passes, rows older than **30 days** are deleted in bounded
+batches and the run writes a `LOGS_AUTO_PRUNED` audit record whose details
+include the message `"<row_count> rows of logs were deleted <backup_date>"`.
+Tune the window with `LOG_RETENTION_DAYS` (default 30). The existing manual
+`DELETE /api/admin/logs/cleanup` endpoint remains available.
 
 ---
 

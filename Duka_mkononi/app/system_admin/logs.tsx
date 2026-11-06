@@ -602,6 +602,23 @@ export default function SystemAdminLogs() {
     return filtered.slice(0, 30);
   }, [userLogs, legacyStatus, legacyRange]);
 
+  const lastPruneMessage = useMemo(() => {
+    for (const log of userLogs) {
+      if (log.action !== 'LOGS_AUTO_PRUNED') continue;
+      let details = log.details;
+      if (typeof details === 'string') {
+        try {
+          details = JSON.parse(details);
+        } catch {
+          details = null;
+        }
+      }
+      const message = details && typeof details.message === 'string' ? details.message : '';
+      if (message) return message;
+    }
+    return '';
+  }, [userLogs]);
+
   const selectedUserLabel = useMemo(() => {
     if (!filters.user_id) return t('system_admin.mon_filter_all');
     const u = users.find((x) => String(x.id) === String(filters.user_id));
@@ -936,6 +953,13 @@ export default function SystemAdminLogs() {
               <Text style={[styles.legacyNote, { color: tc.muted }]}>
                 {t('system_admin.mon_legacy_note')}
               </Text>
+              {lastPruneMessage ? (
+                <View style={[styles.setupBanner, { backgroundColor: '#eef7ee', borderColor: '#27ae60' }]}>
+                  <Text style={[styles.setupBannerText, { color: '#1e6b3a' }]}>
+                    {lastPruneMessage}
+                  </Text>
+                </View>
+              ) : null}
               <Text style={[styles.sectionTitle, { color: tc.ink }]}>
                 {t('system_admin.system_logs_title', { count: userLogs.length })}
               </Text>

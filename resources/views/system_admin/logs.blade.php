@@ -744,10 +744,26 @@
             return filtered.slice(0, 30);
         }
 
+        function latestPruneMessage() {
+            const log = userLogs.find((item) => item.action === 'LOGS_AUTO_PRUNED');
+            if (!log) return '';
+            let details = log.details;
+            if (typeof details === 'string') {
+                try {
+                    details = JSON.parse(details);
+                } catch (e) {
+                    return '';
+                }
+            }
+            return details && typeof details.message === 'string' ? details.message : '';
+        }
+
         function renderLegacyLogsView() {
             const filtered = getFilteredLogs();
+            const pruneMessage = latestPruneMessage();
             return `
                 <div style="font-size:12px;color:#7f8c8d;margin-bottom:12px;">${t('mon_legacy_note')}</div>
+                ${pruneMessage ? `<div style="background:#eef7ee;border:1px solid #27ae60;border-radius:12px;padding:12px 16px;margin-bottom:12px;font-size:13px;color:#1e6b3a;">${escapeHtml(pruneMessage)}</div>` : ''}
                 <div class="section-header"><div class="section-title">${t('system_logs_title', { count: userLogs.length })}</div></div>
                 <div class="filter-bar">
                     <div class="filter-buttons" id="logStatusFilters"></div>

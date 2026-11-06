@@ -147,3 +147,19 @@ Schedule::call(function () {
     ->dailyAt('00:00')
     ->timezone(DatabaseBackupService::TIMEZONE)
     ->withoutOverlapping(120);
+
+/*
+|--------------------------------------------------------------------------
+| Legacy user log retention
+|--------------------------------------------------------------------------
+| Runs every hour after midnight, always after the nightly backup window.
+| logs:prune checks the backups table for that day's automatic backup first;
+| when the backup is missing or incomplete it stops without deleting anything.
+| A late backup is therefore picked up by a later hourly run, and the cleanup
+| is retried safely until the day's evidence has been captured.
+*/
+Schedule::command('logs:prune')
+    ->cron('0 1-23 * * *')
+    ->timezone(DatabaseBackupService::TIMEZONE)
+    ->withoutOverlapping(120)
+    ->name('logs:prune');
