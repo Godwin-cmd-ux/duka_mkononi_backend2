@@ -148,6 +148,8 @@ export default function SystemAdminLogs() {
   const [filters, setFilters] = useState<Filters>({ ...EMPTY_FILTERS });
   const [legacyStatus, setLegacyStatus] = useState<'all' | 'success' | 'failed'>('all');
   const [legacyRange, setLegacyRange] = useState<'today' | 'week' | 'month'>('today');
+  const [legacySearch, setLegacySearch] = useState('');
+  const [legacyLogs, setLegacyLogs] = useState<any[]>([]);
 
   const [filterOpen, setFilterOpen] = useState(false);
   const [draftFilters, setDraftFilters] = useState<Filters>({ ...EMPTY_FILTERS });
@@ -192,9 +194,12 @@ export default function SystemAdminLogs() {
         setFilters((prev) => ({ ...prev, user_id: requestedUser }));
         setDraftFilters((prev) => ({ ...prev, user_id: requestedUser }));
       }
-      await Promise.all([fetchUsers(), fetchLegacyLogs()]);
+      await Promise.all([fetchUsers(), fetchRecentLogs(), fetchLegacyLogs()]);
       setLoading(false);
-      await loadCurrent(requestedUser ? { ...EMPTY_FILTERS, user_id: requestedUser } : filters);
+      const available = await loadCurrent(
+        requestedUser ? { ...EMPTY_FILTERS, user_id: requestedUser } : filters,
+      );
+      if (available === false) setView('legacy');
     } catch (error) {
       console.error('Error initializing logs page:', error);
       setLoading(false);
@@ -216,7 +221,7 @@ export default function SystemAdminLogs() {
     }
   };
 
-  const fetchLegacyLogs = async () => {
+  const fetchRecentLogs = async () => {
     try {
       const userToken = await token();
       if (!userToken) return;
@@ -226,6 +231,41 @@ export default function SystemAdminLogs() {
       if (!res.ok) return;
       const data = await res.json();
       setUserLogs(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error fetching legacy logs:', error);
+    }
+  };
+
+  const legacyRangeStart = (range: 'today' | 'week' | 'month') => {
+    const now = new Date();
+    if (range === 'week') return new Date(now.getTime() - 7 * 86400000);
+    if (range === 'month') return new Date(now.getTime() - 30 * 86400000);
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  };
+
+  const fetchLegacyLogs = async (opts?: {
+    status?: 'all' | 'success' | 'failed';
+    range?: 'today' | 'week' | 'month';
+    q?: string;
+  }) => {
+    try {
+      const userToken = await token();
+      if (!userToken) return;
+      const status = opts?.status ?? legacyStatus;
+      const range = opts?.range ?? legacyRange;
+      const q = opts?.q ?? legacySearch;
+      const params = new URLSearchParams();
+      params.set('start_date', legacyRangeStart(range).toISOString());
+      params.set('limit', '500');
+      if (status !== 'all') params.set('status', status);
+      if (q) params.set('q', q);
+      const res = await fetchWithTimeout(
+        `${API_BASE_URL}/api/admin/logs/search?${params.toString()}`,
+        { headers: { Authorization: `Bearer ${userToken}` } },
+      );
+      if (!res.ok) return;
+      const data = await res.json();
+      setLegacyLogs(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching legacy logs:', error);
     }
@@ -282,12 +322,14 @@ export default function SystemAdminLogs() {
       if (data.unavailable) {
         setUnavailable(true);
         setTimeline((s) => ({ ...s, items: [], total: 0 }));
-        return;
+        return false;
       }
       setUnavailable(false);
       setTimeline((s) => ({ ...s, items: data.items || [], total: data.total || 0 }));
+      return true;
     } catch (error) {
       console.error('Error loading timeline:', error);
+      return false;
     }
   };
 
@@ -333,13 +375,14 @@ export default function SystemAdminLogs() {
     v: LogsView = view,
     resetPage = false,
   ) => {
-    if (v === 'legacy') return;
+    if (v === 'legacy') return true;
     setLoading(true);
     try {
       if (v === 'timeline') {
         const page = resetPage ? 1 : timeline.page;
         if (resetPage) setTimeline((s) => ({ ...s, page: 1 }));
-        await Promise.all([loadSummary(f), loadTimeline(f, page)]);
+        const results = await Promise.all([loadSummary(f), loadTimeline(f, page)]);
+        return results[1];
       } else if (v === 'security') {
         if (resetPage) setAlerts((s: any) => ({ ...s, page: 1 }));
         await loadAlerts();
@@ -348,6 +391,7 @@ export default function SystemAdminLogs() {
         if (resetPage) setSessions((s) => ({ ...s, page: 1 }));
         await loadSessions(f, page);
       }
+      return true;
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -583,24 +627,7 @@ export default function SystemAdminLogs() {
     }
   };
 
-  const legacyFiltered = useMemo(() => {
-    let filtered = [...userLogs];
-    if (legacyStatus !== 'all') {
-      filtered = filtered.filter((log) => log.status === legacyStatus);
-    }
-    const now = new Date();
-    if (legacyRange === 'today') {
-      const todayStr = now.toISOString().split('T')[0];
-      filtered = filtered.filter((log) => String(log.created_at || '').startsWith(todayStr));
-    } else if (legacyRange === 'week') {
-      const weekAgo = new Date(now.getTime() - 7 * 86400000);
-      filtered = filtered.filter((log) => new Date(log.created_at) >= weekAgo);
-    } else {
-      const monthAgo = new Date(now.getTime() - 30 * 86400000);
-      filtered = filtered.filter((log) => new Date(log.created_at) >= monthAgo);
-    }
-    return filtered.slice(0, 30);
-  }, [userLogs, legacyStatus, legacyRange]);
+  const legacyFiltered = useMemo(() => legacyLogs.slice(0, 500), [legacyLogs]);
 
   const lastPruneMessage = useMemo(() => {
     for (const log of userLogs) {
@@ -674,7 +701,9 @@ export default function SystemAdminLogs() {
             onRefresh={() => {
               setRefreshing(true);
               if (view === 'legacy') {
-                fetchLegacyLogs().finally(() => setRefreshing(false));
+                Promise.all([fetchRecentLogs(), fetchLegacyLogs()]).finally(() =>
+                  setRefreshing(false),
+                );
               } else {
                 loadCurrent();
               }
@@ -693,7 +722,11 @@ export default function SystemAdminLogs() {
             </Text>
           </View>
           <TouchableOpacity
-            onPress={() => (view === 'legacy' ? fetchLegacyLogs() : loadCurrent())}
+            onPress={() =>
+              view === 'legacy'
+                ? Promise.all([fetchRecentLogs(), fetchLegacyLogs()])
+                : loadCurrent()
+            }
             style={[styles.refreshBtn, { borderColor: tc.line2, backgroundColor: tc.card }]}
           >
             <Ionicons name="refresh" size={15} color={tc.ink} />
@@ -735,7 +768,9 @@ export default function SystemAdminLogs() {
                   key={id}
                   onPress={() => {
                     setView(id);
-                    if (id !== 'legacy') {
+                    if (id === 'legacy') {
+                      fetchLegacyLogs();
+                    } else {
                       loadCurrent(filters, id, false);
                     }
                   }}
@@ -961,8 +996,31 @@ export default function SystemAdminLogs() {
                 </View>
               ) : null}
               <Text style={[styles.sectionTitle, { color: tc.ink }]}>
-                {t('system_admin.system_logs_title', { count: userLogs.length })}
+                {t('system_admin.system_logs_title', { count: legacyFiltered.length })}
               </Text>
+
+              <View style={[styles.searchRow, { marginTop: 10 }]}>
+                <View style={[styles.searchBox, { backgroundColor: tc.page, borderColor: tc.line2 }]}>
+                  <Ionicons name="search" size={16} color={tc.muted2} />
+                  <TextInput
+                    value={legacySearch}
+                    onChangeText={setLegacySearch}
+                    onSubmitEditing={() => fetchLegacyLogs({ q: legacySearch })}
+                    placeholder={t('system_admin.mon_search')}
+                    placeholderTextColor={tc.muted2}
+                    style={[styles.searchInput, { color: tc.ink }]}
+                    autoCapitalize="none"
+                  />
+                </View>
+                <TouchableOpacity
+                  onPress={() => fetchLegacyLogs({ q: legacySearch })}
+                  style={[styles.outlineChip, { borderColor: tc.line2 }]}
+                >
+                  <Text style={[styles.outlineChipText, { color: tc.ink }]}>
+                    {t('system_admin.mon_apply')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
 
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.viewChips}>
                 {(
@@ -976,7 +1034,10 @@ export default function SystemAdminLogs() {
                   return (
                     <TouchableOpacity
                       key={id}
-                      onPress={() => setLegacyStatus(id)}
+                      onPress={() => {
+                        setLegacyStatus(id);
+                        fetchLegacyLogs({ status: id });
+                      }}
                       style={[
                         styles.chip,
                         {
@@ -1003,7 +1064,10 @@ export default function SystemAdminLogs() {
                   return (
                     <TouchableOpacity
                       key={id}
-                      onPress={() => setLegacyRange(id)}
+                      onPress={() => {
+                        setLegacyRange(id);
+                        fetchLegacyLogs({ range: id });
+                      }}
                       style={[
                         styles.chip,
                         {
@@ -1039,7 +1103,7 @@ export default function SystemAdminLogs() {
                           <Text style={[styles.pillText, { color }]}>{log.status}</Text>
                         </View>
                         <Text style={[styles.logMeta, { color: tc.muted }]}>
-                          👤 {log.user_email || t('system_admin.guest')}
+                          👤 {log.user_email || log.users?.full_name || log.users?.email || t('system_admin.guest')}
                         </Text>
                       </View>
                     </View>

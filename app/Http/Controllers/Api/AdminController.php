@@ -619,12 +619,16 @@ class AdminController extends BaseController
                 return $this->json(['error' => 'Unauthorized'], 403);
             }
 
-            $action = $request->query('action');
+            $action = $request->query('action') ?: $request->query('q');
             $userId = $request->query('user_id');
             $status = $request->query('status');
             $startDate = $request->query('start_date');
             $endDate = $request->query('end_date');
             $ipAddress = $request->query('ip_address');
+            $limitParam = $request->query('limit');
+            $limit = $limitParam === null || $limitParam === ''
+                ? null
+                : max(1, min(1000, (int) $limitParam));
 
             $query = UserLog::query()->orderByDesc('created_at');
 
@@ -652,7 +656,7 @@ class AdminController extends BaseController
                 $query->whereRaw('LOWER(ip_address) LIKE ?', ['%' . mb_strtolower($ipAddress) . '%']);
             }
 
-            $logs = $query->get()->toArray();
+            $logs = ($limit ? $query->limit($limit) : $query)->get()->toArray();
 
             $logs = $this->embedLogUsers($logs);
 

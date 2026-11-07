@@ -294,6 +294,8 @@
 
         let users = [];
         let userLogs = [];
+        let legacyLogs = [];
+        let legacySearch = '';
         let selectedLogStatus = 'all';
         let selectedTimeRange = 'today';
 
@@ -301,6 +303,7 @@
         let logsView = 'timeline'; // timeline | security | sessions | legacy
         let monLoading = false;
         let monUnavailable = false;
+        let monTimelineAvailable = null;
         let monSummary = null;
         let monTimeline = { items: [], total: 0, page: 1, perPage: 25 };
         let monAlerts = { items: [], total: 0, page: 1, perPage: 25, status: 'open' };
@@ -381,6 +384,32 @@
             } catch (e) { console.error(e); }
         }
 
+        function legacyRangeStart(range) {
+            const now = new Date();
+            if (range === 'week') return new Date(now.getTime() - 7 * 86400000);
+            if (range === 'month') return new Date(now.getTime() - 30 * 86400000);
+            return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        }
+
+        async function fetchLegacyLogs() {
+            const token = localStorage.getItem('userToken');
+            if (!token) return;
+            const qs = new URLSearchParams();
+            qs.set('start_date', legacyRangeStart(selectedTimeRange).toISOString());
+            qs.set('limit', '500');
+            if (selectedLogStatus !== 'all') qs.set('status', selectedLogStatus);
+            if (legacySearch) qs.set('q', legacySearch);
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/admin/logs/search?${qs.toString()}`, {
+                    headers: { 'Authorization': `Bearer ${token}` },
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    legacyLogs = Array.isArray(data) ? data : [];
+                }
+            } catch (e) { console.error(e); }
+        }
+
         function monHeaders(extra) {
             const token = localStorage.getItem('userToken');
             const headers = { 'Authorization': 'Bearer ' + token };
@@ -425,11 +454,12 @@
         async function loadTimeline() {
             try {
                 const data = await monFetch('admin/monitoring/timeline', monParams({ page: monTimeline.page, per_page: monTimeline.perPage }));
-                if (data.unavailable) { monUnavailable = true; monTimeline.items = []; monTimeline.total = 0; return; }
+                if (data.unavailable) { monUnavailable = true; monTimelineAvailable = false; monTimeline.items = []; monTimeline.total = 0; return; }
                 monUnavailable = false;
+                monTimelineAvailable = true;
                 monTimeline.items = data.items || [];
                 monTimeline.total = data.total || 0;
-            } catch (e) { /* keep previous data; empty-state explains */ }
+            } catch (e) { monTimelineAvailable = false; /* keep previous data; empty-state explains */ }
         }
         async function loadAlerts() {
             try {
@@ -457,7 +487,18 @@
         function monRunLoad() {
             monLoading = true;
             render();
-            monReloadCurrent().finally(() => { monLoading = false; render(); });
+            monReloadCurrent().finally(() => {
+                monLoading = false;
+                // The monitoring tables are optional. When this deployment has
+                // not created them, show the always-present audit log instead
+                // of an empty timeline.
+                if (monTimelineAvailable === false && logsView === 'timeline') {
+                    logsView = 'legacy';
+                    fetchLegacyLogs().finally(render);
+                    return;
+                }
+                render();
+            });
         }
         function selectValue(id) {
             const el = document.getElementById(id);
@@ -485,7 +526,7 @@
         };
         window.setLogsView = function (view) {
             logsView = view;
-            if (view === 'legacy') { render(); return; }
+            if (view === 'legacy') { fetchLegacyLogs().finally(render); return; }
             monRunLoad();
         };
         window.monTimelinePage = function (page) {
@@ -726,22 +767,9 @@
         }
 
         function getFilteredLogs() {
-            let filtered = [...userLogs];
-            if (selectedLogStatus !== 'all') {
-                filtered = filtered.filter((log) => log.status === selectedLogStatus);
-            }
-            const now = new Date();
-            if (selectedTimeRange === 'today') {
-                const todayStr = now.toISOString().split('T')[0];
-                filtered = filtered.filter((log) => log.created_at?.startsWith(todayStr));
-            } else if (selectedTimeRange === 'week') {
-                const weekAgo = new Date(now.setDate(now.getDate() - 7));
-                filtered = filtered.filter((log) => new Date(log.created_at) >= weekAgo);
-            } else if (selectedTimeRange === 'month') {
-                const monthAgo = new Date(now.setDate(now.getDate() - 30));
-                filtered = filtered.filter((log) => new Date(log.created_at) >= monthAgo);
-            }
-            return filtered.slice(0, 30);
+            // The audit stream is filtered by the server (status, range and
+            // search text) so results are not limited to the last 100 rows.
+            return legacyLogs.slice(0, 500);
         }
 
         function latestPruneMessage() {
@@ -764,8 +792,11 @@
             return `
                 <div style="font-size:12px;color:#7f8c8d;margin-bottom:12px;">${t('mon_legacy_note')}</div>
                 ${pruneMessage ? `<div style="background:#eef7ee;border:1px solid #27ae60;border-radius:12px;padding:12px 16px;margin-bottom:12px;font-size:13px;color:#1e6b3a;">${escapeHtml(pruneMessage)}</div>` : ''}
-                <div class="section-header"><div class="section-title">${t('system_logs_title', { count: userLogs.length })}</div></div>
+                <div class="section-header"><div class="section-title">${t('system_logs_title', { count: filtered.length })}</div></div>
                 <div class="filter-bar">
+                    <div class="search-box"><span>🔍</span><input type="text" id="legacySearch" placeholder="${t('mon_search')}" value="${escapeAttr(legacySearch)}" onkeydown="if(event.key==='Enter'){applyLegacySearch();}"></div>
+                    <button class="filter-chip active" onclick="applyLegacySearch()">${t('mon_apply')}</button>
+                    <button class="filter-chip" onclick="resetLegacySearch()">${t('mon_reset')}</button>
                     <div class="filter-buttons" id="logStatusFilters"></div>
                     <div class="filter-buttons" id="timeRangeFilters"></div>
                 </div>
@@ -781,7 +812,7 @@
                                 <div class="log-endpoint">${escapeHtml(log.endpoint)}</div>
                                 <div class="log-footer">
                                     <span class="log-status" style="padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;background:${color}20;color:${color};">${escapeHtml(String(log.status))}</span>
-                                    <span style="font-size:10px;">👤 ${escapeHtml(log.user_email || t('guest'))}</span>
+                                    <span style="font-size:10px;">👤 ${escapeHtml(log.user_email || (log.users && (log.users.full_name || log.users.email)) || t('guest'))}</span>
                                 </div>
                             </div>
                         `;
@@ -855,10 +886,30 @@
             }
         }
 
-        window.setLogStatus = (status) => { selectedLogStatus = status; render(); };
-        window.setTimeRange = (range) => { selectedTimeRange = range; render(); };
+        window.setLogStatus = (status) => {
+            selectedLogStatus = status;
+            fetchLegacyLogs().finally(render);
+        };
+        window.setTimeRange = (range) => {
+            selectedTimeRange = range;
+            fetchLegacyLogs().finally(render);
+        };
+        window.applyLegacySearch = () => {
+            const input = document.getElementById('legacySearch');
+            legacySearch = input ? input.value.trim().slice(0, 64) : '';
+            fetchLegacyLogs().finally(render);
+        };
+        window.resetLegacySearch = () => {
+            legacySearch = '';
+            selectedLogStatus = 'all';
+            selectedTimeRange = 'today';
+            fetchLegacyLogs().finally(render);
+        };
         window.refreshLogs = () => {
-            if (logsView === 'legacy') { fetchUserLogs().then(render); return; }
+            if (logsView === 'legacy') {
+                Promise.all([fetchUserLogs(), fetchLegacyLogs()]).finally(render);
+                return;
+            }
             monRunLoad();
         };
 
@@ -1088,7 +1139,7 @@
             // events in the timeline from the start.
             const requestedUser = new URLSearchParams(window.location.search).get('user') || '';
 
-            await Promise.all([fetchUsers(), fetchUserLogs()]);
+            await Promise.all([fetchUsers(), fetchUserLogs(), fetchLegacyLogs()]);
             if (requestedUser) {
                 monFilters.user_id = requestedUser;
                 monTimeline.page = 1;
