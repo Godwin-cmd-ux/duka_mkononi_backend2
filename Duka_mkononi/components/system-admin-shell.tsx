@@ -24,6 +24,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLang } from '../context/LanguageContext';
 import { useSession } from '../context/SessionContext';
+import { setLogoutTarget } from '../lib/logout-target';
 import { useTheme } from '../lib/theme';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
@@ -54,6 +55,7 @@ const PLATFORM_NAV: NavItem[] = [
 
 const SYSTEM_NAV: NavItem[] = [
   { key: 'backup', labelKey: 'system_admin.nav_backups', icon: 'cloud-download-outline', route: '/system_admin/backup' },
+  // `/msimamizi` resolves to app/msimamizi/index.tsx (the admin index).
   { key: 'home', labelKey: 'navigation.home', icon: 'home-outline', route: '/msimamizi' },
 ];
 
@@ -123,8 +125,11 @@ export default function SystemAdminShell({ children }: { children: ReactNode }) 
         text: t('navigation.logout'),
         style: 'destructive',
         onPress: async () => {
+          // The root layout's logout safety net reads this target and sends the
+          // super admin to the admin login instead of the public home tabs.
+          setLogoutTarget('/login?role=msimamizi');
           await signOut();
-          router.replace('/(tabs)');
+          router.replace('/login?role=msimamizi' as any);
         },
       },
     ]);

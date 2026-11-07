@@ -22,6 +22,7 @@ import LogoutButton from '../../components/logout-button';
 import { getCache, setCache } from '../../db/cache';
 import { registerLive } from '../../lib/syncer';
 import { fetchWithTimeout } from '../../lib/network';
+import { fetchServices, Service } from '../../lib/huduma';
 
 import { API_BASE_URL } from '../../constants/api';
 import { useTheme, ThemeColors } from '../../lib/theme';
@@ -74,6 +75,13 @@ interface Product {
   total_revenue?: number;
   total_profit?: number;
   has_sales?: boolean;
+}
+
+interface ServiceWithSales extends Service {
+  total_sold: number;
+  total_revenue: number;
+  total_profit: number;
+  has_sales: boolean;
 }
 
 interface Customer {
@@ -136,6 +144,9 @@ export default function RipotiScreen() {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [soldProducts, setSoldProducts] = useState<Product[]>([]);
   const [unsoldProducts, setUnsoldProducts] = useState<Product[]>([]);
+  const [allServices, setAllServices] = useState<ServiceWithSales[]>([]);
+  const [soldServices, setSoldServices] = useState<ServiceWithSales[]>([]);
+  const [unsoldServices, setUnsoldServices] = useState<ServiceWithSales[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   // Sales with no customer data — each counts as one "unknown customer".
   const [unknownCustomers, setUnknownCustomers] = useState(0);
@@ -147,8 +158,9 @@ export default function RipotiScreen() {
   
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [activeReport, setActiveReport] = useState<'overview' | 'sales' | 'products' | 'customers'>('overview');
+  const [activeReport, setActiveReport] = useState<'overview' | 'sales' | 'products' | 'services' | 'customers'>('overview');
   const [activeProductTab, setActiveProductTab] = useState<'sold' | 'unsold'>('sold');
+  const [activeServiceTab, setActiveServiceTab] = useState<'sold' | 'unsold'>('sold');
   const [userToken, setUserToken] = useState<string | null>(null);
   const [dataSource, setDataSource] = useState<'admin' | 'seller'>('seller');
   const [searchTerm, setSearchTerm] = useState('');
@@ -279,6 +291,105 @@ export default function RipotiScreen() {
     const unsold = enrichedProducts.filter(p => !p.has_sales);
     
     return { allProducts: enrichedProducts, soldProducts: sold, unsoldProducts: unsold };
+  };
+
+  const processServicesWithSalesData = (services: Service[], rawServiceSales: any[]) => {
+    type ServiceSalesData = {
+      name: string;
+      totalSold: number;
+      totalRevenue: number;
+      totalCost: number;
+      totalProfit: number;
+      salesCount: number;
+    };
+
+    const byId = new Map<string, ServiceSalesData>();
+    const byName = new Map<string, ServiceSalesData>();
+
+    const addToMap = (map: Map<string, ServiceSalesData>, key: string, sale: any) => {
+      if (!map.has(key)) {
+        map.set(key, {
+          name: String(sale.service_name || ''),
+          totalSold: 0,
+          totalRevenue: 0,
+          totalCost: 0,
+          totalProfit: 0,
+          salesCount: 0
+        });
+      }
+
+      const data = map.get(key)!;
+      data.totalSold += Number(sale.service_quantity || 1);
+      data.totalRevenue += Number(sale.selling_price || 0);
+      data.totalCost += Number(sale.total_cost || 0);
+      data.totalProfit += Number(sale.profit || 0);
+      data.salesCount += 1;
+    };
+
+    rawServiceSales.forEach((sale) => {
+      const serviceId = sale.service_id ? String(sale.service_id) : '';
+      const name = String(sale.service_name || '').trim().toLowerCase();
+      if (serviceId) addToMap(byId, serviceId, sale);
+      else if (name) addToMap(byName, name, sale);
+    });
+
+    const usedNameKeys = new Set<string>();
+    const enrichedServices: ServiceWithSales[] = services.map((service) => {
+      const nameKey = String(service.name || '').trim().toLowerCase();
+      let data = byId.get(String(service.id));
+      if (!data && nameKey) {
+        data = byName.get(nameKey);
+        if (data) usedNameKeys.add(nameKey);
+      }
+
+      return {
+        ...service,
+        total_sold: data?.totalSold || 0,
+        total_revenue: data?.totalRevenue || 0,
+        total_profit: data?.totalProfit || 0,
+        has_sales: !!data && data.salesCount > 0
+      };
+    });
+
+    const knownIds = new Set(services.map((service) => String(service.id)));
+    byId.forEach((data, id) => {
+      if (knownIds.has(id)) return;
+      enrichedServices.push({
+        id: `service-sale-${id}`,
+        name: data.name || t('reports.services'),
+        description: null,
+        status: 'archived',
+        consumables: [],
+        consumables_count: 0,
+        estimated_cost: data.totalCost,
+        total_sold: data.totalSold,
+        total_revenue: data.totalRevenue,
+        total_profit: data.totalProfit,
+        has_sales: true
+      });
+    });
+
+    byName.forEach((data, key) => {
+      if (usedNameKeys.has(key)) return;
+      enrichedServices.push({
+        id: `service-sale-name-${key}`,
+        name: data.name || t('reports.services'),
+        description: null,
+        status: 'archived',
+        consumables: [],
+        consumables_count: 0,
+        estimated_cost: data.totalCost,
+        total_sold: data.totalSold,
+        total_revenue: data.totalRevenue,
+        total_profit: data.totalProfit,
+        has_sales: true
+      });
+    });
+
+    const sold = enrichedServices.filter((service) => service.has_sales);
+    const unsold = enrichedServices.filter((service) => !service.has_sales);
+
+    return { allServices: enrichedServices, soldServices: sold, unsoldServices: unsold };
   };
 
   const buildBusinessSales = (rawSales: any[], allSellers: User[], rawProducts: Product[], businessName: string, customerNameById: Map<string, string> = new Map()): Sale[] => {
@@ -422,8 +533,12 @@ export default function RipotiScreen() {
       setAllProducts([]);
       setSoldProducts([]);
       setUnsoldProducts([]);
+      setAllServices([]);
+      setSoldServices([]);
+      setUnsoldServices([]);
       setCustomers([]);
       setSales([]);
+      setServiceSales([]);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -600,7 +715,23 @@ export default function RipotiScreen() {
       setAllProducts(allProducts);
       setSoldProducts(soldProducts);
       setUnsoldProducts(unsoldProducts);
-      console.log('📊 Bidhaa zimeuzwa:', soldProducts.length, '| Hazijauzwa:', unsoldProducts.length);
+      console.log('?? Bidhaa zimeuzwa:', soldProducts.length, '| Hazijauzwa:', unsoldProducts.length);
+
+      let servicesRaw: Service[] = [];
+      try {
+        servicesRaw = await fetchServices();
+      } catch (error) {
+        console.warn('Services fetch failed:', error);
+      }
+
+      const {
+        allServices: enrichedServices,
+        soldServices: servicesSold,
+        unsoldServices: servicesUnsold
+      } = processServicesWithSalesData(servicesRaw, serviceSalesRaw);
+      setAllServices(enrichedServices);
+      setSoldServices(servicesSold);
+      setUnsoldServices(servicesUnsold);
 
       // 6. Hesabu takwimu za biashara (bidhaa + huduma)
       const today = new Date().toISOString().split('T')[0];
@@ -714,6 +845,38 @@ export default function RipotiScreen() {
       const unknownSellerCustomerSales = new Set(allSales.filter(s => !s.customer_id).map(s => s.id)).size;
       setUnknownCustomers(unknownSellerCustomerSales);
 
+      let serviceSalesRaw: any[] = [];
+      try {
+        const serviceSalesResponse = await fetchWithTimeout(`${API_BASE_URL}/api/service-sales/my`, {
+          method: 'GET',
+          headers: headers
+        }, 20000);
+
+        if (serviceSalesResponse.ok) {
+          const responseData = await serviceSalesResponse.json();
+          serviceSalesRaw = Array.isArray(responseData) ? responseData : responseData.service_sales || [];
+          setServiceSales(serviceSalesRaw);
+        }
+      } catch (error) {
+        console.warn('Seller service sales fetch failed:', error);
+      }
+
+      let servicesRaw: Service[] = [];
+      try {
+        servicesRaw = await fetchServices();
+      } catch (error) {
+        console.warn('Services fetch failed:', error);
+      }
+
+      const {
+        allServices: enrichedServices,
+        soldServices: servicesSold,
+        unsoldServices: servicesUnsold
+      } = processServicesWithSalesData(servicesRaw, serviceSalesRaw);
+      setAllServices(enrichedServices);
+      setSoldServices(servicesSold);
+      setUnsoldServices(servicesUnsold);
+
       // 3. Process products with sales data
       const { allProducts, soldProducts, unsoldProducts } = processProductsWithSalesData(rawProducts, allSales);
       setAllProducts(allProducts);
@@ -750,19 +913,27 @@ export default function RipotiScreen() {
       }
 
       // 5. Hesabu takwimu za seller
-      if (allSales.length > 0) {
-        const totalSalesAmount = allSales.reduce((sum, sale) => sum + sale.total_amount, 0);
-        const totalProfit = allSales.reduce((sum, sale) => sum + (sale.profit || 0), 0);
+      if (allSales.length > 0 || serviceSalesRaw.length > 0) {
         const today = new Date().toISOString().split('T')[0];
+        const serviceRevenue = serviceSalesRaw.reduce((sum, s) => sum + Number(s.selling_price || 0), 0);
+        const serviceProfit = serviceSalesRaw.reduce((sum, s) => sum + Number(s.profit || 0), 0);
+        const serviceCost = serviceSalesRaw.reduce((sum, s) => sum + Number(s.total_cost || 0), 0);
+        const serviceToday = serviceSalesRaw.filter(
+          s => (s.sale_date || s.created_at || '').split('T')[0] === today
+        );
+        const serviceTodayRevenue = serviceToday.reduce((sum, s) => sum + Number(s.selling_price || 0), 0);
+        const serviceTodayProfit = serviceToday.reduce((sum, s) => sum + Number(s.profit || 0), 0);
+        const totalSalesAmount = allSales.reduce((sum, sale) => sum + sale.total_amount, 0) + serviceRevenue;
+        const totalProfit = allSales.reduce((sum, sale) => sum + (sale.profit || 0), 0) + serviceProfit;
         const todaySales = allSales.filter(s => s.sale_date === today);
-        const todaySalesAmount = todaySales.reduce((sum, sale) => sum + sale.total_amount, 0);
-        const todayProfit = todaySales.reduce((sum, sale) => sum + (sale.profit || 0), 0);
+        const todaySalesAmount = todaySales.reduce((sum, sale) => sum + sale.total_amount, 0) + serviceTodayRevenue;
+        const todayProfit = todaySales.reduce((sum, sale) => sum + (sale.profit || 0), 0) + serviceTodayProfit;
         
         const totalCost = allSales.reduce((sum, sale) => {
           const cost = sale.cost_price || 0;
           const quantity = sale.quantity || 0;
           return sum + (cost * quantity);
-        }, 0);
+        }, 0) + serviceCost;
         const averageProfitMargin = totalCost > 0 ? (totalProfit / totalCost) * 100 : 0;
 
         setBusinessStats({
@@ -824,6 +995,12 @@ export default function RipotiScreen() {
   const getFilteredUnsoldProducts = () => searchTerm
     ? unsoldProducts.filter(p => matchesSearch(p.name, p.category))
     : unsoldProducts;
+  const getFilteredSoldServices = () => searchTerm
+    ? soldServices.filter(s => matchesSearch(s.name, s.description, s.status))
+    : soldServices;
+  const getFilteredUnsoldServices = () => searchTerm
+    ? unsoldServices.filter(s => matchesSearch(s.name, s.description, s.status))
+    : unsoldServices;
   const getFilteredCustomers = () => searchTerm
     ? customers.filter(c => matchesSearch(c.name, c.phone, c.email))
     : customers;
@@ -899,6 +1076,16 @@ export default function RipotiScreen() {
           rows: [
             [t('reports.col_product'), t('reports.col_category'), t('reports.col_stock'), t('reports.purchase_price'), t('reports.expected_selling_price'), t('reports.col_sold'), t('reports.total_revenue'), t('reports.profit_label')],
             ...list.map(p => [p.name, p.category || t('reports.no_category'), p.stock, p.price ?? '', p.expected_selling_price ?? '', p.total_sold || 0, p.total_revenue || 0, p.total_profit || 0])
+          ]
+        };
+      }
+      case 'services': {
+        const list = activeServiceTab === 'sold' ? getFilteredSoldServices() : getFilteredUnsoldServices();
+        return {
+          title: `${t(activeServiceTab === 'sold' ? 'reports.sold_services_title' : 'reports.unsold_services_title')} - ${scope}`,
+          rows: [
+            [t('reports.col_service'), t('reports.col_description'), t('reports.col_times_done'), t('reports.col_consumables'), t('reports.total_revenue'), t('reports.profit_label')],
+            ...list.map(s => [s.name, s.description || '', s.total_sold || 0, s.consumables_count ?? s.consumables?.length ?? 0, s.total_revenue || 0, s.total_profit || 0])
           ]
         };
       }
@@ -1471,6 +1658,182 @@ export default function RipotiScreen() {
     );
   };
 
+  const renderSoldServices = () => {
+    const isAdmin = isAdminRole(userData.role);
+
+    return (
+      <View>
+        <Text style={styles.productTabHeader}>
+          {t('reports.sold_services_title')} ({soldServices.length})
+          {isAdmin && dataSource === 'admin' && ` • ${allServices.length} ${t('reports.total_services')}`}
+        </Text>
+
+        {soldServices.length > 0 ? (
+          getFilteredSoldServices().length > 0 ? (
+            getFilteredSoldServices().map((service) => {
+              const timesDone = service.total_sold || 0;
+              const consumablesCount = service.consumables_count ?? service.consumables?.length ?? 0;
+              const estimatedCost = Number(service.estimated_cost || 0);
+
+              return (
+                <View key={service.id} style={styles.productItem}>
+                  <View style={styles.productItemMain}>
+                    <Text style={styles.productItemTitle}>{service.name}</Text>
+                    <Text style={styles.productItemSubtitle}>{service.description || t('reports.no_description')}</Text>
+                    <Text style={styles.productItemMeta}>
+                      {t('reports.service_consumables_count', { count: consumablesCount })} • {t('reports.service_estimated_cost', { amount: formatCurrency(estimatedCost) })}
+                    </Text>
+                    <Text style={styles.productSalesData}>
+                      {t('reports.service_times_done', { count: timesDone })} • {t('reports.total_revenue')}: {formatCurrency(service.total_revenue || 0)} • {t('reports.total_profit_product')}: {formatCurrency(service.total_profit || 0)}
+                    </Text>
+                  </View>
+                  <View style={styles.productItemSide}>
+                    <Text style={styles.productItemAmount}>{formatCurrency(service.total_revenue || 0)}</Text>
+                    <Text style={[styles.profitText, { color: (service.total_profit || 0) >= 0 ? '#27ae60' : '#e74c3c' }]}>
+                      {t('reports.profit_label')} {formatCurrency(service.total_profit || 0)}
+                    </Text>
+                    <Text style={styles.productItemMargin}>{t('reports.service_times_done', { count: timesDone })}</Text>
+                    <View style={styles.successBadge}>
+                      <Ionicons name="checkmark-circle" size={12} color="#27ae60" />
+                      <Text style={styles.successBadgeText}>{t('reports.service_done')}</Text>
+                    </View>
+                  </View>
+                </View>
+              );
+            })
+          ) : (
+            <View style={styles.noData}>
+              <Ionicons name="search" size={48} color="#bdc3c7" />
+              <Text style={styles.noDataText}>{noResultsText()}</Text>
+            </View>
+          )
+        ) : (
+          <View style={styles.noData}>
+            <Ionicons name="checkmark-done" size={48} color="#bdc3c7" />
+            <Text style={styles.noDataText}>{t('reports.no_services_sold')}</Text>
+          </View>
+        )}
+      </View>
+    );
+  };
+
+  const renderUnsoldServices = () => {
+    const isAdmin = isAdminRole(userData.role);
+
+    return (
+      <View>
+        <Text style={styles.productTabHeader}>
+          {t('reports.unsold_services_title')} ({unsoldServices.length})
+          {isAdmin && dataSource === 'admin' && ` • ${allServices.length} ${t('reports.total_services')}`}
+        </Text>
+
+        {unsoldServices.length > 0 ? (
+          getFilteredUnsoldServices().length > 0 ? (
+            getFilteredUnsoldServices().map((service) => {
+              const consumablesCount = service.consumables_count ?? service.consumables?.length ?? 0;
+              const estimatedCost = Number(service.estimated_cost || 0);
+
+              return (
+                <View key={service.id} style={[styles.productItem, { borderLeftWidth: 3, borderLeftColor: '#f39c12' }]}>
+                  <View style={styles.productItemMain}>
+                    <Text style={styles.productItemTitle}>{service.name}</Text>
+                    <Text style={styles.productItemSubtitle}>{service.description || t('reports.no_description')}</Text>
+                    <Text style={styles.productItemMeta}>
+                      {t('reports.service_consumables_count', { count: consumablesCount })} • {t('reports.service_estimated_cost', { amount: formatCurrency(estimatedCost) })}
+                    </Text>
+                    <Text style={styles.unsoldInfo}>
+                      <Ionicons name="alert-circle" size={12} color="#f39c12" />
+                      <Text style={{ color: '#f39c12', marginLeft: 4 }}>{t('reports.service_unsold_meta')}</Text>
+                    </Text>
+                  </View>
+                  <View style={styles.productItemSide}>
+                    <Text style={styles.productItemAmount}>{t('reports.pending')}</Text>
+                    <Text style={styles.productItemMargin}>{t('reports.service_estimated_cost', { amount: formatCurrency(estimatedCost) })}</Text>
+                    <View style={styles.warningBadge}>
+                      <Ionicons name="time" size={12} color="#f39c12" />
+                      <Text style={styles.warningBadgeText}>{t('reports.service_not_done')}</Text>
+                    </View>
+                  </View>
+                </View>
+              );
+            })
+          ) : (
+            <View style={styles.noData}>
+              <Ionicons name="search" size={48} color="#bdc3c7" />
+              <Text style={styles.noDataText}>{noResultsText()}</Text>
+            </View>
+          )
+        ) : (
+          <View style={styles.noData}>
+            <Ionicons name="happy" size={48} color="#2ecc71" />
+            <Text style={[styles.noDataText, { color: '#27ae60' }]}>{t('reports.all_services_sold')}</Text>
+          </View>
+        )}
+      </View>
+    );
+  };
+
+  const renderServicesReport = () => {
+    const isAdmin = isAdminRole(userData.role);
+    const scope = isAdmin ? userData.businessName : t('reports.personal_report');
+
+    return (
+      <View>
+        <Text style={styles.sectionTitle}>
+          {t('reports.service_report_title', { business_name: scope })}
+        </Text>
+
+        <View style={styles.productTabs}>
+          <TouchableOpacity
+            style={[styles.productTab, activeServiceTab === 'sold' && styles.activeProductTab]}
+            onPress={() => setActiveServiceTab('sold')}
+          >
+            <Ionicons name="checkmark-circle" size={16} color={activeServiceTab === 'sold' ? 'white' : '#27ae60'} />
+            <Text style={[styles.productTabText, activeServiceTab === 'sold' && styles.activeProductTabText]}>
+              {t('reports.sold_services_title')} ({soldServices.length})
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.productTab, activeServiceTab === 'unsold' && styles.activeProductTab]}
+            onPress={() => setActiveServiceTab('unsold')}
+          >
+            <Ionicons name="time" size={16} color={activeServiceTab === 'unsold' ? 'white' : '#f39c12'} />
+            <Text style={[styles.productTabText, activeServiceTab === 'unsold' && styles.activeProductTabText]}>
+              {t('reports.unsold_services_title')} ({unsoldServices.length})
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {activeServiceTab === 'sold' ? renderSoldServices() : renderUnsoldServices()}
+
+        <View style={styles.productSummary}>
+          <Text style={styles.summaryTitle}>{t('reports.service_summary')}</Text>
+          <View style={styles.summaryStats}>
+            <View style={styles.summaryStat}>
+              <Text style={styles.summaryStatValue}>{allServices.length}</Text>
+              <Text style={styles.summaryStatLabel}>{t('reports.total_services')}</Text>
+            </View>
+            <View style={styles.summaryStat}>
+              <Text style={[styles.summaryStatValue, { color: '#27ae60' }]}>{soldServices.length}</Text>
+              <Text style={styles.summaryStatLabel}>{t('reports.sold_services_title')}</Text>
+            </View>
+            <View style={styles.summaryStat}>
+              <Text style={[styles.summaryStatValue, { color: '#f39c12' }]}>{unsoldServices.length}</Text>
+              <Text style={styles.summaryStatLabel}>{t('reports.unsold_services_title')}</Text>
+            </View>
+            <View style={styles.summaryStat}>
+              <Text style={styles.summaryStatValue}>
+                {allServices.length > 0 ? Math.round((soldServices.length / allServices.length) * 100) : 0}%
+              </Text>
+              <Text style={styles.summaryStatLabel}>{t('reports.sold_percentage')}</Text>
+            </View>
+          </View>
+        </View>
+      </View>
+    );
+  };
+
   const renderCustomersReport = () => {
     const isAdmin = isAdminRole(userData.role);
     
@@ -1574,6 +1937,8 @@ export default function RipotiScreen() {
         return renderSalesReport();
       case 'products':
         return renderProductsReport();
+      case 'services':
+        return renderServicesReport();
       case 'customers':
         return renderCustomersReport();
       default:
@@ -1670,7 +2035,21 @@ export default function RipotiScreen() {
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity 
+        <TouchableOpacity
+          style={[styles.navButton, activeReport === 'services' && styles.activeNavButton]}
+          onPress={() => { setActiveReport('services'); setSearchTerm(''); }}
+        >
+          <Ionicons
+            name="construct"
+            size={16}
+            color={activeReport === 'services' ? 'white' : '#666'}
+          />
+          <Text style={[styles.navButtonText, activeReport === 'services' && styles.activeNavButtonText]}>
+            {t('reports.services')} ({allServices.length})
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
           style={[styles.navButton, activeReport === 'customers' && styles.activeNavButton]}
           onPress={() => { setActiveReport('customers'); setSearchTerm(''); }}
         >
@@ -1847,6 +2226,7 @@ const makeStyles = (tc: ThemeColors) => StyleSheet.create({
   },
   reportNav: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     backgroundColor: tc.card,
     borderRadius: 12,
     padding: 4,
@@ -1859,6 +2239,7 @@ const makeStyles = (tc: ThemeColors) => StyleSheet.create({
   },
   navButton: {
     flex: 1,
+    flexBasis: '30%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

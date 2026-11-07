@@ -64,7 +64,7 @@
             <span>Backups</span>
         </a>
 
-        <a class="sa-nav-item" href="/home">
+        <a class="sa-nav-item" href="/msimamizi/index">
             <span class="sa-nav-icon">⌂</span>
             <span data-i18n="system_admin_sidebar.nav_home">Nyumbani</span>
         </a>
@@ -142,7 +142,7 @@
                     localStorage.removeItem(key);
                 });
                 document.cookie = 'dm_admin_token=; path=/; max-age=0';
-                window.location.href = '/home';
+                window.location.href = '/login?role=msimamizi';
             });
         }
     })();

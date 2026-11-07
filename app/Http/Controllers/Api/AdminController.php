@@ -12,6 +12,7 @@ use App\Models\ServiceSaleItem;
 use App\Models\User;
 use App\Models\UserLog;
 use App\Services\BusinessResolver;
+use App\Services\Roles;
 use App\Services\Supabase;
 use Illuminate\Http\Request;
 
@@ -143,6 +144,13 @@ class AdminController extends BaseController
             $roleFilter = trim((string) $request->query('role', ''));
             if ($roleFilter !== '') {
                 $roles = array_values(array_filter(array_map('trim', explode(',', $roleFilter)), fn ($r) => in_array($r, ['admin', 'seller', 'client', 'customer', 'super_admin', 'system_admin'], true)));
+                // `admin` must also match promoted owners (super_admin /
+                // system_admin), exactly as BusinessResolver::memberIds does.
+                // The report screens ask for role=seller,admin and then keep
+                // only products/customers/sales owned by a returned member; if
+                // a promoted owner is missing here their rows are silently
+                // dropped (e.g. a business showing 6 of its 34 products).
+                $roles = Roles::expandMemberRoles($roles);
                 if (count($roles) === 1) {
                     $usersQuery->where('role', $roles[0]);
                 } elseif (count($roles) > 1) {

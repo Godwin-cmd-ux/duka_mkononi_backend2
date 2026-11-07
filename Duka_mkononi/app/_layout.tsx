@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { pruneCache } from '../db/cache';
 import { setupBackgroundSync } from '../lib/background';
 import { pingServer } from '../lib/network';
+import { consumeLogoutTarget } from '../lib/logout-target';
 import { LanguageProvider } from '../context/LanguageContext';
 import { SessionProvider, useSession } from '../context/SessionContext';
 import { getDashboardRouteForRole } from '../constants/session';
@@ -60,15 +61,17 @@ function RootNavigator() {
   }, [status, splashMinElapsed]);
 
   // 🚪 Logout safety net: the moment the session flips to logged-out, send the
-  // user home. This makes logout reliable even if a handler's own
-  // router.replace('/(tabs)') fires before the route guards have re-rendered.
+  // user home (or to the screen a handler requested via setLogoutTarget, e.g.
+  // the super-admin drawer sending them to the admin login). This makes logout
+  // reliable even if a handler's own navigation fires before the route guards
+  // have re-rendered.
   // ⚠️ IMPORTANT: only navigate once the <Stack> is actually mounted
   // (splashMinElapsed), otherwise expo-router throws 'Attempted to navigate
   // before mounting the Root Layout component', which crashes the tree and
   // leaves the app stuck on the native splash screen.
   useEffect(() => {
     if (status === 'ready' && splashMinElapsed && !isLoggedIn) {
-      router.replace('/(tabs)');
+      router.replace((consumeLogoutTarget() || '/(tabs)') as any);
     }
   }, [status, splashMinElapsed, isLoggedIn, router]);
 
