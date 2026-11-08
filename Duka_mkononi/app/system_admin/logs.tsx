@@ -190,15 +190,20 @@ export default function SystemAdminLogs() {
         router.replace('/(tabs)');
         return;
       }
-      if (requestedUser) {
-        setFilters((prev) => ({ ...prev, user_id: requestedUser }));
-        setDraftFilters((prev) => ({ ...prev, user_id: requestedUser }));
+      const deepFilters: Filters | null = requestedUser
+        ? { ...EMPTY_FILTERS, range: '', user_id: requestedUser }
+        : null;
+      if (deepFilters) {
+        setFilters(deepFilters);
+        setDraftFilters(deepFilters);
       }
-      await Promise.all([fetchUsers(), fetchRecentLogs(), fetchLegacyLogs()]);
+      await Promise.all([
+        fetchUsers(),
+        fetchRecentLogs(),
+        fetchLegacyLogs(deepFilters ? { user_id: deepFilters.user_id } : undefined),
+      ]);
       setLoading(false);
-      const available = await loadCurrent(
-        requestedUser ? { ...EMPTY_FILTERS, user_id: requestedUser } : filters,
-      );
+      const available = await loadCurrent(deepFilters ?? filters);
       if (available === false) setView('legacy');
     } catch (error) {
       console.error('Error initializing logs page:', error);
@@ -247,6 +252,7 @@ export default function SystemAdminLogs() {
     status?: 'all' | 'success' | 'failed';
     range?: 'today' | 'week' | 'month';
     q?: string;
+    user_id?: string;
   }) => {
     try {
       const userToken = await token();
@@ -254,11 +260,13 @@ export default function SystemAdminLogs() {
       const status = opts?.status ?? legacyStatus;
       const range = opts?.range ?? legacyRange;
       const q = opts?.q ?? legacySearch;
+      const userId = opts?.user_id ?? filters.user_id;
       const params = new URLSearchParams();
       params.set('start_date', legacyRangeStart(range).toISOString());
       params.set('limit', '500');
       if (status !== 'all') params.set('status', status);
       if (q) params.set('q', q);
+      if (userId) params.set('user_id', userId);
       const res = await fetchWithTimeout(
         `${API_BASE_URL}/api/admin/logs/search?${params.toString()}`,
         { headers: { Authorization: `Bearer ${userToken}` } },

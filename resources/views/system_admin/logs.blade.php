@@ -399,6 +399,7 @@
             qs.set('limit', '500');
             if (selectedLogStatus !== 'all') qs.set('status', selectedLogStatus);
             if (legacySearch) qs.set('q', legacySearch);
+            if (monFilters.user_id) qs.set('user_id', monFilters.user_id);
             try {
                 const res = await fetch(`${API_BASE_URL}/api/admin/logs/search?${qs.toString()}`, {
                     headers: { 'Authorization': `Bearer ${token}` },
@@ -1136,14 +1137,15 @@
             if (!checkSystemAdmin()) return;
 
             // Deep link from the Watumiaji page: ?user=<id> opens that user's
-            // events in the timeline from the start.
+            // events in the timeline from the start (all time).
             const requestedUser = new URLSearchParams(window.location.search).get('user') || '';
-
-            await Promise.all([fetchUsers(), fetchUserLogs(), fetchLegacyLogs()]);
             if (requestedUser) {
                 monFilters.user_id = requestedUser;
+                monFilters.range = '';
                 monTimeline.page = 1;
             }
+
+            await Promise.all([fetchUsers(), fetchUserLogs(), fetchLegacyLogs()]);
             monRunLoad();
         })();
     </script>
