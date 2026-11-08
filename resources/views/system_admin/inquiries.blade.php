@@ -41,6 +41,8 @@
         .btn { display: inline-flex; align-items: center; gap: 8px; padding: 11px 16px; border-radius: 10px; border: 1px solid transparent; font-weight: 600; font-size: 14px; cursor: pointer; min-height: 44px; }
         .btn-primary { background: #4f46e5; color: #fff; } .btn-ok { background: #059669; color: #fff; } .btn-ghost { background: #fff; border-color: #e2e8f0; color: #2c3e50; } .btn-danger { background: #dc2626; color: #fff; }
         .btn-sm { padding: 8px 12px; min-height: 36px; font-size: 13px; }
+        .btn:disabled { opacity: .65; cursor: default; }
+        .btn .dm-sc { flex: 0 0 auto; }
         .card { background: #fff; border: 1px solid #ecf0f1; border-radius: 14px; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
         .inq-table { width: 100%; border-collapse: collapse; font-size: 14px; }
         .inq-table th, .inq-table td { padding: 12px 14px; text-align: left; border-bottom: 1px solid #f1f5f9; }
@@ -170,6 +172,7 @@
     function statusBadge(i) { if (i.is_published) return '<span class="badge b-ok">' + esc(t('system_admin_inquiries.published_badge')) + '</span>'; var map = { new: 'b-warn', reviewed: 'b-info', published: 'b-ok', archived: 'b-muted' }; return '<span class="badge ' + (map[i.status] || 'b-muted') + '">' + esc(i.status) + '</span>'; }
 
     var state = { page: 1, lastPage: 1, status: '', search: '' };
+    var detailNotice = null;
 
     function load(reset) {
         if (reset) state.page = 1;
@@ -214,11 +217,17 @@
         fetch('/api/system-admin/inquiries/' + encodeURIComponent(id), { headers: auth() }).then(function (r) { return r.json(); }).then(function (d) {
             if (!d || !d.inquiry) { document.getElementById('dmInqDetail').innerHTML = '<div class="alert alert-err">' + esc(t('system_admin_inquiries.err_generic')) + '</div>'; return; }
             renderDetail(d.inquiry);
+            if (detailNotice) {
+                var noticeBox = document.getElementById('dmDetailAlert');
+                if (noticeBox) noticeBox.innerHTML = '<div class="alert alert-' + detailNotice.cls + '">' + esc(detailNotice.msg) + '</div>';
+                detailNotice = null;
+            }
         }).catch(function () { document.getElementById('dmInqDetail').innerHTML = '<div class="alert alert-err">' + esc(t('system_admin_inquiries.err_generic')) + '</div>'; });
     }
     function renderDetail(i) {
         var review = i.review || {};
         var published = i.is_published && review.is_published;
+        var reviewed = i.status && i.status !== 'new';
         document.getElementById('dmInqDetail').innerHTML =
             '<div id="dmDetailAlert"></div>' +
             '<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px"><b>' + esc(i.subject) + '</b>' + statusBadge(i) + '</div>' +
@@ -234,17 +243,20 @@
             '<div class="field"><label>' + esc(t('system_admin_inquiries.publish_display_name')) + '</label><input id="dmPubName" value="' + esc(review.display_name || '') + '"></div>' +
             '<div class="field"><label>' + esc(t('system_admin_inquiries.publish_rating')) + '</label><select id="dmPubRating"><option value="">-</option><option value="5">5</option><option value="4">4</option><option value="3">3</option><option value="2">2</option><option value="1">1</option></select></div>' +
             '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
-                '<button class="btn btn-ghost" id="dmMarkReviewed">' + esc(t('system_admin_inquiries.mark_reviewed')) + '</button>' +
+                (reviewed
+                    ? '<button class="btn btn-ghost" id="dmMarkReviewed" disabled><i class="fa-solid fa-check"></i>' + esc(t('system_admin_inquiries.mark_reviewed')) + '</button>'
+                    : '<button class="btn btn-ghost" id="dmMarkReviewed">' + esc(t('system_admin_inquiries.mark_reviewed')) + '</button>') +
                 (published
                     ? '<button class="btn btn-danger" id="dmUnpublish">' + esc(t('system_admin_inquiries.unpublish')) + '</button>'
                     : '<button class="btn btn-ok" id="dmPublish">' + esc(t('system_admin_inquiries.publish')) + '</button>') +
             '</div>';
         var sel = document.getElementById('dmPubRating'); if (review.rating && sel) sel.value = String(review.rating);
-        document.getElementById('dmMarkReviewed').onclick = function () { act('/api/system-admin/inquiries/' + encodeURIComponent(i.id) + '/reviewed', 'PUT', {}, 'reviewed'); };
+        var mr = document.getElementById('dmMarkReviewed');
+        if (mr && !mr.disabled) mr.onclick = function () { act('/api/system-admin/inquiries/' + encodeURIComponent(i.id) + '/reviewed', 'PUT', {}, 'reviewed', mr, i.id); };
         var pb = document.getElementById('dmPublish');
-        if (pb) pb.onclick = function () { act('/api/system-admin/inquiries/' + encodeURIComponent(i.id) + '/publish', 'POST', { display_name: document.getElementById('dmPubName').value, rating: document.getElementById('dmPubRating').value }, 'published'); };
+        if (pb) pb.onclick = function () { act('/api/system-admin/inquiries/' + encodeURIComponent(i.id) + '/publish', 'POST', { display_name: document.getElementById('dmPubName').value, rating: document.getElementById('dmPubRating').value }, 'published', pb, i.id); };
         var ub = document.getElementById('dmUnpublish');
-        if (ub) ub.onclick = function () { act('/api/system-admin/inquiries/' + encodeURIComponent(i.id) + '/unpublish', 'POST', {}, 'unpublished'); };
+        if (ub) ub.onclick = function () { act('/api/system-admin/inquiries/' + encodeURIComponent(i.id) + '/unpublish', 'POST', {}, 'unpublished', ub, i.id); };
         var tb = document.getElementById('dmTriageBtn');
         if (tb) tb.onclick = function () { runTriage(i.id); };
     }
@@ -391,16 +403,46 @@
                 box.innerHTML = '<div class="alert alert-err">' + esc(t('inquiry_triage.sent_fail')) + '</div>';
             });
     }
-    function act(url, method, body, kind) {
+    function act(url, method, body, kind, btn, id) {
         var box = document.getElementById('dmDetailAlert');
+        var original = btn ? btn.innerHTML : '';
+        var buttons = document.querySelectorAll('#dmInqDetail .btn');
+        if (btn) {
+            btn.disabled = true;
+            btn.setAttribute('aria-busy', 'true');
+            btn.innerHTML = '<span class="dm-sc dm-sc--light" style="width:16px;height:16px"></span>';
+        }
+        buttons.forEach(function (b) { if (b !== btn) b.disabled = true; });
+
+        var restore = function () {
+            if (btn) {
+                btn.disabled = false;
+                btn.removeAttribute('aria-busy');
+                btn.innerHTML = original;
+            }
+            buttons.forEach(function (b) { if (b !== btn) b.disabled = false; });
+        };
+
         fetch(url, { method: method, headers: Object.assign({ 'Content-Type': 'application/json' }, auth()), body: JSON.stringify(body || {}) })
             .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
             .then(function (res) {
-                if (!res.ok) { box.innerHTML = '<div class="alert alert-err">' + esc((res.d && res.d.error) || t('system_admin_inquiries.err_generic')) + '</div>'; return; }
+                if (!res.ok) {
+                    restore();
+                    box.innerHTML = '<div class="alert alert-err">' + esc((res.d && res.d.error) || t('system_admin_inquiries.err_generic')) + '</div>';
+                    return;
+                }
                 var msg = kind === 'published' ? t('system_admin_inquiries.msg_published') : kind === 'unpublished' ? t('system_admin_inquiries.msg_unpublished') : t('system_admin_inquiries.msg_reviewed');
-                box.innerHTML = '<div class="alert alert-ok">' + esc(msg) + '</div>';
                 load(true);
-            }).catch(function () { box.innerHTML = '<div class="alert alert-err">' + esc(t('system_admin_inquiries.err_generic')) + '</div>'; });
+                if (id) {
+                    detailNotice = { cls: 'ok', msg: msg };
+                    openDetail(id);
+                } else {
+                    box.innerHTML = '<div class="alert alert-ok">' + esc(msg) + '</div>';
+                }
+            }).catch(function () {
+                restore();
+                box.innerHTML = '<div class="alert alert-err">' + esc(t('system_admin_inquiries.err_generic')) + '</div>';
+            });
     }
 
     document.addEventListener('click', function (e) {

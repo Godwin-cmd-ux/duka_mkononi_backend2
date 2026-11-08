@@ -1002,10 +1002,16 @@ export default function SystemAdminInquiries() {
                         disabled={!!acting}
                         onPress={() => act('reviewed')}
                       >
-                        <Ionicons name="checkmark-circle-outline" size={16} color={tc.ink} />
-                        <Text style={[styles.actionText, { color: tc.ink }]}>
-                          {t('system_admin.inq_mark_reviewed')}
-                        </Text>
+                        {acting === 'reviewed' ? (
+                          <SmartCartLoader size="compact" color={tc.ink} />
+                        ) : (
+                          <>
+                            <Ionicons name="checkmark-circle-outline" size={16} color={tc.ink} />
+                            <Text style={[styles.actionText, { color: tc.ink }]}>
+                              {t('system_admin.inq_mark_reviewed')}
+                            </Text>
+                          </>
+                        )}
                       </TouchableOpacity>
                       {detail.is_published ? (
                         <TouchableOpacity
@@ -1013,10 +1019,16 @@ export default function SystemAdminInquiries() {
                           disabled={!!acting}
                           onPress={() => act('unpublish')}
                         >
-                          <Ionicons name="eye-off-outline" size={16} color="#dc2626" />
-                          <Text style={[styles.actionText, { color: '#dc2626' }]}>
-                            {t('system_admin.inq_unpublish')}
-                          </Text>
+                          {acting === 'unpublish' ? (
+                            <SmartCartLoader size="compact" color="#dc2626" />
+                          ) : (
+                            <>
+                              <Ionicons name="eye-off-outline" size={16} color="#dc2626" />
+                              <Text style={[styles.actionText, { color: '#dc2626' }]}>
+                                {t('system_admin.inq_unpublish')}
+                              </Text>
+                            </>
+                          )}
                         </TouchableOpacity>
                       ) : (
                         <TouchableOpacity
@@ -1024,10 +1036,16 @@ export default function SystemAdminInquiries() {
                           disabled={!!acting}
                           onPress={() => act('publish')}
                         >
-                          <Ionicons name="megaphone-outline" size={16} color="#059669" />
-                          <Text style={[styles.actionText, { color: '#059669' }]}>
-                            {t('system_admin.inq_publish')}
-                          </Text>
+                          {acting === 'publish' ? (
+                            <SmartCartLoader size="compact" color="#059669" />
+                          ) : (
+                            <>
+                              <Ionicons name="megaphone-outline" size={16} color="#059669" />
+                              <Text style={[styles.actionText, { color: '#059669' }]}>
+                                {t('system_admin.inq_publish')}
+                              </Text>
+                            </>
+                          )}
                         </TouchableOpacity>
                       )}
                     </View>
