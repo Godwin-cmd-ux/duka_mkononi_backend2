@@ -9,9 +9,11 @@ use App\Models\User;
 use App\Services\JwtToken;
 use App\Services\Monitoring\ActivityTracker;
 use App\Services\Monitoring\EventClassifier;
+use App\Services\Monitoring\LegacyAuditFallback;
 use App\Services\Monitoring\MonitoringSchema;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -159,6 +161,12 @@ class MonitoringController extends BaseController
 
             return $this->json($data);
         } catch (\Throwable $e) {
+            try {
+                return $this->json((new LegacyAuditFallback())->summary(['from' => $from, 'to' => $to], $from, $to));
+            } catch (\Throwable $fallbackError) {
+                // fall through to the generic unavailable response
+            }
+
             return $this->unavailable('summary', $e);
         }
     }
@@ -202,6 +210,23 @@ class MonitoringController extends BaseController
                 'meta' => $this->filterMeta(),
             ]);
         } catch (\Throwable $e) {
+            try {
+                $events = (new LegacyAuditFallback())->events($filters);
+                $total = count($events);
+                $slice = array_slice($events, ($page - 1) * $perPage, $perPage);
+
+                return $this->json([
+                    'items' => $this->attachUsers($slice),
+                    'total' => $total,
+                    'page' => $page,
+                    'per_page' => $perPage,
+                    'meta' => $this->filterMeta(),
+                    'legacy_fallback' => true,
+                ]);
+            } catch (\Throwable $fallbackError) {
+                // fall through to the generic unavailable response
+            }
+
             return $this->unavailable('timeline', $e);
         }
     }
@@ -253,6 +278,34 @@ class MonitoringController extends BaseController
 
             return $this->json(['event' => $event, 'related' => $related]);
         } catch (\Throwable $e) {
+            try {
+                $fallback = new LegacyAuditFallback();
+                $event = $fallback->event(mb_substr($id, 0, 64));
+                if ($event !== null) {
+                    $related = [];
+                    if (! empty($event['user_id'])) {
+                        foreach ($fallback->events(['user_id' => $event['user_id']]) as $candidate) {
+                            if (($candidate['id'] ?? null) === $event['id']) {
+                                continue;
+                            }
+                            $related[] = $candidate;
+                            if (count($related) >= 10) {
+                                break;
+                            }
+                        }
+                    }
+                    $event = $this->attachUsers([$event])[0] ?? $event;
+
+                    return $this->json([
+                        'event' => $event,
+                        'related' => $this->attachUsers($related),
+                        'legacy_fallback' => true,
+                    ]);
+                }
+            } catch (\Throwable $fallbackError) {
+                // fall through to the generic unavailable response
+            }
+
             return $this->unavailable('event_detail', $e);
         }
     }
@@ -323,6 +376,39 @@ class MonitoringController extends BaseController
                 'meta' => $this->filterMeta(),
             ]);
         } catch (\Throwable $e) {
+            try {
+                $fallback = new LegacyAuditFallback();
+                $events = $fallback->events($filters);
+                $total = count($events);
+                $slice = array_slice($events, ($page - 1) * $perPage, $perPage);
+
+                $sessions = array_slice($fallback->sessions($filters), 0, 20);
+                $sessions = $this->attachUsers($sessions);
+
+                $user = null;
+                try {
+                    $found = User::where('id', $userId)->select('id', 'email', 'full_name', 'role', 'status')->first();
+                    if ($found) {
+                        $user = $found->toArray();
+                    }
+                } catch (\Throwable $ignored) {
+                    $user = null;
+                }
+
+                return $this->json([
+                    'items' => $this->attachUsers($slice),
+                    'total' => $total,
+                    'page' => $page,
+                    'per_page' => $perPage,
+                    'sessions' => $sessions,
+                    'user' => $user,
+                    'meta' => $this->filterMeta(),
+                    'legacy_fallback' => true,
+                ]);
+            } catch (\Throwable $fallbackError) {
+                // fall through to the generic unavailable response
+            }
+
             return $this->unavailable('user_timeline', $e);
         }
     }
@@ -380,6 +466,27 @@ class MonitoringController extends BaseController
                 ],
             ]);
         } catch (\Throwable $e) {
+            try {
+                $fallback = new LegacyAuditFallback();
+                $filters['status'] = (string) $request->input('status', '');
+                $sessions = $fallback->sessions($filters);
+                $total = count($sessions);
+                $slice = array_slice($sessions, ($page - 1) * $perPage, $perPage);
+
+                return $this->json([
+                    'items' => $this->attachUsers($slice),
+                    'total' => $total,
+                    'page' => $page,
+                    'per_page' => $perPage,
+                    'meta' => [
+                        'statuses' => ['active', 'ended', 'expired'],
+                    ],
+                    'legacy_fallback' => true,
+                ]);
+            } catch (\Throwable $fallbackError) {
+                // fall through to the generic unavailable response
+            }
+
             return $this->unavailable('sessions', $e);
         }
     }
@@ -417,6 +524,19 @@ class MonitoringController extends BaseController
 
             return $this->json(['session' => $session, 'events' => $events]);
         } catch (\Throwable $e) {
+            try {
+                $detail = (new LegacyAuditFallback())->sessionDetail($sessionRef);
+                if ($detail !== null) {
+                    $detail['session'] = $this->attachUsers([$detail['session']], 'user_id')[0] ?? $detail['session'];
+                    $detail['events'] = $this->attachUsers($detail['events']);
+                    $detail['legacy_fallback'] = true;
+
+                    return $this->json($detail);
+                }
+            } catch (\Throwable $fallbackError) {
+                // fall through to the generic unavailable response
+            }
+
             return $this->unavailable('session_detail', $e);
         }
     }
@@ -469,6 +589,30 @@ class MonitoringController extends BaseController
                 ],
             ]);
         } catch (\Throwable $e) {
+            try {
+                $fallback = new LegacyAuditFallback();
+                $alerts = $fallback->alerts([
+                    'status' => $status,
+                    'severity' => $severity,
+                ]);
+                $total = count($alerts);
+                $slice = array_slice($alerts, ($page - 1) * $perPage, $perPage);
+
+                return $this->json([
+                    'items' => $this->attachAlertUsers($slice),
+                    'total' => $total,
+                    'page' => $page,
+                    'per_page' => $perPage,
+                    'meta' => [
+                        'statuses' => ['open', 'acknowledged', 'resolved'],
+                        'severities' => EventClassifier::SEVERITIES,
+                    ],
+                    'legacy_fallback' => true,
+                ]);
+            } catch (\Throwable $fallbackError) {
+                // fall through to the generic unavailable response
+            }
+
             return $this->unavailable('alerts', $e);
         }
     }
@@ -559,6 +703,57 @@ class MonitoringController extends BaseController
 
             return $this->json(['alert' => $row]);
         } catch (\Throwable $e) {
+            try {
+                $alert = (new LegacyAuditFallback())->alert($id);
+                if ($alert !== null) {
+                    $now = now()->toISOString(true);
+                    $alert['status'] = $status;
+                    $alert['updated_at'] = $now;
+                    if ($status === 'resolved') {
+                        $alert['resolved_by'] = $adminId;
+                        $alert['resolved_at'] = $now;
+                        $alert['resolution'] = $resolution;
+                    } elseif ($status === 'acknowledged') {
+                        $alert['acknowledged_by'] = $adminId;
+                        $alert['acknowledged_at'] = $now;
+                    } else {
+                        $alert['resolved_by'] = null;
+                        $alert['resolved_at'] = null;
+                        $alert['resolution'] = null;
+                    }
+                    if ($note !== null && $note !== '') {
+                        $alert['notes'][] = ['at' => $now, 'by' => $adminId, 'action' => $status, 'text' => $note];
+                        $alert['notes'] = array_slice($alert['notes'], -20);
+                    }
+
+                    Cache::put('mon:legacy_alert:' . $id, [
+                        'status' => $alert['status'],
+                        'updated_at' => $alert['updated_at'],
+                        'acknowledged_by' => $alert['acknowledged_by'] ?? null,
+                        'acknowledged_at' => $alert['acknowledged_at'] ?? null,
+                        'resolved_by' => $alert['resolved_by'] ?? null,
+                        'resolved_at' => $alert['resolved_at'] ?? null,
+                        'resolution' => $alert['resolution'] ?? null,
+                        'notes' => $alert['notes'],
+                    ], now()->addDays(30));
+
+                    $alert = $this->attachAlertUsers([$alert])[0] ?? $alert;
+
+                    $this->log($adminId, 'SECURITY_ALERT_STATUS', '/api/admin/monitoring/alerts/' . $id . '/status', [
+                        'alert_id' => $id,
+                        'rule' => $alert['rule'] ?? null,
+                        'subject' => $alert['subject'] ?? null,
+                        'new_status' => $status,
+                        'has_note' => $note !== null && $note !== '',
+                        'legacy_fallback' => true,
+                    ], $this->ip($request), 'success');
+
+                    return $this->json(['alert' => $alert]);
+                }
+            } catch (\Throwable $fallbackError) {
+                // fall through to the error response
+            }
+
             $this->log($adminId, 'SECURITY_ALERT_STATUS_ERROR', '/api/admin/monitoring/alerts/' . $id . '/status', [
                 'alert_id' => $id,
             ], $this->ip($request), 'failed');

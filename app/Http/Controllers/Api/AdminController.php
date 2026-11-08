@@ -680,7 +680,7 @@ class AdminController extends BaseController
         $userIds = array_values(array_unique(array_filter(array_map(fn($l) => $l['user_id'] ?? null, $logs))));
         $usersById = [];
         if ($userIds) {
-            foreach (User::whereIn('id', $userIds)->select('email', 'full_name', 'role')->get() as $u) {
+            foreach (User::whereIn('id', $userIds)->select('id', 'email', 'full_name', 'role')->get() as $u) {
                 $usersById[$u->id] = $u->toArray();
             }
         }
