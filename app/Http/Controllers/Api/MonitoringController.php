@@ -959,7 +959,7 @@ class MonitoringController extends BaseController
     {
         // Only plain strings are ever considered: query parameters arriving
         // as arrays (user_id[]=...) are treated as absent.
-        $str = function (string $key): string {
+        $str = function (string $key) use ($request): string {
             $value = $request->input($key);
 
             return is_string($value) ? $value : '';
