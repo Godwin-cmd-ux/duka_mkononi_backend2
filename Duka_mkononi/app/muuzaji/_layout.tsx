@@ -38,65 +38,67 @@ export default function MuuzajiLayout() {
       }}>
       <Tabs.Screen
         name="profaili"
-        options={() => ({
+        options={{
           title: t('tabs_seller.profile'),
           tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>👤</Text>,
-        })}
+        }}
       />
       <Tabs.Screen
         name="mauzo"
-        options={() => ({
+        options={{
           title: t('tabs_seller.sales'),
           tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>💰</Text>,
-        })}
+        }}
       />
       <Tabs.Screen
         name="matumizi"
-        options={() => ({
+        options={{
           title: t('tabs_seller.expenses'),
           tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>📊</Text>,
-        })}
+        }}
       />
       <Tabs.Screen
         name="uza"
-        options={() => ({
+        options={{
           title: t('tabs_seller.sell'),
           tabBarIcon: ({ color }) => <Ionicons name="cart" size={20} color={color} />,
-        })}
+        }}
       />
-      <Tabs.Screen
-        name="bidhaa-mpya"
-        options={() => ({
-          // Stays registered so a deep link can explain the feature is off;
-          // the tab itself disappears when product management is disabled.
-          href: productManagementEnabled ? undefined : null,
-          title: t('tabs.new_product'),
-          tabBarIcon: ({ color }) => <Ionicons name="add-circle" size={20} color={color} />,
-        })}
-      />
-      <Tabs.Screen
-        name="friji"
-        options={() => ({
-          // The route stays registered so a deep link can explain that the
-          // feature is off; the tab itself disappears from the bar.
-          href: fridgeEnabled ? undefined : null,
-          title: t('tabs_seller.fridge'),
-          tabBarIcon: ({ color }) => <Ionicons name="snow" size={20} color={color} />,
-        })}
-      />
+      {productManagementEnabled ? (
+        <Tabs.Screen
+          name="bidhaa-mpya"
+          options={{
+            title: t('tabs.new_product'),
+            tabBarIcon: ({ color }) => <Ionicons name="add-circle" size={20} color={color} />,
+          }}
+        />
+      ) : (
+        <Tabs.Screen name="bidhaa-mpya" options={{ href: null }} />
+      )}
+      {fridgeEnabled ? (
+        <Tabs.Screen
+          name="friji"
+          options={{
+            title: t('tabs_seller.fridge'),
+            tabBarIcon: ({ color }) => <Ionicons name="snow" size={20} color={color} />,
+          }}
+        />
+      ) : (
+        <Tabs.Screen name="friji" options={{ href: null }} />
+      )}
       <Tabs.Screen
         name="orders"
-        options={() => ({
+        options={{
           title: t('tabs_seller.orders'),
           tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>📦</Text>,
-        })}
+        }}
       />
       <Tabs.Screen
         name="huduma-nyingine"
-        options={() => ({
+        options={{
           title: t('tabs_seller.other'),
           tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>🧩</Text>,
-        })}
+        }}
       />
       {/* The AI capabilities are opened from the "Other Services" hub,
           so they stay reachable as routes but are hidden from the tab bar. */}
