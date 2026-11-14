@@ -50,6 +50,7 @@ export default function BidhaaMpyaScreen() {
   const { t } = useLang();
   const { isEnabled } = useFeatures();
   const servicesEnabled = isEnabled('services');
+  const productManagementEnabled = isEnabled('product_management');
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [loadingProducts, setLoadingProducts] = useState(false);
@@ -1543,6 +1544,22 @@ export default function BidhaaMpyaScreen() {
         <View style={styles.loadingContainer}>
           <SmartCartLoader size="large" color="#2ecc71" />
           <Text style={styles.loadingText}>{t('products.modal_loading')}</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (userData.role !== 'admin' && !productManagementEnabled) {
+    return (
+      <SafeAreaView style={styles.screenSafe} edges={['top']}>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 28 }}>
+          <Ionicons name="lock-closed-outline" size={46} color={tc.muted2} />
+          <Text style={{ fontSize: 17, fontWeight: '800', color: tc.ink, marginTop: 14, textAlign: 'center' }}>
+            {t('tabs.new_product')}
+          </Text>
+          <Text style={{ fontSize: 13, color: tc.muted2, marginTop: 8, textAlign: 'center', lineHeight: 20 }}>
+            Kipengele cha usimamizi wa bidhaa kimezimwa na msimamizi wa biashara.
+          </Text>
         </View>
       </SafeAreaView>
     );
