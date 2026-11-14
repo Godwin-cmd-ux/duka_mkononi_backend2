@@ -169,12 +169,12 @@
             if (!response.ok) return null;
             return response.json();
         }).then(function (body) {
-            if (!body || !body.features) return;
-            var features = {
-                fridge: body.features.fridge !== false,
-                services: body.features.services !== false,
-                scanner: body.features.scanner === true
-            };
+            if (!body || !body.features) return;                var features = {
+                    fridge: body.features.fridge !== false,
+                    services: body.features.services !== false,
+                    scanner: body.features.scanner === true,
+                    product_management: body.features.product_management === true
+                };
             writeCache(features);
             apply(features);
         }).catch(function () {

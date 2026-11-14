@@ -18,14 +18,16 @@ export default function MuuzajiLayout() {
   const { colors } = useTheme();
   const { isEnabled, refresh } = useFeatures();
   const fridgeEnabled = isEnabled('fridge');
+  const productManagementEnabled = isEnabled('product_management');
 
   // Re-read the business switches whenever the seller area gains focus, so a
   // change made on the admin Settings screen (or on the web) is reflected
   // without waiting for the next cold launch.
   useFocusEffect(useCallback(() => { refresh(); }, [refresh]));
-  const tabs = fridgeEnabled
-    ? [...BASE_TABS, '/muuzaji/friji', ...TRAILING_TABS]
-    : [...BASE_TABS, ...TRAILING_TABS];
+  const tabs = [...BASE_TABS];
+  if (productManagementEnabled) tabs.push('/muuzaji/bidhaa-mpya');
+  if (fridgeEnabled) tabs.push('/muuzaji/friji');
+  tabs.push(...TRAILING_TABS);
 
   return (
     <TabSwipe tabs={tabs}>
@@ -60,6 +62,16 @@ export default function MuuzajiLayout() {
         options={() => ({
           title: t('tabs_seller.sell'),
           tabBarIcon: ({ color }) => <Ionicons name="cart" size={20} color={color} />,
+        })}
+      />
+      <Tabs.Screen
+        name="bidhaa-mpya"
+        options={() => ({
+          // Stays registered so a deep link can explain the feature is off;
+          // the tab itself disappears when product management is disabled.
+          href: productManagementEnabled ? undefined : null,
+          title: t('tabs.new_product'),
+          tabBarIcon: ({ color }) => <Ionicons name="add-circle" size={20} color={color} />,
         })}
       />
       <Tabs.Screen

@@ -49,6 +49,7 @@ export default function UzaScreen() {
   const { isEnabled } = useFeatures();
   const servicesEnabled = isEnabled('services');
   const scannerEnabled = isEnabled('scanner');
+  const productManagementEnabled = isEnabled('product_management');
   const router = useRouter();
   const { signOut } = useSession();
   const [loading, setLoading] = useState(false);
@@ -1360,7 +1361,7 @@ export default function UzaScreen() {
                   >
                     <Text style={styles.clearSearchButtonText}>{t('seller_sell.view_all')}</Text>
                   </TouchableOpacity>
-                ) : userData.role === 'admin' ? (
+                ) : (userData.role === 'admin' || productManagementEnabled) ? (
                   <TouchableOpacity 
                     style={styles.addProductButton}
                     onPress={() => router.push('/muuzaji/bidhaa-mpya' as any)}
