@@ -316,7 +316,7 @@
                     <span class="nav-label" data-i18n="muuzaji_sidebar.nav_sell">Uza</span>
                 </a>
 
-                <a href="friji" class="nav-item" data-page="friji">
+                <a href="friji" class="nav-item" data-page="friji" data-feature-nav="fridge">
                     <div class="nav-icon"><i class="fa-solid fa-snowflake" aria-hidden="true"></i></div>
                     <span class="nav-label" data-i18n="muuzaji_sidebar.nav_fridge">Friji</span>
                 </a>
