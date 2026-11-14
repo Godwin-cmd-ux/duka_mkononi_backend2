@@ -90,7 +90,10 @@ class RecordAuthorizationEventsTest extends TestCase
         $this->assertSame('LOW', $row['severity']);
         $this->assertSame('u-1', $row['user_id'], 'The actor comes from trusted auth attributes.');
         $this->assertSame('/api/admin/products', $row['route']);
-        $this->assertSame(403, $row['metadata']['status'] ?? null);
+        // metadata is a JSON text column in activity_events, so decode the
+        // stored string exactly as the monitoring API does.
+        $metadata = json_decode((string) ($row['metadata'] ?? ''), true);
+        $this->assertSame(403, $metadata['status'] ?? null);
         $this->assertStringContainsString('permission denials', (string) $row['severity_reason'], 'The reason must name what was counted.');
     }
 

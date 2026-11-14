@@ -29,10 +29,12 @@ use App\Http\Controllers\Api\AiTeamActivityController;
 use App\Http\Controllers\Api\AiTrustSummaryController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BackupController;
+use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\BusinessController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\DebugController;
 use App\Http\Controllers\Api\ExpenseController;
+use App\Http\Controllers\Api\FridgeController;
 use App\Http\Controllers\Api\InquiryController;
 use App\Http\Controllers\Api\MiscController;
 use App\Http\Controllers\Api\MonitoringController;
@@ -46,6 +48,7 @@ use App\Http\Controllers\Api\ReactionController;
 use App\Http\Controllers\Api\ResetPasswordController;
 use App\Http\Controllers\Api\RevenueController;
 use App\Http\Controllers\Api\SaleController;
+use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\ServiceSaleController;
 use App\Http\Controllers\Api\ShopController;
@@ -81,6 +84,11 @@ Route::post('setup/password-reset-table', [ResetPasswordController::class, 'setu
 
 Route::post('check-business', [BusinessController::class, 'checkBusiness']);
 Route::get('check-business-name', [BusinessController::class, 'checkBusinessName']);
+
+// Seller registration: pick an eligible business, then one of its active
+// branches. Read-only and intentionally narrow (no private business data).
+Route::get('seller-registration/businesses', [\App\Http\Controllers\Api\SellerRegistrationController::class, 'businesses']);
+Route::get('seller-registration/businesses/{businessId}/branches', [\App\Http\Controllers\Api\SellerRegistrationController::class, 'branches']);
 Route::get('businesses', [BusinessController::class, 'index']);
 Route::get('businesses/{businessId}/products', [BusinessController::class, 'businessProducts']);
 Route::get('test/businesses', [BusinessController::class, 'testBusinesses']);
@@ -170,6 +178,28 @@ Route::middleware('auth.jwt')->group(function () {
     Route::get('debug/check-user/{email}', [DebugController::class, 'checkUser']);
     Route::get('debug/check-business', [DebugController::class, 'checkBusiness']);
 
+    // Multi-branch: the authenticated business's active branches, and the
+    // server-issued branch context. The selected branch is signed into the
+    // returned token, never accepted from later request parameters.
+    Route::get('branches', [BranchController::class, 'index']);
+    Route::post('branches', [BranchController::class, 'store']);
+    Route::put('branches/{id}', [BranchController::class, 'update']);
+    // Deactivation, not deletion: sellers, stock, sales and reports keep
+    // pointing at the same branch id so reactivating restores everything.
+    Route::delete('branches/{id}', [BranchController::class, 'destroy']);
+    Route::post('branch-context', [BranchController::class, 'context']);
+
+    // Centralized admin settings. The full snapshot is admin-only; every
+    // business member may read the three feature switches so navigation can
+    // follow the business's configuration without exposing private details.
+    Route::get('settings/features', [SettingsController::class, 'features']);
+    Route::get('settings', [SettingsController::class, 'show']);
+    Route::put('settings/features', [SettingsController::class, 'updateFeatures']);
+    // Business-structure conversion runs inside an atomic database function;
+    // the controller verifies the admin role and the JWT business first.
+    Route::post('settings/business-structure/branchful', [SettingsController::class, 'convertToBranchful']);
+    Route::post('settings/business-structure/branchless', [SettingsController::class, 'convertToBranchless']);
+
     Route::get('user/profile', [ProfileController::class, 'show']);
     Route::put('user/profile', [ProfileController::class, 'update']);
     // The business owner's own registration completeness (name, type,
@@ -181,6 +211,7 @@ Route::middleware('auth.jwt')->group(function () {
     // a theme on a public page (Phase 1 selector). Validation lives server-side
     // in App\Services\ThemePreference.
     Route::put('user/theme', [ProfileController::class, 'theme']);
+    Route::put('user/language', [ProfileController::class, 'language']);
     Route::put('onboarding/profile', [ProfileController::class, 'onboarding']);
 
     Route::post('setup/ai-import-migration', [AiImportController::class, 'migration']);
@@ -255,8 +286,14 @@ Route::middleware('auth.jwt')->group(function () {
 
     Route::get('products/my', [ProductController::class, 'my']);
     Route::get('products/dummy', [ProductController::class, 'dummy']);
+    // Barcode lookup never creates a product or changes stock; it only resolves
+    // an existing row inside the verified business+branch.
+    Route::get('products/lookup', [ProductController::class, 'lookup']);
     Route::post('products', [ProductController::class, 'store']);
     Route::put('products/{id}', [ProductController::class, 'update']);
+    // The ONLY stock-increase endpoint. Admin-only, atomic RPC, append-only
+    // stock_receipts ledger. Sellers use sales and fridge transfers instead.
+    Route::post('products/{id}/stock', [ProductController::class, 'receiveStock']);
     Route::delete('products/{id}', [ProductController::class, 'destroy']);
     // Static segment first: Laravel prefers it over the {businessName} pattern
     // below. Lets the admin screens ask for their own catalogue without ever
@@ -267,6 +304,21 @@ Route::middleware('auth.jwt')->group(function () {
     Route::get('sales/my', [SaleController::class, 'my']);
     Route::post('sales', [SaleController::class, 'store']);
     Route::put('sales/{id}', [SaleController::class, 'update']);
+
+    // Fridge / Freezer inventory. Reads can be used by every business member;
+    // writes are scoped by the verified JWT business+branch. Stock transfers
+    // are atomic RPCs and never change products.stock.
+    Route::get('fridges/availability', [FridgeController::class, 'availability']);
+    Route::put('fridges/outside-threshold/{productId}', [FridgeController::class, 'setOutsideThreshold']);
+    Route::get('fridges', [FridgeController::class, 'index']);
+    Route::post('fridges', [FridgeController::class, 'store']);
+    Route::get('fridges/{id}', [FridgeController::class, 'show']);
+    Route::put('fridges/{id}', [FridgeController::class, 'update']);
+    Route::delete('fridges/{id}', [FridgeController::class, 'destroy']);
+    Route::get('fridges/{id}/movements', [FridgeController::class, 'movements']);
+    Route::post('fridges/{id}/stock', [FridgeController::class, 'addStock']);
+    Route::post('fridges/{id}/stock/remove', [FridgeController::class, 'removeStock']);
+    Route::put('fridges/{id}/stock/{productId}/threshold', [FridgeController::class, 'setThreshold']);
 
     // Huduma (services): the recipe an admin configures and the seller sells.
     // Reads are open to every business member (a seller needs the recipe);
@@ -385,6 +437,7 @@ Route::middleware('auth.jwt')->group(function () {
     Route::delete('admin/logs/cleanup', [AdminController::class, 'logsCleanup']);
     Route::delete('admin/users/{id}', [AdminController::class, 'destroyUser']);
     Route::put('admin/users/{id}/status', [AdminController::class, 'updateUserStatus']);
+    Route::put('admin/users/{id}/branch', [BranchController::class, 'assignSeller']);
     Route::get('admin/online-users', [AdminController::class, 'onlineUsers']);
     Route::get('admin/real-time-stats', [AdminController::class, 'realTimeStats']);
     Route::get('admin/user/{id}/presence-history', [AdminController::class, 'presenceHistory']);

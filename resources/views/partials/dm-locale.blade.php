@@ -59,3 +59,8 @@
      batches requests, and stops entirely after logout. The server treats
      everything it sends as untrusted. --}}
 <script src="/js/dm-monitor.js" defer></script>
+{{-- Centralized business feature visibility (Fridge / Services). ONE shared
+     script applied from this universal partial, so a switch changed on the
+     Settings page hides the matching navigation everywhere without per-page
+     conditions. The API remains the security boundary. --}}
+<script src="/js/dm-features.js?v={{ filemtime(public_path('js/dm-features.js')) }}" defer></script>

@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\User;
 use App\Services\AuditLogger;
+use App\Services\BranchContext;
 use App\Services\BusinessBlock;
 use App\Services\JwtToken;
 use Closure;
@@ -24,7 +25,7 @@ class AuthenticateJwt
 
         try {
             $decoded = JwtToken::decode($token);
-            $user = User::where('id', $decoded->userId)->select('id', 'email', 'role', 'full_name', 'business_name', 'business_id', 'status', 'is_online', 'last_seen', 'language')->first();
+            $user = User::where('id', $decoded->userId)->select('id', 'email', 'role', 'full_name', 'business_name', 'business_id', 'branch_id', 'status', 'is_online', 'last_seen', 'language')->first();
 
             if (!$user) {
                 AuditLogger::log($decoded->userId ?? null, 'AUTH_FAILED', $request->getRequestUri(), ['reason' => 'User not found'], $ip, 'failed');
@@ -50,6 +51,24 @@ class AuthenticateJwt
             $request->attributes->set('jwt_role', $user->role);
             $request->attributes->set('jwt_business_name', $user->business_name);
             $request->attributes->set('jwt_business_id', $businessId);
+
+            // Multi-branch identity. The claims are signed by this server when
+            // a branch is selected (BranchController::context); none of them is
+            // ever read from the request body. A claimed branch is re-verified
+            // against the business and its active status on every request, so
+            // a deleted/deactivated branch stops working immediately.
+            $branch = BranchContext::resolve(
+                $businessId,
+                $user->role,
+                $user->id,
+                $decoded->branch_id ?? null,
+                $decoded->branch_context ?? null,
+                $decoded->business_structure ?? null
+            );
+            $request->attributes->set('jwt_business_structure', $branch['structure']);
+            $request->attributes->set('jwt_branch_context', $branch['context']);
+            $request->attributes->set('jwt_branch_id', $branch['branch_id']);
+
             $request->attributes->set('jwt_ip', $ip);
             // Capability #22: the caller's stored account language, used by
             // BaseController::resolveLocale() when the client omits `locale`.

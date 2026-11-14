@@ -680,6 +680,7 @@
     "ai_reword_note": "Reformulé par l'IA à partir des mêmes chiffres vérifiés."
   },
   "reports": {
+    "full_report": "Rapport Complet",
     "cost_not_recorded": "prix d'achat non enregistré",
     "title": "Rapport Complet",
     "sales_report": "Rapport de Ventes",
@@ -1648,7 +1649,7 @@
     "payment_unavailable_message": "PesaPal n’est pas encore configuré sur le serveur. Votre publication est enregistrée comme en attente — vous pourrez effectuer le paiement depuis Mes annonces dès que les paiements seront activés.",
     "error_server_slow": "Le serveur met trop de temps à répondre. Veuillez vérifier votre connexion et réessayer."
   },
-  "seller_sell": {
+  "seller_sell": {"outside_stock":"Outside Fridge","quantity":"Quantity","available":"Available","allocation_title":"Choose Stock Source","allocation_hint":"Source quantities must equal the sold quantity.","allocation_mismatch":"Stock allocation is incomplete.",
     "title": "Vendre",
     "select_product": "Sélectionner un Produit",
     "refresh": "Actualiser",
@@ -1745,6 +1746,19 @@
     "na_fallback": "N/A"
   },
   "preview": {
+    "filter_title": "Filtrer par Plage de Dates",
+    "filter_from": "Du",
+    "filter_to": "Au",
+    "filter_to_lower": "à",
+    "filter_search": "Rechercher",
+    "filter_clear": "Effacer",
+    "filter_showing": "✓ Période affichée :",
+    "filter_beginning": "début",
+    "filter_today": "aujourd'hui",
+    "err_date_order": "La date de début est antérieure à la date de fin",
+    "no_sales_period": "Aucune vente durant cette période",
+    "no_sales_try_change": "Essayez de modifier la plage de dates sélectionnée.",
+    "err_date_format": "Utilisez le format de date YYYY-MM-DD (ex. 2026-11-14)",
     "loading": "Chargement...",
     "title": "Aperçu de l'Entreprise",
     "business_review": "Revue de l'Entreprise",
@@ -2004,12 +2018,13 @@
     "nyingine": "Autres",
     "tafuta": "Rechercher"
   },
-  "tabs_seller": {
+  "muuzaji_friji": {"page_title":"Fridge - Dukamkononi Seller","title":"Fridge / Freezer","subtitle":"Manage stock inside and outside your fridges.","add":"Add Fridge","add_fridge":"Add Fridge","refresh":"Refresh","search_placeholder":"Search fridges...","loading":"Loading...","alerts_title":"Stock Alerts","no_alerts":"No alerts right now.","recent_activity":"Recent Activity","recent":"Recent Activity","no_activity":"No activity yet.","business":"Business Stock","business_stock":"Business Stock","outside":"Outside Fridge","outside_stock":"Outside Stock","inside":"Inside Fridge","inside_stock":"Inside Stock","fridges":"Fridges","alerts":"Alerts","active":"Active","archived":"Archived","units":"Units","products":"Products","low":"Low","manage":"Manage","in":"In","out":"Out","alert_business":"Business stock is low","alert_outside":"Outside stock is low","alert_fridge":"Fridge stock is low","left":"Remaining","return":"Return Outside","threshold":"Threshold","transfer_in":"Transfer In","transfer_out":"Transfer Out","transfer_title":"Transfer Stock","rename":"Rename","rename_fridge":"Rename Fridge","archive":"Archive","product":"Product","min_stock":"Minimum Level","quantity":"Quantity","notes":"Notes","no_stock":"No products in this fridge.","movements":"Movement History","no_fridges":"No fridges yet","no_fridges_hint":"Tap \"Add Fridge\" to get started.","no_products":"No products available.","invalid_transfer":"Choose a product and a valid quantity.","transfer_saved":"Stock transferred successfully.","cancel":"Cancel","confirm":"Confirm","save":"Save","name_required":"Fridge name is required.","ask_name":"Fridge name","saved":"Saved.","confirm_archive":"Archive this fridge? Historical movements are kept.","archived_done":"Fridge archived.","threshold_prompt":"Set the minimum fridge stock level:","outside_threshold_prompt":"Set the minimum outside stock level:","transfer_in_hint":"Stock moves from outside into the fridge. Business stock does not change.","transfer_out_hint":"Stock moves from the fridge back outside. Business stock does not change.","empty":"No fridges yet","empty_hint":"Tap Add Fridge to get started."}, "tabs_seller": {
     "orders": "Commandes",
     "profile": "Profil",
     "sales": "Ventes",
     "expenses": "Dépenses",
     "sell": "Vendre",
+      "fridge": "Frigo",
     "price_advisor": "Prix",
     "restock": "Réappro",
     "ask": "Demander",

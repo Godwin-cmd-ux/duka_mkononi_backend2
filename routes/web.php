@@ -42,6 +42,10 @@ Route::view('/track-orders', 'track-orders');
 Route::view('/advertisements', 'advertisements');
 Route::view('/businesses', 'businesses');
 Route::view('/login', 'login');
+// Branch-business administrators land here after login and choose an
+// individual branch or the cross-branch dashboard. The page only reads the
+// API; authorization is enforced server-side by /api/branch-context.
+Route::view('/select-branch', 'select-branch');
 Route::view('/forgot', 'forgot');
 Route::view('/admin-signup', 'admin-signup');
 Route::view('/cashier-signup', 'cashier-signup');
@@ -55,6 +59,10 @@ Route::view('/msimamizi/preview', 'msimamizi.preview');
 Route::view('/msimamizi/tangaza', 'msimamizi.tangaza');
 // Nyingine: the manager's AI capabilities hub (capability #6 anomaly review).
 Route::view('/msimamizi/nyingine', 'msimamizi.nyingine');
+// Centralized administrative settings: personal profile, business + branches,
+// and the optional feature switches. The page reads/writes the authenticated
+// API; every write is authorized server-side.
+Route::view('/msimamizi/mipangilio', 'msimamizi.mipangilio');
 
 Route::view('/mteja', 'mteja.biashara');
 Route::view('/mteja/biashara', 'mteja.biashara');
@@ -69,6 +77,7 @@ Route::view('/muuzaji/orders', 'muuzaji.orders');
 Route::view('/muuzaji/mauzo', 'muuzaji.mauzo');
 Route::view('/muuzaji/matumizi', 'muuzaji.matumizi');
 Route::view('/muuzaji/uza', 'muuzaji.uza');
+Route::view('/muuzaji/friji', 'muuzaji.friji');
 Route::view('/muuzaji/huduma-nyingine', 'muuzaji.huduma-nyingine');
 Route::view('/muuzaji/ushauri-bei', 'muuzaji.ushauri-bei');
 Route::view('/muuzaji/mpango-stock', 'muuzaji.mpango-stock');
@@ -120,6 +129,7 @@ Route::redirect('/biashara', '/mteja/biashara');
 Route::redirect('/matangazo', '/mteja/matangazo');
 Route::redirect('/mauzo', '/muuzaji/mauzo');
 Route::redirect('/uza', '/muuzaji/uza');
+Route::redirect('/friji', '/muuzaji/friji');
 Route::redirect('/matumizi', '/muuzaji/matumizi');
 Route::redirect('/huduma-nyingine', '/muuzaji/huduma-nyingine');
 Route::redirect('/ushauri-bei', '/muuzaji/ushauri-bei');

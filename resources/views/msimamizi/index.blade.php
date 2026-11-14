@@ -803,7 +803,16 @@
             status_unverified: "amebatilishwa",
             remove_seller: "Ondoa Muuzaji",
             confirm_remove_seller: "Unahakika unataka kumfuta muuzaji {name}?",
-            status_deleted: "amefutwa"
+            status_deleted: "amefutwa",
+            branch_data_heading: "Taarifa za Tawi",
+            branch_current: "Tawi la Sasa",
+            branch_all: "Matawi Yote",
+            branch_switch: "Badili Tawi",
+            branch_view_all: "Ona Matawi Yote",
+            branch_no_location: "Eneo halijachukuliwa",
+            branch_count: "{count} matawi",
+            branch_none: "Hakuna tawi",
+            branch_sellers_note: "Wauzaji wa tawi hili"
         };
         function t(key, params) {
             const full = key.indexOf('msimamizi_index.') === 0 ? key : 'msimamizi_index.' + key;
@@ -850,6 +859,10 @@
         let refreshing = false;
         let registrationScore = null;
         let scoreLoading = false;
+        let businessStructure = localStorage.getItem('businessStructure') || 'non_branch';
+        let branchContext = localStorage.getItem('branchContext') || 'non_branch';
+        let branchData = null;
+        let branchOptions = [];
         
         let editFormData = { name: '', phone: '', businessName: '', businessLocation: '', businessType: '', businessDescription: '' };
         let logoUploading = false;
@@ -945,6 +958,97 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             }
             
             return true;
+        }
+
+        async function loadBranchContext() {
+            const token = localStorage.getItem('userToken');
+            if (!token) return;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/branches`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!response.ok) return;
+
+                const data = await response.json();
+                businessStructure = data.business?.business_structure || businessStructure;
+                branchContext = data.context?.branch_context || branchContext;
+                branchOptions = Array.isArray(data.branches) ? data.branches : [];
+
+                const currentId = data.context?.branch_id || localStorage.getItem('branchId') || '';
+                branchData = currentId ? (branchOptions.find(branch => branch.id === currentId) || null) : null;
+
+                localStorage.setItem('businessStructure', businessStructure);
+                localStorage.setItem('branchContext', branchContext);
+                localStorage.setItem('branchId', currentId);
+                if (branchData) localStorage.setItem('branchData', JSON.stringify(branchData));
+                else localStorage.removeItem('branchData');
+            } catch (error) {
+                // Keep the last known branch label; the API still enforces scope.
+            }
+        }
+
+        function branchCardHtml() {
+            if (businessStructure !== 'branch') return '';
+
+            // Sellers never switch branches: their assignment is set by the
+            // administrator, so they get a read-only card (or an explanation
+            // when no branch has been assigned yet).
+            const canSwitch = ['admin', 'super_admin', 'system_admin'].includes(userData.role);
+            const isCross = branchContext === 'cross_branch';
+            const actionLabel = isCross ? t('branch_switch') : t('branch_view_all');
+
+            if (isCross) {
+                const rows = branchOptions.map(branch => `
+                    <div style="display:flex;align-items:flex-start;gap:8px;padding:9px 0;border-bottom:1px solid #eef2f7;">
+                        <div style="color:#3498db;margin-top:2px;">${ic('building', 13)}</div>
+                        <div style="flex:1;">
+                            <div style="font-weight:700;font-size:13px;color:#2c3e50;">${escapeHtml(branch.branch_name)}</div>
+                            <div style="font-size:11px;color:#7a8ba0;">${escapeHtml(branch.location || t('branch_no_location'))}</div>
+                        </div>
+                    </div>
+                `).join('');
+
+                return `
+                    <div class="business-card" style="margin-top:14px;background:#eef4fa;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                            <div style="font-weight:800;font-size:15px;color:#2c3e50;">${ic('building', 15)} ${t('branch_data_heading')}</div>
+                            <span style="font-size:11px;font-weight:700;background:#2c3e50;color:white;padding:4px 9px;border-radius:20px;">${t('branch_all')}</span>
+                        </div>
+                        <div style="font-size:12px;color:#7a8ba0;margin-bottom:6px;">${t('branch_count', {count: branchOptions.length})}</div>
+                        ${rows || `<div style="font-size:12px;color:#b35c00;">${t('branch_no_location')}</div>`}
+                        ${canSwitch ? `<button type="button" onclick="window.location.href='/select-branch'" style="width:100%;margin-top:12px;padding:11px;background:#2c3e50;color:white;border:none;border-radius:12px;font-weight:700;font-size:13px;cursor:pointer;">${actionLabel}</button>` : ''}
+                    </div>
+                `;
+            }
+
+            if (!branchData) {
+                return `
+                    <div class="business-card" style="margin-top:14px;background:#fff4e6;">
+                        <div style="font-weight:800;font-size:15px;color:#b35c00;">${ic('building', 15)} ${t('branch_data_heading')}</div>
+                        <div style="font-size:12px;color:#b35c00;margin-top:6px;">Hakuna tawi lililowekwa kwako. Wasiliana na msimamizi wa biashara.</div>
+                    </div>
+                `;
+            }
+
+            const location = branchData.location || t('branch_no_location');
+            return `
+                <div class="business-card" style="margin-top:14px;background:#eef4fa;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                        <div style="font-weight:800;font-size:15px;color:#2c3e50;">${ic('building', 15)} ${t('branch_data_heading')}</div>
+                        <span style="font-size:11px;font-weight:700;background:#3498db;color:white;padding:4px 9px;border-radius:20px;">${t('branch_current')}</span>
+                    </div>
+                    <div style="font-weight:700;font-size:14px;color:#34495e;">${escapeHtml(branchData.branch_name || '—')}</div>
+                    <div style="font-size:12px;color:#7a8ba0;">${ic('location', 11)} ${escapeHtml(location)}</div>
+                    ${canSwitch ? `<button type="button" onclick="window.location.href='/select-branch'" style="width:100%;margin-top:12px;padding:11px;background:#3498db;color:white;border:none;border-radius:12px;font-weight:700;font-size:13px;cursor:pointer;">${actionLabel}</button>` : ''}
+                </div>
+            `;
         }
 
         async function loadSellersData() {
@@ -1459,6 +1563,16 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                             <div class="seller-email">${ic('mail', 12)} ${escapeHtml(seller.email)}</div>
                             <div class="seller-phone">${ic('phone', 12)} ${escapeHtml(seller.phone || t('msimamizi_index.no_phone'))}</div>
                             <div class="seller-business">${ic('building', 12)} ${escapeHtml(seller.business_name || t('msimamizi_index.no_business'))} - ${escapeHtml(seller.business_location || t('msimamizi_index.no_location'))}</div>
+                            ${businessStructure === 'branch' && seller.branch_name ? `<div class="seller-business" style="color:#3498db;">${ic('building', 12)} ${t('branch_data_heading')}: ${escapeHtml(seller.branch_name)}</div>` : ''}
+                            ${businessStructure === 'branch' && branchOptions.length ? `
+                                <div style="display:flex;gap:6px;margin-top:8px;">
+                                    <select id="branch-select-${escapeHtml(seller.id)}" style="flex:1;padding:7px 9px;border:1px solid #dbe7f3;border-radius:9px;font-size:12px;background:#fff;">
+                                        <option value="">${t('branch_none')}</option>
+                                        ${branchOptions.map(branch => `<option value="${escapeHtml(branch.id)}" ${seller.branch_id === branch.id ? 'selected' : ''}>${escapeHtml(branch.branch_name)}</option>`).join('')}
+                                    </select>
+                                    <button type="button" onclick="window.assignSellerBranch('${escapeHtml(seller.id)}', this)" style="padding:7px 12px;background:#3498db;color:#fff;border:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;">${t('branch_switch')}</button>
+                                </div>
+                            ` : ''}
                         </div>
                         <div class="seller-actions">
                             ${seller.status === 'pending' ? `
@@ -1498,7 +1612,9 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     </div>
                     <div class="header-right">
                         <div class="icon-btn" id="refreshBtn">${refreshing ? '<div class="loading-spinner dm-sc dm-sc--light"></div>' : ic('refresh', 16)}</div>
-                        <div class="icon-btn" id="editProfileBtn">${ic('edit', 16)}</div>
+                        <div class="icon-btn" id="settingsBtn" role="button" tabindex="0" title="Mipangilio" aria-label="Mipangilio">
+                            <i class="fa-solid fa-gear" aria-hidden="true"></i>
+                        </div>
                         <div class="logout-area" id="logoutArea">
                             <div>${ic('user', 18)}</div>
                             <span>${t('msimamizi_index.logout_title')}</span>
@@ -1524,6 +1640,8 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                             ${locationTracking ? t('msimamizi_index.getting_location') : (userData.businessLatitude ? ic('refresh', 14) + ' ' + t('msimamizi_index.btn_change_location') : ic('location', 14) + ' ' + t('msimamizi_index.btn_get_gps_location'))}
                         </button>
                     </div>
+
+                ${branchCardHtml()}
                 
                 ${registrationScoreHtml}
 
@@ -1543,11 +1661,58 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             
             if (isSystemAdmin) document.getElementById('systemAdminBtn')?.addEventListener('click', goToSystemAdmin);
             document.getElementById('refreshBtn')?.addEventListener('click', () => refreshData());
-            document.getElementById('editProfileBtn')?.addEventListener('click', () => openEditModal());
+            const settingsBtn = document.getElementById('settingsBtn');
+            settingsBtn?.addEventListener('click', () => { window.location.href = '/msimamizi/mipangilio'; });
+            settingsBtn?.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    window.location.href = '/msimamizi/mipangilio';
+                }
+            });
             document.getElementById('registrationScoreCard')?.addEventListener('click', () => openEditModal());
             document.getElementById('logoutArea')?.addEventListener('click', handleLogout);
         }
         
+        // Assigns a seller to one of this admin's branches. The server verifies
+        // that the branch belongs to the same business, so a tampered value
+        // cannot cross tenants.
+        window.assignSellerBranch = async (sellerId, button) => {
+            const select = document.getElementById('branch-select-' + sellerId);
+            if (!select) return;
+
+            const token = localStorage.getItem('userToken');
+            const original = button.textContent;
+            button.disabled = true;
+            button.textContent = '...';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/admin/users/${sellerId}/branch`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ branch_id: select.value || null })
+                });
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Imeshindikana kuweka tawi');
+                }
+
+                const branch = branchOptions.find(item => item.id === select.value) || null;
+                sellersData = sellersData.map(seller => seller.id === sellerId
+                    ? { ...seller, branch_id: branch ? branch.id : null, branch_name: branch ? branch.branch_name : null, branch_location: branch ? branch.location : null }
+                    : seller);
+                renderDashboard();
+            } catch (error) {
+                button.disabled = false;
+                button.textContent = original;
+                showAlert(t('msimamizi_index.alert_error_title'), error.message || t('msimamizi_index.alert_try_again'));
+            }
+        };
+
         window.approveSeller = (id) => updateSellerStatus(id, 'approved', t('msimamizi_index.status_verified'));
         window.rejectSeller = (id) => updateSellerStatus(id, 'rejected', t('msimamizi_index.status_unverified'));
         window.deleteSeller = (id, name) => {
@@ -1649,9 +1814,10 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             // falls back to the localStorage cache), so it must NOT delay
             // the dashboard's first paint — run it in the background.
             const sellersPromise = loadSellersData();
+            const branchPromise = loadBranchContext();
             loadProfileIntoEditForm();
             loadRegistrationScore();
-            await sellersPromise;
+            await Promise.all([sellersPromise, branchPromise]);
             loading = false;
             renderDashboard();
         }

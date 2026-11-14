@@ -178,16 +178,23 @@ class MonitoringAdminAccessTest extends TestCase
 
         $this->assertSame(200, $response->getStatusCode());
 
-        $patches = $this->callsTo('/rest/v1/security_alerts', 'PATCH');
+        // The denied attempt above legitimately aggregates its own alert, so
+        // pick the PATCH that actually carries the status change.
+        $patches = array_values(array_filter(
+            $this->callsTo('/rest/v1/security_alerts', 'PATCH'),
+            fn ($patch) => str_contains($patch['body'], '"status"')
+        ));
         $this->assertNotEmpty($patches, 'The incident row must be updated server-side.');
         $this->assertStringContainsString('acknowledged', $patches[0]['body']);
         $this->assertStringContainsString('Checking the source address', $patches[0]['body'], 'The investigation note is stored.');
 
         $afterAudits = array_slice($this->callsTo('/rest/v1/user_logs', 'POST'), $before);
-        $mirrors = array_filter(
+        // array_filter preserves keys; reindex so $mirrors[0] is the first match
+        // rather than "whatever key happened to be 0".
+        $mirrors = array_values(array_filter(
             array_map(fn ($r) => json_decode($r['body'], true), $this->callsTo('/rest/v1/activity_events', 'POST')),
             fn ($row) => is_array($row) && ($row['event_name'] ?? '') === 'SECURITY_ALERT_STATUS'
-        );
+        ));
         $this->assertNotEmpty($afterAudits, 'Incident status changes must be audited.');
         $this->assertNotEmpty($mirrors, 'The incident change must appear in the monitoring timeline as an admin event.');
         $this->assertSame('admin', $mirrors[0]['category'] ?? null);

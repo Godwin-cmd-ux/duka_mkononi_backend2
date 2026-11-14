@@ -4,12 +4,14 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\AiImportVerification;
 use App\Models\Customer;
+use App\Models\FridgeStock;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\User;
 use App\Services\BusinessResolver;
 use App\Services\Roles;
+use App\Services\StockReceiving;
 use App\Services\Supabase;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -589,21 +591,28 @@ Return exactly:
         return $unique;
     }
 
-    private function fetchBusinessCatalogue(array $sellerIds): array
+    private function fetchBusinessCatalogue(array $sellerIds, ?string $branchId = null): array
     {
-        return Product::whereIn('seller_id', $sellerIds)
-            ->where('is_active', true)
-            ->orderBy('name')
+        $query = Product::whereIn('seller_id', $sellerIds)
+            ->where('is_active', true);
+        if ($branchId !== null) {
+            $query->where('branch_id', $branchId);
+        }
+
+        return $query->orderBy('name')
             ->limit(20000)
             ->get()
             ->toArray();
     }
 
-    private function searchCandidates(array $sellerIds, array $tokens): ?array
+    private function searchCandidates(array $sellerIds, array $tokens, ?string $branchId = null): ?array
     {
         if (count($tokens) === 0) return [];
         $likeTokens = array_slice($tokens, 0, 10);
         $query = Product::whereIn('seller_id', $sellerIds)->where('is_active', true);
+        if ($branchId !== null) {
+            $query->where('branch_id', $branchId);
+        }
         $query->where(function ($q) use ($likeTokens) {
             $first = true;
             foreach ($likeTokens as $tok) {
@@ -618,11 +627,11 @@ Return exactly:
         return $query->limit(self::MAX_CANDIDATES)->get()->toArray();
     }
 
-    private function findExistingProducts(array $sellerIds, array $extractedSections): array
+    private function findExistingProducts(array $sellerIds, array $extractedSections, ?string $branchId = null): array
     {
         if (count($sellerIds) === 0) return [];
 
-        $catalogue = $this->fetchBusinessCatalogue($sellerIds);
+        $catalogue = $this->fetchBusinessCatalogue($sellerIds, $branchId);
 
         if (count($catalogue) <= self::SMALL_CATALOGUE_LIMIT) {
             return array_slice($catalogue, 0, self::SMALL_CATALOGUE_LIMIT);
@@ -636,7 +645,7 @@ Return exactly:
         }
         $tokens = $this->tokenize($allText);
 
-        $candidates = $this->searchCandidates($sellerIds, $tokens);
+        $candidates = $this->searchCandidates($sellerIds, $tokens, $branchId);
         if ($candidates !== null && count($candidates) > 0) {
             return array_slice($candidates, 0, self::MAX_CANDIDATES);
         }
@@ -729,6 +738,16 @@ Return exactly:
 
     public function import(Request $request): JsonResponse
     {
+        // Inventory-photo import is a stock-receiving workflow. Sellers must
+        // use the sales scanner, which can only consume existing stock.
+        if (! $this->isAdmin($request)) {
+            return $this->json([
+                'success' => false,
+                'error' => 'Ni msimamizi pekee anayeweza kuingiza stock kwa picha.',
+                'code' => 'STOCK_RECEIVING_FORBIDDEN',
+            ], 403);
+        }
+
         try {
             $userId = $this->userId($request);
             $businessName = $this->businessName($request);
@@ -787,7 +806,11 @@ Return exactly:
 
             $sellerIds = $this->getBusinessSellerIds($businessName);
             $candidates = count($sellerIds) > 0
-                ? $this->findExistingProducts($sellerIds, $extraction['images'])
+                ? $this->findExistingProducts(
+                    $sellerIds,
+                    $extraction['images'],
+                    $this->isIndividualBranchContext($request) ? $this->branchId($request) : null
+                )
                 : [];
 
             $prompt = $this->buildUserPrompt([
@@ -934,9 +957,22 @@ Return exactly:
 
     public function verify(Request $request): JsonResponse
     {
+        if (! $this->isAdmin($request)) {
+            return $this->json([
+                'success' => false,
+                'error' => 'Ni msimamizi pekee anayeweza kupokea stock kwa picha.',
+                'code' => 'STOCK_RECEIVING_FORBIDDEN',
+            ], 403);
+        }
+
         try {
             $userId = $this->userId($request);
             $businessName = $this->businessName($request);
+
+            [$writeBranchId, $branchError] = $this->requireWriteBranch($request);
+            if ($branchError) {
+                return $branchError;
+            }
             $ip = $this->ip($request);
 
             if (!$businessName) {
@@ -992,6 +1028,9 @@ Return exactly:
                     $this->log($userId, 'AI_IMPORT_VERIFY_FORBIDDEN', '/api/inventory/ai-import/verify', ['productId' => $productId], $ip, 'failed');
                     return $this->json(['error' => 'Bidhaa hii si ya biashara yako', 'code' => 'FORBIDDEN'], 403);
                 }
+                if ($writeBranchId !== null && (string) ($product->branch_id ?? '') !== (string) $writeBranchId) {
+                    return $this->json(['error' => 'Bidhaa hii ni ya tawi lingine', 'code' => 'BRANCH_MISMATCH'], 404);
+                }
 
                 $already = $this->markAiImportVerified($verificationToken)['already'];
                 if ($already) {
@@ -1000,7 +1039,6 @@ Return exactly:
                 }
 
                 $updateData = [
-                    'stock' => ($product->stock ?? 0) + $quantityRaw,
                     'updated_at' => now()->toISOString(true),
                 ];
                 $buying = (float) ($body['buyingPrice'] ?? 0);
@@ -1017,19 +1055,44 @@ Return exactly:
                 }
 
                 try {
-                    Product::where('id', $productId)->update($updateData);
+                    if (count($updateData) > 1) {
+                        Product::where('id', $productId)->update($updateData);
+                    }
                 } catch (Throwable $uErr) {
                     unset(self::$aiImportVerified[$verificationToken]);
                     $this->log($userId, 'AI_IMPORT_VERIFY_APPLY_FAILED', '/api/inventory/ai-import/verify', ['productId' => $productId, 'error' => $uErr->getMessage()], $ip, 'failed');
-                    return $this->json(['error' => 'Imeshindwa kuongeza bidhaa kwenye stoo: ' . $uErr->getMessage(), 'code' => 'STOCK_UPDATE_FAILED'], 500);
+                    return $this->json(['error' => 'Imeshindwa kusasisha bidhaa: ' . $uErr->getMessage(), 'code' => 'PRODUCT_UPDATE_FAILED'], 500);
+                }
+
+                try {
+                    $receipt = StockReceiving::receive(
+                        (string) $this->businessId($request),
+                        $writeBranchId,
+                        $productId,
+                        $quantityRaw,
+                        $userId,
+                        'ai_import',
+                        null,
+                        'AI inventory import'
+                    );
+                } catch (Throwable $rErr) {
+                    unset(self::$aiImportVerified[$verificationToken]);
+                    $this->log($userId, 'AI_IMPORT_VERIFY_STOCK_FAILED', '/api/inventory/ai-import/verify', ['productId' => $productId, 'error' => $rErr->getMessage()], $ip, 'failed');
+
+                    if (StockReceiving::isUnavailable($rErr)) {
+                        return $this->json(['error' => 'Mfumo wa kupokea stock haujasakinishwa.', 'code' => 'STOCK_RECEIVING_NOT_INSTALLED'], 503);
+                    }
+
+                    return $this->json(['error' => 'Imeshindwa kuongeza stock: ' . $rErr->getMessage(), 'code' => 'STOCK_UPDATE_FAILED'], 422);
                 }
 
                 $this->log($userId, 'AI_IMPORT_VERIFY', '/api/inventory/ai-import/verify', [
                     'action' => 'EXISTING',
                     'productId' => $productId,
                     'addedStock' => $quantityRaw,
-                    'oldStock' => $product->stock ?? 0,
-                    'newStock' => $updateData['stock'],
+                    'oldStock' => $receipt['stock_before'] ?? ($product->stock ?? 0),
+                    'newStock' => $receipt['stock_after'] ?? (($product->stock ?? 0) + $quantityRaw),
+                    'receipt' => $receipt,
                 ], $ip, 'success');
 
                 // Audit row is best-effort: a missing ai_import_verifications
@@ -1057,8 +1120,9 @@ Return exactly:
                     'product' => [
                         'id' => $productId,
                         'name' => $product->name,
-                        'stock' => $updateData['stock'],
+                        'stock' => $receipt['stock_after'] ?? (($product->stock ?? 0) + $quantityRaw),
                     ],
+                    'receipt' => $receipt,
                 ]);
             }
 
@@ -1118,9 +1182,12 @@ Return exactly:
                 // buying price -> `price`, selling price -> `expected_selling_price`
                 'price' => $validBuying ?? $validSelling,
                 'expected_selling_price' => $validSelling,
-                'stock' => $quantityRaw,
+                // Registered at zero; the receipt RPC below is the only place
+                // that can turn this into stock.
+                'stock' => 0,
                 'is_active' => true,
                 'seller_id' => $userId,
+                'branch_id' => $writeBranchId,
                 'created_at' => $now,
                 'updated_at' => $now,
             ];
@@ -1136,11 +1203,38 @@ Return exactly:
                 return $this->json(['error' => 'Imeshindwa kuunda bidhaa: ' . $cErr->getMessage(), 'code' => 'PRODUCT_CREATE_FAILED'], 500);
             }
 
+            try {
+                $receipt = StockReceiving::receive(
+                    (string) $this->businessId($request),
+                    $writeBranchId,
+                    (string) $created->id,
+                    $quantityRaw,
+                    $userId,
+                    'ai_import',
+                    null,
+                    'AI inventory import (new product)'
+                );
+            } catch (Throwable $rErr) {
+                unset(self::$aiImportVerified[$verificationToken]);
+                Product::where('id', $created->id)->update([
+                    'is_active' => false,
+                    'updated_at' => now()->toISOString(true),
+                ]);
+                $this->log($userId, 'AI_IMPORT_VERIFY_STOCK_FAILED', '/api/inventory/ai-import/verify', ['productId' => $created->id, 'error' => $rErr->getMessage()], $ip, 'failed');
+
+                if (StockReceiving::isUnavailable($rErr)) {
+                    return $this->json(['error' => 'Mfumo wa kupokea stock haujasakinishwa.', 'code' => 'STOCK_RECEIVING_NOT_INSTALLED'], 503);
+                }
+
+                return $this->json(['error' => 'Bidhaa imeundwa lakini stock haikupokelewa: ' . $rErr->getMessage(), 'code' => 'STOCK_UPDATE_FAILED'], 422);
+            }
+
             $this->log($userId, 'AI_IMPORT_VERIFY', '/api/inventory/ai-import/verify', [
                 'action' => 'NEW',
                 'productId' => $created->id,
                 'name' => $name,
-                'stock' => $quantityRaw,
+                'stock' => $receipt['stock_after'] ?? $quantityRaw,
+                'receipt' => $receipt,
             ], $ip, 'success');
 
             // Audit row is best-effort (see the EXISTING branch) — the product
@@ -1163,7 +1257,8 @@ Return exactly:
                 'success' => true,
                 'alreadyVerified' => false,
                 'message' => 'Bidhaa mpya imeundwa kikamilifu!',
-                'product' => ['id' => $created->id, 'name' => $created->name, 'stock' => $created->stock],
+                'product' => ['id' => $created->id, 'name' => $created->name, 'stock' => $receipt['stock_after'] ?? $quantityRaw],
+                'receipt' => $receipt,
             ], 201);
         } catch (Throwable $error) {
             $this->log($this->userId($request), 'AI_IMPORT_VERIFY', '/api/inventory/ai-import/verify', [
@@ -1338,7 +1433,11 @@ OUTPUT SCHEMA (strict JSON only, no markdown fences)
             // 2) Load the business product list for matching (same as inventory)
             $sellerIds = $this->getBusinessSellerIds($businessName);
             $candidates = count($sellerIds) > 0
-                ? $this->findExistingProducts($sellerIds, $extraction['images'])
+                ? $this->findExistingProducts(
+                    $sellerIds,
+                    $extraction['images'],
+                    $this->isIndividualBranchContext($request) ? $this->branchId($request) : null
+                )
                 : [];
 
             if (count($candidates) === 0) {
@@ -1481,6 +1580,19 @@ OUTPUT SCHEMA (strict JSON only, no markdown fences)
 
             $this->touchLastSeen($userId);
 
+            [$writeBranchId, $branchError] = $this->requireWriteBranch($request);
+            if ($branchError) {
+                return $branchError;
+            }
+
+            $businessId = (string) $this->businessId($request);
+            $sellerIds = $businessId !== ''
+                ? BusinessResolver::memberIds($businessId, Roles::BUSINESS_MEMBERS, 'approved')
+                : [];
+            if ($sellerIds === []) {
+                return $this->json(['error' => 'Biashara haijulikani', 'code' => 'BUSINESS_REQUIRED'], 400);
+            }
+
             $normalized = [];
             foreach ($items as $item) {
                 $productId = (string) ($item['product_id'] ?? '');
@@ -1517,20 +1629,73 @@ OUTPUT SCHEMA (strict JSON only, no markdown fences)
             }
 
             // Validate products + stock against LIVE database values.
+            // AI-imported sales have no per-source allocation UI, so they may
+            // consume Outside Stock only. Stock physically inside a fridge is
+            // not silently treated as extra inventory.
+            $insideByProduct = [];
+            try {
+                $insideQuery = FridgeStock::where('business_id', $this->businessId($request));
+                $insideQuery = $this->scopeBranch($insideQuery, $request);
+                foreach ($insideQuery->get()->toArray() as $row) {
+                    $pid = (string) ($row['product_id'] ?? '');
+                    if ($pid !== '') {
+                        $insideByProduct[$pid] = ($insideByProduct[$pid] ?? 0.0) + (float) ($row['quantity'] ?? 0);
+                    }
+                }
+            } catch (Throwable $e) {
+            }
+
             $stockIssues = [];
             $total_amount = 0.0;
             foreach ($normalized as &$n) {
-                $product = Product::where('id', $n['product_id'])->where('is_active', true)->first();
+                $product = Product::where('id', $n['product_id'])
+                    ->whereIn('seller_id', $sellerIds)
+                    ->where('is_active', true)
+                    ->first();
                 if (!$product) {
-                    $stockIssues[] = ['product_id' => $n['product_id'], 'reason' => 'Product not found'];
+                    $stockIssues[] = ['product_id' => $n['product_id'], 'reason' => 'Product not found in this business'];
                     continue;
                 }
+
+                if ($writeBranchId !== null && (string) ($product->branch_id ?? '') !== (string) $writeBranchId) {
+                    $stockIssues[] = ['product_id' => $n['product_id'], 'reason' => 'Product belongs to another branch'];
+                    continue;
+                }
+
+                // Match the manual sale rule: a seller may sell their own rows
+                // or rows owned by this business's administrator(s), never a
+                // different seller's catalogue by guessing an id.
+                if ((string) $product->seller_id !== (string) $userId) {
+                    $caller = User::where('id', $userId)->select(['role', 'business_id'])->first();
+                    $owner = User::where('id', $product->seller_id)
+                        ->whereIn('role', Roles::BUSINESS_OWNERS)
+                        ->where('status', 'approved')
+                        ->select(['id', 'business_id'])
+                        ->first();
+                    if (!$caller || $caller->role !== 'seller' || !$owner
+                        || (string) ($owner->business_id ?? '') !== $businessId) {
+                        $stockIssues[] = ['product_id' => $n['product_id'], 'reason' => 'Product access denied'];
+                        continue;
+                    }
+                }
+
                 if ((float) $product->stock < $n['quantity']) {
                     $stockIssues[] = [
                         'product_id' => $n['product_id'],
                         'product_name' => $product->name,
                         'reason' => 'Insufficient stock',
                         'available' => $product->stock,
+                        'requested' => $n['quantity'],
+                    ];
+                    continue;
+                }
+                $outside = (float) $product->stock - (float) ($insideByProduct[(string) $n['product_id']] ?? 0);
+                if ((float) $n['quantity'] > $outside + 0.0005) {
+                    $stockIssues[] = [
+                        'product_id' => $n['product_id'],
+                        'product_name' => $product->name,
+                        'reason' => 'Insufficient outside stock; allocate the inside quantity from a fridge',
+                        'available' => max(0, $outside),
                         'requested' => $n['quantity'],
                     ];
                     continue;
@@ -1556,6 +1721,7 @@ OUTPUT SCHEMA (strict JSON only, no markdown fences)
                         $createdCustomer = Customer::create([
                             'id' => (string) Str::uuid(),
                             'seller_id' => $userId,
+                            'branch_id' => $writeBranchId,
                             'name' => $customerName,
                             'phone' => trim((string) $request->input('customer_phone', '')),
                             'email' => '',
@@ -1577,6 +1743,7 @@ OUTPUT SCHEMA (strict JSON only, no markdown fences)
             $saleData = [
                 'id' => $newSaleId,
                 'seller_id' => $userId,
+                'branch_id' => $writeBranchId,
                 'customer_id' => $customer_id,
                 'sale_date' => trim((string) $request->input('sale_date', '')) ?: gmdate('Y-m-d'),
                 'total_amount' => $total_amount,

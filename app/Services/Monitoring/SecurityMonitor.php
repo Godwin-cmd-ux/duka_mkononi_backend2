@@ -152,6 +152,13 @@ class SecurityMonitor
      */
     public static function ladder(int $count, array $steps): string
     {
+        // No configured steps means this ladder never escalates. Without this
+        // guard the generic "2+ = LOW" fallback below would still fire and a
+        // missing configuration would silently invent severity.
+        if ($steps === []) {
+            return 'INFO';
+        }
+
         if ($count >= (int) ($steps['critical'] ?? PHP_INT_MAX)) {
             return 'CRITICAL';
         }

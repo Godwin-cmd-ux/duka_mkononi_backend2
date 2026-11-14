@@ -7,6 +7,7 @@ import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
     Alert,
     ActivityIndicator,
+    Modal,
     RefreshControl,
     ScrollView,
     StyleSheet,
@@ -31,6 +32,33 @@ import { useTheme, ThemeColors } from '../../lib/theme';
 // system_admin spelling) keeps full business-admin behaviour.
 const isAdminRole = (role: string | null | undefined): boolean =>
     ['admin', 'super_admin', 'system_admin'].includes(role || '');
+
+// Reports render a short first page and reveal more only when asked, so a
+// business with thousands of rows does not build thousands of <View>s up front.
+const INITIAL_ROWS = 5;
+const ROWS_PER_STEP = 10;
+
+type VisibleCounts = {
+  sales: number;
+  serviceSales: number;
+  soldProducts: number;
+  unsoldProducts: number;
+  soldServices: number;
+  unsoldServices: number;
+  customers: number;
+};
+
+const initialVisibleCounts = (): VisibleCounts => ({
+  sales: INITIAL_ROWS,
+  serviceSales: INITIAL_ROWS,
+  soldProducts: INITIAL_ROWS,
+  unsoldProducts: INITIAL_ROWS,
+  soldServices: INITIAL_ROWS,
+  unsoldServices: INITIAL_ROWS,
+  customers: INITIAL_ROWS,
+});
+
+type ExportRange = { start: string; end: string };
 
 interface Sale {
   // sales.id / sale_items.product_id / sales.customer_id are UUIDs. They were
@@ -164,6 +192,18 @@ export default function RipotiScreen() {
   const [userToken, setUserToken] = useState<string | null>(null);
   const [dataSource, setDataSource] = useState<'admin' | 'seller'>('seller');
   const [searchTerm, setSearchTerm] = useState('');
+  const [visibleCounts, setVisibleCounts] = useState<VisibleCounts>(initialVisibleCounts);
+  const [exportModalVisible, setExportModalVisible] = useState(false);
+  const [pendingExport, setPendingExport] = useState<'pdf' | 'excel' | 'print' | null>(null);
+  const [exportStartDate, setExportStartDate] = useState('');
+  const [exportEndDate, setExportEndDate] = useState('');
+
+  // Collapse every page back to the first 5 rows whenever the search changes,
+  // otherwise a "view more" expansion from a previous query leaks into the new
+  // shorter result set.
+  useEffect(() => {
+    setVisibleCounts(initialVisibleCounts());
+  }, [searchTerm]);
 
   useEffect(() => {
     loadUserData();
@@ -510,6 +550,7 @@ export default function RipotiScreen() {
   const fetchAllReports = useCallback(async (token: string, user: any) => {
     try {
       setLoading(true);
+      setVisibleCounts(initialVisibleCounts());
       
       const headers = {
         'Content-Type': 'application/json',
@@ -1008,6 +1049,28 @@ export default function RipotiScreen() {
   // Known customers + one entry per sale that has no customer data.
   const totalCustomerCount = customers.length + unknownCustomers;
 
+  const showMoreRows = (key: keyof VisibleCounts) => {
+    setVisibleCounts(prev => ({ ...prev, [key]: prev[key] + ROWS_PER_STEP }));
+  };
+
+  // Shared "Ona zaidi" control: renders nothing on a list of 5 or fewer rows,
+  // offers the next batch while records remain, and confirms the end once the
+  // whole list is visible.
+  const renderViewMore = (shown: number, total: number, onPress: () => void) => {
+    if (total <= shown) {
+      return total > INITIAL_ROWS ? (
+        <Text style={styles.viewMoreEnd}>Umefikia mwisho wa orodha</Text>
+      ) : null;
+    }
+    const next = Math.min(ROWS_PER_STEP, total - shown);
+    return (
+      <TouchableOpacity style={styles.viewMoreButton} onPress={onPress} activeOpacity={0.85}>
+        <Text style={styles.viewMoreText}>Ona zaidi ({next})</Text>
+        <Ionicons name="chevron-down" size={15} color="#3498db" />
+      </TouchableOpacity>
+    );
+  };
+
       const formatCurrency = (amount: number) => {
       if (!amount && amount !== 0) return 'TSh 0';
       if (isNaN(amount)) return 'TSh 0';
@@ -1054,25 +1117,61 @@ export default function RipotiScreen() {
   const escapeHtml = (value: unknown) => String(value ?? '')
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-  // Mirrors buildExportTable() in resources/views/msimamizi/ripoti.blade.php:
-  // first row is the header, the rest are data rows for the active tab.
-  const buildExportRows = (): { title: string; rows: (string | number)[][] } => {
-    const isAdmin = isAdminRole(userData.role);
-    const scope = isAdmin ? userData.businessName : t('reports.personal_report');
+  const dayKey = (value: unknown) => String(value ?? '').slice(0, 10);
+  // Exports are always constrained to the period the user typed, so the file
+  // matches the report instead of dumping the whole history.
+  const withinRange = (value: unknown, range?: ExportRange | null) => {
+    if (!range) return true;
+    const day = dayKey(value);
+    return /^\d{4}-\d{2}-\d{2}$/.test(day) && day >= range.start && day <= range.end;
+  };
 
-    switch (activeReport) {
-      case 'sales':
+  type ExportSection = { title: string; rows: (string | number)[][] };
+
+  const exportScope = () =>
+    isAdminRole(userData.role) ? userData.businessName : t('reports.personal_report');
+
+  const exportRangeLabel = (range?: ExportRange | null) =>
+    range ? ` (${range.start} - ${range.end})` : '';
+
+  // Builds one report section. `soldTab` picks the sold/unsold sub-list for
+  // products and services; `ignoreSearch` lets the general report export the
+  // whole period regardless of what the user searched for in the tab.
+  const buildSectionRows = (
+    report: 'overview' | 'sales' | 'products' | 'services' | 'customers',
+    range?: ExportRange | null,
+    soldTab = true,
+    ignoreSearch = false
+  ): ExportSection => {
+    const scope = exportScope();
+    const rangeLabel = exportRangeLabel(range);
+
+    switch (report) {
+      case 'sales': {
+        const base = ignoreSearch ? sales : getFilteredSales();
+        const list = base.filter(s => withinRange(s.sale_date, range));
         return {
-          title: `${t('reports.sales_report')} - ${scope}`,
+          title: `${t('reports.sales_report')} - ${scope}${rangeLabel}`,
           rows: [
             [t('reports.col_product'), t('reports.col_customer'), t('reports.col_seller'), t('reports.col_date'), t('reports.col_quantity'), t('reports.col_price'), t('reports.col_total'), t('reports.profit_label')],
-            ...getFilteredSales().map(s => [s.product_name, s.customer_name || t('reports.customer_name_header'), s.seller_name, s.sale_date, s.quantity, s.unit_price, s.total_amount, typeof s.profit === 'number' ? s.profit : ''])
+            ...list.map(s => [s.product_name, s.customer_name || t('reports.customer_name_header'), s.seller_name, s.sale_date, s.quantity, s.unit_price, s.total_amount, typeof s.profit === 'number' ? s.profit : ''])
           ]
         };
+      }
       case 'products': {
-        const list = activeProductTab === 'sold' ? getFilteredSoldProducts() : getFilteredUnsoldProducts();
+        let list = soldTab
+          ? (ignoreSearch ? soldProducts : getFilteredSoldProducts())
+          : (ignoreSearch ? unsoldProducts : getFilteredUnsoldProducts());
+        if (range && soldTab) {
+          // "Sold" is date based: keep only products that actually sold inside
+          // the requested period.
+          const soldIds = new Set(
+            sales.filter(s => withinRange(s.sale_date, range)).map(s => s.product_id)
+          );
+          list = list.filter(p => soldIds.has(p.id));
+        }
         return {
-          title: `${t(activeProductTab === 'sold' ? 'reports.sold_products' : 'reports.unsold_products')} - ${scope}`,
+          title: `${t(soldTab ? 'reports.sold_products' : 'reports.unsold_products')} - ${scope}${rangeLabel}`,
           rows: [
             [t('reports.col_product'), t('reports.col_category'), t('reports.col_stock'), t('reports.purchase_price'), t('reports.expected_selling_price'), t('reports.col_sold'), t('reports.total_revenue'), t('reports.profit_label')],
             ...list.map(p => [p.name, p.category || t('reports.no_category'), p.stock, p.price ?? '', p.expected_selling_price ?? '', p.total_sold || 0, p.total_revenue || 0, p.total_profit || 0])
@@ -1080,48 +1179,129 @@ export default function RipotiScreen() {
         };
       }
       case 'services': {
-        const list = activeServiceTab === 'sold' ? getFilteredSoldServices() : getFilteredUnsoldServices();
+        let list = soldTab
+          ? (ignoreSearch ? soldServices : getFilteredSoldServices())
+          : (ignoreSearch ? unsoldServices : getFilteredUnsoldServices());
+        if (range && soldTab) {
+          const serviceSalesInRange = serviceSales.filter(s => withinRange(s.sale_date || s.created_at, range));
+          const ids = new Set(serviceSalesInRange.map(s => String(s.service_id || '')).filter(Boolean));
+          const names = new Set(
+            serviceSalesInRange.map(s => String(s.service_name || '').trim().toLowerCase()).filter(Boolean)
+          );
+          list = list.filter(s =>
+            ids.has(String(s.id)) || names.has(String(s.name || '').trim().toLowerCase())
+          );
+        }
         return {
-          title: `${t(activeServiceTab === 'sold' ? 'reports.sold_services_title' : 'reports.unsold_services_title')} - ${scope}`,
+          title: `${t(soldTab ? 'reports.sold_services_title' : 'reports.unsold_services_title')} - ${scope}${rangeLabel}`,
           rows: [
             [t('reports.col_service'), t('reports.col_description'), t('reports.col_times_done'), t('reports.col_consumables'), t('reports.total_revenue'), t('reports.profit_label')],
             ...list.map(s => [s.name, s.description || '', s.total_sold || 0, s.consumables_count ?? s.consumables?.length ?? 0, s.total_revenue || 0, s.total_profit || 0])
           ]
         };
       }
-      case 'customers':
+      case 'customers': {
+        let list = ignoreSearch ? customers : getFilteredCustomers();
+        if (range) {
+          const rangeSales = sales.filter(s => withinRange(s.sale_date, range));
+          const ids = new Set(rangeSales.map(s => String(s.customer_id || '')).filter(Boolean));
+          const names = new Set(
+            rangeSales.map(s => String(s.customer_name || '').trim().toLowerCase()).filter(Boolean)
+          );
+          list = list.filter(c =>
+            ids.has(String(c.id)) || names.has(String(c.name || '').trim().toLowerCase())
+          );
+        }
         return {
-          title: `${t('reports.customer_report')} - ${scope}`,
+          title: `${t('reports.customer_report')} - ${scope}${rangeLabel}`,
           rows: [
             [t('reports.col_name'), t('reports.col_phone'), t('reports.col_email'), t('reports.col_sales'), t('reports.customer_total_sw')],
-            ...getFilteredCustomers().map(c => [c.name, c.phone || '', c.email || '', c.purchases_count || 0, c.total_purchases || 0])
+            ...list.map(c => [c.name, c.phone || '', c.email || '', c.purchases_count || 0, c.total_purchases || 0])
           ]
         };
+      }
       default: {
         const stats = businessStats;
         const rows: (string | number)[][] = [
           [t('reports.col_metric'), t('reports.col_value')],
-          [t('reports.total_sales'), stats ? stats.totalSales : 0],
-          [t('reports.total_profit'), stats ? stats.totalProfit : 0],
-          [t('reports.all_customers'), stats ? stats.totalCustomers : 0],
-          [t('reports.all_products'), stats ? stats.totalProducts : 0],
-          [t('reports.col_sellers'), stats ? stats.totalSellers : 0]
         ];
-        if (stats) {
-          rows.push([t('reports.today_sales'), stats.todaySales]);
-          rows.push([t('reports.today_profit'), stats.todayProfit]);
-          rows.push([t('reports.avg_margin'), `${stats.averageProfitMargin.toFixed(1)}%`]);
-          if (stats.unknownCostSales > 0) {
-            rows.push([t('reports.cost_not_recorded'), stats.unknownCostSales]);
+        if (range) {
+          const rangeSales = sales.filter(s => withinRange(s.sale_date, range));
+          const rangeServiceSales = serviceSales.filter(s => withinRange(s.sale_date || s.created_at, range));
+          const productRevenue = rangeSales.reduce((sum, s) => sum + Number(s.total_amount || 0), 0);
+          const serviceRevenue = rangeServiceSales.reduce((sum, s) => sum + Number(s.selling_price || 0), 0);
+          const productProfit = rangeSales.reduce((sum, s) => sum + (typeof s.profit === 'number' ? s.profit : 0), 0);
+          const serviceProfit = rangeServiceSales.reduce((sum, s) => sum + Number(s.profit || 0), 0);
+          const knownCustomers = new Set(rangeSales.map(s => s.customer_id).filter(Boolean));
+          const unknownCount = rangeSales.filter(s => !s.customer_id).length;
+          rows.push([t('reports.total_sales'), productRevenue + serviceRevenue]);
+          rows.push([t('reports.total_profit'), productProfit + serviceProfit]);
+          rows.push([t('reports.all_customers'), knownCustomers.size + unknownCount]);
+          rows.push([t('reports.all_products'), new Set(rangeSales.map(s => s.product_id)).size]);
+          rows.push([t('reports.col_sellers'), new Set(rangeSales.map(s => s.seller_name).filter(Boolean)).size]);
+        } else {
+          rows.push([t('reports.total_sales'), stats ? stats.totalSales : 0]);
+          rows.push([t('reports.total_profit'), stats ? stats.totalProfit : 0]);
+          rows.push([t('reports.all_customers'), stats ? stats.totalCustomers : 0]);
+          rows.push([t('reports.all_products'), stats ? stats.totalProducts : 0]);
+          rows.push([t('reports.col_sellers'), stats ? stats.totalSellers : 0]);
+          if (stats) {
+            rows.push([t('reports.today_sales'), stats.todaySales]);
+            rows.push([t('reports.today_profit'), stats.todayProfit]);
+            rows.push([t('reports.avg_margin'), `${stats.averageProfitMargin.toFixed(1)}%`]);
+            if (stats.unknownCostSales > 0) {
+              rows.push([t('reports.cost_not_recorded'), stats.unknownCostSales]);
+            }
           }
         }
-        return { title: `${t('reports.business_report')} - ${scope}`, rows };
+        return { title: `${t('reports.business_report')} - ${scope}${rangeLabel}`, rows };
       }
     }
   };
 
-  const buildExportHtml = () => {
-    const { title, rows } = buildExportRows();
+  const buildExportRows = (range?: ExportRange | null): ExportSection => {
+    if (activeReport === 'products') {
+      return buildSectionRows('products', range, activeProductTab === 'sold');
+    }
+    if (activeReport === 'services') {
+      return buildSectionRows('services', range, activeServiceTab === 'sold');
+    }
+    return buildSectionRows(activeReport, range);
+  };
+
+  // General report (overview tab): page 1 is the high-level summary for the
+  // period, then a page each for sales, products, services and customers.
+  const buildGeneralExportSections = (range?: ExportRange | null): ExportSection[] => [
+    buildSectionRows('overview', range),
+    buildSectionRows('sales', range, true, true),
+    buildSectionRows('products', range, true, true),
+    buildSectionRows('services', range, true, true),
+    buildSectionRows('customers', range, true, true),
+  ];
+
+  // Multi-page HTML for the overview tab: summary first, then one page per
+  // report section for the same period.
+  const buildGeneralExportHtml = (range?: ExportRange | null) => {
+    const scope = exportScope();
+    const title = `${t('reports.full_report')} - ${scope}${exportRangeLabel(range)}`;
+    const cell = 'border:1px solid #ecf0f1;padding:6px 10px;';
+    const sections = buildGeneralExportSections(range).map((section, index) => {
+      const head = section.rows[0].map(h => `<th style="border:1px solid #bdc3c7;padding:6px 10px;background:#f4f6f7;text-align:left;">${escapeHtml(h)}</th>`).join('');
+      const body = section.rows.slice(1).map(r => `<tr>${r.map(v => `<td style="${cell}">${escapeHtml(v)}</td>`).join('')}</tr>`).join('');
+      return `<div style="${index > 0 ? 'page-break-before:always;break-before:page;' : ''}">
+        <h2 style="font-family:sans-serif;">${escapeHtml(section.title)}</h2>
+        <table style="border-collapse:collapse;font-family:sans-serif;font-size:12px;"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>
+      </div>`;
+    }).join('');
+    return `<html><head><meta charset="UTF-8"><title>${escapeHtml(title)}</title></head>
+      <body><h1 style="font-family:sans-serif;">${escapeHtml(title)}</h1>
+      <p style="font-family:sans-serif;font-size:12px;color:#555;">${escapeHtml(t('reports.generated_at', { date: new Date().toLocaleString() }))}</p>
+      ${sections}</body></html>`;
+  };
+
+  const buildExportHtml = (range?: ExportRange | null) => {
+    if (activeReport === 'overview') return buildGeneralExportHtml(range);
+    const { title, rows } = buildExportRows(range);
     const cell = 'border:1px solid #ecf0f1;padding:6px 10px;';
     const head = rows[0].map(h => `<th style="border:1px solid #bdc3c7;padding:6px 10px;background:#f4f6f7;text-align:left;">${escapeHtml(h)}</th>`).join('');
     const body = rows.slice(1).map(r => `<tr>${r.map(v => `<td style="${cell}">${escapeHtml(v)}</td>`).join('')}</tr>`).join('');
@@ -1132,15 +1312,22 @@ export default function RipotiScreen() {
   };
 
   // RFC 4180 escaping plus a BOM so Excel reads commas/quotes and UTF-8 right.
-  const buildExportCsv = () => {
+  const buildExportCsv = (range?: ExportRange | null) => {
     const esc = (v: unknown) => { const s = String(v ?? ''); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
-    const { rows } = buildExportRows();
-    return '\ufeff' + rows.map(r => r.map(esc).join(',')).join('\r\n');
+    const lines: (string | number)[][] = activeReport === 'overview'
+      ? buildGeneralExportSections(range).reduce((acc, section, index) => {
+          if (index > 0) acc.push([]);
+          acc.push([section.title]);
+          section.rows.forEach(row => acc.push(row));
+          return acc;
+        }, [] as (string | number)[][])
+      : buildExportRows(range).rows;
+    return '\ufeff' + lines.map(r => r.map(esc).join(',')).join('\r\n');
   };
 
-  const handlePrintPDF = async () => {
+  const handlePrintPDF = async (range?: ExportRange | null) => {
     try {
-      const { uri } = await Print.printToFileAsync({ html: buildExportHtml(), base64: false });
+      const { uri } = await Print.printToFileAsync({ html: buildExportHtml(range), base64: false });
       await shareAsync(uri, {
         UTI: '.pdf',
         mimeType: 'application/pdf',
@@ -1152,13 +1339,14 @@ export default function RipotiScreen() {
     }
   };
 
-  const handleExportExcel = () => {
+  const handleExportExcel = (range?: ExportRange | null) => {
     try {
       // expo-print exposes no file-system API and expo-sharing can only share
       // an existing file, so the CSV is written with expo-file-system first.
-      const file = new File(Paths.cache, `DukaMkononi-${activeReport}-${exportFileStamp()}.csv`);
+      const stamp = range ? `${range.start}_${range.end}` : exportFileStamp();
+      const file = new File(Paths.cache, `DukaMkononi-${activeReport === 'overview' ? 'general' : activeReport}-${stamp}.csv`);
       file.create({ overwrite: true });
-      file.write(buildExportCsv());
+      file.write(buildExportCsv(range));
       shareAsync(file.uri, {
         UTI: 'text/csv',
         mimeType: 'text/csv',
@@ -1173,13 +1361,43 @@ export default function RipotiScreen() {
     }
   };
 
-  const handlePrint = async () => {
+  const handlePrint = async (range?: ExportRange | null) => {
     try {
-      await Print.printAsync({ html: buildExportHtml() });
+      await Print.printAsync({ html: buildExportHtml(range) });
     } catch (error) {
       console.error('Error printing report:', error);
       Alert.alert(t('reports.print'), t('reports.export_failed'));
     }
+  };
+
+  // Every export asks for the period first; only then is the document built,
+  // so a user can never accidentally download the entire history.
+  const openExportModal = (action: 'pdf' | 'excel' | 'print') => {
+    setPendingExport(action);
+    setExportStartDate('');
+    setExportEndDate('');
+    setExportModalVisible(true);
+  };
+
+  const closeExportModal = () => setExportModalVisible(false);
+
+  const confirmExport = async () => {
+    const iso = /^\d{4}-\d{2}-\d{2}$/;
+    const start = exportStartDate.trim();
+    const end = exportEndDate.trim();
+    if (!iso.test(start) || !iso.test(end) || start > end) {
+      Alert.alert(
+        t('app.error'),
+        'Weka tarehe sahihi kwa muundo YYYY-MM-DD. Tarehe ya kuanzia isizidi tarehe ya kumalizia.'
+      );
+      return;
+    }
+    const action = pendingExport;
+    const range: ExportRange = { start, end };
+    setExportModalVisible(false);
+    if (action === 'pdf') await handlePrintPDF(range);
+    else if (action === 'excel') handleExportExcel(range);
+    else if (action === 'print') await handlePrint(range);
   };
 
   const renderOverview = () => {
@@ -1330,6 +1548,9 @@ export default function RipotiScreen() {
 
   const renderSalesReport = () => {
     const isAdmin = isAdminRole(userData.role);
+    const filteredSales = getFilteredSales();
+    const visibleSales = filteredSales.slice(0, visibleCounts.sales);
+    const visibleServiceSales = serviceSales.slice(0, visibleCounts.serviceSales);
     
     return (
       <View>
@@ -1342,7 +1563,7 @@ export default function RipotiScreen() {
             <Text style={styles.reportItemTitle}>
               ✂️ {t('huduma.existing_services')} ({serviceSales.length})
             </Text>
-            {serviceSales.slice(0, 20).map((s: any) => (
+            {visibleServiceSales.map((s: any) => (
               <View key={s.id} style={styles.reportItem}>
                 <View style={styles.reportItemMain}>
                   <Text style={styles.reportItemTitle}>{s.service_name}</Text>
@@ -1364,12 +1585,14 @@ export default function RipotiScreen() {
                 </View>
               </View>
             ))}
+            {renderViewMore(visibleServiceSales.length, serviceSales.length, () => showMoreRows('serviceSales'))}
           </View>
         )}
 
         {sales.length > 0 || serviceSales.length > 0 ? (
-          getFilteredSales().length > 0 ? (
-          getFilteredSales().map((sale, index) => (
+          filteredSales.length > 0 ? (
+          <>
+          {visibleSales.map((sale, index) => (
             <View key={`${sale.id}-${index}`} style={styles.reportItem}>
               <View style={styles.reportItemMain}>
                 <Text style={styles.reportItemTitle}>{sale.product_name}</Text>
@@ -1394,7 +1617,9 @@ export default function RipotiScreen() {
                 </Text>
               </View>
             </View>
-          ))
+          ))}
+          {renderViewMore(visibleSales.length, filteredSales.length, () => showMoreRows('sales'))}
+          </>
           ) : (
             <View style={styles.noData}>
               <Ionicons name="search" size={48} color="#bdc3c7" />
@@ -1415,6 +1640,8 @@ export default function RipotiScreen() {
 
   const renderSoldProducts = () => {
     const isAdmin = isAdminRole(userData.role);
+    const filtered = getFilteredSoldProducts();
+    const visible = filtered.slice(0, visibleCounts.soldProducts);
     
     return (
       <View>
@@ -1424,8 +1651,9 @@ export default function RipotiScreen() {
         </Text>
         
         {soldProducts.length > 0 ? (
-          getFilteredSoldProducts().length > 0 ? (
-          getFilteredSoldProducts().map((product) => {
+          filtered.length > 0 ? (
+          <>
+          {visible.map((product) => {
             // is the selling price, so the report printed the selling price in
             // both columns and every profit figure came out as zero.
             const purchasePrice = product.price ?? null;
@@ -1475,7 +1703,9 @@ export default function RipotiScreen() {
                 </View>
               </View>
             );
-          })
+          })}
+          {renderViewMore(visible.length, filtered.length, () => showMoreRows('soldProducts'))}
+          </>
           ) : (
             <View style={styles.noData}>
               <Ionicons name="search" size={48} color="#bdc3c7" />
@@ -1499,6 +1729,8 @@ export default function RipotiScreen() {
 
   const renderUnsoldProducts = () => {
     const isAdmin = isAdminRole(userData.role);
+    const filtered = getFilteredUnsoldProducts();
+    const visible = filtered.slice(0, visibleCounts.unsoldProducts);
     
     return (
       <View>
@@ -1508,8 +1740,9 @@ export default function RipotiScreen() {
         </Text>
         
         {unsoldProducts.length > 0 ? (
-          getFilteredUnsoldProducts().length > 0 ? (
-          getFilteredUnsoldProducts().map((product) => {
+          filtered.length > 0 ? (
+          <>
+          {visible.map((product) => {
             // is the selling price, so the report printed the selling price in
             // both columns and every profit figure came out as zero.
             const purchasePrice = product.price ?? null;
@@ -1564,7 +1797,9 @@ export default function RipotiScreen() {
                 </View>
               </View>
             );
-          })
+          })}
+          {renderViewMore(visible.length, filtered.length, () => showMoreRows('unsoldProducts'))}
+          </>
           ) : (
             <View style={styles.noData}>
               <Ionicons name="search" size={48} color="#bdc3c7" />
@@ -1660,6 +1895,8 @@ export default function RipotiScreen() {
 
   const renderSoldServices = () => {
     const isAdmin = isAdminRole(userData.role);
+    const filtered = getFilteredSoldServices();
+    const visible = filtered.slice(0, visibleCounts.soldServices);
 
     return (
       <View>
@@ -1669,8 +1906,9 @@ export default function RipotiScreen() {
         </Text>
 
         {soldServices.length > 0 ? (
-          getFilteredSoldServices().length > 0 ? (
-            getFilteredSoldServices().map((service) => {
+          filtered.length > 0 ? (
+            <>
+            {visible.map((service) => {
               const timesDone = service.total_sold || 0;
               const consumablesCount = service.consumables_count ?? service.consumables?.length ?? 0;
               const estimatedCost = Number(service.estimated_cost || 0);
@@ -1700,7 +1938,9 @@ export default function RipotiScreen() {
                   </View>
                 </View>
               );
-            })
+            })}
+            {renderViewMore(visible.length, filtered.length, () => showMoreRows('soldServices'))}
+            </>
           ) : (
             <View style={styles.noData}>
               <Ionicons name="search" size={48} color="#bdc3c7" />
@@ -1719,6 +1959,8 @@ export default function RipotiScreen() {
 
   const renderUnsoldServices = () => {
     const isAdmin = isAdminRole(userData.role);
+    const filtered = getFilteredUnsoldServices();
+    const visible = filtered.slice(0, visibleCounts.unsoldServices);
 
     return (
       <View>
@@ -1728,8 +1970,9 @@ export default function RipotiScreen() {
         </Text>
 
         {unsoldServices.length > 0 ? (
-          getFilteredUnsoldServices().length > 0 ? (
-            getFilteredUnsoldServices().map((service) => {
+          filtered.length > 0 ? (
+            <>
+            {visible.map((service) => {
               const consumablesCount = service.consumables_count ?? service.consumables?.length ?? 0;
               const estimatedCost = Number(service.estimated_cost || 0);
 
@@ -1756,7 +1999,9 @@ export default function RipotiScreen() {
                   </View>
                 </View>
               );
-            })
+          })}
+          {renderViewMore(visible.length, filtered.length, () => showMoreRows('unsoldServices'))}
+          </>
           ) : (
             <View style={styles.noData}>
               <Ionicons name="search" size={48} color="#bdc3c7" />
@@ -1836,6 +2081,8 @@ export default function RipotiScreen() {
 
   const renderCustomersReport = () => {
     const isAdmin = isAdminRole(userData.role);
+    const filtered = getFilteredCustomers();
+    const visible = filtered.slice(0, visibleCounts.customers);
     
     return (
       <View>
@@ -1845,8 +2092,9 @@ export default function RipotiScreen() {
         </Text>
         
         {customers && customers.length > 0 ? (
-          getFilteredCustomers().length > 0 ? (
-          getFilteredCustomers().map((customer) => {
+          filtered.length > 0 ? (
+          <>
+          {visible.map((customer) => {
             const actualTotal = customer.actual_purchases || customer.total_purchases;
             const actualCount = customer.actual_purchase_count || customer.purchases_count;
             const lastPurchase = customer.last_purchase_date ? 
@@ -1907,7 +2155,9 @@ export default function RipotiScreen() {
                 </View>
               </View>
             );
-          })
+          })}
+          {renderViewMore(visible.length, filtered.length, () => showMoreRows('customers'))}
+          </>
           ) : (
             <View style={styles.noData}>
               <Ionicons name="search" size={48} color="#bdc3c7" />
@@ -2091,21 +2341,21 @@ export default function RipotiScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>{t('reports.export_options')}</Text>
         <View style={styles.exportOptions}>
-          <TouchableOpacity style={styles.exportButton} onPress={handlePrintPDF}>
+          <TouchableOpacity style={styles.exportButton} onPress={() => openExportModal('pdf')}>
             <View style={[styles.exportIcon, { backgroundColor: '#e74c3c20' }]}>
               <Ionicons name="document-text" size={20} color="#e74c3c" />
             </View>
             <Text style={styles.exportButtonText}>PDF</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.exportButton} onPress={handleExportExcel}>
+          <TouchableOpacity style={styles.exportButton} onPress={() => openExportModal('excel')}>
             <View style={[styles.exportIcon, { backgroundColor: '#27ae6020' }]}>
               <Ionicons name="document" size={20} color="#27ae60" />
             </View>
             <Text style={styles.exportButtonText}>Excel</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.exportButton} onPress={handlePrint}>
+          <TouchableOpacity style={styles.exportButton} onPress={() => openExportModal('print')}>
             <View style={[styles.exportIcon, { backgroundColor: '#3498db20' }]}>
               <Ionicons name="print" size={20} color="#3498db" />
             </View>
@@ -2130,6 +2380,52 @@ export default function RipotiScreen() {
         </View>
       )}
     </ScrollView>
+
+    <Modal
+      visible={exportModalVisible}
+      transparent
+      animationType="fade"
+      onRequestClose={closeExportModal}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalCard}>
+          <Text style={styles.modalTitle}>
+            {t('reports.export')} {pendingExport === 'pdf' ? 'PDF' : pendingExport === 'excel' ? 'Excel' : t('reports.print')}
+          </Text>
+          <Text style={styles.modalHint}>
+            Weka tarehe ya kuanzia na tarehe ya kumalizia (YYYY-MM-DD)
+          </Text>
+          <Text style={styles.modalLabel}>Tarehe ya kuanzia</Text>
+          <TextInput
+            style={styles.modalInput}
+            value={exportStartDate}
+            onChangeText={setExportStartDate}
+            placeholder="2026-01-01"
+            placeholderTextColor="#95a5a6"
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          <Text style={styles.modalLabel}>Tarehe ya kumalizia</Text>
+          <TextInput
+            style={styles.modalInput}
+            value={exportEndDate}
+            onChangeText={setExportEndDate}
+            placeholder="2026-01-31"
+            placeholderTextColor="#95a5a6"
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          <View style={styles.modalActions}>
+            <TouchableOpacity style={[styles.modalButton, styles.modalCancel]} onPress={closeExportModal}>
+              <Text style={styles.modalCancelText}>Ghairi</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.modalButton, styles.modalConfirm]} onPress={confirmExport}>
+              <Text style={styles.modalConfirmText}>{t('reports.export')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
     </SafeAreaView>
   );
 }
@@ -2768,6 +3064,98 @@ const makeStyles = (tc: ThemeColors) => StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     color: tc.ink,
+  },
+  viewMoreButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    marginTop: 2,
+    marginBottom: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: tc.primary,
+    backgroundColor: tc.card,
+  },
+  viewMoreText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: tc.primary,
+  },
+  viewMoreEnd: {
+    textAlign: 'center',
+    fontSize: 12,
+    color: tc.muted,
+    fontStyle: 'italic',
+    marginTop: 4,
+    marginBottom: 12,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  modalCard: {
+    backgroundColor: tc.card,
+    borderRadius: 16,
+    padding: 20,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: tc.ink,
+    marginBottom: 8,
+  },
+  modalHint: {
+    fontSize: 13,
+    color: tc.muted,
+    marginBottom: 16,
+  },
+  modalLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: tc.ink,
+    marginBottom: 6,
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: tc.line,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 15,
+    color: tc.ink,
+    marginBottom: 14,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 10,
+  },
+  modalButton: {
+    paddingHorizontal: 18,
+    paddingVertical: 11,
+    borderRadius: 10,
+  },
+  modalCancel: {
+    backgroundColor: tc.card,
+    borderWidth: 1,
+    borderColor: tc.line,
+  },
+  modalCancelText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: tc.ink,
+  },
+  modalConfirm: {
+    backgroundColor: tc.primary,
+  },
+  modalConfirmText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: 'white',
   },
   statusCard: {
     flexDirection: 'row',

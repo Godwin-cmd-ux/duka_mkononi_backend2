@@ -680,6 +680,7 @@
     "ai_reword_note": "AI द्वारा उन्हीं सत्यापित आँकड़ों से पुनर्लेखित।"
   },
   "reports": {
+    "full_report": "पूरी रिपोर्ट",
     "cost_not_recorded": "खरीद मूल्य दर्ज नहीं है",
     "title": "पूरी रिपोर्ट",
     "sales_report": "बिक्री रिपोर्ट",
@@ -1648,7 +1649,7 @@
     "payment_unavailable_message": "सर्वर पर PesaPal अभी कॉन्फ़िगर नहीं किया गया है। आपकी पोस्ट लंबित के रूप में सहेजी गई है — भुगतान सक्षम होने पर आप मेरे विज्ञापन से भुगतान पूरा कर सकते हैं।",
     "error_server_slow": "सर्वर को उत्तर देने में बहुत समय लग रहा है। कृपया अपना कनेक्शन जांचें और पुनः प्रयास करें।"
   },
-  "seller_sell": {
+  "seller_sell": {"outside_stock":"Outside Fridge","quantity":"Quantity","available":"Available","allocation_title":"Choose Stock Source","allocation_hint":"Source quantities must equal the sold quantity.","allocation_mismatch":"Stock allocation is incomplete.",
     "title": "बेचें",
     "select_product": "उत्पाद चुनें",
     "refresh": "ताज़ा करें",
@@ -1745,6 +1746,19 @@
     "na_fallback": "N/A"
   },
   "preview": {
+    "filter_title": "तिथि सीमा से फ़िल्टर करें",
+    "filter_from": "से",
+    "filter_to": "तक",
+    "filter_to_lower": "तक",
+    "filter_search": "खोजें",
+    "filter_clear": "साफ़ करें",
+    "filter_showing": "✓ अवधि दिखा रहा है:",
+    "filter_beginning": "प्रारंभ",
+    "filter_today": "आज",
+    "err_date_order": "प्रारंभ तिथि अंतिम तिथि से पहले है",
+    "no_sales_period": "इस अवधि में कोई बिक्री नहीं",
+    "no_sales_try_change": "चयनित तिथि सीमा बदलने का प्रयास करें।",
+    "err_date_format": "तिथि प्रारूप YYYY-MM-DD का उपयोग करें (उदा. 2026-11-14)",
     "loading": "लोड हो रहा है...",
     "title": "व्यवसाय अवलोकन",
     "business_review": "व्यवसाय समीक्षा",
@@ -2004,12 +2018,13 @@
     "nyingine": "अन्य",
     "tafuta": "खोजें"
   },
-  "tabs_seller": {
+  "muuzaji_friji": {"page_title":"Fridge - Dukamkononi Seller","title":"Fridge / Freezer","subtitle":"Manage stock inside and outside your fridges.","add":"Add Fridge","add_fridge":"Add Fridge","refresh":"Refresh","search_placeholder":"Search fridges...","loading":"Loading...","alerts_title":"Stock Alerts","no_alerts":"No alerts right now.","recent_activity":"Recent Activity","recent":"Recent Activity","no_activity":"No activity yet.","business":"Business Stock","business_stock":"Business Stock","outside":"Outside Fridge","outside_stock":"Outside Stock","inside":"Inside Fridge","inside_stock":"Inside Stock","fridges":"Fridges","alerts":"Alerts","active":"Active","archived":"Archived","units":"Units","products":"Products","low":"Low","manage":"Manage","in":"In","out":"Out","alert_business":"Business stock is low","alert_outside":"Outside stock is low","alert_fridge":"Fridge stock is low","left":"Remaining","return":"Return Outside","threshold":"Threshold","transfer_in":"Transfer In","transfer_out":"Transfer Out","transfer_title":"Transfer Stock","rename":"Rename","rename_fridge":"Rename Fridge","archive":"Archive","product":"Product","min_stock":"Minimum Level","quantity":"Quantity","notes":"Notes","no_stock":"No products in this fridge.","movements":"Movement History","no_fridges":"No fridges yet","no_fridges_hint":"Tap \"Add Fridge\" to get started.","no_products":"No products available.","invalid_transfer":"Choose a product and a valid quantity.","transfer_saved":"Stock transferred successfully.","cancel":"Cancel","confirm":"Confirm","save":"Save","name_required":"Fridge name is required.","ask_name":"Fridge name","saved":"Saved.","confirm_archive":"Archive this fridge? Historical movements are kept.","archived_done":"Fridge archived.","threshold_prompt":"Set the minimum fridge stock level:","outside_threshold_prompt":"Set the minimum outside stock level:","transfer_in_hint":"Stock moves from outside into the fridge. Business stock does not change.","transfer_out_hint":"Stock moves from the fridge back outside. Business stock does not change.","empty":"No fridges yet","empty_hint":"Tap Add Fridge to get started."}, "tabs_seller": {
     "orders": "ऑर्डर",
     "profile": "प्रोफ़ाइल",
     "sales": "बिक्री",
     "expenses": "खर्च",
     "sell": "बेचें",
+      "fridge": "à¤«à¥à¤°à¤¿à¤œ",
     "price_advisor": "कीमतें",
     "restock": "पुनः स्टॉक",
     "ask": "पूछें",

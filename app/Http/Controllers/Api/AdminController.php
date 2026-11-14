@@ -34,7 +34,7 @@ class AdminController extends BaseController
      *
      * @return array{sales: list<array>, summary: array{count:int,revenue:float,cost:float,profit:float}}
      */
-    private function serviceSalesForReport(?string $businessId, string $dateFrom, string $dateTo): array
+    private function serviceSalesForReport(?string $businessId, string $dateFrom, string $dateTo, ?string $branchId = null): array
     {
         $empty = ['sales' => [], 'summary' => ['count' => 0, 'revenue' => 0.0, 'cost' => 0.0, 'profit' => 0.0]];
 
@@ -43,6 +43,10 @@ class AdminController extends BaseController
         }
 
         $query = ServiceSale::where('business_id', $businessId);
+
+        if ($branchId) {
+            $query->where('branch_id', $branchId);
+        }
 
         if ($dateFrom !== '') {
             $query->where('sale_date', '>=', $dateFrom);
@@ -141,6 +145,13 @@ class AdminController extends BaseController
                 $this->log($userId, 'ADMIN_NO_BUSINESS', '/api/admin/users', ['reason' => 'Caller has no business_id'], $this->ip($request), 'failed');
                 $usersQuery->whereRaw('id = ?', ['00000000-0000-0000-0000-000000000000']);
             }
+            if (! $isPlatformAdmin) {
+                // Individual branch mode shows only sellers assigned to it;
+                // cross-branch mode shows every branch; non-branch keeps the
+                // existing business-wide list.
+                $usersQuery = $this->scopeBranch($usersQuery, $request);
+            }
+
             $roleFilter = trim((string) $request->query('role', ''));
             if ($roleFilter !== '') {
                 $roles = array_values(array_filter(array_map('trim', explode(',', $roleFilter)), fn ($r) => in_array($r, ['admin', 'seller', 'client', 'customer', 'super_admin', 'system_admin'], true)));
@@ -160,6 +171,25 @@ class AdminController extends BaseController
 
             $users = $usersQuery->get()->toArray();
             $usersList = $users ?: [];
+
+            // Identify the branch of every seller. Cross-branch mode needs this
+            // to show which branch each seller belongs to; individual mode
+            // already filtered to one branch.
+            $branchIds = array_values(array_unique(array_filter(array_map(fn ($u) => $u['branch_id'] ?? null, $usersList))));
+            $branchesById = [];
+            if ($branchIds) {
+                foreach (\App\Models\Branch::whereIn('id', $branchIds)->get() as $branch) {
+                    $branchesById[(string) $branch->id] = $branch->toArray();
+                }
+            }
+
+            $usersList = array_map(function ($u) use ($branchesById) {
+                $branch = $branchesById[(string) ($u['branch_id'] ?? '')] ?? null;
+                $u['branch'] = $branch;
+                $u['branch_name'] = $branch['branch_name'] ?? null;
+                $u['branch_location'] = $branch['location'] ?? null;
+                return $u;
+            }, $usersList);
 
             $stats = [
                 'totalUsers' => count($usersList),
@@ -253,6 +283,10 @@ class AdminController extends BaseController
                 $query->whereRaw('id = ?', ['00000000-0000-0000-0000-000000000000']);
             }
 
+            if (! $isPlatformAdmin) {
+                $query = $this->scopeBranch($query, $request);
+            }
+
             // slim=1: report pages only need a handful of columns and no
             // embedded user objects — the full payloads (2+ MB) were the
             // main reason the ripoti page took forever to load on slow
@@ -336,6 +370,10 @@ class AdminController extends BaseController
                 $salesQuery->whereRaw('id = ?', ['00000000-0000-0000-0000-000000000000']);
             }
 
+            if (! $isPlatformAdmin) {
+                $salesQuery = $this->scopeBranch($salesQuery, $request);
+            }
+
             // Optional server-side date range so report pages can request
             // exactly the window they display instead of every sale ever made.
             $dateFrom = trim((string) ($request->query('date_from', '') ?: $request->query('start_date', '')));
@@ -357,7 +395,12 @@ class AdminController extends BaseController
             // product line: a product consumed by a service is inventory
             // consumption, not an independent sale) but included in the same
             // response so every report reads one consistent snapshot.
-            $serviceReport = $this->serviceSalesForReport($scopeBusinessId, $dateFrom, $dateTo);
+            $serviceReport = $this->serviceSalesForReport(
+                $scopeBusinessId,
+                $dateFrom,
+                $dateTo,
+                (! $isPlatformAdmin && $this->isIndividualBranchContext($request)) ? $this->branchId($request) : null
+            );
 
             if ($request->boolean('slim')) {
                 $saleIds = array_column($sales, 'id');
@@ -475,6 +518,8 @@ class AdminController extends BaseController
 
             // Business scoping after the business_id migration: see products().
             $query = Customer::query();
+            // (branch scope is applied after the platform/business branch
+            // below, exactly like products and sales.)
             $callerBusinessId = $this->businessId($request);
             // Platform-wide scope is OPT-IN: the msimamizi module must look
             // exactly the same for a promoted super admin as for any business
@@ -499,6 +544,10 @@ class AdminController extends BaseController
             } else {
                 $this->log($userId, 'ADMIN_NO_BUSINESS', '/api/admin/customers', ['reason' => 'Caller has no business_id'], $this->ip($request), 'failed');
                 $query->whereRaw('id = ?', ['00000000-0000-0000-0000-000000000000']);
+            }
+
+            if (! $isPlatformAdmin) {
+                $query = $this->scopeBranch($query, $request);
             }
 
             $customers = $query->orderByDesc('total_purchases')->get()->toArray();

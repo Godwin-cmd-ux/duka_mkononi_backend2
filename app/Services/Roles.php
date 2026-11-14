@@ -60,6 +60,18 @@ final class Roles
         return in_array((string) $role, self::BUSINESS_OWNERS, true);
     }
 
+    /** Is this a seller account? */
+    public static function isSeller(?string $role): bool
+    {
+        return (string) $role === 'seller';
+    }
+
+    /** Can this role belong to a business and hold its operational data? */
+    public static function isBusinessMember(?string $role): bool
+    {
+        return in_array((string) $role, self::BUSINESS_MEMBERS, true);
+    }
+
     /**
      * Expand a caller's requested member-roles so a request for 'admin' also
      * pulls in the platform-admin spellings. Callers ask for 'admin' to mean

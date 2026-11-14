@@ -338,7 +338,13 @@
 
             <div class="form-container">
                 <input type="text" class="input-field" id="full_name" placeholder="Jina Kamili *" autocomplete="name" data-i18n="cashier_signup.label_full_name" data-i18n-attr="placeholder">
+                <select class="input-field" id="seller_business_id">
+                    <option value="">Chagua Biashara Unayojiunga Nayo *</option>
+                </select>
                 <input type="text" class="input-field" id="business_name" placeholder="Jina la Biashara *" autocomplete="organization" data-i18n="cashier_signup.label_business_name" data-i18n-attr="placeholder">
+                <select class="input-field" id="seller_branch_id" style="display:none;">
+                    <option value="">Chagua Tawi Lako *</option>
+                </select>
                 <input type="text" class="input-field" id="business_location" placeholder="Mahali pa Biashara *" autocomplete="address-line1" data-i18n="cashier_signup.label_business_location" data-i18n-attr="placeholder">
                 <input type="email" class="input-field" id="email" placeholder="Barua Pepe *" autocomplete="email" data-i18n="cashier_signup.label_email" data-i18n-attr="placeholder">
                 <input type="tel" class="input-field" id="phone" placeholder="Namba ya Simu" autocomplete="tel" data-i18n="cashier_signup.label_phone" data-i18n-attr="placeholder">
@@ -456,6 +462,9 @@
     }
 
     const fullNameInput = document.getElementById('full_name');
+    const sellerBusinessSelect = document.getElementById('seller_business_id');
+    const sellerBranchSelect = document.getElementById('seller_branch_id');
+    let sellerBusinessStructure = '';
     const businessNameInput = document.getElementById('business_name');
     const businessLocationInput = document.getElementById('business_location');
     const emailInput = document.getElementById('email');
@@ -734,6 +743,8 @@
     function getFormValues() {
         return {
             full_name: fullNameInput.value.trim(),
+            business_id: sellerBusinessSelect ? sellerBusinessSelect.value : '',
+            branch_id: sellerBranchSelect && sellerBranchSelect.style.display !== 'none' ? sellerBranchSelect.value : '',
             business_name: businessNameInput.value.trim(),
             business_location: businessLocationInput.value.trim(),
             email: emailInput.value.trim(),
@@ -746,6 +757,10 @@
     function validateForm(form) {
         if (!form.email || !form.password || !form.full_name || !form.business_name || !form.business_location) {
             showAlert({ key: 'cashier_signup.alert_error' }, { key: 'cashier_signup.err_required_fields' });
+            return false;
+        }
+        if (sellerBusinessStructure === 'branch' && !form.branch_id) {
+            showAlert({ key: 'cashier_signup.alert_error' }, 'Chagua tawi la biashara unayojiunga nayo.');
             return false;
         }
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -808,6 +823,8 @@
                     role: 'seller',
                     full_name: form.full_name,
                     phone: form.phone || '',
+                    business_id: form.business_id || undefined,
+                    branch_id: form.branch_id || undefined,
                     business_name: form.business_name,
                     business_location: form.business_location
                 })
@@ -1012,6 +1029,79 @@
             window.location.href = '/home';
         }
     }
+
+    // Seller business/branch pickers. The list endpoint returns only businesses
+    // that have an approved administrator, and the branch list only active
+    // branches of the selected business. The server re-validates both on submit.
+    async function loadSellerBusinesses() {
+        if (!sellerBusinessSelect) return;
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/seller-registration/businesses`);
+            const data = await response.json();
+            if (!response.ok || !Array.isArray(data.businesses)) return;
+
+            sellerBusinessSelect.innerHTML = '<option value="">Chagua Biashara Unayojiunga Nayo *</option>'
+                + data.businesses.map(business => `<option value="${escapeHtml(business.id)}" data-name="${escapeHtml(business.business_name)}" data-structure="${escapeHtml(business.business_structure)}">${escapeHtml(business.business_name)}</option>`).join('');
+        } catch (error) {
+            console.warn('Seller business list unavailable', error);
+        }
+    }
+
+    async function loadSellerBranches(businessId) {
+        sellerBranchSelect.innerHTML = '<option value="">Inapakia matawi...</option>';
+        sellerBranchSelect.style.display = 'block';
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/seller-registration/businesses/${encodeURIComponent(businessId)}/branches`);
+            const data = await response.json();
+
+            if (!response.ok) throw new Error(data.error || 'Imeshindikana kupata matawi');
+
+            const branches = Array.isArray(data.branches) ? data.branches : [];
+            sellerBranchSelect.innerHTML = '<option value="">Chagua Tawi Lako *</option>'
+                + branches.map(branch => `<option value="${escapeHtml(branch.id)}" data-location="${escapeHtml(branch.location || '')}">${escapeHtml(branch.branch_name)}${branch.location ? ' — ' + escapeHtml(branch.location) : ''}</option>`).join('');
+
+            if (branches.length === 0) {
+                sellerBranchSelect.innerHTML = '<option value="">Biashara hii haina tawi hai</option>';
+            }
+        } catch (error) {
+            sellerBranchSelect.innerHTML = '<option value="">Imeshindikana kupata matawi</option>';
+        }
+    }
+
+    if (sellerBusinessSelect) {
+        sellerBusinessSelect.addEventListener('change', async () => {
+            const option = sellerBusinessSelect.selectedOptions[0];
+            const businessId = sellerBusinessSelect.value;
+            sellerBusinessStructure = option?.getAttribute('data-structure') || '';
+            businessNameInput.value = option?.getAttribute('data-name') || '';
+
+            if (!businessId) {
+                sellerBranchSelect.style.display = 'none';
+                sellerBranchSelect.innerHTML = '<option value="">Chagua Tawi Lako *</option>';
+                return;
+            }
+
+            if (sellerBusinessStructure === 'branch') {
+                await loadSellerBranches(businessId);
+            } else {
+                sellerBranchSelect.style.display = 'none';
+                sellerBranchSelect.innerHTML = '<option value="">Chagua Tawi Lako *</option>';
+            }
+        });
+    }
+
+    if (sellerBranchSelect) {
+        sellerBranchSelect.addEventListener('change', () => {
+            const option = sellerBranchSelect.selectedOptions[0];
+            const location = option?.getAttribute('data-location') || '';
+            if (location && !businessLocationInput.value.trim()) {
+                businessLocationInput.value = location;
+            }
+        });
+    }
+
+    loadSellerBusinesses();
 
     signupBtn.addEventListener('click', handleSignup);
 

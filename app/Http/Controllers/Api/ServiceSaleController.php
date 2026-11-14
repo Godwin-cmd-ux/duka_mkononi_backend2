@@ -29,7 +29,7 @@ use Illuminate\Http\Request;
  */
 class ServiceSaleController extends BaseController
 {
-    private const PRODUCT_COLUMNS = ['id', 'name', 'price', 'stock', 'is_active', 'seller_id'];
+    private const PRODUCT_COLUMNS = ['id', 'name', 'price', 'stock', 'is_active', 'seller_id', 'branch_id'];
 
     /** GET /api/service-sales/my — the seller's own completed service sales. */
     public function my(Request $request)
@@ -38,6 +38,7 @@ class ServiceSaleController extends BaseController
             $userId = $this->userId($request);
 
             $query = ServiceSale::where('seller_id', $userId);
+            $query = $this->scopeBranch($query, $request);
 
             $dateFrom = trim((string) $request->query('date_from', ''));
             $dateTo = trim((string) $request->query('date_to', ''));
@@ -92,6 +93,7 @@ class ServiceSaleController extends BaseController
             }
 
             $query = ServiceSale::where('business_id', $businessId);
+            $query = $this->scopeBranch($query, $request);
 
             $dateFrom = trim((string) ($request->query('date_from', '') ?: $request->query('start_date', '')));
             $dateTo = trim((string) ($request->query('date_to', '') ?: $request->query('end_date', '')));
@@ -149,6 +151,13 @@ class ServiceSaleController extends BaseController
      */
     public function store(Request $request)
     {
+        // Selling a service is a service module write. Historical service
+        // sales stay readable through my()/adminIndex() even when the module
+        // is switched off.
+        if ($deny = $this->requireFeature($request, 'services')) {
+            return $deny;
+        }
+
         // A service sale is one database call, but the pre-checks are several
         // Supabase roundtrips; give slow networks room (see SaleController).
         if (function_exists('set_time_limit')) {
@@ -157,6 +166,11 @@ class ServiceSaleController extends BaseController
 
         $userId = $this->userId($request);
         $businessId = $this->businessId($request);
+
+        [$writeBranchId, $branchError] = $this->requireWriteBranch($request);
+        if ($branchError) {
+            return $branchError;
+        }
 
         if (!in_array((string) $this->role($request), Roles::BUSINESS_MEMBERS, true)) {
             return $this->json([
@@ -185,6 +199,18 @@ class ServiceSaleController extends BaseController
                 return $this->json([
                     'success' => false,
                     'error' => 'Huduma haipatikani kwenye biashara yako',
+                    'code' => 'SERVICE_NOT_FOUND',
+                ], 404);
+            }
+
+            // A branch may sell its own services and the business-wide ones,
+            // never another branch's private service.
+            if ($writeBranchId !== null
+                && !empty($service->branch_id)
+                && (string) $service->branch_id !== $writeBranchId) {
+                return $this->json([
+                    'success' => false,
+                    'error' => 'Huduma hii ni ya tawi lingine',
                     'code' => 'SERVICE_NOT_FOUND',
                 ], 404);
             }
@@ -239,7 +265,7 @@ class ServiceSaleController extends BaseController
             }
 
             // ---- Pre-flight (fast, friendly errors; RPC re-validates) ----
-            $preflight = $this->preflight($businessId, $lines);
+            $preflight = $this->preflight($businessId, $lines, $writeBranchId);
 
             if (isset($preflight['error'])) {
                 $this->log($userId, 'SERVICE_SALE_FAILED', '/api/service-sales', [
@@ -293,6 +319,25 @@ class ServiceSaleController extends BaseController
             $sale = is_array($result['sale'] ?? null) ? $result['sale'] : [];
             $sale['items'] = is_array($result['items'] ?? null) ? $result['items'] : [];
             $duplicate = (bool) ($result['duplicate'] ?? false);
+
+            // The existing create_service_sale RPC predates branches and has
+            // no branch parameter. Stamp the branch immediately after the
+            // atomic write; a failure is logged but never hides the sale (it
+            // stays visible in cross-branch mode).
+            if ($writeBranchId !== null && !empty($sale['id'])) {
+                try {
+                    ServiceSale::where('id', $sale['id'])
+                        ->where('business_id', $businessId)
+                        ->update(['branch_id' => $writeBranchId]);
+                    $sale['branch_id'] = $writeBranchId;
+                } catch (\Throwable $branchStampError) {
+                    $this->log($userId, 'SERVICE_SALE_BRANCH_STAMP_FAILED', '/api/service-sales', [
+                        'service_sale_id' => $sale['id'] ?? null,
+                        'branch_id' => $writeBranchId,
+                        'error' => $branchStampError->getMessage(),
+                    ], $this->ip($request), 'failed');
+                }
+            }
 
             $this->log($userId, $duplicate ? 'SERVICE_SALE_DUPLICATE_SUPPRESSED' : 'SERVICE_SALE_CREATE', '/api/service-sales', [
                 'service_sale_id' => $sale['id'] ?? null,
@@ -409,15 +454,19 @@ class ServiceSaleController extends BaseController
      * pass exists so the seller sees precisely which product is short instead
      * of a generic failure.
      */
-    private function preflight(string $businessId, array $lines): array
+    private function preflight(string $businessId, array $lines, ?string $branchId = null): array
     {
         $memberIds = BusinessResolver::memberIds($businessId, Roles::BUSINESS_MEMBERS, 'approved');
         $allowed = array_flip($memberIds);
 
-        $products = Product::whereIn('id', array_column($lines, 'product_id'))
-            ->select(self::PRODUCT_COLUMNS)
-            ->get()
-            ->toArray();
+        $productQuery = Product::whereIn('id', array_column($lines, 'product_id'))
+            ->select(self::PRODUCT_COLUMNS);
+
+        if ($branchId !== null) {
+            $productQuery->where('branch_id', $branchId);
+        }
+
+        $products = $productQuery->get()->toArray();
 
         $byId = [];
         foreach ($products as $product) {

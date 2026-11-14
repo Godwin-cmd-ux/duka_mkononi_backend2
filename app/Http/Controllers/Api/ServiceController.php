@@ -45,6 +45,9 @@ class ServiceController extends BaseController
             }
 
             $query = Service::where('business_id', $businessId);
+            // Branch mode sees the services created for that branch PLUS the
+            // business-wide recipes (branch_id NULL) that every branch may sell.
+            $query = $this->scopeBranch($query, $request, true);
 
             // A seller only ever sells active services. An admin also sees the
             // paused ones so they can be reactivated.
@@ -87,6 +90,10 @@ class ServiceController extends BaseController
     /** POST /api/services */
     public function store(Request $request)
     {
+        if ($deny = $this->requireFeature($request, 'services')) {
+            return $deny;
+        }
+
         if (!$this->isAdmin($request)) {
             return $this->forbidden();
         }
@@ -99,6 +106,11 @@ class ServiceController extends BaseController
                 'error' => 'Biashara haijapatikana',
                 'code' => 'NO_BUSINESS',
             ], 403);
+        }
+
+        [$writeBranchId, $branchError] = $this->requireWriteBranch($request);
+        if ($branchError) {
+            return $branchError;
         }
 
         $name = trim((string) $request->input('name', ''));
@@ -151,6 +163,7 @@ class ServiceController extends BaseController
             $service = Service::create([
                 'id' => Str::uuid()->toString(),
                 'business_id' => $businessId,
+                'branch_id' => $writeBranchId,
                 'name' => $name,
                 'description' => $this->nullableText($request->input('description')),
                 'status' => $this->status($request->input('status')),
@@ -197,8 +210,17 @@ class ServiceController extends BaseController
     /** PUT /api/services/{id} */
     public function update(Request $request, $id)
     {
+        if ($deny = $this->requireFeature($request, 'services')) {
+            return $deny;
+        }
+
         if (!$this->isAdmin($request)) {
             return $this->forbidden();
+        }
+
+        [$writeBranchId, $branchError] = $this->requireWriteBranch($request);
+        if ($branchError) {
+            return $branchError;
         }
 
         $service = $this->findService($request, $id);
@@ -277,8 +299,17 @@ class ServiceController extends BaseController
     /** DELETE /api/services/{id} */
     public function destroy(Request $request, $id)
     {
+        if ($deny = $this->requireFeature($request, 'services')) {
+            return $deny;
+        }
+
         if (!$this->isAdmin($request)) {
             return $this->forbidden();
+        }
+
+        [$writeBranchId, $branchError] = $this->requireWriteBranch($request);
+        if ($branchError) {
+            return $branchError;
         }
 
         $service = $this->findService($request, $id);
@@ -315,8 +346,17 @@ class ServiceController extends BaseController
     /** POST /api/services/{id}/consumables */
     public function addConsumables(Request $request, $id)
     {
+        if ($deny = $this->requireFeature($request, 'services')) {
+            return $deny;
+        }
+
         if (!$this->isAdmin($request)) {
             return $this->forbidden();
+        }
+
+        [$writeBranchId, $branchError] = $this->requireWriteBranch($request);
+        if ($branchError) {
+            return $branchError;
         }
 
         $service = $this->findService($request, $id);
@@ -374,8 +414,17 @@ class ServiceController extends BaseController
     /** PUT /api/services/{id}/consumables/{productId} */
     public function updateConsumable(Request $request, $id, $productId)
     {
+        if ($deny = $this->requireFeature($request, 'services')) {
+            return $deny;
+        }
+
         if (!$this->isAdmin($request)) {
             return $this->forbidden();
+        }
+
+        [$writeBranchId, $branchError] = $this->requireWriteBranch($request);
+        if ($branchError) {
+            return $branchError;
         }
 
         $service = $this->findService($request, $id);
@@ -428,8 +477,17 @@ class ServiceController extends BaseController
     /** DELETE /api/services/{id}/consumables/{productId} */
     public function removeConsumable(Request $request, $id, $productId)
     {
+        if ($deny = $this->requireFeature($request, 'services')) {
+            return $deny;
+        }
+
         if (!$this->isAdmin($request)) {
             return $this->forbidden();
+        }
+
+        [$writeBranchId, $branchError] = $this->requireWriteBranch($request);
+        if ($branchError) {
+            return $branchError;
         }
 
         $service = $this->findService($request, $id);
@@ -477,7 +535,25 @@ class ServiceController extends BaseController
             return null;
         }
 
-        return Service::where('id', $id)->where('business_id', $businessId)->first();
+        $query = Service::where('id', $id)->where('business_id', $businessId);
+
+        if ($this->isIndividualBranchContext($request)) {
+            $branchId = $this->branchId($request);
+
+            if (! $branchId) {
+                return null;
+            }
+
+            // A branch-specific service belongs to exactly one branch; a
+            // business-wide service (NULL) is available everywhere.
+            $query->where(function ($q) use ($branchId) {
+                $q->where('branch_id', $branchId)->orWhereNull('branch_id');
+            });
+        } elseif ($this->branchContext($request) === \App\Services\BranchContext::UNSELECTED) {
+            return null;
+        }
+
+        return $query->first();
     }
 
     /**

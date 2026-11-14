@@ -1188,6 +1188,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     <div style="font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:6px;">${ic('doc', 14)} ${t('msimamizi_preview.business_summary')}</div>
                     <div style="font-size:13px;">${t('msimamizi_preview.info_summary_desc', { business_name: escapeHtml(userData.businessName) })}</div>
                 </div>
+                ${renderDateFilter()}
                 <div class="tabs-container">
                     <div class="tab-btn ${activeTab === 'days' ? 'active' : ''}" onclick="window.setTab('days')">${ic('calendar', 15)} ${t('msimamizi_preview.my_days')}</div>
                     <div class="tab-btn ${activeTab === 'events' ? 'active' : ''}" onclick="window.setTab('events')">${ic('bell', 15)} ${t('msimamizi_preview.notifications_tab', { count: unreadCount })}${unreadCount ? ` <span class="new-badge">${t('msimamizi_preview.badge_new')}</span>` : ''}</div>

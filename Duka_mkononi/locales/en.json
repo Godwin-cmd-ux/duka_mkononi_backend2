@@ -680,6 +680,7 @@
     "ai_reword_note": "Reworded by AI from the same verified figures."
   },
   "reports": {
+    "full_report": "Full Report",
     "cost_not_recorded": "buying price not recorded",
     "title": "Full Report",
     "sales_report": "Sales Report",
@@ -1648,7 +1649,7 @@
     "payment_unavailable_message": "PesaPal is not configured on the server yet. Your post is saved as pending — you can complete the payment from My Ads once payments are enabled.",
     "error_server_slow": "The server is taking too long to respond. Please check your connection and try again."
   },
-  "seller_sell": {
+  "seller_sell": {"outside_stock":"Outside Fridge","quantity":"Quantity","available":"Available","allocation_title":"Choose Stock Source","allocation_hint":"Source quantities must equal the sold quantity.","allocation_mismatch":"Stock allocation is incomplete.",
     "title": "Sell",
     "select_product": "Select Product",
     "refresh": "Refresh",
@@ -1745,6 +1746,19 @@
     "na_fallback": "N/A"
   },
   "preview": {
+    "filter_title": "Filter by Date Range",
+    "filter_from": "From",
+    "filter_to": "To",
+    "filter_to_lower": "to",
+    "filter_search": "Search",
+    "filter_clear": "Clear",
+    "filter_showing": "✓ Showing period:",
+    "filter_beginning": "beginning",
+    "filter_today": "today",
+    "err_date_order": "The start date is before the end date",
+    "no_sales_period": "No sales in this period",
+    "no_sales_try_change": "Try changing the selected date range.",
+    "err_date_format": "Use the date format YYYY-MM-DD (e.g. 2026-11-14)",
     "loading": "Loading...",
     "title": "Business Overview",
     "business_review": "Business Review",
@@ -2004,12 +2018,13 @@
     "nyingine": "Others",
     "tafuta": "Search"
   },
-  "tabs_seller": {
+  "muuzaji_friji": {"page_title":"Fridge - Dukamkononi Seller","title":"Fridge / Freezer","subtitle":"Manage stock inside and outside your fridges.","add":"Add Fridge","add_fridge":"Add Fridge","refresh":"Refresh","search_placeholder":"Search fridges...","loading":"Loading...","alerts_title":"Stock Alerts","no_alerts":"No alerts right now.","recent_activity":"Recent Activity","recent":"Recent Activity","no_activity":"No activity yet.","business":"Business Stock","business_stock":"Business Stock","outside":"Outside Fridge","outside_stock":"Outside Stock","inside":"Inside Fridge","inside_stock":"Inside Stock","fridges":"Fridges","alerts":"Alerts","active":"Active","archived":"Archived","units":"Units","products":"Products","low":"Low","manage":"Manage","in":"In","out":"Out","alert_business":"Business stock is low","alert_outside":"Outside stock is low","alert_fridge":"Fridge stock is low","left":"Remaining","return":"Return Outside","threshold":"Threshold","transfer_in":"Transfer In","transfer_out":"Transfer Out","transfer_title":"Transfer Stock","rename":"Rename","rename_fridge":"Rename Fridge","archive":"Archive","product":"Product","min_stock":"Minimum Level","quantity":"Quantity","notes":"Notes","no_stock":"No products in this fridge.","movements":"Movement History","no_fridges":"No fridges yet","no_fridges_hint":"Tap \"Add Fridge\" to get started.","no_products":"No products available.","invalid_transfer":"Choose a product and a valid quantity.","transfer_saved":"Stock transferred successfully.","cancel":"Cancel","confirm":"Confirm","save":"Save","name_required":"Fridge name is required.","ask_name":"Fridge name","saved":"Saved.","confirm_archive":"Archive this fridge? Historical movements are kept.","archived_done":"Fridge archived.","threshold_prompt":"Set the minimum fridge stock level:","outside_threshold_prompt":"Set the minimum outside stock level:","transfer_in_hint":"Stock moves from outside into the fridge. Business stock does not change.","transfer_out_hint":"Stock moves from the fridge back outside. Business stock does not change.","empty":"No fridges yet","empty_hint":"Tap Add Fridge to get started."}, "tabs_seller": {
     "orders": "Orders",
     "profile": "Profile",
     "sales": "Sales",
     "expenses": "Expenses",
     "sell": "Sell",
+      "fridge": "Fridge",
     "price_advisor": "Prices",
     "restock": "Restock",
     "ask": "Ask",

@@ -7,6 +7,7 @@ import { setupBackgroundSync } from '../lib/background';
 import { pingServer } from '../lib/network';
 import { consumeLogoutTarget } from '../lib/logout-target';
 import { LanguageProvider } from '../context/LanguageContext';
+import { FeatureProvider } from '../context/FeatureContext';
 import { SessionProvider, useSession } from '../context/SessionContext';
 import { getDashboardRouteForRole } from '../constants/session';
 import { ThemeProvider } from '../lib/theme';
@@ -23,7 +24,9 @@ export default function RootLayout() {
     <SessionProvider>
       <ThemeProvider>
         <LanguageProvider>
-          <RootNavigator />
+          <FeatureProvider>
+            <RootNavigator />
+          </FeatureProvider>
         </LanguageProvider>
       </ThemeProvider>
     </SessionProvider>
@@ -169,6 +172,9 @@ function RootNavigator() {
       {/* 👑 Admin (msimamizi) + System Admin */}
       <Stack.Protected guard={isAdmin}>
         <Stack.Screen name="msimamizi" options={{ headerShown: false }} />
+        {/* Branch-business administrators choose a branch (or all branches)
+            before operational screens load. */}
+        <Stack.Screen name="select-branch" options={{ headerShown: false }} />
         <Stack.Screen name="system_admin" options={{ headerShown: false }} />
       </Stack.Protected>
 

@@ -18,6 +18,7 @@ import {
 } from 'react-native';
 import SmartCartLoader from '../../components/SmartCartLoader';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFeatures } from '../../context/FeatureContext';
 import { useLang } from '../../context/LanguageContext';
 import { useSession } from '../../context/SessionContext';
 import LogoutButton from '../../components/logout-button';
@@ -45,6 +46,9 @@ export default function UzaScreen() {
   const { colors: tc } = useTheme();
   const styles = useMemo(() => makeStyles(tc), [tc]);
   const { t, lang } = useLang();
+  const { isEnabled } = useFeatures();
+  const servicesEnabled = isEnabled('services');
+  const scannerEnabled = isEnabled('scanner');
   const router = useRouter();
   const { signOut } = useSession();
   const [loading, setLoading] = useState(false);
@@ -56,6 +60,7 @@ export default function UzaScreen() {
   const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [scanCode, setScanCode] = useState('');
   
   // ✅ HII NI KIKAPU CHA BIDHAA
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -275,7 +280,7 @@ export default function UzaScreen() {
       console.log('📦 Loading products for sale...');
       
       const token = await AsyncStorage.getItem('userToken');
-      
+
       if (!token) {
         Alert.alert(t('app.error'), t('seller_dashboard.error_auth'));
         router.back();
@@ -423,6 +428,39 @@ export default function UzaScreen() {
   };
 
   // ✅ FUNCTION: ONGEZA BIDHAA KATIKA KIKAPU - HAPANA KU-PUNGUZA STOCK HAPA
+  // Resolve an existing product by barcode. The server never creates stock
+  // here; an unknown/other-branch code is rejected.
+  const scanProductBarcode = async (rawCode: string) => {
+    const code = String(rawCode || '').trim();
+    if (!code) return;
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      const response = await fetchWithTimeout(
+        `${API_BASE_URL}/api/products/lookup?barcode=${encodeURIComponent(code)}&purpose=sale`,
+        { headers: { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' } }
+      );
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.product) {
+        Alert.alert(t('app.error'), data.error || 'Bidhaa haijapatikana kwa barcode hii');
+        return;
+      }
+      const product = products.find((p: any) => String(p.id) === String(data.product.id));
+      if (!product) {
+        Alert.alert(t('app.error'), 'Bidhaa hii haipo kwenye orodha ya tawi lako. Sasisha bidhaa kwanza.');
+        return;
+      }
+      if (Number(product.stock || 0) <= 0) {
+        Alert.alert(t('app.error'), t('seller_sell.out_of_stock'));
+        return;
+      }
+      setSelectedProduct(product);
+      setQuantity('1');
+      setScanCode('');
+    } catch (e) {
+      Alert.alert(t('app.error'), 'Imeshindikana kuchanganua barcode');
+    }
+  };
+
   const addToCart = () => {
     if (!selectedProduct) {
       Alert.alert(t('app.error'), t('seller_sell.select_product'));
@@ -667,6 +705,9 @@ export default function UzaScreen() {
     }
   };
 
+  const [allocationVisible, setAllocationVisible] = useState(false);
+  const [allocationDraft, setAllocationDraft] = useState<Record<string, { fridge_id: string | null; name: string; available: number; quantity: number }[]>>({});
+
   const handleSale = async () => {
     if (!validateForm()) {
       Alert.alert(t('app.error'), t('seller_sell.add_one_product'));
@@ -674,10 +715,109 @@ export default function UzaScreen() {
     }
 
     setLoading(true);
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) {
+        Alert.alert(t('app.error'), t('seller_dashboard.error_auth'));
+        router.back();
+        return;
+      }
+      if (!(await requireNetwork())) return;
+
+      let productsAvailability: any[] = [];
+      try {
+        const ids = cart.map(item => item.product_id).join(',');
+        const response = await fetchWithTimeout(`${API_BASE_URL}/api/fridges/availability?product_ids=${encodeURIComponent(ids)}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'ngrok-skip-browser-warning': 'true'
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          productsAvailability = data.products || [];
+        }
+      } catch (availabilityError) {
+        console.warn('Fridge availability unavailable:', availabilityError);
+      }
+
+      const byProduct: Record<string, any> = {};
+      productsAvailability.forEach(product => { byProduct[product.product_id] = product; });
+      const needsAllocation = cart.some(item => Number((byProduct[item.product_id] || {}).inside_stock || 0) > 0);
+
+      if (needsAllocation) {
+        const draft: Record<string, { fridge_id: string | null; name: string; available: number; quantity: number }[]> = {};
+        cart.forEach(item => {
+          const available = byProduct[item.product_id] || { outside_stock: item.quantity, fridges: [] };
+          let remaining = Number(item.quantity);
+          const outside = Math.min(remaining, Math.max(0, Number(available.outside_stock || 0)));
+          remaining = Math.round((remaining - outside) * 1000) / 1000;
+          const sources = [{ fridge_id: null, name: t('seller_sell.outside_stock') || 'Nje ya Friji', available: Number(available.outside_stock || 0), quantity: outside }];
+          (available.fridges || []).forEach((fridge: any) => {
+            const quantity = Math.min(remaining, Number(fridge.quantity || 0));
+            remaining = Math.round((remaining - quantity) * 1000) / 1000;
+            sources.push({ fridge_id: fridge.fridge_id, name: fridge.name, available: Number(fridge.quantity || 0), quantity });
+          });
+          draft[item.product_id] = sources;
+        });
+        setAllocationDraft(draft);
+        setAllocationVisible(true);
+        return;
+      }
+
+      await submitSale(cart.map(item => ({
+        product_id: item.product_id,
+        quantity: item.quantity,
+        unit_price: item.unit_price
+      })));
+    } catch (error: any) {
+      Alert.alert(t('app.error'), error?.message || t('seller_sell.sale_error'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateAllocation = (productId: string, sourceIndex: number, value: string) => {
+    setAllocationDraft(prev => {
+      const next = { ...prev };
+      const sources = [...(next[productId] || [])];
+      if (sources[sourceIndex]) {
+        sources[sourceIndex] = { ...sources[sourceIndex], quantity: Math.max(0, Number(value) || 0) };
+      }
+      next[productId] = sources;
+      return next;
+    });
+  };
+
+  const confirmAllocationAndSale = () => {
+    const items: any[] = [];
+    for (const item of cart) {
+      const sources = allocationDraft[item.product_id] || [];
+      const total = sources.reduce((sum, source) => sum + Number(source.quantity || 0), 0);
+      if (Math.abs(total - Number(item.quantity)) > 0.0005) {
+        Alert.alert(t('app.error'), `${item.name}: ${t('seller_sell.allocation_mismatch') || 'Mgawanyo haujakamilika'}`);
+        return;
+      }
+      items.push({
+        product_id: item.product_id,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        allocations: sources.filter(source => Number(source.quantity) > 0).map(source => ({
+          fridge_id: source.fridge_id,
+          quantity: Number(source.quantity)
+        }))
+      });
+    }
+    setAllocationVisible(false);
+    submitSale(items);
+  };
+
+  const submitSale = async (items: any[]) => {
+    setLoading(true);
 
     try {
       const token = await AsyncStorage.getItem('userToken');
-      
+
       if (!token) {
         Alert.alert(t('app.error'), t('seller_dashboard.error_auth'));
         router.back();
@@ -685,13 +825,6 @@ export default function UzaScreen() {
       }
 
       if (!(await requireNetwork())) return;
-
-      // TENGENEZA ITEMS KUTOKA KIKAPUNI
-      const items = cart.map(item => ({
-        product_id: item.product_id,
-        quantity: item.quantity,
-        unit_price: item.unit_price
-      }));
 
       let customerId: string | null = null;
       
@@ -1107,7 +1240,9 @@ export default function UzaScreen() {
 
 
         {/* Uza Huduma: a sibling route so the product cart flow below is
-            untouched and keeps working exactly as before. */}
+            untouched and keeps working exactly as before. Hidden when the
+            business has switched services off; history stays readable. */}
+        {servicesEnabled && (
         <TouchableOpacity
           style={{
             backgroundColor: '#fff',
@@ -1133,6 +1268,7 @@ export default function UzaScreen() {
           </View>
           <Ionicons name="chevron-forward" size={20} color="#95a5a6" />
         </TouchableOpacity>
+        )}
 
         <View style={styles.formContainer}>
           {/* Sehemu ya Kuchagua Bidhaa */}
@@ -1168,6 +1304,21 @@ export default function UzaScreen() {
                 </TouchableOpacity>
               ) : null}
             </View>
+
+            {/* Barcode scanner: USB/Bluetooth scanners type here; Enter submits. */}
+            {scannerEnabled && <View style={[styles.searchContainer, { borderColor: '#bfdbfe', backgroundColor: '#eef5ff' }]}>
+              <Ionicons name="barcode-outline" size={20} color="#2563eb" style={styles.searchIcon} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Scan barcode / QR kisha Enter"
+                value={scanCode}
+                onChangeText={setScanCode}
+                onSubmitEditing={() => scanProductBarcode(scanCode)}
+                returnKeyType="done"
+                autoCapitalize="none"
+                placeholderTextColor="#64748b"
+              />
+            </View>}
             
             {loadingProducts ? (
               <View style={styles.loadingProducts}>
@@ -1567,6 +1718,66 @@ export default function UzaScreen() {
           </View>
         </View>
       </Modal>
+
+      <Modal
+        visible={allocationVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setAllocationVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { maxHeight: '88%' }]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{t('seller_sell.allocation_title') || 'Chagua Chanzo cha Stock'}</Text>
+              <TouchableOpacity onPress={() => setAllocationVisible(false)}>
+                <Ionicons name="close" size={24} color={tc.ink} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={{ marginBottom: 12 }}>
+              {cart.map(item => (
+                <View key={item.product_id} style={{ marginBottom: 16, borderBottomWidth: 1, borderBottomColor: tc.line, paddingBottom: 12 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <Text style={{ fontWeight: '700', color: tc.ink, flex: 1 }}>{item.name}</Text>
+                    <Text style={{ color: tc.muted, fontSize: 12 }}>{t('seller_sell.quantity') || 'Kiasi'}: {item.quantity}</Text>
+                  </View>
+                  {(allocationDraft[item.product_id] || []).map((source, index) => (
+                    <View key={String(source.fridge_id ?? 'outside')} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 10 }}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontWeight: '600', color: tc.ink, fontSize: 13 }}>{source.name}</Text>
+                        <Text style={{ color: tc.muted, fontSize: 11 }}>{t('seller_sell.available') || 'Inapatikana'}: {source.available}</Text>
+                      </View>
+                      <TextInput
+                        value={String(source.quantity)}
+                        onChangeText={value => updateAllocation(item.product_id, index, value)}
+                        keyboardType="numeric"
+                        style={{ width: 80, borderWidth: 1, borderColor: tc.line2, borderRadius: 9, padding: 8, color: tc.ink, textAlign: 'center' }}
+                      />
+                    </View>
+                  ))}
+                </View>
+              ))}
+              <Text style={{ color: tc.muted, fontSize: 12 }}>
+                {t('seller_sell.allocation_hint') || 'Jumla ya vyanzo lazima ilingane na kiasi kilichochaguliwa.'}
+              </Text>
+            </ScrollView>
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <TouchableOpacity
+                onPress={() => setAllocationVisible(false)}
+                style={{ flex: 1, padding: 13, borderRadius: 10, borderWidth: 1, borderColor: tc.line2, alignItems: 'center' }}
+              >
+                <Text style={{ color: tc.ink, fontWeight: '600' }}>{t('app.cancel') || 'Ghairi'}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={confirmAllocationAndSale}
+                style={{ flex: 1, padding: 13, borderRadius: 10, backgroundColor: tc.primary, alignItems: 'center' }}
+              >
+                <Text style={{ color: '#fff', fontWeight: '700' }}>{t('seller_sell.proceed_sale') || 'Kamilisha Mauzo'}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </KeyboardAvoidingView>
       </SafeAreaView>
   );

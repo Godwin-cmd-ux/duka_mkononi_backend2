@@ -21,6 +21,7 @@ import {
 } from 'react-native';
 import SmartCartLoader from '../../components/SmartCartLoader';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFeatures } from '../../context/FeatureContext';
 import { useLang } from '../../context/LanguageContext';
 import LogoutButton from '../../components/logout-button';
 import { getCache, setCache } from '../../db/cache';
@@ -47,6 +48,8 @@ export default function BidhaaMpyaScreen() {
   const { colors: tc } = useTheme();
   const styles = useMemo(() => makeStyles(tc), [tc]);
   const { t } = useLang();
+  const { isEnabled } = useFeatures();
+  const servicesEnabled = isEnabled('services');
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [loadingProducts, setLoadingProducts] = useState(false);
@@ -57,6 +60,7 @@ export default function BidhaaMpyaScreen() {
     price: '',
     expected_selling_price: '',
     stock: '',
+    barcode: '',
   });
   const [showCustomCategory, setShowCustomCategory] = useState(false);
   // Optional product photo (Cloudinary URL). Mirrors the Blade photo field.
@@ -66,6 +70,7 @@ export default function BidhaaMpyaScreen() {
   const [existingProducts, setExistingProducts] = useState<any[]>([]);
   const [showProductModal, setShowProductModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [scanCode, setScanCode] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [isOwnerOfSelectedProduct, setIsOwnerOfSelectedProduct] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit' | 'delete'>('add');
@@ -729,24 +734,14 @@ export default function BidhaaMpyaScreen() {
 
       if (!(await requireNetwork())) return false;
 
-      const newStock = parseInt(product.stock || '0') + quantityToAdd;
-      
-      const updateData = {
-        name: product.name,
-        category: product.category,
-        price: parseFloat(product.price),
-        stock: newStock,
-        expected_selling_price: parseFloat(product.expected_selling_price || product.price)
-      };
-
-      const response = await fetchWithTimeout(`${API_BASE_URL}/api/products/${product.id}`, {
-        method: 'PUT',
+      const response = await fetchWithTimeout(`${API_BASE_URL}/api/products/${product.id}/stock`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
           'ngrok-skip-browser-warning': 'true'
         },
-        body: JSON.stringify(updateData),
+        body: JSON.stringify({ quantity: quantityToAdd, source: 'manual', notes: 'Manual stock receiving' }),
       });
 
       if (!response.ok) {
@@ -765,6 +760,49 @@ export default function BidhaaMpyaScreen() {
       console.error('❌ Kosa wakati wa kuongeza stock:', error);
       Alert.alert(t('app.error'), t('products.error_add'));
       return false;
+    }
+  };
+
+  // Admin scanner receiving: resolve an existing row, then receive exactly one
+  // unit through the ledger endpoint. Unknown codes never create a product.
+  const scanReceiveOne = async () => {
+    const code = scanCode.trim();
+    if (!code) return;
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) { Alert.alert(t('app.error'), t('products.error_auth')); return; }
+      if (!(await requireNetwork())) return;
+
+      const lookup = await fetchWithTimeout(
+        `${API_BASE_URL}/api/products/lookup?barcode=${encodeURIComponent(code)}&purpose=admin_receiving`,
+        { headers: { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' } }
+      );
+      const found = await lookup.json().catch(() => ({}));
+      if (!lookup.ok || !found.product) {
+        Alert.alert(t('app.error'), found.error || 'Bidhaa haijapatikana kwa barcode hii');
+        return;
+      }
+
+      const receive = await fetchWithTimeout(`${API_BASE_URL}/api/products/${found.product.id}/stock`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          'ngrok-skip-browser-warning': 'true',
+        },
+        body: JSON.stringify({ quantity: 1, source: 'scanner', notes: 'Scanner receiving' }),
+      });
+      const data = await receive.json().catch(() => ({}));
+      if (!receive.ok) {
+        Alert.alert(t('app.error'), data.error || 'Stock haikupokelewa');
+        return;
+      }
+
+      setScanCode('');
+      Alert.alert(t('products.stock_add_success_title'), 'Stock +1: ' + found.product.name + '\nJumla: ' + (data.product?.stock ?? ''));
+      if (userData?.business_name) await fetchExistingProducts(token);
+    } catch (error: any) {
+      Alert.alert(t('app.error'), error?.message || 'Imeshindikana kuchanganua barcode');
     }
   };
 
@@ -859,6 +897,7 @@ export default function BidhaaMpyaScreen() {
       price: product.price?.toString() || '',
       expected_selling_price: product.expected_selling_price?.toString() || '',
       stock: '',
+      barcode: product.barcode || '',
     });
     setShowProductModal(false);
     // Focus stock input after state update
@@ -870,15 +909,7 @@ export default function BidhaaMpyaScreen() {
   const handleEditProduct = useCallback((product: any) => {
     Keyboard.dismiss();
     setSelectedProduct(product);
-    setIsOwnerOfSelectedProduct(product.seller_id === userData?.id);
-    
-    if (product.seller_id !== userData?.id) {
-      Alert.alert(
-        t('products.not_authorized_title'),
-        t('products.not_authorized')
-      );
-      return;
-    }
+    setIsOwnerOfSelectedProduct(true);
     
     setModalMode('edit');
     setProductImageUrl(product.image_url || '');
@@ -888,6 +919,7 @@ export default function BidhaaMpyaScreen() {
       price: product.price?.toString() || '',
       expected_selling_price: product.expected_selling_price?.toString() || '',
       stock: product.stock?.toString() || '',
+      barcode: product.barcode || '',
     });
     setShowProductModal(false);
     // Focus name input after state update
@@ -897,13 +929,6 @@ export default function BidhaaMpyaScreen() {
   }, [userData]);
 
   const handleDeleteProduct = useCallback((product: any) => {
-    if (product.seller_id !== userData?.id) {
-      Alert.alert(
-        t('products.not_authorized_title'),
-        t('products.not_authorized')
-      );
-      return;
-    }
     
     Alert.alert(
       t('products.confirm_delete'),
@@ -978,6 +1003,7 @@ export default function BidhaaMpyaScreen() {
           price: parseFloat(formData.price),
           stock: parseInt(formData.stock),
           expected_selling_price: parseFloat(formData.expected_selling_price),
+          barcode: formData.barcode || null,
           image_url: productImageUrl || null,
         };
         
@@ -1022,6 +1048,7 @@ export default function BidhaaMpyaScreen() {
           price: parseFloat(formData.price),
           stock: parseInt(formData.stock),
           expected_selling_price: parseFloat(formData.expected_selling_price),
+          barcode: formData.barcode || null,
           image_url: productImageUrl || null,
         };
       }
@@ -1163,6 +1190,7 @@ export default function BidhaaMpyaScreen() {
       price: '',
       expected_selling_price: '',
       stock: '',
+      barcode: '',
     });
     setProductImageUrl('');
     setUploadingPhoto(false);
@@ -1272,6 +1300,7 @@ export default function BidhaaMpyaScreen() {
       price: product.price?.toString() || '',
       expected_selling_price: product.expected_selling_price?.toString() || '',
       stock: '',
+      barcode: product.barcode || '',
     });
     
     setShowProductModal(false);
@@ -1462,6 +1491,19 @@ export default function BidhaaMpyaScreen() {
                 placeholderTextColor="#95a5a6"
               />
 
+              {isEnabled('scanner') && (
+                <TextInput
+                  style={[styles.modalSearchInput, { backgroundColor: '#eef5ff', borderColor: '#bfdbfe' }]}
+                  placeholder="Scan barcode kupokea kipande 1"
+                  value={scanCode}
+                  onChangeText={setScanCode}
+                  onSubmitEditing={scanReceiveOne}
+                  returnKeyType="done"
+                  autoCapitalize="none"
+                  placeholderTextColor="#64748b"
+                />
+              )}
+
               {loadingProducts ? (
                 <View style={styles.modalLoadingContainer}>
                   <SmartCartLoader size="large" color="#2ecc71" />
@@ -1493,7 +1535,7 @@ export default function BidhaaMpyaScreen() {
         </View>
       </TouchableWithoutFeedback>
     </Modal>
-  ), [showProductModal, searchQuery, loadingProducts, filteredProducts, renderProductItem]);
+  ), [showProductModal, searchQuery, scanCode, loadingProducts, filteredProducts, renderProductItem, isEnabled]);
 
   if (!userData) {
     return (
@@ -1563,6 +1605,7 @@ export default function BidhaaMpyaScreen() {
               <Ionicons name="cube-outline" size={16} color={tc.primary} />
               <Text style={{ fontSize: 14, fontWeight: '800', color: tc.primary }}>{t('huduma.tab_products')}</Text>
             </View>
+            {servicesEnabled && (
             <TouchableOpacity
               style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 11, borderRadius: 12 }}
               onPress={() => router.push('/msimamizi/huduma' as any)}
@@ -1571,6 +1614,7 @@ export default function BidhaaMpyaScreen() {
               <Ionicons name="cut-outline" size={16} color={tc.muted} />
               <Text style={{ fontSize: 14, fontWeight: '700', color: tc.muted }}>{t('huduma.tab_services')}</Text>
             </TouchableOpacity>
+            )}
           </View>
 
           {/* Form Section */}
@@ -2118,6 +2162,22 @@ export default function BidhaaMpyaScreen() {
                 </View>
               </View>
             )}
+
+            {/* Barcode / QR. Registration only; scanning is a read/lookup. */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Barcode / QR</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Changanua au andika barcode"
+                value={formData.barcode}
+                onChangeText={(value) => handleInputChange('barcode', value)}
+                autoCapitalize="none"
+                placeholderTextColor="#95a5a6"
+              />
+              <Text style={styles.currentStockInfo}>
+                Barcode hutumika kupata bidhaa wakati wa kuuza au kuhamisha stock. Haiwezi kutumika kuongeza stock.
+              </Text>
+            </View>
 
             {/* Stock Quantity */}
             <View style={styles.inputGroup}>

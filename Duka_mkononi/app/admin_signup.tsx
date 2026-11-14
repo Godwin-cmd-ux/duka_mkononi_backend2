@@ -11,9 +11,11 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
+import * as Location from 'expo-location';
 import SmartCartLoader from '../components/SmartCartLoader';
 import { useLang } from '../context/LanguageContext';
 import OtpVerificationModal from '../components/otp-verification-modal';
+import { reverseGeocode } from '../utils/location';
 
 import { API_BASE_URL } from '../constants/api';
 import { requireNetwork, fetchWithTimeout } from '../lib/network';
@@ -40,6 +42,61 @@ export default function AdminSignup() {
         business_location: '', // 🔄 Kubadilishwa
         adminCode: ''
     });
+
+    // Business structure is separate from business_type: it decides whether the
+    // business has one location (non_branch) or several branches, each with its
+    // own name and geographical location.
+    const [businessStructure, setBusinessStructure] = useState<'non_branch' | 'branch'>('non_branch');
+    const [branches, setBranches] = useState<Array<{
+        branch_name: string;
+        location: string;
+        latitude: number | null;
+        longitude: number | null;
+    }>>([]);
+
+    const addBranch = () => {
+        setBranches((prev) => [...prev, { branch_name: '', location: '', latitude: null, longitude: null }]);
+    };
+
+    const updateBranch = (index: number, field: 'branch_name' | 'location', value: string) => {
+        setBranches((prev) => prev.map((branch, i) => (i === index ? { ...branch, [field]: value } : branch)));
+    };
+
+    const removeBranch = (index: number) => {
+        setBranches((prev) => prev.filter((_, i) => i !== index));
+    };
+
+    const captureBranchLocation = async (index: number) => {
+        try {
+            const permission = await Location.requestForegroundPermissionsAsync();
+            if (permission.status !== 'granted') {
+                Alert.alert(t('app.error'), 'Ruhusa ya eneo imekataliwa.');
+                return;
+            }
+
+            const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+            const { latitude, longitude } = position.coords;
+            const areaName = await reverseGeocode(latitude, longitude);
+
+            Alert.alert(
+                'Tumia eneo hili?',
+                areaName || `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`,
+                [
+                    { text: 'Hapana', style: 'cancel' },
+                    {
+                        text: 'Ndiyo',
+                        onPress: () => setBranches((prev) => prev.map((branch, i) => (
+                            i === index
+                                ? { ...branch, latitude, longitude, location: areaName || branch.location }
+                                : branch
+                        ))),
+                    },
+                ]
+            );
+        } catch (error) {
+            Alert.alert(t('app.error'), 'Imeshindikana kupata eneo la tawi.');
+        }
+    };
 
     const handleSignup = async () => {
         if (!(await requireNetwork())) return;
@@ -74,6 +131,17 @@ export default function AdminSignup() {
             return;
         }
 
+        if (businessStructure === 'branch') {
+            if (branches.length === 0) {
+                Alert.alert(t('app.error'), 'Ongeza tawi moja au zaidi kwa biashara yenye matawi.');
+                return;
+            }
+            if (branches.some((branch) => !branch.branch_name.trim() || !branch.location.trim())) {
+                Alert.alert(t('app.error'), 'Jina na mahali pa kila tawi vinahitajika.');
+                return;
+            }
+        }
+
         setLoading(true);
 
         try {
@@ -90,6 +158,8 @@ export default function AdminSignup() {
                     phone: formData.phone,
                     business_name: formData.business_name,
                     business_location: formData.business_location,
+                    business_structure: businessStructure,
+                    branches: businessStructure === 'branch' ? branches : [],
                     language: lang // Pass selected language
                 }),
             });
@@ -219,6 +289,86 @@ export default function AdminSignup() {
                         onChangeText={(value) => updateFormData('business_location', value)}
                         placeholderTextColor="#95a5a6"
                     />
+
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: '#34495e', alignSelf: 'flex-start', marginBottom: 6 }}>
+                        Muundo wa Biashara *
+                    </Text>
+                    <View style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
+                        <TouchableOpacity
+                            style={[styles.input, { flex: 1, alignItems: 'center', backgroundColor: businessStructure === 'non_branch' ? '#3498db' : '#ffffff' }]}
+                            onPress={() => setBusinessStructure('non_branch')}
+                        >
+                            <Text style={{ fontWeight: '700', color: businessStructure === 'non_branch' ? '#ffffff' : '#34495e', fontSize: 12 }}>
+                                Bila Matawi
+                            </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.input, { flex: 1, alignItems: 'center', backgroundColor: businessStructure === 'branch' ? '#3498db' : '#ffffff' }]}
+                            onPress={() => {
+                                setBusinessStructure('branch');
+                                if (branches.length === 0) addBranch();
+                            }}
+                        >
+                            <Text style={{ fontWeight: '700', color: businessStructure === 'branch' ? '#ffffff' : '#34495e', fontSize: 12 }}>
+                                Yenye Matawi
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    {businessStructure === 'branch' && (
+                        <View style={{ width: '100%', backgroundColor: '#eef4fa', borderRadius: 14, padding: 12, marginBottom: 10 }}>
+                            <Text style={{ fontWeight: '700', color: '#2c3e50', fontSize: 13, marginBottom: 4 }}>
+                                MATAWI YA BIASHARA *
+                            </Text>
+                            <Text style={{ fontSize: 11, color: '#7a8ba0', marginBottom: 10 }}>
+                                Kila tawi linahitaji jina na eneo lake. Unaweza kuchukua eneo kwa GPS.
+                            </Text>
+
+                            {branches.map((branch, index) => (
+                                <View key={index} style={{ backgroundColor: '#ffffff', borderRadius: 12, padding: 10, marginBottom: 8 }}>
+                                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                                        <Text style={{ fontWeight: '700', fontSize: 12, color: '#34495e' }}>Tawi {index + 1}</Text>
+                                        {branches.length > 1 && (
+                                            <TouchableOpacity onPress={() => removeBranch(index)}>
+                                                <Text style={{ color: '#e74c3c', fontWeight: '700', fontSize: 12 }}>Ondoa</Text>
+                                            </TouchableOpacity>
+                                        )}
+                                    </View>
+                                    <TextInput
+                                        style={[styles.input, { marginBottom: 6 }]}
+                                        placeholder="Jina la Tawi *"
+                                        value={branch.branch_name}
+                                        onChangeText={(value) => updateBranch(index, 'branch_name', value)}
+                                        placeholderTextColor="#95a5a6"
+                                    />
+                                    <TextInput
+                                        style={[styles.input, { marginBottom: 6 }]}
+                                        placeholder="Mahali pa Tawi *"
+                                        value={branch.location}
+                                        onChangeText={(value) => updateBranch(index, 'location', value)}
+                                        placeholderTextColor="#95a5a6"
+                                    />
+                                    <TouchableOpacity
+                                        style={{ backgroundColor: '#e67e22', borderRadius: 9, padding: 10, alignItems: 'center' }}
+                                        onPress={() => captureBranchLocation(index)}
+                                    >
+                                        <Text style={{ color: '#ffffff', fontWeight: '700', fontSize: 12 }}>
+                                            {branch.latitude !== null
+                                                ? `Eneo: ${branch.latitude.toFixed(5)}, ${branch.longitude?.toFixed(5)}`
+                                                : 'Pata Eneo la Tawi (GPS)'}
+                                        </Text>
+                                    </TouchableOpacity>
+                                </View>
+                            ))}
+
+                            <TouchableOpacity
+                                style={{ borderWidth: 2, borderStyle: 'dashed', borderColor: '#3498db', borderRadius: 10, padding: 10, alignItems: 'center' }}
+                                onPress={addBranch}
+                            >
+                                <Text style={{ color: '#3498db', fontWeight: '700' }}>+ Ongeza Tawi</Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
 
                     <TextInput
                         style={styles.input}

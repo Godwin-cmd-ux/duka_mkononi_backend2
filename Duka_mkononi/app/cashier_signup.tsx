@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
     Alert,
     KeyboardAvoidingView,
+    Modal,
     Platform,
     ScrollView,
     StyleSheet,
@@ -41,6 +42,72 @@ export default function CashierSignup() {
         business_location: ''
     });
 
+    // Seller registration joins an existing eligible business and, for a branch
+    // business, exactly one active branch. The selectors are convenience only:
+    // the API re-validates business ownership and branch membership on submit.
+    type BusinessOption = { id: string; business_name: string; business_structure: string };
+    type BranchOption = { id: string; branch_name: string; location: string | null };
+
+    const [businessOptions, setBusinessOptions] = useState<BusinessOption[]>([]);
+    const [selectedBusiness, setSelectedBusiness] = useState<BusinessOption | null>(null);
+    const [branchOptions, setBranchOptions] = useState<BranchOption[]>([]);
+    const [selectedBranch, setSelectedBranch] = useState<BranchOption | null>(null);
+    const [businessModalVisible, setBusinessModalVisible] = useState(false);
+    const [branchModalVisible, setBranchModalVisible] = useState(false);
+
+    useEffect(() => {
+        (async () => {
+            try {
+                const response = await fetchWithTimeout(`${API_BASE_URL}/api/seller-registration/businesses`, {
+                    headers: { Accept: 'application/json', 'ngrok-skip-browser-warning': 'true' },
+                });
+                const data = await response.json();
+                if (response.ok && Array.isArray(data.businesses)) {
+                    setBusinessOptions(data.businesses);
+                }
+            } catch (error) {
+                console.warn('Seller business list unavailable', error);
+            }
+        })();
+    }, []);
+
+    const chooseBusiness = async (business: BusinessOption) => {
+        setSelectedBusiness(business);
+        setBusinessModalVisible(false);
+        setSelectedBranch(null);
+        setBranchOptions([]);
+
+        setFormData((prev) => ({
+            ...prev,
+            business_name: business.business_name,
+        }));
+
+        if (business.business_structure !== 'branch') return;
+
+        try {
+            const response = await fetchWithTimeout(
+                `${API_BASE_URL}/api/seller-registration/businesses/${encodeURIComponent(business.id)}/branches`,
+                { headers: { Accept: 'application/json', 'ngrok-skip-browser-warning': 'true' } }
+            );
+            const data = await response.json();
+            if (response.ok && Array.isArray(data.branches)) {
+                setBranchOptions(data.branches);
+                setBranchModalVisible(true);
+            }
+        } catch (error) {
+            Alert.alert(t('app.error'), 'Imeshindikana kupata matawi ya biashara hii.');
+        }
+    };
+
+    const chooseBranch = (branch: BranchOption) => {
+        setSelectedBranch(branch);
+        setBranchModalVisible(false);
+        setFormData((prev) => ({
+            ...prev,
+            business_location: prev.business_location || branch.location || '',
+        }));
+    };
+
     const handleSignup = async () => {
         if (!(await requireNetwork())) return;
 
@@ -48,6 +115,11 @@ export default function CashierSignup() {
         if (!formData.email || !formData.password || !formData.full_name || 
             !formData.business_name || !formData.business_location) {
             Alert.alert(t('app.error'), t('seller_signup.error_required'));
+            return;
+        }
+
+        if (selectedBusiness?.business_structure === 'branch' && !selectedBranch) {
+            Alert.alert(t('app.error'), 'Chagua tawi la biashara unayojiunga nayo.');
             return;
         }
 
@@ -129,6 +201,8 @@ export default function CashierSignup() {
                     role: 'seller',
                     full_name: formData.full_name,
                     phone: formData.phone,
+                    business_id: selectedBusiness?.id,
+                    branch_id: selectedBranch?.id,
                     business_name: formData.business_name,
                     business_location: formData.business_location,
                     language: lang // Pass selected language
@@ -280,16 +354,29 @@ export default function CashierSignup() {
                         textAlignVertical="center"
                     />
 
-                    <TextInput
-                        style={styles.input}
-                        placeholder={t('seller_signup.business_name_placeholder')}
-                        value={formData.business_name}
-                        onChangeText={(value) => updateFormData('business_name', value)}
-                        placeholderTextColor="#95a5a6"
-                        cursorColor="#2ecc71"
-                        selectionColor="rgba(46, 204, 113, 0.3)"
-                        textAlignVertical="center"
-                    />
+                    <TouchableOpacity
+                        style={[styles.input, { justifyContent: 'center' }]}
+                        onPress={() => setBusinessModalVisible(true)}
+                        activeOpacity={0.8}
+                    >
+                        <Text style={{ color: selectedBusiness ? '#2c3e50' : '#95a5a6', fontSize: 16 }}>
+                            {selectedBusiness ? selectedBusiness.business_name : 'Chagua Biashara Unayojiunga Nayo *'}
+                        </Text>
+                    </TouchableOpacity>
+
+                    {selectedBusiness && selectedBusiness.business_structure === 'branch' && (
+                        <TouchableOpacity
+                            style={[styles.input, { justifyContent: 'center' }]}
+                            onPress={() => setBranchModalVisible(true)}
+                            activeOpacity={0.8}
+                        >
+                            <Text style={{ color: selectedBranch ? '#2c3e50' : '#95a5a6', fontSize: 16 }}>
+                                {selectedBranch
+                                    ? `${selectedBranch.branch_name}${selectedBranch.location ? ' — ' + selectedBranch.location : ''}`
+                                    : 'Chagua Tawi Lako *'}
+                            </Text>
+                        </TouchableOpacity>
+                    )}
 
                     <TextInput
                         style={styles.input}
@@ -400,6 +487,72 @@ export default function CashierSignup() {
                 onVerified={handleOtpVerified}
                 onClose={() => setOtpVisible(false)}
             />
+
+            {/* Business picker */}
+            <Modal visible={businessModalVisible} transparent animationType="slide" onRequestClose={() => setBusinessModalVisible(false)}>
+                <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
+                    <View style={{ backgroundColor: '#ffffff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: '70%' }}>
+                        <Text style={{ fontSize: 17, fontWeight: '800', color: '#2c3e50', marginBottom: 4 }}>Chagua Biashara</Text>
+                        <Text style={{ fontSize: 12, color: '#7f8c8d', marginBottom: 12 }}>
+                            Biashara zinazoonyeshwa zina msimamizi aliyethibitishwa.
+                        </Text>
+                        <ScrollView>
+                            {businessOptions.map((business) => (
+                                <TouchableOpacity
+                                    key={business.id}
+                                    style={{ paddingVertical: 13, borderBottomWidth: 1, borderBottomColor: '#eef2f7' }}
+                                    onPress={() => chooseBusiness(business)}
+                                >
+                                    <Text style={{ fontSize: 15, fontWeight: '700', color: '#2c3e50' }}>{business.business_name}</Text>
+                                    <Text style={{ fontSize: 11, color: '#7f8c8d' }}>
+                                        {business.business_structure === 'branch' ? 'Biashara yenye matawi' : 'Biashara bila matawi'}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                            {businessOptions.length === 0 && (
+                                <Text style={{ fontSize: 13, color: '#7f8c8d', paddingVertical: 16 }}>
+                                    Hakuna biashara inayopatikana kwa sasa.
+                                </Text>
+                            )}
+                        </ScrollView>
+                        <TouchableOpacity style={{ paddingVertical: 12, alignItems: 'center' }} onPress={() => setBusinessModalVisible(false)}>
+                            <Text style={{ color: '#e74c3c', fontWeight: '700' }}>Funga</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Branch picker */}
+            <Modal visible={branchModalVisible} transparent animationType="slide" onRequestClose={() => setBranchModalVisible(false)}>
+                <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
+                    <View style={{ backgroundColor: '#ffffff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: '70%' }}>
+                        <Text style={{ fontSize: 17, fontWeight: '800', color: '#2c3e50', marginBottom: 4 }}>Chagua Tawi</Text>
+                        <Text style={{ fontSize: 12, color: '#7f8c8d', marginBottom: 12 }}>
+                            Utahudumu katika tawi hili tu. Msimamizi anaweza kubadilisha baadaye.
+                        </Text>
+                        <ScrollView>
+                            {branchOptions.map((branch) => (
+                                <TouchableOpacity
+                                    key={branch.id}
+                                    style={{ paddingVertical: 13, borderBottomWidth: 1, borderBottomColor: '#eef2f7' }}
+                                    onPress={() => chooseBranch(branch)}
+                                >
+                                    <Text style={{ fontSize: 15, fontWeight: '700', color: '#2c3e50' }}>{branch.branch_name}</Text>
+                                    <Text style={{ fontSize: 11, color: '#7f8c8d' }}>{branch.location || 'Eneo halijachukuliwa'}</Text>
+                                </TouchableOpacity>
+                            ))}
+                            {branchOptions.length === 0 && (
+                                <Text style={{ fontSize: 13, color: '#7f8c8d', paddingVertical: 16 }}>
+                                    Biashara hii haina tawi hai. Wasiliana na msimamizi.
+                                </Text>
+                            )}
+                        </ScrollView>
+                        <TouchableOpacity style={{ paddingVertical: 12, alignItems: 'center' }} onPress={() => setBranchModalVisible(false)}>
+                            <Text style={{ color: '#e74c3c', fontWeight: '700' }}>Funga</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </KeyboardAvoidingView>
     );
 }

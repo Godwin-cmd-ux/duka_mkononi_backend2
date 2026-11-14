@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Business;
 use App\Models\User;
+use App\Services\Ai\Locale;
 use App\Services\BusinessResolver;
 use App\Services\ThemePreference;
 use Illuminate\Database\QueryException;
@@ -49,24 +50,64 @@ class ProfileController extends BaseController
         $ip = $this->ip($request);
 
         $all = $request->all();
-        $full_name = $request->input('full_name');
-        $phone = $request->input('phone');
-        $business_name = $request->input('business_name');
-        $business_location = $request->input('business_location');
-        $business_logo_url = $request->input('business_logo_url');
-        $business_latitude = $request->input('business_latitude');
-        $business_longitude = $request->input('business_longitude');
-        $business_type = $request->input('business_type');
-        $business_description = $request->input('business_description');
+
+        // Validate only the fields that were sent: this endpoint serves both
+        // the dashboard edit modal and the Settings page, which saves one
+        // section at a time. Protected columns (role, status, business_id,
+        // branch_id, email) are never read from this payload at all, so no
+        // amount of extra JSON can change them.
+        $validator = \Illuminate\Support\Facades\Validator::make($all, [
+            'full_name' => 'sometimes|required|string|min:2|max:120',
+            'phone' => 'sometimes|nullable|string|max:30|regex:/^[0-9+\-\s()]*$/',
+            'business_name' => 'sometimes|required|string|min:2|max:150',
+            'business_location' => 'sometimes|nullable|string|max:255',
+            'business_logo_url' => 'sometimes|nullable|string|max:2048',
+            'business_latitude' => 'sometimes|nullable|numeric|between:-90,90',
+            'business_longitude' => 'sometimes|nullable|numeric|between:-180,180',
+            'business_type' => 'sometimes|nullable|string|max:100',
+            'business_description' => 'sometimes|nullable|string|max:1000',
+        ]);
+
+        if ($validator->fails()) {
+            $this->log($userId, 'PROFILE_UPDATE_FAILED', '/api/user/profile', ['reason' => 'Validation failed'], $ip, 'failed');
+
+            return $this->json([
+                'error' => $validator->errors()->first(),
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        foreach (['full_name', 'phone', 'business_name', 'business_location', 'business_logo_url', 'business_type', 'business_description'] as $field) {
+            if (array_key_exists($field, $all) && is_string($all[$field])) {
+                $all[$field] = trim($all[$field]);
+            }
+        }
+
+        $full_name = $all['full_name'] ?? null;
+        $phone = $all['phone'] ?? null;
+        $business_name = $all['business_name'] ?? null;
+        $business_location = $all['business_location'] ?? null;
+        $business_logo_url = $all['business_logo_url'] ?? null;
+        $business_latitude = $all['business_latitude'] ?? null;
+        $business_longitude = $all['business_longitude'] ?? null;
+        $business_type = $all['business_type'] ?? null;
+        $business_description = $all['business_description'] ?? null;
 
         try {
             $businessKeys = array_values(array_intersect(self::BUSINESS_FIELDS, array_keys($all)));
             $hasBusinessEdit = count($businessKeys) > 0 || $business_name !== null;
 
-            if (!$full_name && !$business_logo_url && !$business_type && !$business_description && !array_key_exists('business_latitude', $all) && !array_key_exists('business_longitude', $all)) {
-                $this->log($userId, 'PROFILE_UPDATE_FAILED', '/api/user/profile', ['reason' => 'Full name required'], $ip, 'failed');
-                return $this->json(['error' => 'Jina kamili linahitajika'], 400);
+            $recognised = array_merge(self::BUSINESS_FIELDS, [
+                'full_name', 'phone', 'business_name', 'business_location',
+                'business_logo_url', 'business_latitude', 'business_longitude',
+            ]);
+
+            if (array_intersect($recognised, array_keys($all)) === []) {
+                $this->log($userId, 'PROFILE_UPDATE_FAILED', '/api/user/profile', ['reason' => 'No editable field supplied'], $ip, 'failed');
+                return $this->json(['error' => 'Hakuna taarifa za kuhifadhi'], 400);
             }
+
+            $beforeUser = User::where('id', $userId)->select('full_name', 'phone')->first();
 
             $updateData = [
                 'updated_at' => $this->isoNow(),
@@ -81,8 +122,11 @@ class ProfileController extends BaseController
             }
 
             $updatedBusinessId = $this->businessId($request) ?: BusinessResolver::idForUser($userId);
+            $beforeBusiness = null;
+            $businessUpdate = null;
 
             if ($updatedBusinessId && $hasBusinessEdit) {
+                $beforeBusiness = Business::where('id', $updatedBusinessId)->first();
                 $businessUpdate = ['updated_at' => $this->isoNow()];
 
                 if (array_key_exists('business_name', $all) && $business_name) {
@@ -160,8 +204,40 @@ class ProfileController extends BaseController
 
             $fieldsUpdated = array_values(array_diff(array_keys($updateData), ['updated_at', 'last_seen']));
 
+            // Audit old/new values for every field that actually changed. Keys
+            // that are internal (timestamps, the derived rename key) are left
+            // out; no secret is ever part of this payload.
+            $changes = [];
+            foreach (['full_name', 'phone'] as $field) {
+                if (! array_key_exists($field, $updateData)) {
+                    continue;
+                }
+
+                $old = $beforeUser->{$field} ?? null;
+                $new = $updateData[$field];
+
+                if ((string) $old !== (string) $new) {
+                    $changes[$field] = ['from' => $old, 'to' => $new];
+                }
+            }
+
+            if ($beforeBusiness && is_array($businessUpdate)) {
+                foreach ($businessUpdate as $field => $new) {
+                    if (in_array($field, ['updated_at', 'legacy_name_key'], true)) {
+                        continue;
+                    }
+
+                    $old = $beforeBusiness->{$field} ?? null;
+                    if ((string) $old !== (string) $new) {
+                        $changes[$field] = ['from' => $old, 'to' => $new ?: null];
+                    }
+                }
+            }
+
             $this->log($userId, 'PROFILE_UPDATE', '/api/user/profile', [
                 'fields_updated' => $fieldsUpdated,
+                'changes' => $changes,
+                'business_id' => $updatedBusinessId,
             ], $ip, 'success');
 
             return $this->json([
@@ -206,6 +282,43 @@ class ProfileController extends BaseController
         } catch (\Throwable $error) {
             $this->log($userId, 'PREFERRED_THEME_UPDATE_ERROR', '/api/user/theme', ['error' => $error->getMessage()], $ip, 'failed');
             return $this->dbError($error, 'Hitilafu ya ndani ya server');
+        }
+    }
+
+    /**
+     * Persist the caller's preferred language on their account.
+     *
+     * This is the SAME preference the website language widget and the mobile
+     * LanguageContext already use (users.language, surfaced in the JWT and
+     * re-synchronized at login). The Settings page writes it here instead of
+     * introducing a second language store; the allow-list is the one
+     * App\Services\Ai\Locale::TAGS catalogue.
+     */
+    public function language(Request $request)
+    {
+        $userId = $this->userId($request);
+        $ip = $this->ip($request);
+
+        $raw = $request->input('language');
+        $language = is_string($raw) ? strtolower(trim($raw)) : '';
+
+        if (! array_key_exists($language, Locale::TAGS)) {
+            $this->log($userId, 'PREFERRED_LANGUAGE_UPDATE_FAILED', '/api/user/language', ['reason' => 'Invalid language'], $ip, 'failed');
+
+            return $this->json(['error' => 'Lugha si sahihi'], 422);
+        }
+
+        try {
+            User::where('id', $userId)->update([
+                'language' => $language,
+                'updated_at' => $this->isoNow(),
+            ]);
+
+            $this->log($userId, 'PREFERRED_LANGUAGE_UPDATE', '/api/user/language', ['language' => $language], $ip, 'success');
+
+            return $this->json(['language' => $language]);
+        } catch (\Throwable $error) {
+            return $this->dbError($error, 'Imeshindikana kuhifadhi lugha');
         }
     }
 
@@ -292,7 +405,7 @@ class ProfileController extends BaseController
         $user = $this->selectProfile([
             'id', 'email', 'role', 'full_name', 'phone', 'business_name', 'business_location',
             'business_logo_url', 'business_latitude', 'business_longitude', 'status', 'is_online',
-            'last_seen', 'created_at', 'updated_at', 'business_id',
+            'last_seen', 'created_at', 'updated_at', 'business_id', 'branch_id',
         ])->where('id', $userId)->first();
 
         if (!$user) {
@@ -310,6 +423,20 @@ class ProfileController extends BaseController
             $user->business_type = null;
             $user->business_description = null;
         }
+
+        // A seller's branch, read from the same business so a stale/dangling
+        // assignment can never label the account with another tenant's branch.
+        $branchId = $user->branch_id ?? null;
+        $branch = null;
+
+        if ($branchId && $businessId) {
+            $branch = \App\Models\Branch::where('id', $branchId)
+                ->where('business_id', $businessId)
+                ->first();
+        }
+
+        $user->branch_name = $branch->branch_name ?? null;
+        $user->branch_location = $branch->location ?? null;
 
         return $user;
     }

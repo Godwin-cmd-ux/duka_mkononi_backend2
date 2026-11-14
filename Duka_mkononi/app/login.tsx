@@ -317,6 +317,12 @@ export default function LoginScreen() {
                 userName: user.full_name || user.email.split('@')[0],
                 userLanguage: lang, // Save selected language
                 isLoggedIn: 'true', // 🔒 Persistent login: stays logged in until Logout
+                // Branch context (empty for non-branch businesses). A branch
+                // admin has branch_context 'unselected' here and is sent to
+                // /select-branch by the dashboard before operational data loads.
+                branchId: user.branch_id || '',
+                branchContext: user.branch_context || 'non_branch',
+                businessStructure: user.business_structure || 'non_branch',
                 ...(user.business_name && { userBusiness: user.business_name })
             };
 

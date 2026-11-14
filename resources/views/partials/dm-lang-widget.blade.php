@@ -363,6 +363,34 @@
                     headers: { 'Accept': 'application/json' }
                 }).catch(function () {});
             } catch (e) {}
+
+            // Keep the ACCOUNT preference in step with the browser choice, so
+            // settings changed here are also what the mobile app and the next
+            // login receive. Best-effort: the session choice above already
+            // applied, and a logged-out visitor simply has no account row.
+            try {
+                var token = global.localStorage && localStorage.getItem('userToken');
+                if (token) {
+                    fetch('/api/user/language', {
+                        method: 'PUT',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + token
+                        },
+                        body: JSON.stringify({ language: code })
+                    }).catch(function () {});
+
+                    var rawUser = localStorage.getItem('userData');
+                    if (rawUser) {
+                        var storedUser = JSON.parse(rawUser);
+                        if (storedUser && typeof storedUser === 'object') {
+                            storedUser.language = code;
+                            localStorage.setItem('userData', JSON.stringify(storedUser));
+                        }
+                    }
+                }
+            } catch (e) {}
             return;
         }
         render();

@@ -41,7 +41,7 @@ class NotificationController extends BaseController
                 $messageId = $event->sent->getMessageId();
             });
 
-            Mail::html($html, [], function ($m) use ($to, $subject) {
+            Mail::html($html, function ($m) use ($to, $subject) {
                 $m->to($to)->subject($subject);
             });
 

@@ -759,6 +759,10 @@
                     </div>
                     <span class="nav-label" data-i18n="muuzaji_mauzo.nav_sell">Uza</span>
                 </a>
+                <a href="friji" class="nav-item">
+                    <div class="nav-icon"><i class="fa-solid fa-snowflake" aria-hidden="true"></i></div>
+                    <span class="nav-label" data-i18n="muuzaji_sidebar.nav_fridge">Friji</span>
+                </a>
                 <a href="orders" class="nav-item">
                     <div class="nav-icon">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">

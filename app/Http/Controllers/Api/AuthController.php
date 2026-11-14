@@ -2,10 +2,14 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\Branch;
+use App\Models\Business;
 use App\Models\User;
+use App\Services\BranchContext;
 use App\Services\BusinessBlock;
 use App\Services\BusinessResolver;
 use App\Services\JwtToken;
+use App\Services\Supabase;
 use App\Services\ThemePreference;
 use Firebase\JWT\ExpiredException;
 use UnexpectedValueException;
@@ -99,6 +103,10 @@ class AuthController extends BaseController
         $business_location = $verified->business_location ?? null;
         $business_type = $verified->business_type ?? null;
         $business_description = $verified->business_description ?? null;
+        $business_structure = $verified->business_structure ?? 'non_branch';
+        $branches = $verified->branches ?? [];
+        $seller_business_id = $verified->business_id ?? null;
+        $seller_branch_id = $verified->branch_id ?? null;
         $language = $verified->language ?? 'sw';
 
         if ($request->input('email') && strtolower(trim($request->input('email'))) !== strtolower(trim($email))) {
@@ -112,6 +120,31 @@ class AuthController extends BaseController
             if ($existingUsers && $existingUsers->count() > 0) {
                 $this->log(null, 'REGISTER_FAILED', '/api/register', ['reason' => 'Account already exists', 'email' => $email, 'role' => $role], $ip, 'failed');
                 return $this->json(['error' => 'Akaunti na barua pepe hii tayari ipo'], 400);
+            }
+
+            if ($role === 'seller') {
+                // Re-validate against the database, not the OTP cache: the
+                // business must exist and the branch must still be active and
+                // owned by that business at the moment the account is created.
+                $assignment = $this->resolveSellerAssignment(
+                    is_string($seller_business_id) ? $seller_business_id : null,
+                    is_string($business_name) ? $business_name : null,
+                    is_string($seller_branch_id) ? $seller_branch_id : null
+                );
+
+                if (isset($assignment['error'])) {
+                    $this->log(null, 'REGISTER_FAILED', '/api/register', [
+                        'reason' => 'Invalid seller business/branch',
+                        'email' => $email,
+                    ], $ip, 'failed');
+
+                    return $this->json(['error' => $assignment['error'], 'code' => $assignment['code'] ?? 'BRANCH_REQUIRED'], 400);
+                }
+
+                $business_name = $assignment['business_name'];
+                $seller_business_id = $assignment['business_id'];
+                $seller_branch_id = $assignment['branch_id'];
+                $business_structure = $assignment['business_structure'];
             }
 
             if ($role === 'admin' || $role === 'seller') {
@@ -171,25 +204,34 @@ class AuthController extends BaseController
             // and business_description have a home: they were previously written
             // to users, where the columns do not exist, and silently discarded.
             $businessId = null;
-            if ($business_name) {
-                $business = BusinessResolver::resolveOrCreate($business_name, [
-                    'business_type' => $business_type ?: null,
-                    'business_description' => $business_description ?: null,
-                ]);
-                $businessId = $business?->id;
+            if ($role === 'seller' && $seller_business_id) {
+                // Sellers join an existing business; they never create one.
+                $businessId = (string) $seller_business_id;
+            } elseif ($business_name) {
+                $registration = $this->createBusinessWithBranches(
+                    (string) $business_name,
+                    (string) ($business_structure ?: 'non_branch'),
+                    is_array($branches) ? $branches : [],
+                    [
+                        'business_type' => $business_type ?: null,
+                        'business_description' => $business_description ?: null,
+                        'business_location' => $business_location ?: null,
+                    ]
+                );
 
-                if ($businessId && ($business_location || $business_type)) {
-                    $patch = [];
-                    if ($business_location) {
-                        $patch['business_location'] = $business_location;
-                    }
-                    if ($business_type && ! $business?->business_type) {
-                        $patch['business_type'] = $business_type;
-                    }
-                    if ($patch) {
-                        \App\Models\Business::where('id', $businessId)->update($patch);
-                    }
+                if (! empty($registration['error'])) {
+                    $this->log(null, 'REGISTER_FAILED', '/api/register', [
+                        'reason' => 'Business/branch creation failed',
+                        'error' => $registration['error'],
+                    ], $ip, 'failed');
+
+                    return $this->json([
+                        'error' => 'Biashara na matawi hayakuweza kuhifadhiwa. Tafadhali jaribu tena.',
+                        'code' => 'BUSINESS_CREATE_FAILED',
+                    ], 500);
                 }
+
+                $businessId = $registration['business_id'];
             }
 
             $userData = [
@@ -201,6 +243,7 @@ class AuthController extends BaseController
                 'phone' => $phone ?: null,
                 'business_name' => $business_name ?: null,
                 'business_id' => $businessId,
+                'branch_id' => $role === 'seller' ? ($seller_branch_id ?: null) : null,
                 'business_location' => $business_location ?: null,
                 'language' => $language ?: 'sw',
                 'status' => $userStatus,
@@ -263,6 +306,10 @@ class AuthController extends BaseController
         $business_location = $request->input('business_location');
         $business_type = $request->input('business_type');
         $business_description = $request->input('business_description');
+        $business_structure = $request->input('business_structure');
+        $branchesInput = $request->input('branches');
+        $seller_business_id = $request->input('business_id');
+        $seller_branch_id = $request->input('branch_id');
         $language = $request->input('language');
 
         if (!$email || !$password || !$role) {
@@ -281,6 +328,59 @@ class AuthController extends BaseController
         if ($role === 'admin' && (!$business_type || !in_array($business_type, self::BUSINESS_TYPE_ALLOWED, true))) {
             $this->log(null, 'REGISTER_INITIATE_FAILED', '/api/register/initiate', ['reason' => 'Invalid business_type', 'email' => $email, 'role' => $role, 'business_type' => $business_type], $ip, 'failed');
             return $this->json(['error' => 'Aina ya biashara inahitajika'], 400);
+        }
+
+        // Branch/non-branch choice. `business_type` above is the industry; this
+        // is a separate field so the existing registration rules keep working.
+        $business_structure = is_string($business_structure) ? trim($business_structure) : '';
+        $branches = [];
+
+        if ($role === 'admin') {
+            if ($business_structure !== '' && ! in_array($business_structure, BranchContext::STRUCTURES, true)) {
+                return $this->json(['error' => 'Aina ya biashara (matawi) si sahihi'], 400);
+            }
+            $business_structure = $business_structure !== '' ? $business_structure : 'non_branch';
+
+            $parsed = $this->normalizeBranches($branchesInput);
+            if (isset($parsed['error'])) {
+                return $this->json(['error' => $parsed['error']], 400);
+            }
+            $branches = $parsed['branches'];
+
+            if ($business_structure === 'branch' && count($branches) === 0) {
+                return $this->json(['error' => 'Biashara yenye matawi inahitaji tawi moja au zaidi'], 400);
+            }
+        } else {
+            $business_structure = 'non_branch';
+            $branches = [];
+        }
+
+        // A seller joins an existing, eligible business and (for a branch
+        // business) exactly one active branch. The values are accepted here for
+        // the OTP round-trip but re-validated against the database when the
+        // account is actually created. They must NOT be cleared first: the
+        // branch selector sends business_id + branch_id, and discarding them
+        // here made every branch seller fail with BRANCH_REQUIRED.
+        if ($role === 'seller') {
+            $assignment = $this->resolveSellerAssignment(
+                is_string($seller_business_id) ? $seller_business_id : null,
+                is_string($business_name) ? $business_name : null,
+                is_string($seller_branch_id) ? $seller_branch_id : null
+            );
+
+            if (isset($assignment['error'])) {
+                $this->log(null, 'REGISTER_INITIATE_FAILED', '/api/register/initiate', [
+                    'reason' => 'Invalid seller business/branch',
+                    'email' => $email,
+                ], $ip, 'failed');
+
+                return $this->json(['error' => $assignment['error'], 'code' => $assignment['code'] ?? 'BRANCH_REQUIRED'], 400);
+            }
+
+            $business_name = $assignment['business_name'];
+            $business_structure = $assignment['business_structure'];
+            $seller_business_id = $assignment['business_id'];
+            $seller_branch_id = $assignment['branch_id'];
         }
 
         if (strlen($password) < 6) {
@@ -370,6 +470,10 @@ class AuthController extends BaseController
                     'business_location' => $business_location,
                     'business_type' => $business_type,
                     'business_description' => $business_description,
+                    'business_structure' => $business_structure,
+                    'branches' => $branches,
+                    'business_id' => $seller_business_id,
+                    'branch_id' => $seller_branch_id,
                     'language' => $language
                 ],
                 'expiresAt' => (int) (microtime(true) * 1000) + self::OTP_EXPIRY_MS,
@@ -464,6 +568,10 @@ class AuthController extends BaseController
                 'business_location' => $payload['business_location'] ?: null,
                 'business_type' => $payload['business_type'] ?: null,
                 'business_description' => $payload['business_description'] ?: null,
+                'business_structure' => $payload['business_structure'] ?: 'non_branch',
+                'branches' => $payload['branches'] ?? [],
+                'business_id' => $payload['business_id'] ?? null,
+                'branch_id' => $payload['branch_id'] ?? null,
                 'language' => $payload['language'] ?: 'sw',
                 'type' => 'registration_verified',
                 'verifiedAt' => (int) (microtime(true) * 1000),
@@ -678,10 +786,49 @@ class AuthController extends BaseController
                 'updated_at' => $now
             ]);
 
+            // Multi-branch: the token carries the business structure and, for
+            // a seller, their assigned branch. A branch-business administrator
+            // starts UNSELECTED and must choose a branch (or cross-branch)
+            // through POST /api/branch-context before operational endpoints
+            // return any rows.
+            $structure = BranchContext::structure($accountBusinessId ?: null);
+            $branch = BranchContext::resolve(
+                $accountBusinessId ?: null,
+                $user->role,
+                $user->id,
+                null,
+                null,
+                $structure
+            );
+
+            // A seller is bound to one branch. If that branch is missing,
+            // inactive, or belongs to another business, login is refused rather
+            // than silently falling back to another branch or to a business-wide
+            // view. Non-branch sellers and administrators are unaffected.
+            if ($user->role === 'seller' && $structure === 'branch' && $branch['context'] !== BranchContext::INDIVIDUAL) {
+                $this->log($user->id, 'LOGIN_FAILED', '/api/login', [
+                    'reason' => 'Seller branch unavailable',
+                    'business_id' => $accountBusinessId,
+                ], $ip, 'failed');
+
+                return $this->json([
+                    'error' => 'Tawi ulilopewa halipatikani au limezimwa. Wasiliana na msimamizi wa biashara yako.',
+                    'code' => 'BRANCH_UNAVAILABLE',
+                ], 403);
+            }
+
+            $branchRow = $branch['branch_id']
+                ? Branch::where('id', $branch['branch_id'])->first()
+                : null;
+
             $token = JwtToken::encode([
                 'userId' => $user->id,
                 'email' => $user->email,
-                'role' => $user->role
+                'role' => $user->role,
+                'business_id' => $accountBusinessId ?: null,
+                'business_structure' => $structure,
+                'branch_id' => $branch['branch_id'],
+                'branch_context' => $branch['context'],
             ]);
 
             $this->log($user->id, 'LOGIN_SUCCESS', '/api/login', [
@@ -709,6 +856,13 @@ class AuthController extends BaseController
                     'role' => $user->role,
                     'full_name' => $user->full_name,
                     'business_name' => $user->business_name,
+                    'business_id' => $accountBusinessId ?: null,
+                    'business_structure' => $structure,
+                    'branch_id' => $branch['branch_id'],
+                    'branch_name' => $branchRow->branch_name ?? null,
+                    'branch_location' => $branchRow->location ?? null,
+                    'branch_context' => $branch['context'],
+                    'needs_branch_selection' => $structure === 'branch' && $branch['context'] === BranchContext::UNSELECTED,
                     'business_location' => $user->business_location,
                     'business_logo_url' => $user->business_logo_url ?: null,
                     'business_latitude' => $user->business_latitude ?: null,
@@ -725,6 +879,224 @@ class AuthController extends BaseController
             $this->log(null, 'LOGIN_ERROR', '/api/login', ['error' => $error->getMessage(), 'email' => $email, 'role' => $role], $ip, 'failed');
             return $this->json(['error' => 'Hitilafu ya ndani ya server: ' . $error->getMessage()], 500);
         }
+    }
+
+    /**
+     * Resolve the business a seller is joining and, for a branch business,
+     * verify the selected branch belongs to that business and is active.
+     *
+     * The seller never creates a business. When an id is supplied it must
+     * already exist and have an approved administrator; the legacy name-based
+     * flow is kept for clients that do not send an id yet, and is subject to
+     * the same branch rule so it cannot bypass branch assignment.
+     *
+     * @return array{business_id?:string,business_name?:string,business_structure?:string,branch_id?:?string,error?:string,code?:string}
+     */
+    private function resolveSellerAssignment(?string $businessId, ?string $businessName, ?string $branchId): array
+    {
+        $business = null;
+
+        if ($businessId !== null && trim($businessId) !== '') {
+            try {
+                $business = Business::where('id', trim($businessId))->first();
+            } catch (\Throwable $e) {
+                $business = null;
+            }
+        }
+
+        if (! $business && $businessName !== null && trim($businessName) !== '') {
+            $business = BusinessResolver::findByName(trim($businessName));
+        }
+
+        if (! $business) {
+            return ['error' => 'Biashara hii haipatikani kwenye mfumo.', 'code' => 'BUSINESS_NOT_FOUND'];
+        }
+
+        $canonicalName = trim((string) ($business->business_name ?? ''));
+
+        $hasApprovedAdmin = User::where('business_id', (string) $business->id)
+            ->whereIn('role', \App\Services\Roles::BUSINESS_OWNERS)
+            ->where('status', 'approved')
+            ->count() > 0;
+
+        if (! $hasApprovedAdmin) {
+            $hasApprovedAdmin = User::whereRaw('LOWER(business_name) = ?', [mb_strtolower($canonicalName)])
+                ->whereIn('role', \App\Services\Roles::BUSINESS_OWNERS)
+                ->where('status', 'approved')
+                ->count() > 0;
+        }
+
+        if (! $hasApprovedAdmin) {
+            return ['error' => 'Biashara hii haina msimamizi. Tafadhali jisajili kama msimamizi kwanza.', 'code' => 'BUSINESS_NO_ADMIN'];
+        }
+
+        $structure = in_array((string) ($business->business_structure ?? ''), BranchContext::STRUCTURES, true)
+            ? (string) $business->business_structure
+            : BranchContext::NON_BRANCH;
+
+        $resolvedBranchId = null;
+
+        if ($structure === 'branch') {
+            $requested = $branchId !== null ? trim($branchId) : '';
+
+            if ($requested === '') {
+                return ['error' => 'Chagua tawi la biashara unayojiunga nayo.', 'code' => 'BRANCH_REQUIRED'];
+            }
+
+            $branch = BranchContext::activeBranch($requested, (string) $business->id);
+
+            if (! $branch) {
+                return ['error' => 'Tawi ulilochagua halipatikani kwenye biashara hii au limezimwa.', 'code' => 'BRANCH_NOT_FOUND'];
+            }
+
+            $resolvedBranchId = (string) $branch->id;
+        }
+
+        return [
+            'business_id' => (string) $business->id,
+            'business_name' => $canonicalName,
+            'business_structure' => $structure,
+            'branch_id' => $resolvedBranchId,
+        ];
+    }
+
+    /**
+     * Validate and normalise the branch rows sent at registration.
+     *
+     * Each branch requires a name and a location; coordinates are optional
+     * (a denied GPS permission must not silently store 0,0 - missing stays
+     * null and the administrator can capture the pin later).
+     *
+     * @return array{branches?: list<array<string,mixed>>, error?: string}
+     */
+    private function normalizeBranches($input): array
+    {
+        if ($input === null || $input === '') {
+            return ['branches' => []];
+        }
+
+        if (! is_array($input)) {
+            return ['error' => 'Taarifa za matawi si sahihi'];
+        }
+
+        $branches = [];
+
+        foreach ($input as $raw) {
+            if (! is_array($raw)) {
+                return ['error' => 'Taarifa za tawi si sahihi'];
+            }
+
+            $name = trim((string) ($raw['branch_name'] ?? $raw['name'] ?? ''));
+            $location = trim((string) ($raw['location'] ?? $raw['branch_location'] ?? ''));
+
+            if ($name === '') {
+                return ['error' => 'Jina la kila tawi linahitajika'];
+            }
+            if ($location === '') {
+                return ['error' => 'Mahali pa kila tawi linahitajika'];
+            }
+
+            $latitude = $raw['latitude'] ?? null;
+            $longitude = $raw['longitude'] ?? null;
+
+            if ($latitude !== null && $latitude !== '') {
+                if (! is_numeric($latitude) || (float) $latitude < -90 || (float) $latitude > 90) {
+                    return ['error' => 'Latitudo ya tawi si sahihi'];
+                }
+                $latitude = (float) $latitude;
+            } else {
+                $latitude = null;
+            }
+
+            if ($longitude !== null && $longitude !== '') {
+                if (! is_numeric($longitude) || (float) $longitude < -180 || (float) $longitude > 180) {
+                    return ['error' => 'Longitudo ya tawi si sahihi'];
+                }
+                $longitude = (float) $longitude;
+            } else {
+                $longitude = null;
+            }
+
+            $branches[] = [
+                'branch_name' => $name,
+                'location' => $location,
+                'latitude' => $latitude,
+                'longitude' => $longitude,
+            ];
+        }
+
+        return ['branches' => $branches];
+    }
+
+    /**
+     * Create the parent business and every branch in ONE database call.
+     *
+     * The SQL function register_business_with_branches runs in a single
+     * transaction, so a missing/invalid branch rolls the business row back too.
+     * For a non-branch business (or a deployment that has not applied the
+     * migration yet) the proven BusinessResolver path remains the fallback.
+     *
+     * @return array{business_id?: ?string, branches?: array, error?: string}
+     */
+    private function createBusinessWithBranches(string $name, string $structure, array $branches, array $attributes): array
+    {
+        $key = BusinessResolver::key($name);
+
+        if ($key === '') {
+            return ['error' => 'Jina la biashara linahitajika'];
+        }
+
+        if (! in_array($structure, BranchContext::STRUCTURES, true)) {
+            $structure = 'non_branch';
+        }
+
+        if ($structure === 'branch' && count($branches) === 0) {
+            return ['error' => 'Tawi moja au zaidi linahitajika'];
+        }
+
+        try {
+            $result = Supabase::callFunction('register_business_with_branches', [
+                'p_business_name' => trim($name),
+                'p_legacy_name_key' => $key,
+                'p_business_structure' => $structure,
+                'p_business_type' => $attributes['business_type'] ?? null,
+                'p_business_description' => $attributes['business_description'] ?? null,
+                'p_business_location' => $attributes['business_location'] ?? null,
+                'p_branches' => array_values($branches),
+            ]);
+
+            if (isset($result[0]) && is_array($result[0]) && ! isset($result['business'])) {
+                $result = $result[0];
+            }
+
+            $businessId = $result['business']['id'] ?? null;
+
+            if ($businessId) {
+                return [
+                    'business_id' => (string) $businessId,
+                    'branches' => is_array($result['branches'] ?? null) ? $result['branches'] : [],
+                ];
+            }
+        } catch (\Throwable $e) {
+            // A branch business MUST be atomic: never fall back to a business
+            // row without its branches.
+            if ($structure === 'branch') {
+                return ['error' => $e->getMessage()];
+            }
+        }
+
+        $business = BusinessResolver::resolveOrCreate($name, array_filter([
+            'business_type' => $attributes['business_type'] ?? null,
+            'business_description' => $attributes['business_description'] ?? null,
+            'business_location' => $attributes['business_location'] ?? null,
+            'business_structure' => 'non_branch',
+        ], fn ($v) => $v !== null && $v !== ''));
+
+        if (! $business) {
+            return ['error' => 'Biashara haikuweza kuundwa'];
+        }
+
+        return ['business_id' => (string) $business->id, 'branches' => []];
     }
 
     private function registrationOtpKey($email, $role): string
@@ -770,7 +1142,7 @@ class AuthController extends BaseController
         $lastError = null;
         for ($attempt = 1; $attempt <= $maxRetries; $attempt++) {
             try {
-                Mail::html($html, [], function ($m) use ($to, $subject) {
+                Mail::html($html, function ($m) use ($to, $subject) {
                     $m->to($to)->subject($subject);
                 });
                 return ['success' => true, 'messageId' => '', 'attempt' => $attempt];

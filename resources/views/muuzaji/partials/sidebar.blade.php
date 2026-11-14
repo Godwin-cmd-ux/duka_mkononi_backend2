@@ -315,6 +315,16 @@
                     <div class="nav-icon">🛒</div>
                     <span class="nav-label" data-i18n="muuzaji_sidebar.nav_sell">Uza</span>
                 </a>
+
+                <a href="friji" class="nav-item" data-page="friji">
+                    <div class="nav-icon"><i class="fa-solid fa-snowflake" aria-hidden="true"></i></div>
+                    <span class="nav-label" data-i18n="muuzaji_sidebar.nav_fridge">Friji</span>
+                </a>
+
+                <a href="/msimamizi/bidhaa-mpya" class="nav-item" data-page="bidhaa-mpya" data-feature-nav="product_management">
+                    <div class="nav-icon"><i class="fa-solid fa-circle-plus" aria-hidden="true"></i></div>
+                    <span class="nav-label" data-i18n="muuzaji_sidebar.nav_products">Bidhaa Mpya</span>
+                </a>
             </div>
 
             <div class="sidebar-footer">

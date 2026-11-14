@@ -1,19 +1,34 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { Tabs, useFocusEffect } from 'expo-router';
+import React, { useCallback } from 'react';
 import { Text } from 'react-native';
 import TabSwipe from '../../components/tab-swipe';
+import { useFeatures } from '../../context/FeatureContext';
 import { useLang } from '../../context/LanguageContext';
 import { useTheme } from '../../lib/theme';
 
-// Tab order — used by the swipe gesture to pick the neighbouring page.
-const MUUZAJI_TABS = ['/muuzaji/profaili', '/muuzaji/mauzo', '/muuzaji/matumizi', '/muuzaji/uza', '/muuzaji/orders', '/muuzaji/huduma-nyingine'];
+// Tab order — used by the swipe gesture to pick the neighbouring page. The
+// Fridge entry follows the business's switch, so the gesture never lands on a
+// tab that is not rendered.
+const BASE_TABS = ['/muuzaji/profaili', '/muuzaji/mauzo', '/muuzaji/matumizi', '/muuzaji/uza'];
+const TRAILING_TABS = ['/muuzaji/orders', '/muuzaji/huduma-nyingine'];
 
 export default function MuuzajiLayout() {
   const { t } = useLang();
   const { colors } = useTheme();
+  const { isEnabled, refresh } = useFeatures();
+  const fridgeEnabled = isEnabled('fridge');
+
+  // Re-read the business switches whenever the seller area gains focus, so a
+  // change made on the admin Settings screen (or on the web) is reflected
+  // without waiting for the next cold launch.
+  useFocusEffect(useCallback(() => { refresh(); }, [refresh]));
+  const tabs = fridgeEnabled
+    ? [...BASE_TABS, '/muuzaji/friji', ...TRAILING_TABS]
+    : [...BASE_TABS, ...TRAILING_TABS];
 
   return (
-    <TabSwipe tabs={MUUZAJI_TABS}>
+    <TabSwipe tabs={tabs}>
     <Tabs
       screenOptions={{
         headerShown: false,
@@ -44,7 +59,17 @@ export default function MuuzajiLayout() {
         name="uza"
         options={() => ({
           title: t('tabs_seller.sell'),
-          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>🛒</Text>,
+          tabBarIcon: ({ color }) => <Ionicons name="cart" size={20} color={color} />,
+        })}
+      />
+      <Tabs.Screen
+        name="friji"
+        options={() => ({
+          // The route stays registered so a deep link can explain that the
+          // feature is off; the tab itself disappears from the bar.
+          href: fridgeEnabled ? undefined : null,
+          title: t('tabs_seller.fridge'),
+          tabBarIcon: ({ color }) => <Ionicons name="snow" size={20} color={color} />,
         })}
       />
       <Tabs.Screen

@@ -37,7 +37,9 @@ class ProfitController extends BaseController
             $unknownBuyingPriceItems = 0;
 
             if (count($userIds) > 0) {
-                $sales = Sale::whereIn('seller_id', $userIds)->where('sale_date', $targetDate)->get();
+                $salesQuery = Sale::whereIn('seller_id', $userIds)->where('sale_date', $targetDate);
+                $salesQuery = $this->scopeBranch($salesQuery, $request);
+                $sales = $salesQuery->get();
 
                 $saleIds = $sales->pluck('id')->all();
                 $items = [];
@@ -193,7 +195,9 @@ class ProfitController extends BaseController
             $unknownBuyingPriceItems = 0;
 
             if (count($userIds) > 0) {
-                $sales = Sale::whereIn('seller_id', $userIds)->where('sale_date', '>=', $startDate)->where('sale_date', '<=', $endDate)->get();
+                $salesQuery = Sale::whereIn('seller_id', $userIds)->where('sale_date', '>=', $startDate)->where('sale_date', '<=', $endDate);
+                $salesQuery = $this->scopeBranch($salesQuery, $request);
+                $sales = $salesQuery->get();
 
                 $saleIds = $sales->pluck('id')->all();
                 $items = [];

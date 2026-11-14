@@ -102,6 +102,16 @@ export default function MsimamiziHomeScreen() {
   const [registrationScore, setRegistrationScore] = useState<RegistrationScore | null>(null);
   const [scoreLoading, setScoreLoading] = useState(false);
 
+  // Branch context (non-branch businesses keep the defaults and never see the
+  // branch card). A branch admin with 'unselected' is redirected to the picker
+  // before operational data is shown.
+  const [branchInfo, setBranchInfo] = useState<{
+    structure: string;
+    context: string;
+    current: any | null;
+    options: any[];
+  }>({ structure: 'non_branch', context: 'non_branch', current: null, options: [] });
+
   // Badilisha nenosiri modal
   const [passwordModalVisible, setPasswordModalVisible] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
@@ -112,6 +122,12 @@ export default function MsimamiziHomeScreen() {
   const [changingPassword, setChangingPassword] = useState(false);
   const [updatingSellerStatus, setUpdatingSellerStatus] = useState<string | null>(null);
   const [deletingSellerId, setDeletingSellerId] = useState<string | null>(null);
+
+  // Seller branch assignment (branch businesses only). The selected branch is
+  // saved through PUT /api/admin/users/{id}/branch, which re-verifies that the
+  // branch belongs to this business.
+  const [assigningBranchSellerId, setAssigningBranchSellerId] = useState<string | null>(null);
+  const [branchPickerSeller, setBranchPickerSeller] = useState<any | null>(null);
 
   useEffect(() => {
     loadUserData();
@@ -149,6 +165,51 @@ export default function MsimamiziHomeScreen() {
     );
     return stop;
   }, [lang, userData.businessName]);
+
+  const loadBranchData = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) return;
+
+      const response = await fetchWithTimeout(`${API_BASE_URL}/api/branches`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+          'Accept': 'application/json'
+        },
+      });
+
+      if (!response.ok) return;
+      const data = await response.json();
+
+      const structure = data.business?.business_structure || 'non_branch';
+      const context = data.context?.branch_context || 'non_branch';
+      const options = Array.isArray(data.branches) ? data.branches : [];
+      const storedId = data.context?.branch_id || (await AsyncStorage.getItem('branchId')) || '';
+      const current = options.find((branch: any) => branch.id === storedId) || null;
+
+      setBranchInfo({ structure, context, current, options });
+      await AsyncStorage.multiSet([
+        ['branchContext', context],
+        ['businessStructure', structure],
+        ['branchId', storedId],
+      ]);
+
+      const role = (await AsyncStorage.getItem('userRole')) || '';
+      if (
+        structure === 'branch' &&
+        context === 'unselected' &&
+        ['admin', 'super_admin', 'system_admin'].includes(role)
+      ) {
+        router.replace('/select-branch' as any);
+      }
+    } catch (error) {
+      // The server still enforces the branch on every request; the card just
+      // keeps the last known labels until the next refresh.
+    }
+  };
 
   const loadUserData = async () => {
     try {
@@ -194,6 +255,10 @@ export default function MsimamiziHomeScreen() {
           businessType: user.business_type || '',
           businessDescription: user.business_description || ''
         });
+
+        // Branch context drives the Branch Data card and may redirect a
+        // branch admin to the selection screen.
+        loadBranchData();
 
         // ✅ KUBADILISHWA: Pita business name kwa loadSellersData
         await loadSellersData();
@@ -358,11 +423,6 @@ export default function MsimamiziHomeScreen() {
   };
 
   // Edit Profile Functions
-  const handleEditProfile = () => {
-    setEditFromScore(false);
-    setEditModalVisible(true);
-  };
-
   const handleOpenRegistration = () => {
     setEditFromScore(true);
     setEditModalVisible(true);
@@ -516,6 +576,59 @@ export default function MsimamiziHomeScreen() {
   };
 
   // Seller Management Functions
+  // Assigns a seller to one of this admin's branches (or clears it). The
+  // server re-verifies that the branch belongs to the same business, so a
+  // tampered id cannot cross tenants. Mirrors the website seller list.
+  const handleAssignSellerBranch = async (seller: any, branchId: string | null) => {
+    if (!seller || !(await requireNetwork())) return;
+
+    setAssigningBranchSellerId(seller.id);
+
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) {
+        Alert.alert(t('app.error'), t('admin_dashboard.error_auth'));
+        return;
+      }
+
+      const response = await fetchWithTimeout(`${API_BASE_URL}/api/admin/users/${seller.id}/branch`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+        },
+        body: JSON.stringify({ branch_id: branchId }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Imeshindikana kuweka tawi');
+      }
+
+      const branch = branchInfo.options.find((item: any) => item.id === branchId) || null;
+      setSellersData((prev) => {
+        const next = prev.map((item) => item.id === seller.id
+          ? {
+              ...item,
+              branch_id: branch ? branch.id : null,
+              branch_name: branch ? branch.branch_name : null,
+              branch_location: branch ? branch.location : null,
+            }
+          : item);
+        setCache(SELLERS_CACHE_KEY, next).catch(() => {});
+        return next;
+      });
+      setBranchPickerSeller(null);
+      Alert.alert(t('app.success'), data.message || 'Muuzaji amewekwa kwenye tawi');
+    } catch (error: any) {
+      Alert.alert(t('app.error'), error?.message || 'Imeshindikana kuweka tawi');
+    } finally {
+      setAssigningBranchSellerId(null);
+    }
+  };
+
   const handleApproveSeller = async (sellerId: string) => {
     try {
       setUpdatingSellerStatus(sellerId);
@@ -1030,8 +1143,12 @@ export default function MsimamiziHomeScreen() {
             <TouchableOpacity onPress={handleRefresh} style={styles.iconButton}>
               <Ionicons name="refresh" size={22} color="#3498db" />
             </TouchableOpacity>
-            <TouchableOpacity onPress={handleEditProfile} style={styles.iconButton}>
-              <Ionicons name="create-outline" size={22} color="#3498db" />
+            <TouchableOpacity
+              onPress={() => router.push('/msimamizi/mipangilio' as any)}
+              style={styles.iconButton}
+              accessibilityLabel="Mipangilio"
+            >
+              <Ionicons name="settings-outline" size={22} color="#3498db" />
             </TouchableOpacity>
           </View>
           
@@ -1104,6 +1221,67 @@ export default function MsimamiziHomeScreen() {
           )}
         </TouchableOpacity>
       </View>
+
+      {/* Branch Data — only for branch businesses. Order: Business Data →
+          Branch Data → Scheduled Alarms → Sellers. */}
+      {branchInfo.structure === 'branch' && (
+        <View style={styles.branchCard}>
+          <View style={styles.branchCardHeader}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Ionicons name="business" size={16} color="#2c3e50" />
+              <Text style={styles.branchCardTitle}>Taarifa za Tawi</Text>
+            </View>
+            <View style={styles.branchBadge}>
+              <Text style={styles.branchBadgeText}>
+                {branchInfo.context === 'cross_branch' ? 'Matawi Yote' : 'Tawi la Sasa'}
+              </Text>
+            </View>
+          </View>
+
+          {branchInfo.context === 'cross_branch' ? (
+            <>
+              <Text style={styles.branchLocationText}>
+                Muhtasari wa biashara nzima — matawi {branchInfo.options.length}
+              </Text>
+              {branchInfo.options.map((branch: any) => (
+                <View key={branch.id} style={styles.branchListRow}>
+                  <Ionicons name="business-outline" size={14} color="#3498db" />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.branchListName}>{branch.branch_name}</Text>
+                    <Text style={styles.branchListLocation}>
+                      {branch.location || 'Eneo halijachukuliwa'}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+            </>
+          ) : branchInfo.context === 'unselected' ? (
+            <Text style={styles.branchLocationText}>
+              Hakuna tawi lililowekwa kwako. Wasiliana na msimamizi wa biashara.
+            </Text>
+          ) : (
+            <>
+              <Text style={styles.branchNameText}>{branchInfo.current?.branch_name || '—'}</Text>
+              <Text style={styles.branchLocationText}>
+                {branchInfo.current?.location || 'Eneo halijachukuliwa'}
+              </Text>
+            </>
+          )}
+
+          {['admin', 'super_admin', 'system_admin'].includes(userData.role) && (
+            <TouchableOpacity
+              style={styles.branchSwitchBtn}
+              onPress={() => router.push('/select-branch' as any)}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="swap-horizontal" size={15} color="#ffffff" />
+              <Text style={styles.branchSwitchText}>
+                {branchInfo.context === 'cross_branch' ? 'Chagua Tawi' : 'Badili Tawi'}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
 
       {/* Registration success score */}
       <TouchableOpacity
@@ -1224,6 +1402,31 @@ export default function MsimamiziHomeScreen() {
                 <Text style={styles.sellerBusiness}>
                   {seller.business_name || t('admin_dashboard.business')} - {seller.business_location || t('admin_dashboard.business_location')}
                 </Text>
+                {branchInfo.structure === 'branch' && (
+                  <View style={styles.sellerBranchRow}>
+                    <Ionicons name="business-outline" size={11} color="#3498db" />
+                    <Text style={styles.sellerBranch}>
+                      Tawi: {seller.branch_name || 'Hakuna tawi'}
+                    </Text>
+                  </View>
+                )}
+                {branchInfo.structure === 'branch' && branchInfo.options.length > 0 && ['admin', 'super_admin', 'system_admin'].includes(userData.role) && (
+                  <TouchableOpacity
+                    style={styles.sellerBranchButton}
+                    onPress={() => setBranchPickerSeller(seller)}
+                    disabled={assigningBranchSellerId === seller.id}
+                    activeOpacity={0.85}
+                  >
+                    {assigningBranchSellerId === seller.id ? (
+                      <SmartCartLoader size="compact" color="#ffffff" />
+                    ) : (
+                      <>
+                        <Ionicons name="swap-horizontal" size={13} color="#ffffff" />
+                        <Text style={styles.sellerBranchButtonText}>Badili Tawi</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                )}
               </View>
               
               <View style={styles.sellerActions}>
@@ -1600,6 +1803,85 @@ export default function MsimamiziHomeScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Modali ya Kuweka Tawi la Muuzaji */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={branchPickerSeller !== null}
+        onRequestClose={() => {
+          if (assigningBranchSellerId === null) setBranchPickerSeller(null);
+        }}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Weka Tawi la Muuzaji</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  if (assigningBranchSellerId === null) setBranchPickerSeller(null);
+                }}
+                style={styles.closeButton}
+              >
+                <Ionicons name="close" size={22} color="#7f8c8d" />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.branchPickerSellerName}>
+              {branchPickerSeller?.full_name || branchPickerSeller?.email || ''}
+            </Text>
+
+            <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
+              <TouchableOpacity
+                style={[
+                  styles.branchPickerRow,
+                  branchPickerSeller && !branchPickerSeller.branch_id && styles.branchPickerRowActive,
+                ]}
+                disabled={assigningBranchSellerId !== null}
+                onPress={() => handleAssignSellerBranch(branchPickerSeller, null)}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="remove-circle-outline" size={18} color="#7a8ba0" />
+                <Text style={styles.branchPickerName}>Hakuna tawi</Text>
+                {assigningBranchSellerId === branchPickerSeller?.id ? (
+                  <SmartCartLoader size="compact" color="#3498db" />
+                ) : branchPickerSeller && !branchPickerSeller.branch_id ? (
+                  <Ionicons name="checkmark" size={18} color="#2ecc71" />
+                ) : null}
+              </TouchableOpacity>
+
+              {branchInfo.options.map((branch: any) => {
+                const selected = branchPickerSeller?.branch_id === branch.id;
+                const busy = assigningBranchSellerId === branchPickerSeller?.id;
+                return (
+                  <TouchableOpacity
+                    key={branch.id}
+                    style={[styles.branchPickerRow, selected && styles.branchPickerRowActive]}
+                    disabled={assigningBranchSellerId !== null}
+                    onPress={() => handleAssignSellerBranch(branchPickerSeller, branch.id)}
+                    activeOpacity={0.85}
+                  >
+                    <Ionicons name="business-outline" size={18} color="#3498db" />
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.branchPickerName}>{branch.branch_name}</Text>
+                      <Text style={styles.branchPickerLocation}>
+                        {branch.location || 'Eneo halijachukuliwa'}
+                      </Text>
+                    </View>
+                    {selected ? (
+                      busy ? (
+                        <SmartCartLoader size="compact" color="#3498db" />
+                      ) : (
+                        <Ionicons name="checkmark" size={18} color="#2ecc71" />
+                      )
+                    ) : null}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
     </SafeAreaView>
   );
@@ -1705,6 +1987,44 @@ const makeStyles = (tc: ThemeColors) => StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
+  branchCard: {
+    backgroundColor: '#eef4fa',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  branchCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  branchCardTitle: { fontSize: 15, fontWeight: '800', color: '#2c3e50' },
+  branchBadge: { backgroundColor: '#3498db', borderRadius: 20, paddingHorizontal: 9, paddingVertical: 4 },
+  branchBadgeText: { fontSize: 10, fontWeight: '800', color: '#ffffff' },
+  branchNameText: { fontSize: 15, fontWeight: '700', color: '#34495e' },
+  branchLocationText: { fontSize: 12, color: '#7a8ba0', marginTop: 2 },
+  branchListRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#dbe7f3',
+  },
+  branchListName: { fontSize: 13, fontWeight: '700', color: '#2c3e50' },
+  branchListLocation: { fontSize: 11, color: '#7a8ba0' },
+  branchSwitchBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: '#3498db',
+    borderRadius: 12,
+    paddingVertical: 11,
+    marginTop: 12,
+  },
+  branchSwitchText: { color: '#ffffff', fontWeight: '700', fontSize: 13 },
   scoreCard: {
     backgroundColor: tc.card,
     padding: 16,
@@ -2014,6 +2334,65 @@ const makeStyles = (tc: ThemeColors) => StyleSheet.create({
     color: tc.muted2,
     marginTop: 4,
     lineHeight: 14,
+  },
+  sellerBranchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 4,
+  },
+  sellerBranch: {
+    fontSize: 11,
+    color: '#3498db',
+    fontWeight: '600',
+    lineHeight: 14,
+  },
+  sellerBranchButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    alignSelf: 'flex-start',
+    backgroundColor: '#3498db',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginTop: 8,
+  },
+  sellerBranchButtonText: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  branchPickerSellerName: {
+    fontSize: 13,
+    color: tc.muted,
+    marginBottom: 10,
+  },
+  branchPickerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: tc.page,
+    marginBottom: 8,
+  },
+  branchPickerRowActive: {
+    borderColor: '#3498db',
+    backgroundColor: '#eef4fa',
+  },
+  branchPickerName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: tc.ink,
+  },
+  branchPickerLocation: {
+    fontSize: 11,
+    color: tc.muted,
+    marginTop: 2,
   },
   statusContainer: {
     alignSelf: 'flex-start',

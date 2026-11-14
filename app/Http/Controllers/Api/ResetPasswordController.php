@@ -67,43 +67,12 @@ class ResetPasswordController extends BaseController
 
             $resetCode = (string) random_int(100000, 999999);
 
-            if ($this->isTestMode()) {
-                if ($tableExists) {
-                    try {
-Supabase::table('password_reset_codes')->insert([
-                            'id' => (string) Str::uuid(),
-                            'user_id' => $user->id,
-                            'email' => $email,
-                            'code' => $resetCode,
-                            'status' => 'pending',
-                            'expires_at' => now()->addMinutes(15)->toISOString(true),
-                            'created_at' => $this->isoNow(),
-                            'updated_at' => $this->isoNow()
-                        ]);
-                    } catch (\Throwable $dbError) {
-                        // Could not save code to database
-                    }
-                }
-
-                $this->log($user->id, 'PASSWORD_RESET_DEVELOPMENT', '/api/password-reset/request', [
-                    'code_generated' => $resetCode,
-                    'development_mode' => true,
-                    'table_exists' => $tableExists
-                ], $ip, 'success');
-
-                return $this->json([
-                    'success' => true,
-                    'message' => 'Development mode: Tumia msimbo huu wa kubadilisha nenosiri',
-                    'resetCode' => $resetCode,
-                    'email' => $email,
-                    'userId' => $user->id,
-                    'role' => $role,
-                    'expiresIn' => '15 minutes',
-                    'warning' => 'Running in development mode - email haikutumwa',
-                    'development' => true,
-                    'timestamp' => $this->isoNow()
-                ], 200);
-            }
+            // Always deliver the code by email. Test/development mode used to
+            // return early with the code and skip the mailer entirely, which is
+            // why password-reset OTPs "never arrived" outside production.
+            // Test mode only affects the fallback below (when delivery fails),
+            // where it may echo the code back for local debugging.
+            $isTestMode = $this->isTestMode();
 
             if (!$tableExists) {
                 $expiresAt = now()->addMinutes(15)->toISOString(true);
@@ -155,13 +124,17 @@ Supabase::table('password_reset_codes')->insert([
 
                     return $this->json([
                         'success' => true,
-                        'message' => 'Msimbo wa kubadilisha nenosiri (email imeshindikana):',
-                        'resetCode' => $resetCode,
+                        'message' => $isTestMode
+                            ? 'Msimbo wa kubadilisha nenosiri (email imeshindikana):'
+                            : 'Imeshindikana kutuma msimbo kwenye barua pepe yako. Tafadhali jaribu tena baadaye.',
+                        'resetCode' => $isTestMode ? $resetCode : null,
                         'email' => $email,
                         'userId' => $user->id,
                         'role' => $role,
                         'expiresIn' => '15 minutes',
-                        'warning' => 'Email haikutumwa. Tumia msimbo huu.',
+                        'warning' => $isTestMode
+                            ? 'Email haikutumwa. Tumia msimbo huu.'
+                            : 'Email haikutumwa.',
                         'email_failed' => true,
                         'fallback' => true
                     ], 200);
@@ -255,7 +228,7 @@ Supabase::table('password_reset_codes')->insert([
                 return $this->json([
                     'success' => true,
                     'message' => 'Msimbo wa kubadilisha nenosiri umehifadhiwa kwenye mfumo lakini imeshindikana kutumwa kwenye barua pepe.',
-                    'resetCode' => $resetCode,
+                    'resetCode' => $isTestMode ? $resetCode : null,
                     'email' => $email,
                     'userId' => $user->id,
                     'role' => $role,
@@ -263,7 +236,7 @@ Supabase::table('password_reset_codes')->insert([
                     'database_stored' => true,
                     'email_failed' => true,
                     'note' => 'Code is saved in database. Contact support with your email.',
-                    'warning' => $this->isProduction() ? 'Code not shown in production' : 'Use this code for testing'
+                    'warning' => $isTestMode ? 'Use this code for testing' : 'Email haikutumwa.'
                 ], 200);
             }
 
@@ -889,7 +862,7 @@ CREATE INDEX idx_password_reset_codes_expires_at ON password_reset_codes(expires
     private function sendEmail($to, $subject, $html): array
     {
         try {
-            Mail::html($html, [], function ($m) use ($to, $subject) {
+                Mail::html($html, function ($m) use ($to, $subject) {
                 $m->to($to)->subject($subject);
             });
             return ['success' => true, 'messageId' => ''];
@@ -903,7 +876,7 @@ CREATE INDEX idx_password_reset_codes_expires_at ON password_reset_codes(expires
         $lastError = null;
         for ($attempt = 1; $attempt <= $maxRetries; $attempt++) {
             try {
-                Mail::html($html, [], function ($m) use ($to, $subject) {
+            Mail::html($html, function ($m) use ($to, $subject) {
                     $m->to($to)->subject($subject);
                 });
                 return ['success' => true, 'messageId' => '', 'attempt' => $attempt];

@@ -885,6 +885,18 @@ export default function ProfailiScreen() {
             </View>
           )}
 
+          {userData.branch_name && (
+            <View style={styles.infoRow}>
+              <View style={styles.infoLabelContainer}>
+                <Ionicons name="build-outline" size={18} color="#7f8c8d" />
+                <Text style={styles.infoLabel}>{t('profile.branch')}</Text>
+              </View>
+              <Text style={styles.infoValue}>
+                {userData.branch_name}${userData.branch_location ? ' — ' + userData.branch_location : ''}
+              </Text>
+            </View>
+          )}
+
           {userData.business_description && (
             <View style={styles.infoRow}>
               <View style={styles.infoLabelContainer}>

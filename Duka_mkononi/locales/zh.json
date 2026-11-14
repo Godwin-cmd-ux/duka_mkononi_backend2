@@ -671,6 +671,7 @@
     "ai_reword_note": "由 AI 用相同的已核实数据改写。"
   },
   "reports": {
+    "full_report": "完整报表",
     "cost_not_recorded": "未记录进货价",
     "title": "完整报告",
     "sales_report": "销售报告",
@@ -1639,7 +1640,7 @@
     "payment_unavailable_message": "服务器上尚未配置 PesaPal。您的帖子已保存为待处理状态 — 支付功能启用后，您可以从“我的广告”完成支付。",
     "error_server_slow": "服务器响应时间过长。请检查您的网络连接后重试。"
   },
-  "seller_sell": {
+  "seller_sell": {"outside_stock":"Outside Fridge","quantity":"Quantity","available":"Available","allocation_title":"Choose Stock Source","allocation_hint":"Source quantities must equal the sold quantity.","allocation_mismatch":"Stock allocation is incomplete.",
     "title": "Uza Bidhaa",
     "select_product": "Chagua Bidhaa",
     "refresh": "Sasisha",
@@ -1736,6 +1737,19 @@
     "na_fallback": "N/A"
   },
   "preview": {
+    "filter_title": "按日期范围筛选",
+    "filter_from": "从",
+    "filter_to": "至",
+    "filter_to_lower": "至",
+    "filter_search": "搜索",
+    "filter_clear": "清除",
+    "filter_showing": "✓ 显示期间：",
+    "filter_beginning": "开始",
+    "filter_today": "今天",
+    "err_date_order": "开始日期早于结束日期",
+    "no_sales_period": "此期间没有销售",
+    "no_sales_try_change": "请尝试更改所选的日期范围。",
+    "err_date_format": "请使用日期格式 YYYY-MM-DD（例如 2026-11-14）",
     "loading": "加载中...",
     "title": "企业概览",
     "business_review": "企业回顾",
@@ -1995,12 +2009,13 @@
     "nyingine": "其他",
     "tafuta": "搜索"
   },
-  "tabs_seller": {
+  "muuzaji_friji": {"page_title":"Fridge - Dukamkononi Seller","title":"Fridge / Freezer","subtitle":"Manage stock inside and outside your fridges.","add":"Add Fridge","add_fridge":"Add Fridge","refresh":"Refresh","search_placeholder":"Search fridges...","loading":"Loading...","alerts_title":"Stock Alerts","no_alerts":"No alerts right now.","recent_activity":"Recent Activity","recent":"Recent Activity","no_activity":"No activity yet.","business":"Business Stock","business_stock":"Business Stock","outside":"Outside Fridge","outside_stock":"Outside Stock","inside":"Inside Fridge","inside_stock":"Inside Stock","fridges":"Fridges","alerts":"Alerts","active":"Active","archived":"Archived","units":"Units","products":"Products","low":"Low","manage":"Manage","in":"In","out":"Out","alert_business":"Business stock is low","alert_outside":"Outside stock is low","alert_fridge":"Fridge stock is low","left":"Remaining","return":"Return Outside","threshold":"Threshold","transfer_in":"Transfer In","transfer_out":"Transfer Out","transfer_title":"Transfer Stock","rename":"Rename","rename_fridge":"Rename Fridge","archive":"Archive","product":"Product","min_stock":"Minimum Level","quantity":"Quantity","notes":"Notes","no_stock":"No products in this fridge.","movements":"Movement History","no_fridges":"No fridges yet","no_fridges_hint":"Tap \"Add Fridge\" to get started.","no_products":"No products available.","invalid_transfer":"Choose a product and a valid quantity.","transfer_saved":"Stock transferred successfully.","cancel":"Cancel","confirm":"Confirm","save":"Save","name_required":"Fridge name is required.","ask_name":"Fridge name","saved":"Saved.","confirm_archive":"Archive this fridge? Historical movements are kept.","archived_done":"Fridge archived.","threshold_prompt":"Set the minimum fridge stock level:","outside_threshold_prompt":"Set the minimum outside stock level:","transfer_in_hint":"Stock moves from outside into the fridge. Business stock does not change.","transfer_out_hint":"Stock moves from the fridge back outside. Business stock does not change.","empty":"No fridges yet","empty_hint":"Tap Add Fridge to get started."}, "tabs_seller": {
     "orders": "订单",
     "profile": "个人资料",
     "sales": "销售",
     "expenses": "支出",
     "sell": "出售",
+      "fridge": "å†°ç®±",
     "price_advisor": "价格",
     "restock": "补货",
     "ask": "提问",

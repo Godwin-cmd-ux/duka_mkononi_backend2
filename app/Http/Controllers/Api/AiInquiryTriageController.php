@@ -528,7 +528,7 @@ class AiInquiryTriageController extends BaseController
                     $messageId = $event->sent->getMessageId();
                 });
 
-                Mail::html(nl2br(e($body)), [], function ($m) use ($to, $subject) {
+                Mail::html(nl2br(e($body)), function ($m) use ($to, $subject) {
                     $m->to($to)->subject($subject);
                 });
 

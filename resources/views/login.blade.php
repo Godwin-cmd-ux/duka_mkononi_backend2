@@ -858,8 +858,18 @@
             // Save credentials if remember me
             saveCredentials();
             
-            // ✅ UPDATED: Get correct dashboard route based on user's role from backend
-            const dashboardRoute = getDashboardRoute(user.role);
+            // ✅ Get correct dashboard route based on the user's role from backend
+            let dashboardRoute = getDashboardRoute(user.role);
+
+            // A branch-business administrator must choose the branch (or the
+            // cross-branch dashboard) before any operational page loads.
+            if (user.needs_branch_selection && ['admin', 'super_admin', 'system_admin'].includes(user.role)) {
+                dashboardRoute = '/select-branch';
+            }
+            localStorage.setItem('branchId', user.branch_id || '');
+            localStorage.setItem('branchContext', user.branch_context || 'non_branch');
+            localStorage.setItem('businessStructure', user.business_structure || 'non_branch');
+
             const userName = user.full_name || user.business_name || user.email.split('@')[0];
             
             console.log('✅ Login successful! Redirecting to:', dashboardRoute);

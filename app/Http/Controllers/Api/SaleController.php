@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Customer;
+use App\Models\FridgeStock;
 use App\Models\Product;
+use App\Services\FridgeStockMath;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\User;
@@ -22,6 +24,7 @@ class SaleController extends BaseController
             $this->touchLastSeen($userId);
 
             $salesQuery = Sale::where('seller_id', $userId);
+            $salesQuery = $this->scopeBranch($salesQuery, $request);
 
             // Optional server-side date range so pages like the seller
             // profile can request exactly the day they display instead of
@@ -63,6 +66,10 @@ class SaleController extends BaseController
 
         try {
             $userId = $this->userId($request);
+            [$writeBranchId, $branchError] = $this->requireWriteBranch($request);
+            if ($branchError) {
+                return $branchError;
+            }
             $customer_id = $request->input('customer_id');
             $sale_date = $request->input('sale_date');
             $payment_method = $request->input('payment_method');
@@ -145,14 +152,42 @@ class SaleController extends BaseController
             }
 
             $stockIssues = [];
+
+            // Business stock is split into Outside + inside fridges. A plain
+            // sale (no explicit allocations) consumes Outside Stock only, so
+            // it must not silently eat stock that is physically in a fridge.
+            // Sales that DO send allocations are validated atomically by the
+            // create_pos_sale RPC below.
+            $insideByProduct = [];
+            try {
+                $insideQuery = FridgeStock::where('business_id', $this->businessId($request));
+                $insideQuery = $this->scopeBranch($insideQuery, $request);
+                foreach ($insideQuery->get()->toArray() as $row) {
+                    $pid = (string) ($row['product_id'] ?? '');
+                    if ($pid !== '') {
+                        $insideByProduct[$pid] = ($insideByProduct[$pid] ?? 0.0) + (float) ($row['quantity'] ?? 0);
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Fridge tables may not exist yet on an older deployment.
+            }
+
             foreach ($items as $item) {
                 $product = Product::where('id', $item['product_id'])
                     ->where('is_active', true)
-                    ->select(['stock', 'name', 'seller_id', 'is_active'])
+                    ->select(['stock', 'name', 'seller_id', 'is_active', 'branch_id'])
                     ->first();
 
                 if (!$product) {
                     $stockIssues[] = ['product_id' => $item['product_id'], 'reason' => 'Product not found'];
+                    continue;
+                }
+
+                // A branch sale may only use inventory that belongs to the
+                // selected branch. A legacy NULL row is NOT acceptable here:
+                // that would let one branch sell another branch's stock.
+                if ($writeBranchId !== null && (string) ($product->branch_id ?? '') !== $writeBranchId) {
+                    $stockIssues[] = ['product_id' => $item['product_id'], 'reason' => 'Product belongs to another branch'];
                     continue;
                 }
 
@@ -197,6 +232,21 @@ class SaleController extends BaseController
                         'available' => $product->stock,
                         'requested' => $item['quantity'],
                     ];
+                    continue;
+                }
+
+                $hasAllocations = is_array($item['allocations'] ?? null) && count($item['allocations']) > 0;
+                $inside = (float) ($insideByProduct[(string) $item['product_id']] ?? 0);
+                $outside = (float) $product->stock - $inside;
+                if (! $hasAllocations && (float) $item['quantity'] > $outside + 0.0005) {
+                    $stockIssues[] = [
+                        'product_id' => $item['product_id'],
+                        'product_name' => $product->name,
+                        'reason' => 'Insufficient outside stock; allocate the inside quantity from a fridge',
+                        'available' => max(0, $outside),
+                        'requested' => $item['quantity'],
+                        'inside_stock' => $inside,
+                    ];
                 }
             }
 
@@ -216,12 +266,47 @@ class SaleController extends BaseController
 
             $invoice_number = $this->generateInvoiceNumber($userId);
 
+            $hasFridgeAllocations = false;
+            foreach ($items as $item) {
+                if (is_array($item['allocations'] ?? null) && count($item['allocations']) > 0) {
+                    $hasFridgeAllocations = true;
+                    break;
+                }
+            }
+
+            if ($hasFridgeAllocations) {
+                // A crafted request must not deduct fridge stock through the
+                // sales endpoint while the fridge module is switched off.
+                if (! \App\Services\BusinessSettings::enabled('fridge', $this->businessId($request))) {
+                    return $this->json([
+                        'success' => false,
+                        'error' => 'Kipengele cha friji kimezimwa na msimamizi wa biashara.',
+                        'code' => 'FEATURE_DISABLED',
+                        'feature' => 'fridge',
+                    ], 403);
+                }
+
+                return $this->storeWithFridgeAllocations(
+                    $request,
+                    $items,
+                    $userId,
+                    $writeBranchId,
+                    $customer_id,
+                    $sale_date,
+                    $payment_method,
+                    $notes,
+                    $clientSaleKey,
+                    $invoice_number
+                );
+            }
+
             $now = $this->isoNow();
             $newSaleId = Str::uuid()->toString();
 
             $saleData = [
                 'id' => $newSaleId,
                 'seller_id' => $userId,
+                'branch_id' => $writeBranchId,
                 'customer_id' => $customer_id ?: null,
                 'sale_date' => $sale_date ?: gmdate('Y-m-d'),
                 'total_amount' => $total_amount,
@@ -410,9 +495,17 @@ class SaleController extends BaseController
 
         try {
             $userId = $this->userId($request);
+            [$writeBranchId, $branchError] = $this->requireWriteBranch($request);
+            if ($branchError) {
+                return $branchError;
+            }
             $this->touchLastSeen($userId);
 
-            $sale = $id !== '' ? Sale::where('id', $id)->where('seller_id', $userId)->first() : null;
+            $saleQuery = $id !== '' ? Sale::where('id', $id)->where('seller_id', $userId) : null;
+            if ($saleQuery !== null && $writeBranchId !== null) {
+                $saleQuery->where('branch_id', $writeBranchId);
+            }
+            $sale = $saleQuery !== null ? $saleQuery->first() : null;
 
             if (!$sale) {
                 $this->log($userId, 'SALE_UPDATE_FAILED', '/api/sales/' . $id, [
@@ -836,6 +929,110 @@ class SaleController extends BaseController
             ]);
         } catch (\Throwable $e) {
         }
+    }
+
+    /**
+     * Create a sale atomically when at least one line is served from a fridge.
+     *
+     * The RPC locks every product and fridge stock row, re-validates the
+     * allocations, inserts the sale + lines + allocation history, decrements
+     * products.stock once per product and fridge_stock once per source, and
+     * updates the customer totals - all in one transaction.
+     */
+    private function storeWithFridgeAllocations(
+        Request $request,
+        array $items,
+        string $userId,
+        ?string $writeBranchId,
+        $customer_id,
+        $sale_date,
+        $payment_method,
+        $notes,
+        string $clientSaleKey,
+        string $invoice_number
+    ) {
+        $businessId = $this->businessId($request);
+        if (! $businessId) {
+            return $this->json([
+                'success' => false,
+                'error' => 'Biashara haijulikani; mgawanyo wa friji hauwezi kuthibitishwa.',
+                'code' => 'BUSINESS_REQUIRED',
+            ], 400);
+        }
+
+        $rpcItems = [];
+        foreach ($items as $item) {
+            $quantity = (float) $item['quantity'];
+            $allocations = is_array($item['allocations'] ?? null) ? $item['allocations'] : [];
+            $plan = FridgeStockMath::normalizeAllocations($quantity, $allocations);
+
+            if (! $plan['valid']) {
+                return $this->json([
+                    'success' => false,
+                    'error' => 'Mgawanyo wa vyanzo vya bidhaa si sahihi',
+                    'code' => 'ALLOCATION_INVALID',
+                    'errors' => $plan['errors'],
+                    'product_id' => $item['product_id'],
+                ], 422);
+            }
+
+            $rpcItems[] = [
+                'product_id' => $item['product_id'],
+                'quantity' => $quantity,
+                'unit_price' => (float) $item['unit_price'],
+                'allocations' => $plan['items'],
+            ];
+        }
+
+        $saleId = Str::uuid()->toString();
+        $rpcNotes = $notes ?: null;
+        if ($clientSaleKey !== '') {
+            $rpcNotes = 'ai_dup_' . $clientSaleKey . ($rpcNotes ? ' | ' . $rpcNotes : '');
+        }
+
+        try {
+            $result = \App\Services\Supabase::callFunction('create_pos_sale', [
+                'p_sale_id' => $saleId,
+                'p_seller_id' => $userId,
+                'p_business_id' => $businessId,
+                'p_branch_id' => $writeBranchId,
+                'p_invoice_number' => $invoice_number,
+                'p_customer_id' => $customer_id ?: null,
+                'p_sale_date' => $sale_date ?: gmdate('Y-m-d'),
+                'p_payment_method' => $payment_method ?: 'cash',
+                'p_notes' => $rpcNotes,
+                'p_items' => $rpcItems,
+            ]);
+        } catch (\Throwable $e) {
+            $this->log($userId, 'SALE_CREATE_FAILED', '/api/sales', [
+                'reason' => 'Fridge allocation RPC failed',
+                'error' => $e->getMessage(),
+            ], $this->ip($request), 'failed');
+
+            return $this->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'code' => 'FRIDGE_STOCK_ERROR',
+            ], 422);
+        }
+
+        $saleRow = Sale::where('id', $saleId)->first();
+        $hydrated = $saleRow ? $this->attachRelations([$saleRow->toArray()])[0] : ($result['sale'] ?? null);
+
+        $this->log($userId, 'SALE_CREATE', '/api/sales', [
+            'sale_id' => $saleId,
+            'invoice_number' => $invoice_number,
+            'items_count' => count($rpcItems),
+            'fridge_allocations' => true,
+        ], $this->ip($request), 'success');
+
+        return $this->json([
+            'success' => true,
+            'message' => 'Mauzo yamekamilika kikamilifu!',
+            'invoice_number' => $invoice_number,
+            'unit_price_included' => true,
+            'sale' => $hydrated,
+        ], 201);
     }
 
     private function generateInvoiceNumber($seller_id = null)

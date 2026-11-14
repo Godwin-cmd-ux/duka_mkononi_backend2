@@ -217,11 +217,13 @@ class EventClassifier
     {
         $words = explode('_', strtolower(str_replace(['-', ' '], '_', trim($action))));
         $words = array_map(
-            fn ($w) => $w === 'ai' ? 'AI' : ucfirst($w),
+            fn ($w) => $w === 'ai' ? 'AI' : $w,
             $words
         );
 
-        $label = implode(' ', $words);
+        // Sentence case: only the first word is capitalised, so the timeline
+        // reads "Product update" rather than "Product Update".
+        $label = ucfirst(implode(' ', $words));
 
         return mb_substr($label, 0, 200);
     }

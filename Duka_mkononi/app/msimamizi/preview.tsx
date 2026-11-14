@@ -9,6 +9,7 @@ import {
     ScrollView,
     StyleSheet,
     Text,
+    TextInput,
     TouchableOpacity,
     View
 } from 'react-native';
@@ -22,6 +23,9 @@ import { fetchWithTimeout } from '../../lib/network';
 // ✅ BADILISHA HII IWE URL YA SERVER YAKO
 import { API_BASE_URL } from '../../constants/api';
 import { useTheme, ThemeColors } from '../../lib/theme';
+
+// Date-range filter inputs use the same YYYY-MM-DD format the API expects.
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 // A buying price is only "known" when it was actually recorded. 0 is a real
 // value, so an explicit null check is required — `|| 0` would erase the
@@ -178,6 +182,13 @@ export default function PreviewScreen() {
   const [businessEvents, setBusinessEvents] = useState<BusinessEvent[]>([]);
   const [eventsLoading, setEventsLoading] = useState(false);
 
+  // ✅ Date-range filter (draft inputs vs. applied range)
+  const [filterStartInput, setFilterStartInput] = useState('');
+  const [filterEndInput, setFilterEndInput] = useState('');
+  const [filterStart, setFilterStart] = useState('');
+  const [filterEnd, setFilterEnd] = useState('');
+  const filterActive = !!filterStart || !!filterEnd;
+
   useEffect(() => {
     loadUserData();
   }, [lang]);
@@ -262,8 +273,8 @@ export default function PreviewScreen() {
       // ✅ Run debug check first
       await checkBusinessData(token);
 
-      // Load all data for the business
-      await loadBusinessData(businessName, token);
+      // Load all data for the business (keeping any applied date filter)
+      await loadBusinessData(businessName, token, filterStart, filterEnd);
       
     } catch (error) {
       console.error('Error loading user data:', error);
@@ -324,10 +335,16 @@ export default function PreviewScreen() {
     }
   };
 
-  const loadBusinessData = async (businessName: string, token: string) => {
+  const loadBusinessData = async (
+    businessName: string,
+    token: string,
+    rangeStart: string = '',
+    rangeEnd: string = ''
+  ) => {
+    const rangeActive = !!rangeStart || !!rangeEnd;
     try {
       setLoading(true);
-      console.log('🏢 Inapakua data ya biashara:', businessName);
+      console.log('🏢 Inapakua data ya biashara:', businessName, rangeActive ? `(${rangeStart || '...'} - ${rangeEnd || '...'})` : '(muda wote)');
 
       // ✅ 1. PATA WAUZAJI WOTE WA BIASHARA HII
       console.log('🔍 Inatafuta wauzaji wa biashara:', businessName);
@@ -461,12 +478,21 @@ export default function PreviewScreen() {
       console.log('💰 Inapata mauzo ya biashara nzima...');
       let allSales: Sale[] = [];
 
-      const cachedSales = await getCache<Sale[]>('d:preview:sales');
-      if (cachedSales) { allSales = cachedSales; }
-      
+      // The unfiltered cache cannot represent a date range, so only reuse it
+      // when no range is applied.
+      if (!rangeActive) {
+        const cachedSales = await getCache<Sale[]>('d:preview:sales');
+        if (cachedSales) { allSales = cachedSales; }
+      }
+
+      const salesQuery = [
+        rangeStart ? `date_from=${encodeURIComponent(rangeStart)}` : '',
+        rangeEnd ? `date_to=${encodeURIComponent(rangeEnd)}` : ''
+      ].filter(Boolean).join('&');
+
       try {
         const salesResponse = await fetchWithTimeout(
-          `${API_BASE_URL}/api/admin/sales`,
+          `${API_BASE_URL}/api/admin/sales${salesQuery ? `?${salesQuery}` : ''}`,
           {
           method: 'GET',
           headers: {
@@ -556,7 +582,7 @@ export default function PreviewScreen() {
               }
             }
           });
-          setCache('d:preview:sales', allSales).catch(() => {});
+          if (!rangeActive) setCache('d:preview:sales', allSales).catch(() => {});
           console.log('💰 Mauzo ya biashara:', allSales.length);
         }
       } catch (error) {
@@ -568,9 +594,14 @@ export default function PreviewScreen() {
         sale.sale_date.split('T')[0]
       ))];
 
-      // ONE range request (no date filter on mobile yet) so days that have
-      // expenses but no sales are included too — matching the Blade page.
-      const expensesData = await loadExpensesRange('2000-01-01', '2100-01-01', token);
+      // ONE range request so days that have expenses but no sales are included
+      // too — matching the Blade page. When a filter is active, request only
+      // that window; otherwise cover every date.
+      const expensesData = await loadExpensesRange(
+        rangeStart || '2000-01-01',
+        rangeEnd || '2100-01-01',
+        token
+      );
       const expenseDates = Object.keys(expensesData);
       const allDates = [...new Set([...salesDates, ...expenseDates])];
 
@@ -870,6 +901,36 @@ export default function PreviewScreen() {
     setRefreshing(false);
   };
 
+  // Date-range filter: refetch from the API with date_from/date_to so the
+  // DATABASE filters sales (fast) instead of the app.
+  const applyDateFilter = async () => {
+    const start = filterStartInput.trim();
+    const end = filterEndInput.trim();
+    if ((start && !DATE_RE.test(start)) || (end && !DATE_RE.test(end))) {
+      Alert.alert(t('app.error'), t('preview.err_date_format'));
+      return;
+    }
+    if (start && end && start > end) {
+      Alert.alert(t('app.error'), t('preview.err_date_order'));
+      return;
+    }
+    setFilterStart(start);
+    setFilterEnd(end);
+    const token = await AsyncStorage.getItem('userToken');
+    if (!token || !userData.businessName) return;
+    await loadBusinessData(userData.businessName, token, start, end);
+  };
+
+  const clearDateFilter = async () => {
+    setFilterStartInput('');
+    setFilterEndInput('');
+    setFilterStart('');
+    setFilterEnd('');
+    const token = await AsyncStorage.getItem('userToken');
+    if (!token || !userData.businessName) return;
+    await loadBusinessData(userData.businessName, token, '', '');
+  };
+
   const handleDayPress = (day: DailySummary) => {
     console.log('📱 Kubonyeza siku:', day.date, 'na expenses:', day.expenses?.length || 0);
     setSelectedDay(day);
@@ -1148,9 +1209,11 @@ export default function PreviewScreen() {
       ) : (
         <View style={styles.noData}>
           <Ionicons name="business-outline" size={64} color="#bdc3c7" />
-          <Text style={styles.noDataText}>{t('preview.no_sales')}</Text>
+          <Text style={styles.noDataText}>
+            {filterActive ? t('preview.no_sales_period') : t('preview.no_sales')}
+          </Text>
           <Text style={styles.noDataSubtext}>
-            {t('preview.no_sales_sub', { name: userData.businessName })}
+            {filterActive ? t('preview.no_sales_try_change') : t('preview.no_sales_sub', { name: userData.businessName })}
           </Text>
           <TouchableOpacity onPress={handleRefresh} style={styles.tryAgainButton}>
             <Text style={styles.tryAgainText}>{t('preview.try_again')}</Text>
@@ -1350,6 +1413,55 @@ export default function PreviewScreen() {
           {t('preview.info_text', { name: userData.businessName, sellers: sellers.length > 1 ? t('preview.info_sellers', { n: sellers.length }) : '' })}
           {' '}{t('preview.info_note')}
         </Text>
+      </View>
+
+      {/* Date Range Filter */}
+      <View style={styles.dateFilterCard}>
+        <View style={styles.dateFilterTitleRow}>
+          <Ionicons name="filter" size={15} color={tc.primary} />
+          <Text style={styles.dateFilterTitle}>{t('preview.filter_title')}</Text>
+        </View>
+        <View style={styles.dateFilterRow}>
+          <View style={styles.dateField}>
+            <Text style={styles.dateFieldLabel}>{t('preview.filter_from')}</Text>
+            <TextInput
+              style={styles.dateInput}
+              value={filterStartInput}
+              onChangeText={setFilterStartInput}
+              placeholder="YYYY-MM-DD"
+              placeholderTextColor={tc.muted}
+              autoCapitalize="none"
+              autoCorrect={false}
+              maxLength={10}
+            />
+          </View>
+          <View style={styles.dateField}>
+            <Text style={styles.dateFieldLabel}>{t('preview.filter_to')}</Text>
+            <TextInput
+              style={styles.dateInput}
+              value={filterEndInput}
+              onChangeText={setFilterEndInput}
+              placeholder="YYYY-MM-DD"
+              placeholderTextColor={tc.muted}
+              autoCapitalize="none"
+              autoCorrect={false}
+              maxLength={10}
+            />
+          </View>
+        </View>
+        <View style={styles.dateFilterActions}>
+          <TouchableOpacity style={styles.dateApplyButton} onPress={applyDateFilter} activeOpacity={0.8}>
+            <Text style={styles.dateApplyText}>{t('preview.filter_search')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.dateClearButton} onPress={clearDateFilter} activeOpacity={0.8}>
+            <Text style={styles.dateClearText}>{t('preview.filter_clear')}</Text>
+          </TouchableOpacity>
+        </View>
+        {filterActive && (
+          <Text style={styles.dateFilterActive}>
+            {t('preview.filter_showing')} {filterStart || t('preview.filter_beginning')} {t('preview.filter_to_lower')} {filterEnd || t('preview.filter_today')}
+          </Text>
+        )}
       </View>
 
       {/* Debug Panel */}
@@ -1767,6 +1879,88 @@ const makeStyles = (tc: ThemeColors) => StyleSheet.create({
     fontSize: 14,
     color: tc.ink,
     lineHeight: 20,
+  },
+
+  // Date Range Filter
+  dateFilterCard: {
+    backgroundColor: tc.card,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: tc.line,
+  },
+  dateFilterTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 12,
+  },
+  dateFilterTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: tc.ink,
+  },
+  dateFilterRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  dateField: {
+    flex: 1,
+  },
+  dateFieldLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: tc.muted,
+    marginBottom: 4,
+  },
+  dateInput: {
+    borderWidth: 1,
+    borderColor: tc.line,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    fontSize: 13,
+    color: tc.ink,
+    backgroundColor: tc.page,
+  },
+  dateFilterActions: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 12,
+  },
+  dateApplyButton: {
+    flex: 1,
+    backgroundColor: tc.primary,
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  dateApplyText: {
+    color: '#ffffff',
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  dateClearButton: {
+    flex: 1,
+    backgroundColor: tc.page,
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: tc.line,
+  },
+  dateClearText: {
+    color: tc.muted,
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  dateFilterActive: {
+    marginTop: 10,
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#27ae60',
   },
   
   // Debug Panel

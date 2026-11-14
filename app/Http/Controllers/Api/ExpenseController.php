@@ -32,19 +32,24 @@ class ExpenseController extends BaseController
             $userId = $this->userId($request);
             $today = gmdate('Y-m-d');
 
-            $user = User::where('id', $userId)->select('business_name')->first();
+            $businessId = $this->businessId($request) ?: BusinessResolver::idForUser($userId);
 
-            if (!$user || empty($user->business_name)) {
+            if (!$businessId) {
                 return $this->json([
                     'success' => false,
                     'error' => 'Biashara haijapatikana',
                 ], 400);
             }
 
-            $businessName = $user->business_name;
+            // Expenses belong to the business through the member who recorded
+            // them (legacy rows have no business_id); branch mode narrows that
+            // to the selected branch.
+            $memberIds = BusinessResolver::memberIds($businessId);
+            $expenseQuery = OfficeExpense::whereIn('user_id', $memberIds ?: ['00000000-0000-0000-0000-000000000000'])
+                ->where('expense_date', $today);
+            $expenseQuery = $this->scopeBranch($expenseQuery, $request);
 
-            $expenses = OfficeExpense::where('business_name', $businessName)
-                ->where('expense_date', $today)
+            $expenses = $expenseQuery
                 ->orderByDesc('created_at')
                 ->get()
                 ->toArray();
@@ -102,13 +107,19 @@ class ExpenseController extends BaseController
                 ], 400);
             }
 
+            $businessId = $this->businessId($request) ?: BusinessResolver::idForUser($userId);
             $user = User::where('id', $userId)->select('business_name')->first();
 
-            if (!$user || empty($user->business_name)) {
+            if (!$user || empty($user->business_name) || !$businessId) {
                 return $this->json([
                     'success' => false,
                     'error' => 'Biashara haijapatikana',
                 ], 400);
+            }
+
+            [$writeBranchId, $branchError] = $this->requireWriteBranch($request);
+            if ($branchError) {
+                return $branchError;
             }
 
             $businessName = $user->business_name;
@@ -117,6 +128,8 @@ class ExpenseController extends BaseController
             $expenseData = [
                 'id' => Str::uuid()->toString(),
                 'user_id' => $userId,
+                'business_id' => $businessId,
+                'branch_id' => $writeBranchId,
                 'business_name' => $businessName,
                 'expense_date' => $today,
                 'amount' => $amountValue,
@@ -177,26 +190,21 @@ class ExpenseController extends BaseController
                 ], 400);
             }
 
-            $user = User::where('id', $userId)->select('business_name', 'id', 'email', 'role')->first();
+            $businessId = $this->businessId($request) ?: BusinessResolver::idForUser($userId);
 
-            if (!$user) {
-                return $this->json([
-                    'success' => false,
-                    'error' => 'Mtumiaji hajapatikana',
-                ], 400);
-            }
-
-            $businessName = $user->business_name;
-
-            if (!$businessName) {
+            if (!$businessId) {
                 return $this->json([
                     'success' => false,
                     'error' => 'Biashara haijapatikana kwenye akaunti yako',
                 ], 400);
             }
 
-            $expenses = OfficeExpense::where('business_name', $businessName)
-                ->where('expense_date', $targetDate)
+            $memberIds = BusinessResolver::memberIds($businessId);
+            $expenseQuery = OfficeExpense::whereIn('user_id', $memberIds ?: ['00000000-0000-0000-0000-000000000000'])
+                ->where('expense_date', $targetDate);
+            $expenseQuery = $this->scopeBranch($expenseQuery, $request);
+
+            $expenses = $expenseQuery
                 ->orderByDesc('created_at')
                 ->get()
                 ->toArray();
@@ -213,7 +221,7 @@ class ExpenseController extends BaseController
                 'total' => $total,
                 'date' => $targetDate,
                 'count' => count($formattedExpenses),
-                'business_name' => $businessName,
+                'business_name' => $expenses[0]['business_name'] ?? null,
             ]);
         } catch (\Throwable $e) {
             return $this->json([
@@ -247,19 +255,16 @@ class ExpenseController extends BaseController
                 ], 400);
             }
 
-            // office_expenses has no business_id, so the only reliable link is
-            // the user_id that recorded the row. The previous
-            // `where('business_name', $user->business_name)` match meant an
-            // expense was invisible the moment the business name was respelled:
-            // three Jerald expenses are stored as "Jerald Stationary" while
-            // both members' users.business_name reads "Jerald Stationari", so
-            // the report returned nothing at all for that business.
-            // Membership is also the same scope the sales/products totals this
-            // report nets against are already using.
+            // office_expenses now carries business_id (backfilled by the
+            // multi-branch migration), but legacy rows may still lack it, so
+            // membership of the recording user stays the reliable base scope.
+            // It also matches the sales/products totals this report nets
+            // against. Branch mode narrows the result further via branch_id.
             $memberIds = BusinessResolver::memberIds($businessId);
 
             $query = OfficeExpense::whereIn('user_id', $memberIds ?: ['00000000-0000-0000-0000-000000000000'])
                 ->orderByDesc('expense_date');
+            $query = $this->scopeBranch($query, $request);
 
             if ($startDate) {
                 $query->where('expense_date', '>=', $startDate);
@@ -329,19 +334,21 @@ class ExpenseController extends BaseController
             $userId = $this->userId($request);
             $expenseId = $id;
 
-            $user = User::where('id', $userId)->select('business_name', 'role')->first();
+            $businessId = $this->businessId($request) ?: BusinessResolver::idForUser($userId);
 
-            if (!$user) {
+            if (!$businessId) {
                 return $this->json([
                     'success' => false,
                     'error' => 'Mtumiaji hajapatikana',
                 ], 400);
             }
 
-            $businessName = $user->business_name;
-            $userRole = $user->role;
-
-            $expense = OfficeExpense::where('id', $expenseId)->select('id', 'amount', 'description', 'business_name', 'user_id')->first();
+            $memberIds = BusinessResolver::memberIds($businessId);
+            $expenseQuery = OfficeExpense::where('id', $expenseId)
+                ->whereIn('user_id', $memberIds ?: ['00000000-0000-0000-0000-000000000000'])
+                ->select('id', 'amount', 'description', 'business_name', 'user_id', 'branch_id');
+            $expenseQuery = $this->scopeBranch($expenseQuery, $request);
+            $expense = $expenseQuery->first();
 
             if (!$expense) {
                 return $this->json([
@@ -350,12 +357,7 @@ class ExpenseController extends BaseController
                 ], 404);
             }
 
-            if ($expense->business_name !== $businessName && $userRole !== 'admin') {
-                return $this->json([
-                    'success' => false,
-                    'error' => 'Huna ruhusa ya kufuta matumizi haya',
-                ], 403);
-            }
+            $businessName = $expense->business_name;
 
             OfficeExpense::where('id', $expenseId)->delete();
 

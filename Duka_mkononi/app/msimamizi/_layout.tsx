@@ -87,6 +87,8 @@ export default function MsimamiziLayout() {
       {/* Huduma (services) is opened from Bidhaa Mpya, so it stays reachable
           as a route but hidden from the tab bar. */}
       <Tabs.Screen name="huduma" options={{ href: null }} />
+      {/* Settings opens from the dashboard gear; it is not a tab. */}
+      <Tabs.Screen name="mipangilio" options={{ href: null }} />
     </Tabs>
     </TabSwipe>
   );

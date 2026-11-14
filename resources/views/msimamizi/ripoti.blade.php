@@ -174,6 +174,40 @@
             gap: 8px; padding: 12px; background: white; border-radius: 12px;
             cursor: pointer; font-weight: 600;
         }
+
+        .view-more {
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            margin: 10px 0 16px; padding: 11px; border-radius: 10px;
+            border: 1px solid #3498db; background: white; color: #3498db;
+            font-weight: 600; font-size: 13px; cursor: pointer;
+        }
+        .view-more:hover { background: #eaf4fb; }
+        .view-more-end {
+            text-align: center; font-size: 12px; color: #95a5a6;
+            font-style: italic; margin: 8px 0 16px;
+        }
+
+        .dm-modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+            display: none; align-items: center; justify-content: center;
+            z-index: 9999; padding: 20px;
+        }
+        .dm-modal-card {
+            background: #fff; border-radius: 16px; padding: 22px;
+            width: 100%; max-width: 380px; box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+        }
+        .dm-modal-title { font-size: 17px; font-weight: 700; color: #2c3e50; margin-bottom: 8px; }
+        .dm-modal-hint { font-size: 12.5px; color: #7f8c8d; margin-bottom: 16px; }
+        .dm-modal-label { display: block; font-size: 12.5px; font-weight: 600; color: #2c3e50; margin-bottom: 6px; }
+        .dm-modal-input {
+            width: 100%; box-sizing: border-box; border: 1px solid #dfe6e9;
+            border-radius: 10px; padding: 10px 12px; font-size: 14px;
+            margin-bottom: 14px; color: #2c3e50;
+        }
+        .dm-modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+        .dm-modal-btn { padding: 10px 18px; border-radius: 10px; font-size: 13.5px; font-weight: 600; cursor: pointer; border: none; }
+        .dm-modal-cancel { background: #f4f6f7; color: #2c3e50; border: 1px solid #dfe6e9; }
+        .dm-modal-confirm { background: #3498db; color: #fff; }
         
         .status-card { display: flex; align-items: center; gap: 12px; background: white; padding: 16px; border-radius: 12px; margin-top: 20px; }
         
@@ -414,6 +448,14 @@
         let searchTerm = '';
         let dataSource = 'seller';
         let userToken = null;
+        // Short first page per tab; "Ona zaidi" reveals the next batch on
+        // demand instead of painting every row on first load.
+        const INITIAL_ROWS = 5;
+        const ROWS_PER_STEP = 10;
+        function initialVisibleCounts() {
+            return { sales: INITIAL_ROWS, soldProducts: INITIAL_ROWS, unsoldProducts: INITIAL_ROWS, soldServices: INITIAL_ROWS, unsoldServices: INITIAL_ROWS, customers: INITIAL_ROWS };
+        }
+        let visibleCounts = initialVisibleCounts();
 
         function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
         function formatCurrency(amount) { return t('msimamizi_ripoti.currency_prefix') + (amount || 0).toLocaleString(); }
@@ -433,7 +475,7 @@
             folder: 'fa-folder-open', image: 'fa-image', video: 'fa-video', thumb: 'fa-thumbs-up',
             flag: 'fa-flag', crown: 'fa-crown', info: 'fa-circle-info', filePdf: 'fa-file-pdf',
             excel: 'fa-file-excel', plusSm: 'fa-plus', ai: 'fa-robot', scan: 'fa-barcode', save: 'fa-floppy-disk',
-            service: 'fa-screwdriver-wrench'
+            service: 'fa-screwdriver-wrench', chevronDown: 'fa-chevron-down'
         };
         function ic(name, size = 16, cls = '') {
             return `<i class="fa-solid ${FA_MAP[name] || 'fa-circle-info'} ${cls}" style="font-size:${size}px;" aria-hidden="true"></i>`;
@@ -679,7 +721,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     dataSource = 'seller';
                 }
             } catch(e) { console.error(e); showAlert(t('msimamizi_ripoti.alert_error_title'), t('msimamizi_ripoti.report_load_failed')); }
-            finally { loading = false; render(); if (!aiSummary.data && !aiSummary.loading && userToken) window.loadAiSummary(); }
+            finally { loading = false; resetVisibleCounts(); render(); if (!aiSummary.data && !aiSummary.loading && userToken) window.loadAiSummary(); }
         }
 
         async function fetchBusinessData(headers) {
@@ -1091,6 +1133,23 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             );
         }
 
+        function resetVisibleCounts() { visibleCounts = initialVisibleCounts(); }
+
+        window.showMoreRows = (key) => {
+            visibleCounts[key] = (visibleCounts[key] || INITIAL_ROWS) + ROWS_PER_STEP;
+            renderReportContent();
+        };
+
+        // Shared "Ona zaidi" footer: hidden for short lists, offers the next
+        // batch while rows remain, confirms the end once everything is shown.
+        function viewMoreHtml(key, shown, total) {
+            if (total <= shown) {
+                return total > INITIAL_ROWS ? '<div class="view-more-end">Umefikia mwisho wa orodha</div>' : '';
+            }
+            const next = Math.min(ROWS_PER_STEP, total - shown);
+            return `<div class="view-more" onclick="showMoreRows('${key}')">Ona zaidi (${next}) ${ic('chevronDown', 12)}</div>`;
+        }
+
         function noResultsHtml(iconName) {
             return `<div class="no-results"><div class="no-data-icon">${ic(iconName, 44)}</div><div>${t('msimamizi_ripoti.no_results')}</div></div>`;
         }
@@ -1119,18 +1178,19 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
 
         function renderSalesReport() {
             const filtered = getFilteredSales();
+            const visible = filtered.slice(0, visibleCounts.sales);
             const listHtml = sales.length === 0
                 ? '<div class="no-data"><div class="no-data-icon">' + ic('doc', 44) + '</div><div>' + t('msimamizi_ripoti.no_sales_yet') + '</div></div>'
                 : filtered.length === 0
                     ? noResultsHtml('doc')
-                    : filtered.map(sale => {
+                    : visible.map(sale => {
                     const known = typeof sale.profit === 'number';
                     const basis = typeof sale.cost_price === 'number' ? sale.cost_price * sale.quantity : null;
                     const margin = known && basis ? (sale.profit / basis) * 100 : null;
                     return `
                     <div class="item-card"><div class="item-info"><div class="item-title">${escapeHtml(sale.product_name)}</div><div class="item-subtitle">${escapeHtml(sale.customer_name || t('msimamizi_ripoti.customer_generic'))} • ${formatDate(sale.sale_date)}</div><div class="item-meta">${sale.quantity} × ${formatCurrency(sale.unit_price)}</div></div>
                     <div class="item-side"><div class="item-amount">${formatCurrency(sale.total_amount)}</div><div class="profit-text" style="color:${known && sale.profit >= 0 ? '#27ae60' : '#e74c3c'}">${t('msimamizi_ripoti.profit_amount', { amount: known ? formatCurrency(sale.profit) : '-' })}</div><div style="font-size:11px;color:#7f8c8d;">${margin === null ? t('msimamizi_ripoti.buying_price_unknown') : t('msimamizi_ripoti.margin_pct', { percent: margin.toFixed(1) })}</div></div></div>
-                `}).join('');
+                `}).join('') + viewMoreHtml('sales', visible.length, filtered.length);
             return `<div class="section"><div class="section-title">${t('msimamizi_ripoti.sales_report_title', { business_name: escapeHtml(userData.businessName) })}</div>
                 ${searchResultsText(filtered.length, sales.length)}${listHtml}</div>`;
         }
@@ -1138,6 +1198,8 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         function renderProductsReport() {
             const allInTab = activeProductTab === 'sold' ? soldProducts : unsoldProducts;
             const currentProducts = getFilteredProducts();
+            const pageKey = activeProductTab === 'sold' ? 'soldProducts' : 'unsoldProducts';
+            const visibleProducts = currentProducts.slice(0, visibleCounts[pageKey]);
             const isSold = activeProductTab === 'sold';
             return `
                 ${searchResultsText(currentProducts.length, allInTab.length)}
@@ -1145,7 +1207,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     <div class="product-tab ${activeProductTab === 'sold' ? 'active' : ''}" onclick="setProductTab('sold')">${t('msimamizi_ripoti.sold_count', { count: soldProducts.length })}</div>
                     <div class="product-tab ${activeProductTab === 'unsold' ? 'active' : ''}" onclick="setProductTab('unsold')">${ic('clock', 14)} ${t('msimamizi_ripoti.unsold_count', { count: unsoldProducts.length })}</div>
                 </div>
-                ${allInTab.length === 0 ? `<div class="no-data"><div class="no-data-icon">${ic('box', 44)}</div><div>${isSold ? t('msimamizi_ripoti.no_products_sold') : t('msimamizi_ripoti.all_products_sold')}</div></div>` : currentProducts.length === 0 ? noResultsHtml('box') : currentProducts.map(p => {
+                ${allInTab.length === 0 ? `<div class="no-data"><div class="no-data-icon">${ic('box', 44)}</div><div>${isSold ? t('msimamizi_ripoti.no_products_sold') : t('msimamizi_ripoti.all_products_sold')}</div></div>` : currentProducts.length === 0 ? noResultsHtml('box') : visibleProducts.map(p => {
                     const cost = costBasis(p);
                     const sellTarget = sellingBasis(p);
                     // Projected profit = target selling price - buying price.
@@ -1163,7 +1225,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                         <div class="profit-text" style="color:${isSold && p.total_profit >= 0 ? '#27ae60' : '#f39c12'}">${isSold ? t('msimamizi_ripoti.profit_amount', { amount: p.total_profit_known ? formatCurrency(p.total_profit) : '-' }) : t('msimamizi_ripoti.profit_per_product', { amount: profitPerUnit === null ? '-' : formatCurrency(profitPerUnit) })}</div>
                         <div class="badge ${isSold ? 'badge-success' : 'badge-warning'}">${isSold ? ic('check', 10) + ' ' + t('msimamizi_ripoti.sold') : ic('clock', 10) + ' ' + t('msimamizi_ripoti.not_sold')}</div></div>
                     </div>`;
-                }).join('')}
+                }).join('') + viewMoreHtml(pageKey, visibleProducts.length, currentProducts.length)}
                 <div style="background:white;padding:16px;border-radius:12px;margin-top:16px;"><div style="font-weight:700;text-align:center;margin-bottom:12px;">${t('msimamizi_ripoti.product_summary')}</div>
                 <div style="display:flex;justify-content:space-around;"><div><div style="font-size:20px;font-weight:700;">${allProducts.length}</div><div>${t('msimamizi_ripoti.total')}</div></div>
                 <div><div style="font-size:20px;font-weight:700;color:#27ae60;">${soldProducts.length}</div><div>${t('msimamizi_ripoti.sold_short')}</div></div>
@@ -1175,6 +1237,8 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         function renderServicesReport() {
             const allInTab = activeServiceTab === 'sold' ? soldServices : unsoldServices;
             const currentServices = getFilteredServices();
+            const pageKey = activeServiceTab === 'sold' ? 'soldServices' : 'unsoldServices';
+            const visibleServices = currentServices.slice(0, visibleCounts[pageKey]);
             const isSold = activeServiceTab === 'sold';
             return `
                 ${searchResultsText(currentServices.length, allInTab.length)}
@@ -1182,7 +1246,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     <div class="product-tab ${activeServiceTab === 'sold' ? 'active' : ''}" onclick="setServiceTab('sold')">${t('msimamizi_ripoti.sold_services_title')} (${soldServices.length})</div>
                     <div class="product-tab ${activeServiceTab === 'unsold' ? 'active' : ''}" onclick="setServiceTab('unsold')">${ic('clock', 14)} ${t('msimamizi_ripoti.unsold_services_title')} (${unsoldServices.length})</div>
                 </div>
-                ${allInTab.length === 0 ? `<div class="no-data"><div class="no-data-icon">${ic('service', 44)}</div><div>${isSold ? t('msimamizi_ripoti.no_services_sold') : t('msimamizi_ripoti.all_services_sold')}</div></div>` : currentServices.length === 0 ? noResultsHtml('service') : currentServices.map(s => {
+                ${allInTab.length === 0 ? `<div class="no-data"><div class="no-data-icon">${ic('service', 44)}</div><div>${isSold ? t('msimamizi_ripoti.no_services_sold') : t('msimamizi_ripoti.all_services_sold')}</div></div>` : currentServices.length === 0 ? noResultsHtml('service') : visibleServices.map(s => {
                     const timesDone = s.total_sold || 0;
                     const consumablesCount = s.consumables_count || (s.consumables || []).length || 0;
                     const estimatedCost = Number(s.estimated_cost || 0);
@@ -1195,7 +1259,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                         <div class="profit-text" style="color:${isSold && (s.total_profit || 0) >= 0 ? '#27ae60' : '#f39c12'}">${isSold ? t('msimamizi_ripoti.profit_amount', { amount: formatCurrency(s.total_profit || 0) }) : t('msimamizi_ripoti.service_estimated_cost', { amount: formatCurrency(estimatedCost) })}</div>
                         <div class="badge ${isSold ? 'badge-success' : 'badge-warning'}">${isSold ? ic('check', 10) + ' ' + t('msimamizi_ripoti.service_done') : ic('clock', 10) + ' ' + t('msimamizi_ripoti.service_not_done')}</div></div>
                     </div>`;
-                }).join('')}
+                }).join('') + viewMoreHtml(pageKey, visibleServices.length, currentServices.length)}
                 <div style="background:white;padding:16px;border-radius:12px;margin-top:16px;"><div style="font-weight:700;text-align:center;margin-bottom:12px;">${t('msimamizi_ripoti.service_summary')}</div>
                 <div style="display:flex;justify-content:space-around;"><div><div style="font-size:20px;font-weight:700;">${allServices.length}</div><div>${t('msimamizi_ripoti.total_services')}</div></div>
                 <div><div style="font-size:20px;font-weight:700;color:#27ae60;">${soldServices.length}</div><div>${t('msimamizi_ripoti.sold_services_title')}</div></div>
@@ -1206,16 +1270,17 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
 
         function renderCustomersReport() {
             const filtered = getFilteredCustomers();
+            const visible = filtered.slice(0, visibleCounts.customers);
             const listHtml = customers.length === 0
                 ? '<div class="no-data"><div class="no-data-icon">' + ic('users', 44) + '</div><div>' + t('msimamizi_ripoti.no_customers_yet') + '</div></div>'
                 : filtered.length === 0
                     ? noResultsHtml('users')
-                    : filtered.map(c => `
+                    : visible.map(c => `
                     <div class="customer-item"><div class="customer-avatar">${ic('user', 26)}</div><div class="customer-info"><div class="customer-name">${escapeHtml(c.name)}</div>
                     <div class="customer-contact">${c.phone ? `${ic('phone', 12)} ${escapeHtml(c.phone)}` : ''} ${c.email ? `${ic('mail', 12)} ${escapeHtml(c.email)}` : ''}</div>
                     <div class="customer-meta">${ic('doc', 12)} ${t('msimamizi_ripoti.sales_count', { count: c.purchases_count })} • ${ic('calendar', 12)} ${c.last_purchase_date ? formatDate(c.last_purchase_date) : t('msimamizi_ripoti.none_yet')}</div></div>
                     <div class="customer-stats"><div class="customer-total">${formatCurrency(c.total_purchases)}</div><div>${t('msimamizi_ripoti.total_purchases')}</div></div></div>
-                `).join('');
+                `).join('') + viewMoreHtml('customers', visible.length, filtered.length);
             return `<div class="section"><div class="section-title">${t('msimamizi_ripoti.customers_report_title', { business_name: escapeHtml(userData.businessName) })}</div>
                 ${searchResultsText(filtered.length, customers.length)}${listHtml}</div>`;
         }
@@ -1235,7 +1300,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     </div>
                     ${activeReport !== 'overview' ? renderSearchBar() : ''}
                     <div id="reportContent"></div>
-                    <div class="section"><div class="section-title">${t('msimamizi_ripoti.export_report')}</div><div class="export-buttons"><div class="export-btn" onclick="exportPDF()">${ic('filePdf', 15)} ${t('msimamizi_ripoti.pdf')}</div><div class="export-btn" onclick="exportExcel()">${ic('excel', 15)} ${t('msimamizi_ripoti.excel')}</div><div class="export-btn" onclick="exportPrint()">${ic('print', 15)} ${t('msimamizi_ripoti.print')}</div></div></div>
+                    <div class="section"><div class="section-title">${t('msimamizi_ripoti.export_report')}</div><div class="export-buttons"><div class="export-btn" onclick="openExportModal('pdf')">${ic('filePdf', 15)} ${t('msimamizi_ripoti.pdf')}</div><div class="export-btn" onclick="openExportModal('excel')">${ic('excel', 15)} ${t('msimamizi_ripoti.excel')}</div><div class="export-btn" onclick="openExportModal('print')">${ic('print', 15)} ${t('msimamizi_ripoti.print')}</div></div></div>
                     <div class="status-card"><div>${dataSource === 'admin' ? ic('check', 13) + ' ' + t('msimamizi_ripoti.showing_business_data') : ic('info', 13) + ' ' + t('msimamizi_ripoti.showing_seller_data')}</div></div>
                 </div>
             `;
@@ -1255,48 +1320,159 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         function renderLoading() { document.getElementById('mainContent').innerHTML = '<div style="text-align:center;padding:60px;"><div class="loading-spinner dm-sc"></div><div>' + t('msimamizi_ripoti.loading') + '</div></div>'; }
 
         // ============================== EXPORTS ==============================
-        // Builds a standalone HTML document (title + table) for the report tab
-        // currently active. Used by both the PDF and Print buttons.
-        function buildExportTable() {
-            const th = (t) => `<th style="border:1px solid #bdc3c7;padding:6px 10px;background:#f4f6f7;text-align:left;">${escapeHtml(t)}</th>`;
-            const td = (v) => `<td style="border:1px solid #ecf0f1;padding:6px 10px;">${escapeHtml(String(v ?? ''))}</td>`;
+        // Exports are gated behind a start/end date prompt (openExportModal)
+        // and only include rows inside that period, so a download never
+        // silently dumps the whole history.
+        function inExportRange(value, range) {
+            if (!range) return true;
+            const day = String(value || '').slice(0, 10);
+            return /^\d{4}-\d{2}-\d{2}$/.test(day) && day >= range.start && day <= range.end;
+        }
+
+        function buildExportRows(range) {
+            const rangeLabel = range ? ` (${range.start} - ${range.end})` : '';
             let title = t('msimamizi_ripoti.full_report');
             let rows = [];
             if (activeReport === 'sales') {
-                title = t('msimamizi_ripoti.sales_report_title', { business_name: userData.businessName });
+                const list = sales.filter(s => inExportRange(s.sale_date, range));
+                title = t('msimamizi_ripoti.sales_report_title', { business_name: userData.businessName }) + rangeLabel;
                 rows = [[t('msimamizi_ripoti.product_generic'), t('msimamizi_ripoti.customer_generic'), t('msimamizi_ripoti.seller_header'), t('msimamizi_ripoti.date_header'), t('msimamizi_ripoti.quantity_header'), t('msimamizi_ripoti.price_header'), t('msimamizi_ripoti.total'), t('msimamizi_ripoti.profit_header')],
-                    ...sales.map(s => [s.product_name, s.customer_name || t('msimamizi_ripoti.customer_generic'), s.seller_name, s.sale_date, s.quantity, s.unit_price, s.total_amount, typeof s.profit === 'number' ? s.profit : ''])];
+                    ...list.map(s => [s.product_name, s.customer_name || t('msimamizi_ripoti.customer_generic'), s.seller_name, s.sale_date, s.quantity, s.unit_price, s.total_amount, typeof s.profit === 'number' ? s.profit : ''])];
             } else if (activeReport === 'products') {
-                const list = activeProductTab === 'sold' ? soldProducts : unsoldProducts;
-                title = t(activeProductTab === 'sold' ? 'msimamizi_ripoti.sold_products_title' : 'msimamizi_ripoti.unsold_products_title') + ' - ' + userData.businessName;
+                let list = activeProductTab === 'sold' ? soldProducts : unsoldProducts;
+                if (range && activeProductTab === 'sold') {
+                    const soldIds = new Set(sales.filter(s => inExportRange(s.sale_date, range)).map(s => s.product_id));
+                    list = list.filter(p => soldIds.has(p.id));
+                }
+                title = t(activeProductTab === 'sold' ? 'msimamizi_ripoti.sold_products_title' : 'msimamizi_ripoti.unsold_products_title') + ' - ' + userData.businessName + rangeLabel;
                 rows = [[t('msimamizi_ripoti.product_generic'), t('msimamizi_ripoti.category_header'), t('msimamizi_ripoti.stock_header'), t('msimamizi_ripoti.buying_price_header'), t('msimamizi_ripoti.selling_price_header'), t('msimamizi_ripoti.sold_header'), t('msimamizi_ripoti.revenue_header'), t('msimamizi_ripoti.profit_header')],
                     ...list.map(p => [p.name, p.category || t('msimamizi_ripoti.no_category'), p.stock, costBasis(p) === null ? '' : costBasis(p), p.expected_selling_price, p.total_sold || 0, p.total_revenue || 0, p.total_profit_known ? (p.total_profit || 0) : ''])];
             } else if (activeReport === 'services') {
-                const list = activeServiceTab === 'sold' ? soldServices : unsoldServices;
-                title = t(activeServiceTab === 'sold' ? 'msimamizi_ripoti.sold_services_title' : 'msimamizi_ripoti.unsold_services_title') + ' - ' + userData.businessName;
+                let list = activeServiceTab === 'sold' ? soldServices : unsoldServices;
+                if (range && activeServiceTab === 'sold') {
+                    const scoped = serviceSales.filter(s => inExportRange(s.sale_date || s.created_at, range));
+                    const ids = new Set(scoped.map(s => String(s.service_id || '')).filter(Boolean));
+                    const names = new Set(scoped.map(s => String(s.service_name || '').trim().toLowerCase()).filter(Boolean));
+                    list = list.filter(s => ids.has(String(s.id)) || names.has(String(s.name || '').trim().toLowerCase()));
+                }
+                title = t(activeServiceTab === 'sold' ? 'msimamizi_ripoti.sold_services_title' : 'msimamizi_ripoti.unsold_services_title') + ' - ' + userData.businessName + rangeLabel;
                 rows = [[t('msimamizi_ripoti.service_header'), t('msimamizi_ripoti.description_header'), t('msimamizi_ripoti.times_done_header'), t('msimamizi_ripoti.consumables_header'), t('msimamizi_ripoti.profit_header'), t('msimamizi_ripoti.revenue_header')],
                     ...list.map(s => [s.name, s.description || t('msimamizi_ripoti.no_description'), s.total_sold || 0, s.consumables_count || 0, s.total_profit || 0, s.total_revenue || 0])];
             } else if (activeReport === 'customers') {
-                title = t('msimamizi_ripoti.customers_report_title', { business_name: userData.businessName });
+                let list = customers;
+                if (range) {
+                    const scoped = sales.filter(s => inExportRange(s.sale_date, range));
+                    const ids = new Set(scoped.map(s => String(s.customer_id || '')).filter(Boolean));
+                    const names = new Set(scoped.map(s => String(s.customer_name || '').trim().toLowerCase()).filter(Boolean));
+                    list = list.filter(c => ids.has(String(c.id)) || names.has(String(c.name || '').trim().toLowerCase()));
+                }
+                title = t('msimamizi_ripoti.customers_report_title', { business_name: userData.businessName }) + rangeLabel;
                 rows = [[t('msimamizi_ripoti.name_header'), t('msimamizi_ripoti.phone_header'), t('msimamizi_ripoti.email_header'), t('msimamizi_ripoti.sales_header'), t('msimamizi_ripoti.total')],
-                    ...customers.map(c => [c.name, c.phone || '', c.email || '', c.purchases_count || 0, c.total_purchases || 0])];
+                    ...list.map(c => [c.name, c.phone || '', c.email || '', c.purchases_count || 0, c.total_purchases || 0])];
             } else {
-                title = t('msimamizi_ripoti.overview_title', { business_name: userData.businessName });
-                rows = [[t('msimamizi_ripoti.metric_header'), t('msimamizi_ripoti.value_header')],
-                    [t('msimamizi_ripoti.total_sales'), businessStats ? businessStats.totalSales : 0],
-                    [t('msimamizi_ripoti.total_profit'), businessStats ? businessStats.totalProfit : 0],
-                    [t('msimamizi_ripoti.customers'), businessStats ? businessStats.totalCustomers : 0],
-                    [t('msimamizi_ripoti.all_products'), businessStats ? businessStats.totalProducts : 0],
-                    [t('msimamizi_ripoti.sellers_metric'), businessStats ? businessStats.totalSellers : 0],
-                    [t('msimamizi_ripoti.today_sales_label'), businessStats ? businessStats.todaySales : 0],
-                    [t('msimamizi_ripoti.today_profit_label'), businessStats ? businessStats.todayProfit : 0],
-                    [t('msimamizi_ripoti.avg_margin_metric'), businessStats ? businessStats.averageProfitMargin.toFixed(1) : 0]];
-                // The profit rows above only cover sales with a recorded
-                // buying price, so say so rather than let the number stand.
-                if (businessStats && businessStats.unknownCostSales) {
-                    rows.push([t('msimamizi_ripoti.note'), t('msimamizi_ripoti.unknown_cost_excluded', { count: businessStats.unknownCostSales })]);
+                title = t('msimamizi_ripoti.overview_title', { business_name: userData.businessName }) + rangeLabel;
+                if (range) {
+                    const scoped = sales.filter(s => inExportRange(s.sale_date, range));
+                    const scopedSvc = serviceSales.filter(s => inExportRange(s.sale_date || s.created_at, range));
+                    const productRevenue = scoped.reduce((sum, s) => sum + Number(s.total_amount || 0), 0);
+                    const serviceRevenue = scopedSvc.reduce((sum, s) => sum + Number(s.selling_price || 0), 0);
+                    const productProfit = sumProfit(scoped);
+                    const serviceProfit = scopedSvc.reduce((sum, s) => sum + Number(s.profit || 0), 0);
+                    const known = new Set(scoped.map(s => s.customer_id).filter(Boolean));
+                    const unknown = scoped.filter(s => !s.customer_id).length;
+                    rows = [[t('msimamizi_ripoti.metric_header'), t('msimamizi_ripoti.value_header')],
+                        [t('msimamizi_ripoti.total_sales'), productRevenue + serviceRevenue],
+                        [t('msimamizi_ripoti.total_profit'), productProfit + serviceProfit],
+                        [t('msimamizi_ripoti.customers'), known.size + unknown],
+                        [t('msimamizi_ripoti.all_products'), new Set(scoped.map(s => s.product_id)).size],
+                        [t('msimamizi_ripoti.sellers_metric'), new Set(scoped.map(s => s.seller_name).filter(Boolean)).size]];
+                } else {
+                    rows = [[t('msimamizi_ripoti.metric_header'), t('msimamizi_ripoti.value_header')],
+                        [t('msimamizi_ripoti.total_sales'), businessStats ? businessStats.totalSales : 0],
+                        [t('msimamizi_ripoti.total_profit'), businessStats ? businessStats.totalProfit : 0],
+                        [t('msimamizi_ripoti.customers'), businessStats ? businessStats.totalCustomers : 0],
+                        [t('msimamizi_ripoti.all_products'), businessStats ? businessStats.totalProducts : 0],
+                        [t('msimamizi_ripoti.sellers_metric'), businessStats ? businessStats.totalSellers : 0],
+                        [t('msimamizi_ripoti.today_sales_label'), businessStats ? businessStats.todaySales : 0],
+                        [t('msimamizi_ripoti.today_profit_label'), businessStats ? businessStats.todayProfit : 0],
+                        [t('msimamizi_ripoti.avg_margin_metric'), businessStats ? businessStats.averageProfitMargin.toFixed(1) : 0]];
+                    // The profit rows above only cover sales with a recorded
+                    // buying price, so say so rather than let the number stand.
+                    if (businessStats && businessStats.unknownCostSales) {
+                        rows.push([t('msimamizi_ripoti.note'), t('msimamizi_ripoti.unknown_cost_excluded', { count: businessStats.unknownCostSales })]);
+                    }
                 }
             }
+            return { title, rows };
+        }
+
+        // General report (overview tab): page 1 is the high-level summary for
+        // the selected period, followed by a page each for sales, products,
+        // services and customers. Reuses the per-tab builders by temporarily
+        // switching the active tab, then restores the user's tab.
+        function buildSectionFor(report, subTab, range) {
+            const prevReport = activeReport;
+            const prevProductTab = activeProductTab;
+            const prevServiceTab = activeServiceTab;
+            activeReport = report;
+            if (report === 'products' && subTab) activeProductTab = subTab;
+            if (report === 'services' && subTab) activeServiceTab = subTab;
+            const section = buildExportRows(range);
+            activeReport = prevReport;
+            activeProductTab = prevProductTab;
+            activeServiceTab = prevServiceTab;
+            return section;
+        }
+
+        function buildGeneralExportSections(range) {
+            return [
+                buildSectionFor('overview', null, range),
+                buildSectionFor('sales', null, range),
+                buildSectionFor('products', 'sold', range),
+                buildSectionFor('services', 'sold', range),
+                buildSectionFor('customers', null, range)
+            ];
+        }
+
+        // CSV layout mirrors the multi-page document: section title, its table,
+        // then a blank line before the next section.
+        function buildExportCsvRows(range) {
+            if (activeReport !== 'overview') return buildExportRows(range).rows;
+            const out = [];
+            buildGeneralExportSections(range).forEach((section, index) => {
+                if (index > 0) out.push([]);
+                out.push([section.title]);
+                section.rows.forEach(r => out.push(r));
+            });
+            return out;
+        }
+
+        function buildGeneralExportTable(range) {
+            const th = (v) => `<th style="border:1px solid #bdc3c7;padding:6px 10px;background:#f4f6f7;text-align:left;">${escapeHtml(v)}</th>`;
+            const td = (v) => `<td style="border:1px solid #ecf0f1;padding:6px 10px;">${escapeHtml(String(v ?? ''))}</td>`;
+            const rangeLabel = range ? ` (${range.start} - ${range.end})` : '';
+            const title = t('msimamizi_ripoti.full_report') + ' - ' + userData.businessName + rangeLabel;
+            const sections = buildGeneralExportSections(range).map((section, index) => {
+                const head = section.rows[0].map(th).join('');
+                const body = section.rows.slice(1).map(r => `<tr>${r.map(td).join('')}</tr>`).join('');
+                return `<div style="${index > 0 ? 'page-break-before:always;break-before:page;' : ''}">
+                    <h2 style="font-family:sans-serif;">${escapeHtml(section.title)}</h2>
+                    <table style="border-collapse:collapse;font-family:sans-serif;font-size:12px;"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>
+                </div>`;
+            }).join('');
+            return `<html><head><meta charset="UTF-8"><title>${escapeHtml(title)}</title></head>
+                <body><h1 style="font-family:sans-serif;">${escapeHtml(title)}</h1>
+                <p style="font-family:sans-serif;font-size:12px;color:#555;">${t('msimamizi_ripoti.generated_at', { date: new Date().toLocaleString('sw-TZ') })}</p>
+                ${sections}</body></html>`;
+        }
+
+        // Builds a standalone HTML document for the report currently active.
+        // The overview tab expands into the full multi-page report.
+        function buildExportTable(range) {
+            if (activeReport === 'overview') return buildGeneralExportTable(range);
+            const th = (v) => `<th style="border:1px solid #bdc3c7;padding:6px 10px;background:#f4f6f7;text-align:left;">${escapeHtml(v)}</th>`;
+            const td = (v) => `<td style="border:1px solid #ecf0f1;padding:6px 10px;">${escapeHtml(String(v ?? ''))}</td>`;
+            const { title, rows } = buildExportRows(range);
             const head = rows[0].map(th).join('');
             const body = rows.slice(1).map(r => `<tr>${r.map(td).join('')}</tr>`).join('');
             return `<html><head><meta charset="UTF-8"><title>${escapeHtml(title)}</title></head>
@@ -1305,86 +1481,127 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 <table style="border-collapse:collapse;font-family:sans-serif;font-size:12px;"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></body></html>`;
         }
 
+        // The export buttons only open this prompt. The file is produced after
+        // the user confirms the start/end dates.
+        let pendingExport = null;
+
+        window.openExportModal = (action) => {
+            pendingExport = action;
+            let overlay = document.getElementById('exportRangeOverlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'exportRangeOverlay';
+                overlay.className = 'dm-modal-overlay';
+                document.body.appendChild(overlay);
+            }
+            const label = action === 'pdf' ? 'PDF' : action === 'excel' ? 'Excel' : t('msimamizi_ripoti.print');
+            overlay.innerHTML = `
+                <div class="dm-modal-card">
+                    <div class="dm-modal-title">${t('msimamizi_ripoti.export_report')} ${label}</div>
+                    <div class="dm-modal-hint">Weka tarehe ya kuanzia na tarehe ya kumalizia (YYYY-MM-DD)</div>
+                    <label class="dm-modal-label">Tarehe ya kuanzia</label>
+                    <input type="date" id="exportStartDate" class="dm-modal-input">
+                    <label class="dm-modal-label">Tarehe ya kumalizia</label>
+                    <input type="date" id="exportEndDate" class="dm-modal-input">
+                    <div class="dm-modal-actions">
+                        <button type="button" class="dm-modal-btn dm-modal-cancel" onclick="closeExportModal()">Ghairi</button>
+                        <button type="button" class="dm-modal-btn dm-modal-confirm" onclick="confirmExportRange()">${t('msimamizi_ripoti.export_report')}</button>
+                    </div>
+                </div>`;
+            overlay.style.display = 'flex';
+            const startInput = document.getElementById('exportStartDate');
+            if (startInput) startInput.focus();
+        };
+
+        window.closeExportModal = () => {
+            const overlay = document.getElementById('exportRangeOverlay');
+            if (overlay) overlay.style.display = 'none';
+            pendingExport = null;
+        };
+
+        window.confirmExportRange = () => {
+            const startEl = document.getElementById('exportStartDate');
+            const endEl = document.getElementById('exportEndDate');
+            const start = startEl ? startEl.value : '';
+            const end = endEl ? endEl.value : '';
+            const iso = /^\d{4}-\d{2}-\d{2}$/;
+            if (!iso.test(start) || !iso.test(end) || start > end) {
+                showAlert(t('msimamizi_ripoti.alert_error_title'), 'Weka tarehe sahihi kwa muundo YYYY-MM-DD. Tarehe ya kuanzia isizidi tarehe ya kumalizia.');
+                return;
+            }
+            const action = pendingExport;
+            const range = { start: start, end: end };
+            window.closeExportModal();
+            if (action === 'pdf') runExportPDF(range);
+            else if (action === 'excel') runExportExcel(range);
+            else if (action === 'print') runExportPrint(range);
+        };
+
         // PDF: opens the report in a new window and triggers the browser's
         // print dialog, whose destination includes "Save as PDF".
-        window.exportPDF = function () {
+        function runExportPDF(range) {
             const w = window.open('', '_blank');
             if (!w) { showAlert(t('msimamizi_ripoti.alert_error_title'), t('msimamizi_ripoti.pdf_popup_permission')); return; }
             w.document.open();
-            w.document.write(buildExportTable());
+            w.document.write(buildExportTable(range));
             w.document.close();
             w.focus();
             setTimeout(() => { try { w.print(); } catch (e) {} }, 400);
-        };
+        }
 
         // Print: same document, print dialog in the popup.
-        window.exportPrint = function () {
+        function runExportPrint(range) {
             const w = window.open('', '_blank');
             if (!w) { showAlert(t('msimamizi_ripoti.alert_error_title'), t('msimamizi_ripoti.print_popup_permission')); return; }
             w.document.open();
-            w.document.write(buildExportTable());
+            w.document.write(buildExportTable(range));
             w.document.close();
             w.focus();
             setTimeout(() => { try { w.print(); } catch (e) {} }, 400);
-        };
+        }
 
         // Excel: CSV download (opens natively in Excel). RFC 4180 escaping and
         // a BOM so Excel handles commas/quotes/newlines and UTF-8 correctly.
-        window.exportExcel = function () {
+        function runExportExcel(range) {
             const esc = (v) => { const s = String(v ?? ''); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
             const row = (arr) => arr.map(esc).join(',');
-            const lines = [];
-            if (activeReport === 'sales') {
-                lines.push(row([t('msimamizi_ripoti.product_generic'), t('msimamizi_ripoti.customer_generic'), t('msimamizi_ripoti.seller_header'), t('msimamizi_ripoti.date_header'), t('msimamizi_ripoti.quantity_header'), t('msimamizi_ripoti.price_header'), t('msimamizi_ripoti.total'), t('msimamizi_ripoti.profit_header')]));
-                sales.forEach(s => lines.push(row([s.product_name, s.customer_name || t('msimamizi_ripoti.customer_generic'), s.seller_name, s.sale_date, s.quantity, s.unit_price, s.total_amount, typeof s.profit === 'number' ? s.profit : ''])));
-            } else if (activeReport === 'products') {
-                const list = activeProductTab === 'sold' ? soldProducts : unsoldProducts;
-                lines.push(row([t('msimamizi_ripoti.product_generic'), t('msimamizi_ripoti.category_header'), t('msimamizi_ripoti.stock_header'), t('msimamizi_ripoti.buying_price_header'), t('msimamizi_ripoti.selling_price_header'), t('msimamizi_ripoti.sold_header'), t('msimamizi_ripoti.revenue_header'), t('msimamizi_ripoti.profit_header')]));
-                list.forEach(p => lines.push(row([p.name, p.category || t('msimamizi_ripoti.no_category'), p.stock, costBasis(p) === null ? '' : costBasis(p), p.expected_selling_price, p.total_sold || 0, p.total_revenue || 0, p.total_profit_known ? (p.total_profit || 0) : ''])));
-            } else if (activeReport === 'services') {
-                const list = activeServiceTab === 'sold' ? soldServices : unsoldServices;
-                lines.push(row([t('msimamizi_ripoti.service_header'), t('msimamizi_ripoti.description_header'), t('msimamizi_ripoti.times_done_header'), t('msimamizi_ripoti.consumables_header'), t('msimamizi_ripoti.profit_header'), t('msimamizi_ripoti.revenue_header')]));
-                list.forEach(s => lines.push(row([s.name, s.description || t('msimamizi_ripoti.no_description'), s.total_sold || 0, s.consumables_count || 0, s.total_profit || 0, s.total_revenue || 0])));
-            } else if (activeReport === 'customers') {
-                lines.push(row([t('msimamizi_ripoti.name_header'), t('msimamizi_ripoti.phone_header'), t('msimamizi_ripoti.email_header'), t('msimamizi_ripoti.sales_header'), t('msimamizi_ripoti.total')]));
-                customers.forEach(c => lines.push(row([c.name, c.phone || '', c.email || '', c.purchases_count || 0, c.total_purchases || 0])));
-            } else {
-                lines.push(row([t('msimamizi_ripoti.metric_header'), t('msimamizi_ripoti.value_header')]));
-                lines.push(row([t('msimamizi_ripoti.total_sales'), businessStats ? businessStats.totalSales : 0]));
-                lines.push(row([t('msimamizi_ripoti.total_profit'), businessStats ? businessStats.totalProfit : 0]));
-                lines.push(row([t('msimamizi_ripoti.customers'), businessStats ? businessStats.totalCustomers : 0]));
-                lines.push(row([t('msimamizi_ripoti.all_products'), businessStats ? businessStats.totalProducts : 0]));
-                lines.push(row([t('msimamizi_ripoti.sellers_metric'), businessStats ? businessStats.totalSellers : 0]));
-                lines.push(row([t('msimamizi_ripoti.today_sales_label'), businessStats ? businessStats.todaySales : 0]));
-                lines.push(row([t('msimamizi_ripoti.today_profit_label'), businessStats ? businessStats.todayProfit : 0]));
-                lines.push(row([t('msimamizi_ripoti.avg_margin_metric'), businessStats ? businessStats.averageProfitMargin.toFixed(1) : 0]));
-                if (businessStats && businessStats.unknownCostSales) {
-                    lines.push(row([t('msimamizi_ripoti.note'), t('msimamizi_ripoti.unknown_cost_excluded', { count: businessStats.unknownCostSales })]));
-                }
-            }
+            const rows = buildExportCsvRows(range);
+            const lines = rows.map(row);
             const blob = new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
             const a = document.createElement('a');
+            const stamp = range ? range.start + '_' + range.end : new Date().toISOString().slice(0, 10);
             a.href = URL.createObjectURL(blob);
-            a.download = 'DukaMkononi-' + activeReport + '-' + new Date().toISOString().slice(0, 10) + '.csv';
+            a.download = 'DukaMkononi-' + (activeReport === 'overview' ? 'general' : activeReport) + '-' + stamp + '.csv';
             document.body.appendChild(a);
             a.click();
             a.remove();
-        };
+        }
 
-        window.setReport = (report) => { activeReport = report; searchTerm = ''; render(); };
+        window.setReport = (report) => { activeReport = report; searchTerm = ''; resetVisibleCounts(); render(); };
 
         // Search input handlers: only re-render the report list so the input
         // keeps focus while typing.
         window.handleSearchInput = (el) => {
             searchTerm = el.value.trim().toLowerCase();
+            resetVisibleCounts();
             const clearBtn = document.getElementById('searchClear');
             if (clearBtn) clearBtn.style.display = el.value ? 'block' : 'none';
             renderReportContent();
         };
 
-        window.clearSearch = () => { searchTerm = ''; render(); };
-        window.setProductTab = (tab) => { activeProductTab = tab; render(); };
-        window.setServiceTab = (tab) => { activeServiceTab = tab; render(); };
+        window.clearSearch = () => { searchTerm = ''; resetVisibleCounts(); render(); };
+        window.setProductTab = (tab) => {
+            activeProductTab = tab;
+            visibleCounts.soldProducts = INITIAL_ROWS;
+            visibleCounts.unsoldProducts = INITIAL_ROWS;
+            render();
+        };
+        window.setServiceTab = (tab) => {
+            activeServiceTab = tab;
+            visibleCounts.soldServices = INITIAL_ROWS;
+            visibleCounts.unsoldServices = INITIAL_ROWS;
+            render();
+        };
 
         function setupSidebar() {
             document.getElementById('mobileMenuToggle').addEventListener('click', () => document.getElementById('sidebar').classList.toggle('open'));

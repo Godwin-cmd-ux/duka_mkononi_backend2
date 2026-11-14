@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
@@ -339,13 +341,23 @@ class Supabase
             return 0;
         }
 
-        $response = Http::withHeaders(array_merge(
-            $this->authHeaders(),
-            [
-                'Prefer' => 'count=exact',
-                'Range' => '0-0',
-            ]
-        ))->timeout(config('supabase.timeout'))->get($this->absoluteUrl($this->readUrl()));
+        try {
+            $response = $this->httpClient(array_merge(
+                $this->authHeaders(),
+                [
+                    'Prefer' => 'count=exact',
+                    'Range' => '0-0',
+                ]
+            ), true)->get($this->absoluteUrl($this->readUrl()));
+        } catch (ConnectionException $e) {
+            report($e);
+
+            throw new RuntimeException(
+                'Mfumo wa database haupatikani kwa sasa. Tafadhali jaribu tena baada ya muda mfupi.',
+                0,
+                $e
+            );
+        }
 
         if (!$response->successful()) {
             throw new RuntimeException("Supabase count failed: {$response->status()} {$response->body()}");
@@ -407,14 +419,23 @@ class Supabase
      */
     public function rpc(string $function, array $params = [])
     {
-        $response = Http::withHeaders(array_merge(
-            $this->authHeaders(),
-            [
-                'Prefer' => 'return=representation',
-                'Content-Type' => 'application/json',
-            ]
-        ))->timeout(config('supabase.timeout'))
-            ->post($this->absoluteUrl('/rpc/' . $function), $params);
+        try {
+            $response = $this->httpClient(array_merge(
+                $this->authHeaders(),
+                [
+                    'Prefer' => 'return=representation',
+                    'Content-Type' => 'application/json',
+                ]
+            ))->post($this->absoluteUrl('/rpc/' . $function), $params);
+        } catch (ConnectionException $e) {
+            report($e);
+
+            throw new RuntimeException(
+                'Mfumo wa database haupatikani kwa sasa. Tafadhali jaribu tena baada ya muda mfupi.',
+                0,
+                $e
+            );
+        }
 
         if (!$response->successful()) {
             $body = $response->json();
@@ -459,13 +480,23 @@ class Supabase
             return 0;
         }
 
-        $response = Http::withHeaders(array_merge(
-            $this->authHeaders(),
-            [
-                'Prefer' => 'return=minimal',
-                'Content-Type' => 'application/json',
-            ]
-        ))->timeout(config('supabase.timeout'))->patch($this->absoluteUrl($this->writeUrl()), $data);
+        try {
+            $response = $this->httpClient(array_merge(
+                $this->authHeaders(),
+                [
+                    'Prefer' => 'return=minimal',
+                    'Content-Type' => 'application/json',
+                ]
+            ))->patch($this->absoluteUrl($this->writeUrl()), $data);
+        } catch (ConnectionException $e) {
+            report($e);
+
+            throw new RuntimeException(
+                'Mfumo wa database haupatikani kwa sasa. Tafadhali jaribu tena baada ya muda mfupi.',
+                0,
+                $e
+            );
+        }
 
         if (!$response->successful() && !in_array($response->status(), [204, 200], true)) {
             throw new RuntimeException("Supabase update failed: {$response->status()} {$response->body()}");
@@ -480,12 +511,22 @@ class Supabase
             return false;
         }
 
-        $response = Http::withHeaders(array_merge(
-            $this->authHeaders(),
-            [
-                'Prefer' => 'return=minimal',
-            ]
-        ))->timeout(config('supabase.timeout'))->delete($this->absoluteUrl($this->writeUrl()));
+        try {
+            $response = $this->httpClient(array_merge(
+                $this->authHeaders(),
+                [
+                    'Prefer' => 'return=minimal',
+                ]
+            ))->delete($this->absoluteUrl($this->writeUrl()));
+        } catch (ConnectionException $e) {
+            report($e);
+
+            throw new RuntimeException(
+                'Mfumo wa database haupatikani kwa sasa. Tafadhali jaribu tena baada ya muda mfupi.',
+                0,
+                $e
+            );
+        }
 
         if (!$response->successful() && !in_array($response->status(), [204, 200], true)) {
             throw new RuntimeException("Supabase delete failed: {$response->status()} {$response->body()}");
@@ -668,17 +709,61 @@ class Supabase
             $url = $this->absoluteUrl($url);
         }
 
-        $http = Http::withHeaders($headers)->timeout(config('supabase.timeout'));
+        // Reads are safe to retry: a dropped connection ("cURL error 35:
+        // Recv failure: Connection was reset") is transient on Supabase and
+        // used to surface as a 500 during signup. Writes are not retried here
+        // because a POST that actually reached PostgREST must not be replayed.
+        $http = $this->httpClient($headers, $method === 'GET');
 
-        $response = $method === 'GET'
-            ? $http->get($url)
-            : $http->withBody(json_encode($body ?? []), 'application/json')->post($url);
+        try {
+            $response = $method === 'GET'
+                ? $http->get($url)
+                : $http->withBody(json_encode($body ?? []), 'application/json')->post($url);
+        } catch (ConnectionException $e) {
+            report($e);
+
+            throw new RuntimeException(
+                'Mfumo wa database haupatikani kwa sasa. Tafadhali jaribu tena baada ya muda mfupi.',
+                0,
+                $e
+            );
+        }
 
         if (!$response->successful()) {
             throw new RuntimeException("Supabase {$method} {$this->table} failed: {$response->status()} {$response->body()}", $response->status());
         }
 
         return $response->json();
+    }
+
+    /**
+     * Configured HTTP client for the Supabase project.
+     *
+     * Connection resets and 5xx/429 responses are retried for reads; a
+     * connection failure is also translated into a stable, user-facing
+     * message so callers never leak cURL internals to the API response.
+     */
+    protected function httpClient(array $headers, bool $retry = false)
+    {
+        $timeout = max(5, (int) config('supabase.timeout', 20));
+
+        $client = Http::withHeaders($headers)
+            ->timeout($timeout)
+            ->connectTimeout(min(10, $timeout));
+
+        if ($retry) {
+            $client = $client->retry(3, 500, function ($exception) {
+                if ($exception instanceof ConnectionException) {
+                    return true;
+                }
+
+                return $exception instanceof RequestException
+                    && $exception->response !== null
+                    && ($exception->response->serverError() || $exception->response->status() === 429);
+            }, throw: false);
+        }
+
+        return $client;
     }
 
     protected function compileNode(string $column, string $operator, $value): array

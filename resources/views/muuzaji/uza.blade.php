@@ -257,6 +257,10 @@
                 <a href="mauzo" class="nav-item"><div class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2.5" y="6" width="19" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.6"/><path d="M6 9.5V9.51M18 14.5V14.51" stroke-linecap="round"/></svg></div><span class="nav-label" data-i18n="muuzaji_uza.nav_sales">Mauzo</span></a>
                 <a href="matumizi" class="nav-item"><div class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z"/><path d="M8 7V17M12 7V17M16 7V17"/></svg></div><span class="nav-label" data-i18n="muuzaji_uza.nav_expenses">Matumizi</span></a>
                 <a href="uza" class="nav-item active"><div class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="20" r="1.6"/><circle cx="17" cy="20" r="1.6"/><path d="M3 3H5L7.4 15.2C7.55 15.95 8.2 16.5 8.97 16.5H17.6C18.32 16.5 18.94 16 19.08 15.3L21 7H6" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="nav-label" data-i18n="muuzaji_uza.nav_sell">Uza</span></a>
+                <a href="friji" class="nav-item">
+                    <div class="nav-icon"><i class="fa-solid fa-snowflake" aria-hidden="true"></i></div>
+                    <span class="nav-label" data-i18n="muuzaji_sidebar.nav_fridge">Friji</span>
+                </a>
                 <a href="orders" class="nav-item"><div class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2.5h12a1.5 1.5 0 0 1 1.5 1.5V21l-3-2-3 2-3-2-3 2V4a1.5 1.5 0 0 1 1.5-1.5Z" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 7.5h7M8.5 11h7M8.5 14.5h4" stroke-linecap="round"/></svg></div><span class="nav-label" data-i18n="muuzaji_orders.nav_orders">Oda</span></a>
                 <a href="huduma-nyingine" class="nav-item"><div class="nav-icon">🧩</div><span class="nav-label" data-i18n="muuzaji_huduma.nav_other">Huduma Nyingine</span></a>
             </div>
@@ -268,7 +272,7 @@
         <main class="main-content">
             <div class="svc-modebar" id="uzaModeBar">
                 <button type="button" class="svc-mode active" data-mode="products" onclick="uzaSetMode('products')"><span>🛒</span> <span data-i18n="muuzaji_uza_huduma.mode_products">Uza Bidhaa</span></button>
-                <button type="button" class="svc-mode" data-mode="services" onclick="uzaSetMode('services')"><span>✂️</span> <span data-i18n="muuzaji_uza_huduma.mode_services">Uza Huduma</span></button>
+                <button type="button" class="svc-mode" data-mode="services" data-feature-nav="services" onclick="uzaSetMode('services')"><span>✂️</span> <span data-i18n="muuzaji_uza_huduma.mode_services">Uza Huduma</span></button>
             </div>
             <div class="page-container" id="uzaContent"></div>
             <div class="page-container" id="uzaHudumaHost" style="display:none;"></div>
@@ -277,6 +281,21 @@
 
     <!-- Cart Modal -->
     <div id="cartModal" class="modal-overlay"><div class="modal-content" id="cartModalContent"></div></div>
+
+    <!-- Allocation Modal -->
+    <div id="allocationModal" class="modal-overlay" style="display:none;">
+        <div class="modal-content" style="max-width:520px;">
+            <div class="modal-header">
+                <div class="modal-title">Chagua Chanzo cha Stock</div>
+                <span style="cursor:pointer;" onclick="closeAllocationModal()"><i class="fa-solid fa-xmark" style="font-size:22px;" aria-hidden="true"></i></span>
+            </div>
+            <div id="allocationModalBody" style="padding:4px 2px 10px;"></div>
+            <div style="display:flex;gap:10px;margin-top:12px;">
+                <button type="button" onclick="closeAllocationModal()" style="flex:1;padding:12px;border-radius:10px;border:1px solid #dbe3ea;background:#fff;font-weight:600;cursor:pointer;">Ghairi</button>
+                <button type="button" onclick="confirmAllocationAndSale()" style="flex:1;padding:12px;border-radius:10px;border:0;background:#2563eb;color:#fff;font-weight:700;cursor:pointer;">Kamilisha Mauzo</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         const API_BASE_URL = '';
@@ -427,6 +446,11 @@
             msg_some_failed: '{saved} zimehifadhiwa, {failed} zilishindikana — rekebisha na ujaribu tena.',
             ai_import_notes: 'AI import: {name}',
             sale_notes_seller: 'Muuzaji: {name}',
+            label_outside_stock: 'Nje ya Friji',
+            label_qty: 'Kiasi',
+            label_available: 'Inapatikana',
+            allocation_hint: 'Jumla ya vyanzo lazima ilingane na kiasi kilichochaguliwa.',
+            allocation_mismatch: 'Mgawanyo wa stock haujakamilika.',
             business_generic: 'Biashara',
             stock_left: '{count} imebaki',
             in_cart_suffix: '({count} kikapuni)',
@@ -452,7 +476,7 @@
             user: 'fa-user', money: 'fa-money-bill-1', cart: 'fa-cart-shopping', box: 'fa-box',
             doc: 'fa-file-lines', refresh: 'fa-rotate-right', check: 'fa-check', x: 'fa-xmark',
             warning: 'fa-triangle-exclamation', search: 'fa-magnifying-glass',
-            save: 'fa-floppy-disk', spinner: 'fa-spinner'
+            save: 'fa-floppy-disk', spinner: 'fa-spinner', scan: 'fa-barcode'
         };
         function ic(name, size = 16, cls = '') {
             return `<i class="fa-solid ${FA_MAP[name] || 'fa-circle-info'} ${cls}" style="font-size:${size}px;" aria-hidden="true"></i>`;
@@ -673,25 +697,134 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             return null;
         }
 
+        let saleAllocations = null;
+        let allocationAvailability = {};
+        let allocationDraft = {};
+
         async function handleSale() {
             if (cart.length === 0) { showToast(t('err_empty_cart'), 'warning'); return; }
             if (loading) return; // double-submit guard: one request per tap
             loading = true;
-            const clientSaleKey = 'uza-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
             render();
+            try {
+                const ids = cart.map(i => i.product_id);
+                let products = [];
+                try {
+                    const token = localStorage.getItem('userToken');
+                    const res = await fetch(`${API_BASE_URL}/api/fridges/availability?product_ids=${encodeURIComponent(ids.join(','))}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        products = data.products || [];
+                    }
+                } catch (e) { products = []; }
+
+                allocationAvailability = {};
+                products.forEach(p => { allocationAvailability[p.product_id] = p; });
+                const needsAllocation = cart.some(i => Number((allocationAvailability[i.product_id] || {}).inside_stock || 0) > 0);
+
+                if (needsAllocation) {
+                    buildAllocationDraft();
+                    renderAllocationModal();
+                    document.getElementById('allocationModal').style.display = 'flex';
+                    loading = false;
+                    render();
+                    return;
+                }
+
+                await submitSale(cart.map(i => ({ product_id: i.product_id, quantity: i.quantity, unit_price: i.unit_price })));
+            } catch(e) {
+                showToast(e && e.message ? e.message : t('err_network'), 'error');
+                loading = false;
+                render();
+            }
+        }
+
+        function buildAllocationDraft() {
+            allocationDraft = {};
+            cart.forEach(item => {
+                const available = allocationAvailability[item.product_id] || { outside_stock: item.quantity, fridges: [] };
+                let remaining = Number(item.quantity);
+                const outside = Math.min(remaining, Math.max(0, Number(available.outside_stock || 0)));
+                remaining = Math.round((remaining - outside) * 1000) / 1000;
+                const sources = [{ key: 'outside', fridge_id: null, name: t('label_outside_stock') || 'Nje ya Friji', available: Number(available.outside_stock || 0), quantity: outside }];
+                (available.fridges || []).forEach(f => {
+                    const qty = Math.min(remaining, Number(f.quantity || 0));
+                    remaining = Math.round((remaining - qty) * 1000) / 1000;
+                    sources.push({ key: String(f.fridge_id), fridge_id: f.fridge_id, name: f.name, available: Number(f.quantity || 0), quantity: qty });
+                });
+                allocationDraft[item.product_id] = sources;
+            });
+        }
+
+        function renderAllocationModal() {
+            const body = document.getElementById('allocationModalBody');
+            body.innerHTML = cart.map(item => {
+                const sources = allocationDraft[item.product_id] || [];
+                return `<div style="margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #eef2f5;">
+                    <div style="display:flex;justify-content:space-between;gap:10px;margin-bottom:8px;">
+                        <strong style="font-size:13px;">${escapeHtml(item.name)}</strong>
+                        <span style="font-size:12px;color:#64748b;">${t('label_qty') || 'Kiasi'}: ${item.quantity}</span>
+                    </div>
+                    ${sources.map(src => `<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
+                        <div style="flex:1;font-size:12px;"><span style="font-weight:700;">${escapeHtml(src.name)}</span><div style="color:#94a3b8;font-size:10px;">${t('label_available') || 'Inapatikana'}: ${src.available}</div></div>
+                        <input type="number" min="0" step="0.001" value="${src.quantity}" data-product="${escapeHtml(item.product_id)}" data-source="${escapeHtml(src.key)}" oninput="updateAllocation(this)" style="width:92px;border:1px solid #dbe3ea;border-radius:9px;padding:8px;font-size:12px;">
+                    </div>`).join('')}
+                </div>`;
+            }).join('') + `<div id="allocationError" style="color:#dc2626;font-size:12px;margin-bottom:4px;"></div>
+                <div style="font-size:11px;color:#94a3b8;">${t('allocation_hint') || 'Jumla ya vyanzo lazima ilingane na kiasi kilichochaguliwa.'}</div>`;
+        }
+
+        function updateAllocation(input) {
+            const productId = input.getAttribute('data-product');
+            const sourceKey = input.getAttribute('data-source');
+            const sources = allocationDraft[productId] || [];
+            const source = sources.find(s => s.key === sourceKey);
+            if (source) source.quantity = Math.max(0, Number(input.value) || 0);
+        }
+
+        function confirmAllocationAndSale() {
+            const items = [];
+            for (const item of cart) {
+                const sources = allocationDraft[item.product_id] || [];
+                const total = sources.reduce((sum, s) => sum + Number(s.quantity || 0), 0);
+                if (Math.abs(total - Number(item.quantity)) > 0.0005) {
+                    document.getElementById('allocationError').textContent = `${item.name}: ${t('allocation_mismatch') || 'Mgawanyo haujakamilika'}`;
+                    return;
+                }
+                items.push({
+                    product_id: item.product_id,
+                    quantity: item.quantity,
+                    unit_price: item.unit_price,
+                    allocations: sources.filter(s => Number(s.quantity) > 0).map(s => ({ fridge_id: s.fridge_id, quantity: Number(s.quantity) }))
+                });
+            }
+            document.getElementById('allocationModal').style.display = 'none';
+            loading = true;
+            render();
+            submitSale(items);
+        }
+
+        function closeAllocationModal() {
+            document.getElementById('allocationModal').style.display = 'none';
+            loading = false;
+            render();
+        }
+
+        async function submitSale(items) {
+            const clientSaleKey = 'uza-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
             const token = localStorage.getItem('userToken');
             try {
-                const items = cart.map(i => ({ product_id: i.product_id, quantity: i.quantity, unit_price: i.unit_price }));
                 const saleData = { items, sale_date: saleDate, payment_method: 'cash', notes: t('sale_notes_seller', { name: userData?.full_name || userData?.email }), clientSaleKey };
-                
-                // Create/get customer and attach customer_id if name provided
+
                 if (customerName.trim()) {
                     const customerId = await getOrCreateCustomer(customerName.trim(), customerPhone.trim());
                     if (customerId) { saleData.customer_id = customerId; }
                     saleData.customer_name = customerName.trim();
                     saleData.customer_phone = customerPhone.trim();
                 }
-                
+
                 const sendSale = async () => {
                     const r = await fetch(`${API_BASE_URL}/api/sales`, {
                         method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -706,9 +839,6 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 try {
                     ({ res, body: result } = await sendSale());
                 } catch (e1) {
-                    // Network hiccup — ONE automatic retry. Safe from double
-                    // charging because clientSaleKey makes the request
-                    // idempotent on the server.
                     ({ res, body: result } = await sendSale());
                 }
                 if (!result && res && res.status >= 500) {
@@ -717,7 +847,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 if (res.ok) {
                     const total = getCartTotal();
                     showToast(t('msg_sale_complete', { total: formatCurrency(total) }), 'success');
-                    cart = []; customerName = ''; customerPhone = '';
+                    cart = []; customerName = ''; customerPhone = ''; saleAllocations = null;
                     await loadProducts();
                 } else if (result && result.error) {
                     showToast(result.error, 'error');
@@ -763,6 +893,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
 
         function render() {
             const container = document.getElementById('uzaContent');
+            const scannerEnabled = !!(window.DMFeatures && window.DMFeatures.isEnabled('scanner'));
             const inCartQty = selectedProduct ? getInCartQty(selectedProduct.id) : 0;
             const availableStock = selectedProduct ? selectedProduct.stock - inCartQty : 0;
             const isOut = selectedProduct ? availableStock <= 0 : false;
@@ -777,6 +908,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 <div class="form-card">
                     <div class="section-header"><span class="label">${t('label_select_product')}</span><button class="refresh-btn" style="font-size:14px;" onclick="loadProducts()">${ic('refresh', 13)} ${t('btn_refresh')}</button></div>
                     <div class="search-box">${ic('search', 15)}<input type="text" id="searchInput" class="search-input" placeholder="${t('search_placeholder')}" value="${escapeHtml(searchQuery)}"></div>
+                    ${scannerEnabled ? `<div class="search-box" style="background:#eef5ff;border-color:#bfdbfe;">${ic('scan', 15)}<input type="text" id="scanInput" class="search-input" placeholder="Scan barcode / QR kisha Enter" autocomplete="off"></div>` : ''}
                     
                     ${loadingProducts ? `<div class="loading-spinner dm-sc"></div>` : productsError ? `
                         <div style="text-align:center;padding:30px;">
@@ -874,6 +1006,13 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             `;
             
             document.getElementById('searchInput')?.addEventListener('input', (e) => { searchQuery = e.target.value; filterProducts(); });
+            document.getElementById('scanInput')?.addEventListener('keydown', (e) => {
+                if (e.key !== 'Enter') return;
+                e.preventDefault();
+                const code = e.target.value.trim();
+                e.target.value = '';
+                if (code) scanSaleBarcode(code);
+            });
             document.getElementById('customerNameInput')?.addEventListener('input', (e) => { customerName = e.target.value; });
             document.getElementById('customerPhoneInput')?.addEventListener('input', (e) => { customerPhone = e.target.value; });
             document.getElementById('saleDateInput')?.addEventListener('input', (e) => { saleDate = e.target.value; });
@@ -885,6 +1024,38 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             const product = products.find(p => p.id === id);
             if (product) { selectedProduct = product; quantity = '1'; render(); }
         };
+
+        // Scanner flow: resolve an EXISTING product inside this seller's branch.
+        // The lookup endpoint never creates inventory; an unknown code is an error.
+        async function scanSaleBarcode(code) {
+            try {
+                const token = localStorage.getItem('userToken');
+                const res = await fetch(`${API_BASE_URL}/api/products/lookup?barcode=${encodeURIComponent(code)}&purpose=sale`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok || !data.product) {
+                    showToast(data.error || 'Bidhaa haijapatikana kwa barcode hii', 'error');
+                    return;
+                }
+                const product = products.find(p => String(p.id) === String(data.product.id));
+                if (!product) {
+                    showToast('Bidhaa hii haipo kwenye orodha ya tawi lako. Sasisha bidhaa kwanza.', 'error');
+                    return;
+                }
+                if (Number(product.stock || 0) <= 0) {
+                    showToast(t('out_of_stock'), 'warning');
+                    return;
+                }
+                selectedProduct = product;
+                quantity = '1';
+                addToCart();
+            } catch (e) {
+                showToast('Imeshindikana kuchanganua barcode', 'error');
+            }
+        }
+        window.scanSaleBarcode = scanSaleBarcode;
+        window.addEventListener('dm:features', function () { render(); });
         window.changeQty = (delta) => {
             let q = parseInt(quantity) || 1;
             q += delta;

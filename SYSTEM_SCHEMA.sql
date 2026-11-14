@@ -18,6 +18,41 @@
 -- key. Keep that order when adding a table.
 -- ============================================================================
 
+CREATE TABLE public.businesses (
+    id UUID PRIMARY KEY,
+    business_name TEXT,
+    legacy_name_key TEXT,
+    business_structure TEXT DEFAULT 'non_branch',
+    business_type TEXT,
+    business_description TEXT,
+    business_location TEXT,
+    business_logo_url TEXT,
+    business_latitude DOUBLE PRECISION,
+    business_longitude DOUBLE PRECISION,
+    is_certified BOOLEAN DEFAULT FALSE,
+    certified_at TIMESTAMP,
+    certification_note TEXT,
+    is_public BOOLEAN DEFAULT FALSE,
+    merged_from JSONB,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
+);
+
+-- One row per branch. business_id is the parent business, branches.id is the
+-- branch_id used by operational rows. Kept before users/products/sales so a
+-- restore never trips a foreign key.
+CREATE TABLE public.branches (
+    id UUID PRIMARY KEY,
+    business_id UUID,
+    branch_name TEXT,
+    location TEXT,
+    latitude DOUBLE PRECISION,
+    longitude DOUBLE PRECISION,
+    status TEXT DEFAULT 'active',
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
+);
+
 CREATE TABLE public.users (
     id UUID PRIMARY KEY,
     email TEXT,
@@ -27,6 +62,8 @@ CREATE TABLE public.users (
     full_name TEXT,
     phone TEXT,
     business_name TEXT,
+    business_id UUID,
+    branch_id UUID,
     business_location TEXT,
     business_logo_url TEXT,
     business_latitude DOUBLE PRECISION,
@@ -49,6 +86,7 @@ CREATE TABLE public.users (
 CREATE TABLE public.products (
     id UUID PRIMARY KEY,
     seller_id TEXT,
+    branch_id UUID,
     name TEXT,
     description TEXT,
     category TEXT,
@@ -69,10 +107,33 @@ CREATE TABLE public.products (
     updated_at TIMESTAMP
 );
 
+-- Append-only receipt for every INCREASE of business stock. Parent rows are
+-- businesses, branches, products and users, all created above. The ledger is
+-- part of the backup so a restore keeps the authorized receiving history.
+CREATE TABLE public.stock_receipts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    business_id UUID NOT NULL,
+    branch_id UUID,
+    product_id UUID NOT NULL,
+    quantity INTEGER NOT NULL,
+    stock_before INTEGER NOT NULL,
+    stock_after INTEGER NOT NULL,
+    source TEXT NOT NULL DEFAULT 'manual',
+    receiving_reference TEXT NOT NULL,
+    notes TEXT,
+    received_by UUID,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    CONSTRAINT stock_receipts_quantity_check CHECK (quantity > 0),
+    CONSTRAINT stock_receipts_balance_check CHECK (stock_after = stock_before + quantity),
+    CONSTRAINT stock_receipts_source_check CHECK (source IN ('manual', 'scanner', 'ai_import')),
+    CONSTRAINT stock_receipts_reference_unique UNIQUE (business_id, receiving_reference)
+);
+
 CREATE TABLE public.sales (
     id UUID PRIMARY KEY,
     invoice_number TEXT,
     seller_id TEXT,
+    branch_id UUID,
     customer_id TEXT,
     sale_date DATE,
     sale_time TIME,
@@ -106,6 +167,7 @@ CREATE TABLE public.sale_items (
 CREATE TABLE public.customers (
     id UUID PRIMARY KEY,
     seller_id TEXT,
+    branch_id UUID,
     name TEXT,
     phone TEXT,
     email TEXT,
@@ -265,6 +327,8 @@ CREATE TABLE public.ai_import_verifications (
 CREATE TABLE public.office_expenses (
     id UUID PRIMARY KEY,
     user_id TEXT,
+    business_id UUID,
+    branch_id UUID,
     business_name TEXT,
     expense_date TEXT,
     amount DOUBLE PRECISION,
@@ -375,6 +439,7 @@ CREATE TABLE public.backups (
 CREATE TABLE public.services (
     id UUID PRIMARY KEY,
     business_id UUID,
+    branch_id UUID,
     name TEXT,
     description TEXT,
     status TEXT DEFAULT 'active',
@@ -455,9 +520,22 @@ CREATE INDEX IF NOT EXISTS session_activity_user_id_index ON public.session_acti
 CREATE INDEX IF NOT EXISTS security_alerts_rule_index ON public.security_alerts (rule);
 CREATE INDEX IF NOT EXISTS security_alerts_status_index ON public.security_alerts (status);
 CREATE INDEX IF NOT EXISTS backups_backup_date_index ON public.backups (backup_date);
+CREATE INDEX IF NOT EXISTS businesses_legacy_name_key_index ON public.businesses (legacy_name_key);
+CREATE INDEX IF NOT EXISTS branches_business_status_index ON public.branches (business_id, status);
+CREATE UNIQUE INDEX IF NOT EXISTS branches_business_name_unique ON public.branches (business_id, lower(btrim(branch_name)));
+CREATE INDEX IF NOT EXISTS users_business_branch_index ON public.users (business_id, branch_id);
+CREATE INDEX IF NOT EXISTS products_branch_id_index ON public.products (branch_id);
+CREATE INDEX IF NOT EXISTS products_barcode_lookup_index ON public.products (lower(btrim(barcode))) WHERE barcode IS NOT NULL AND btrim(barcode) <> '';
+CREATE INDEX IF NOT EXISTS stock_receipts_product_created_index ON public.stock_receipts (product_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS stock_receipts_business_created_index ON public.stock_receipts (business_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS stock_receipts_branch_created_index ON public.stock_receipts (branch_id, created_at DESC) WHERE branch_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS sales_branch_id_index ON public.sales (branch_id);
+CREATE INDEX IF NOT EXISTS customers_branch_id_index ON public.customers (branch_id);
+CREATE INDEX IF NOT EXISTS office_expenses_business_branch_index ON public.office_expenses (business_id, branch_id);
 CREATE INDEX IF NOT EXISTS services_business_status_index ON public.services (business_id, status);
 CREATE UNIQUE INDEX IF NOT EXISTS services_business_name_unique ON public.services (business_id, lower(btrim(name)));
 CREATE INDEX IF NOT EXISTS service_consumables_product_index ON public.service_consumables (product_id);
 CREATE INDEX IF NOT EXISTS service_sales_business_date_index ON public.service_sales (business_id, sale_date);
+CREATE INDEX IF NOT EXISTS service_sales_branch_date_index ON public.service_sales (branch_id, sale_date);
 CREATE INDEX IF NOT EXISTS service_sales_seller_date_index ON public.service_sales (seller_id, sale_date);
 CREATE INDEX IF NOT EXISTS service_sale_items_sale_index ON public.service_sale_items (service_sale_id);

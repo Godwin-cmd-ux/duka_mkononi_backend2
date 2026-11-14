@@ -17,6 +17,10 @@ export const SESSION_KEYS = [
   'userLanguage',
   'userBusiness',
   'isLoggedIn',
+  'branchId',
+  'branchContext',
+  'branchData',
+  'businessStructure',
 ] as const;
 
 // Platform super admin check — 'super_admin' is the canonical role (promoted by

@@ -897,7 +897,11 @@ class AiNlEntryController extends BaseController
     {
         $sub = Request::create('/api/internal/nl-entry', 'POST', $payload);
 
-        foreach (['jwt_user', 'jwt_user_id', 'jwt_role', 'jwt_business_id', 'jwt_business_name', 'jwt_language', 'jwt_ip'] as $key) {
+        foreach ([
+            'jwt_user', 'jwt_user_id', 'jwt_role', 'jwt_business_id', 'jwt_business_name',
+            'jwt_business_structure', 'jwt_branch_context', 'jwt_branch_id',
+            'jwt_language', 'jwt_ip',
+        ] as $key) {
             if ($source->attributes->has($key)) {
                 $sub->attributes->set($key, $source->attributes->get($key));
             }

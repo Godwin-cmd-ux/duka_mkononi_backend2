@@ -15,7 +15,9 @@ class CustomerController extends BaseController
 
             $this->touchLastSeen($userId);
 
-            $customers = Customer::where('seller_id', $userId)
+            $customerQuery = Customer::where('seller_id', $userId);
+            $customerQuery = $this->scopeBranch($customerQuery, $request);
+            $customers = $customerQuery
                 ->orderBy('total_purchases', 'desc')
                 ->get()
                 ->toArray();
@@ -35,6 +37,10 @@ class CustomerController extends BaseController
     {
         try {
             $userId = $this->userId($request);
+            [$writeBranchId, $branchError] = $this->requireWriteBranch($request);
+            if ($branchError) {
+                return $branchError;
+            }
             $name = $request->input('name');
             $phone = $request->input('phone');
             $email = $request->input('email');
@@ -53,6 +59,7 @@ class CustomerController extends BaseController
             $customerData = [
                 'id' => $newCustomerId,
                 'seller_id' => $userId,
+                'branch_id' => $writeBranchId,
                 'name' => $name,
                 'phone' => $phone ?: null,
                 'email' => $email ?: null,
@@ -84,13 +91,17 @@ class CustomerController extends BaseController
         try {
             $customerId = $id;
             $userId = $this->userId($request);
+            [$writeBranchId, $branchError] = $this->requireWriteBranch($request);
+            if ($branchError) {
+                return $branchError;
+            }
             $name = $request->input('name');
             $phone = $request->input('phone');
             $email = $request->input('email');
 
             $this->touchLastSeen($userId);
 
-            $customer = Customer::where('id', $customerId)->select(['seller_id'])->first();
+            $customer = Customer::where('id', $customerId)->select(['seller_id', 'branch_id'])->first();
 
             if (!$customer) {
                 $this->log($userId, 'CUSTOMER_UPDATE_FAILED', '/api/customers/:id', [
@@ -99,6 +110,10 @@ class CustomerController extends BaseController
                 ], $this->ip($request), 'failed');
 
                 return $this->json(['error' => 'Mteja hajapatikana'], 404);
+            }
+
+            if ($writeBranchId !== null && (string) ($customer->branch_id ?? '') !== $writeBranchId) {
+                return $this->json(['error' => 'Mteja huyu ni wa tawi lingine', 'code' => 'BRANCH_MISMATCH'], 404);
             }
 
             if ($customer->seller_id !== $userId) {

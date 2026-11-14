@@ -1,5 +1,22 @@
 <?php
 
+// EMAIL_FROM is a legacy variable that sometimes holds a full mailbox string
+// ("Name <address>"). Symfony rejects that as an addr-spec, which used to make
+// EVERY OTP/password-reset email fail before it even reached the transport.
+// Split it into a bare address plus an optional display name here so both the
+// legacy and the current variables always produce a valid From header.
+$fromAddress = env('MAIL_FROM_ADDRESS') ?: env('EMAIL_FROM') ?: 'no-reply@dukamkononi.com';
+$fromName = env('MAIL_FROM_NAME') ?: 'DukaMkononi';
+
+if (is_string($fromAddress) && preg_match('/^\s*(.*?)\s*<([^>]+)>\s*$/', $fromAddress, $matches)) {
+    $fromAddress = trim($matches[2]);
+    if (trim($matches[1]) !== '') {
+        $fromName = trim($matches[1], " \"'");
+    }
+}
+
+$fromAddress = $fromAddress ?: 'no-reply@dukamkononi.com';
+
 return [
 
     'default' => env('MAIL_MAILER', 'smtp'),
@@ -30,8 +47,8 @@ return [
     ],
 
     'from' => [
-        'address' => env('EMAIL_FROM', env('MAIL_FROM_ADDRESS', 'no-reply@dukamkononi.com')),
-        'name' => env('MAIL_FROM_NAME', 'DukaMkononi'),
+        'address' => $fromAddress,
+        'name' => $fromName,
     ],
 
     'markdown' => [

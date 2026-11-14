@@ -370,6 +370,23 @@
                     <option value="other" data-i18n="admin_signup.business_type_other">Nyingine</option>
                 </select>
                 <textarea class="input-field" id="business_description" placeholder="Maelezo mafupi ya biashara (mfano: Tunauza sehemu za magari ya Toyota na Nissan...)" data-i18n="admin_signup.label_business_description" data-i18n-attr="placeholder" style="height:72px;padding:14px 16px;resize:vertical;font-family:'Inter',sans-serif;"></textarea>
+
+                <!-- Muundo wa biashara: biashara moja (bila matawi) au biashara
+                     yenye matawi. Hii ni tofauti na `business_type` ya hapo juu,
+                     ambayo ni aina ya bidhaa/huduma (duka la dawa, supermarket...). -->
+                <select class="input-field" id="business_structure">
+                    <option value="non_branch">Biashara Bila Matawi</option>
+                    <option value="branch">Biashara Yenye Matawi</option>
+                </select>
+
+                <div id="branchSection" style="display:none;width:100%;">
+                    <div style="width:100%;background:#eef4fa;border-radius:14px;padding:14px;margin-bottom:10px;">
+                        <div style="font-weight:700;color:#2c3e50;font-size:14px;margin-bottom:4px;">MATAWI YA BIASHARA *</div>
+                        <div style="font-size:12px;color:#7a8ba0;margin-bottom:10px;">Ongeza tawi moja au zaidi. Kila tawi linahitaji jina na eneo lake.</div>
+                        <div id="branchList"></div>
+                        <button type="button" id="addBranchBtn" style="width:100%;margin-top:8px;padding:10px;border:2px dashed #3498db;background:transparent;color:#3498db;border-radius:10px;font-weight:700;cursor:pointer;">+ Ongeza Tawi</button>
+                    </div>
+                </div>
                 <input type="email" class="input-field" id="email" placeholder="Barua Pepe *" data-i18n="admin_signup.label_email" data-i18n-attr="placeholder" autocomplete="email">
                 <input type="tel" class="input-field" id="phone" placeholder="Namba ya Simu" data-i18n="admin_signup.label_phone" data-i18n-attr="placeholder" autocomplete="tel">
                 <input type="password" class="input-field" id="adminCode" placeholder="Admin Code *" data-i18n="admin_signup.label_admin_code" data-i18n-attr="placeholder">
@@ -468,6 +485,10 @@
     const businessNameInput = document.getElementById('business_name');
     const businessLocationInput = document.getElementById('business_location');
     const businessTypeInput = document.getElementById('business_type');
+    const businessStructureInput = document.getElementById('business_structure');
+    const branchSection = document.getElementById('branchSection');
+    const branchList = document.getElementById('branchList');
+    const addBranchBtn = document.getElementById('addBranchBtn');
     const businessDescInput = document.getElementById('business_description');
     const emailInput = document.getElementById('email');
     const phoneInput = document.getElementById('phone');
@@ -483,6 +504,134 @@
     let formValues = null;
     let registrationToken = null;
     let pendingEmail = '';
+
+    // Branch rows captured before registration. Coordinates stay null when the
+    // browser denies GPS - a missing pin is never saved as (0,0).
+    let branchRows = [];
+
+    function newBranchRow() {
+        return { branch_name: '', location: '', latitude: null, longitude: null, locating: false };
+    }
+
+    function escapeBranchHtml(value) {
+        return String(value == null ? '' : value).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    }
+
+    function renderBranches() {
+        if (!branchList) return;
+        branchList.innerHTML = branchRows.map(function (branch, index) {
+            const coords = (branch.latitude !== null && branch.longitude !== null)
+                ? '<div style="font-size:11px;color:#2ecc71;margin-top:4px;">📍 ' + Number(branch.latitude).toFixed(5) + ', ' + Number(branch.longitude).toFixed(5) + '</div>'
+                : '';
+            return '<div data-branch-index="' + index + '" style="background:white;border:1px solid #dbe7f3;border-radius:12px;padding:10px;margin-bottom:8px;">'
+                + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'
+                + '<strong style="font-size:12px;color:#34495e;">Tawi ' + (index + 1) + '</strong>'
+                + (branchRows.length > 1 ? '<button type="button" data-remove-branch="' + index + '" style="border:none;background:transparent;color:#e74c3c;font-weight:700;cursor:pointer;">Ondoa</button>' : '')
+                + '</div>'
+                + '<input type="text" data-branch-field="branch_name" placeholder="Jina la Tawi *" value="' + escapeBranchHtml(branch.branch_name) + '" style="width:100%;padding:9px 11px;border:1px solid #ddd;border-radius:9px;margin-bottom:6px;font-size:14px;">'
+                + '<input type="text" data-branch-field="location" placeholder="Mahali pa Tawi *" value="' + escapeBranchHtml(branch.location) + '" style="width:100%;padding:9px 11px;border:1px solid #ddd;border-radius:9px;margin-bottom:6px;font-size:14px;">'
+                + '<button type="button" data-track-branch="' + index + '" style="width:100%;padding:9px;background:#e67e22;color:white;border:none;border-radius:9px;font-weight:700;font-size:12px;cursor:pointer;">'
+                + (branch.locating ? 'Inatafuta eneo...' : (branch.latitude !== null ? 'Badili Eneo la Tawi' : 'Pata Eneo la Tawi (GPS)'))
+                + '</button>'
+                + coords
+                + '</div>';
+        }).join('');
+    }
+
+    function bindBranchEvents() {
+        if (!branchList) return;
+
+        branchList.querySelectorAll('[data-branch-field]').forEach(function (input) {
+            input.addEventListener('input', function () {
+                const index = Number(input.closest('[data-branch-index]').getAttribute('data-branch-index'));
+                branchRows[index][input.getAttribute('data-branch-field')] = input.value;
+            });
+        });
+
+        branchList.querySelectorAll('[data-remove-branch]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                branchRows.splice(Number(button.getAttribute('data-remove-branch')), 1);
+                renderBranches();
+            });
+        });
+
+        branchList.querySelectorAll('[data-track-branch]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                trackBranchLocation(Number(button.getAttribute('data-track-branch')));
+            });
+        });
+    }
+
+    async function trackBranchLocation(index) {
+        if (!navigator.geolocation) {
+            showAlert({ key: 'admin_signup.alert_error' }, { key: 'admin_signup.err_required_fields' });
+            return;
+        }
+
+        branchRows[index].locating = true;
+        renderBranches();
+
+        try {
+            const position = await new Promise(function (resolve, reject) {
+                navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 15000 });
+            });
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+
+            let areaName = '';
+            try {
+                const geoRes = await fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng);
+                if (geoRes.ok) { const geo = await geoRes.json(); areaName = geo.display_name || ''; }
+            } catch (e) {}
+
+            if (!confirm('Tumia eneo hili kwa tawi hili?\n\n' + (areaName || lat.toFixed(5) + ', ' + lng.toFixed(5)))) {
+                branchRows[index].locating = false;
+                renderBranches();
+                return;
+            }
+
+            branchRows[index].latitude = lat;
+            branchRows[index].longitude = lng;
+            if (areaName) branchRows[index].location = areaName;
+            branchRows[index].locating = false;
+            renderBranches();
+        } catch (error) {
+            branchRows[index].locating = false;
+            renderBranches();
+            showAlert({ key: 'admin_signup.alert_error' }, 'Imeshindikana kupata eneo la tawi. Hakikisha ruhusa ya GPS imetolewa.');
+        }
+    }
+
+    function syncBranchSection() {
+        const isBranch = businessStructureInput && businessStructureInput.value === 'branch';
+        if (branchSection) branchSection.style.display = isBranch ? 'block' : 'none';
+        if (isBranch && branchRows.length === 0) {
+            branchRows = [newBranchRow()];
+            renderBranches();
+        }
+    }
+
+    if (businessStructureInput) {
+        businessStructureInput.addEventListener('change', syncBranchSection);
+        syncBranchSection();
+    }
+    if (addBranchBtn) {
+        addBranchBtn.addEventListener('click', function () {
+            branchRows.push(newBranchRow());
+            renderBranches();
+        });
+    }
+    if (branchList) {
+        branchList.addEventListener('input', function () {});
+        bindBranchEvents();
+    }
+    const originalRenderBranches = renderBranches;
+    renderBranches = function () {
+        originalRenderBranches();
+        bindBranchEvents();
+    };
 
     // OTP Modal HTML — 6 individual digit boxes with countdown
     const OTP_LENGTH = 6;
@@ -778,6 +927,17 @@
             business_name: businessNameInput.value.trim(),
             business_location: businessLocationInput.value.trim(),
             business_type: businessTypeInput.value,
+            business_structure: businessStructureInput ? businessStructureInput.value : 'non_branch',
+            branches: businessStructureInput && businessStructureInput.value === 'branch'
+                ? branchRows.map(function (branch) {
+                    return {
+                        branch_name: (branch.branch_name || '').trim(),
+                        location: (branch.location || '').trim(),
+                        latitude: branch.latitude,
+                        longitude: branch.longitude
+                    };
+                })
+                : [],
             business_description: (businessDescInput.value || '').trim(),
             email: emailInput.value.trim(),
             phone: phoneInput.value.trim(),
@@ -809,6 +969,18 @@
             showAlert({ key: 'admin_signup.alert_error' }, { key: 'admin_signup.err_admin_code_incorrect' });
             return false;
         }
+        if (form.business_structure === 'branch') {
+            if (!form.branches || form.branches.length === 0) {
+                showAlert({ key: 'admin_signup.alert_error' }, 'Ongeza tawi moja au zaidi kwa biashara yenye matawi.');
+                return false;
+            }
+            for (let i = 0; i < form.branches.length; i += 1) {
+                if (!form.branches[i].branch_name || !form.branches[i].location) {
+                    showAlert({ key: 'admin_signup.alert_error' }, 'Jina na mahali pa kila tawi vinahitajika.');
+                    return false;
+                }
+            }
+        }
         return true;
     }
 
@@ -835,6 +1007,8 @@
                     business_name: form.business_name,
                     business_location: form.business_location,
                     business_type: form.business_type,
+                    business_structure: form.business_structure || 'non_branch',
+                    branches: form.branches || [],
                     business_description: form.business_description || ''
                 }),
             });
