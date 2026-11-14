@@ -61,6 +61,22 @@ class Supabase
         return $this->table;
     }
 
+    /**
+     * The column a stable default ORDER BY should use for this table.
+     *
+     * Most tables use `id`, but a few (business_settings, business_blocks)
+     * are keyed by `business_id` and have no `id` column. Ordering by a
+     * non-existent column makes PostgREST reject the whole request, so the
+     * default must match the table's actual primary key.
+     */
+    public function primaryKey(): string
+    {
+        return match ($this->table) {
+            'business_settings', 'business_blocks' => 'business_id',
+            default => 'id',
+        };
+    }
+
     public function query(): static
     {
         return $this;
@@ -291,7 +307,7 @@ class Supabase
             // didn't request an order, pin one to avoid skipped/duplicate rows
             // across pages.
             if ($query->orderBy === []) {
-                $query->orderBy['id'] = 'asc';
+                $query->orderBy[$query->primaryKey()] = 'asc';
             }
 
             $rows = $query->request('GET', $query->readUrl(), $query->authHeaders()) ?? [];
@@ -377,7 +393,7 @@ class Supabase
             return false;
         }
 
-        return $this->select('id')->first() !== null;
+        return $this->first() !== null;
     }
 
     public function sum(string $column)

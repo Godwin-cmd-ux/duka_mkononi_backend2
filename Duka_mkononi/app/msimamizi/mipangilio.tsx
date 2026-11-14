@@ -375,7 +375,7 @@ export default function MipangilioScreen() {
     { key: 'user', label: 'Mimi', icon: 'person-outline' },
     { key: 'business', label: 'Biashara', icon: 'storefront-outline' },
     { key: 'branches', label: 'Matawi', icon: 'business-outline' },
-    { key: 'other', label: 'Mipangilio', icon: 'options-outline' },
+    { key: 'other', label: 'Mengine', icon: 'options-outline' },
   ];
 
   const renderSwitch = (key: string, title: string, description: string, badge?: string) => (
@@ -415,18 +415,22 @@ export default function MipangilioScreen() {
         </View>
       ) : (
         <>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs}>
+          <View style={styles.tabsGrid}>
             {tabs.map((item) => (
               <TouchableOpacity
                 key={item.key}
                 onPress={() => setTab(item.key)}
-                style={[styles.tab, tab === item.key && { backgroundColor: tc.tint, borderColor: tc.primary }]}
+                style={[styles.tabCard, tab === item.key && styles.tabCardActive]}
+                accessibilityRole="button"
+                accessibilityState={{ selected: tab === item.key }}
               >
-                <Ionicons name={item.icon} size={15} color={tab === item.key ? tc.primary : tc.muted} />
-                <Text style={[styles.tabLabel, tab === item.key && { color: tc.primary }]}>{item.label}</Text>
+                <View style={[styles.tabIconWrap, tab === item.key && styles.tabIconWrapActive]}>
+                  <Ionicons name={item.icon} size={18} color={tab === item.key ? '#ffffff' : tc.primary} />
+                </View>
+                <Text style={[styles.tabCardLabel, tab === item.key && styles.tabCardLabelActive]}>{item.label}</Text>
               </TouchableOpacity>
             ))}
-          </ScrollView>
+          </View>
 
           <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
             {tab === 'user' && (
@@ -782,13 +786,20 @@ const makeStyles = (tc: ThemeColors) => StyleSheet.create({
   headerSub: { fontSize: 11.5, color: tc.muted, marginTop: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10 },
   loadingText: { fontSize: 13, color: tc.muted },
-  tabs: { paddingHorizontal: 12, paddingVertical: 12, gap: 8 },
-  tab: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingHorizontal: 13, paddingVertical: 8, borderRadius: 999,
+  tabsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingHorizontal: 12, paddingVertical: 12 },
+  tabCard: {
+    flexBasis: '47%', flexGrow: 1, flexDirection: 'row', alignItems: 'center', gap: 10,
+    paddingHorizontal: 12, paddingVertical: 12, borderRadius: 14,
     borderWidth: 1, borderColor: tc.line, backgroundColor: tc.card,
   },
-  tabLabel: { fontSize: 12, fontWeight: '700', color: tc.muted },
+  tabCardActive: { borderColor: tc.primary, backgroundColor: tc.tint },
+  tabIconWrap: {
+    width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: tc.soft,
+  },
+  tabIconWrapActive: { backgroundColor: tc.primary },
+  tabCardLabel: { fontSize: 13, fontWeight: '800', color: tc.ink },
+  tabCardLabelActive: { color: tc.primary },
   content: { paddingHorizontal: 12, paddingBottom: 20, gap: 12 },
   card: { backgroundColor: tc.card, borderRadius: 16, borderWidth: 1, borderColor: tc.line, padding: 16 },
   cardTitle: { fontSize: 15, fontWeight: '800', color: tc.ink },

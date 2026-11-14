@@ -20,6 +20,7 @@ import { useFeatures } from '../../context/FeatureContext';
 import { useLang } from '../../context/LanguageContext';
 import { fetchWithTimeout, requireNetwork } from '../../lib/network';
 import { useTheme, ThemeColors } from '../../lib/theme';
+import SmartCartLoader from '../../components/SmartCartLoader';
 
 interface Fridge {
   id: string;
@@ -77,6 +78,7 @@ export default function FrijiScreen() {
   const fridgeEnabled = isEnabled('fridge');
 
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [fridges, setFridges] = useState<Fridge[]>([]);
   const [summary, setSummary] = useState<any>({});
@@ -323,6 +325,8 @@ export default function FrijiScreen() {
     }
   };
 
+  const filteredFridges = useMemo(() => fridges.filter((f) => !search.trim() || String(f.name || '').toLowerCase().includes(search.trim().toLowerCase())), [fridges, search]);
+
   const inside = Number(summary.inside_units || 0);
   const outside = Number(summary.outside_units || 0);
   const business = Number(summary.business_units || 0);
@@ -363,8 +367,19 @@ export default function FrijiScreen() {
           </TouchableOpacity>
         </View>
 
+        <View style={styles.searchBox}>
+          <Ionicons name="search" size={18} color={tc.muted} />
+          <TextInput
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Tafuta friji..."
+            placeholderTextColor={tc.muted}
+            style={styles.searchInput}
+          />
+        </View>
+
         {loading ? (
-          <View style={styles.loading}><ActivityIndicator color={tc.primary} /><Text style={styles.muted}>{tr('loading')}</Text></View>
+          <View style={styles.loading}><SmartCartLoader size="large" color={tc.primary} /><Text style={styles.muted}>{tr('loading')}</Text></View>
         ) : (
           <>
             <View style={styles.statsRow}>
@@ -378,13 +393,13 @@ export default function FrijiScreen() {
               <Stat label={tr('alerts')} value={alerts.length} color={alerts.length ? '#d97706' : '#15803d'} styles={styles} />
             </View>
 
-            {fridges.length === 0 ? (
+            {filteredFridges.length === 0 ? (
               <View style={styles.emptyCard}>
                 <Ionicons name="snow-outline" size={44} color="#94a3b8" />
-                <Text style={styles.emptyTitle}>{tr('empty')}</Text>
-                <Text style={styles.muted}>{tr('empty_hint')}</Text>
+                <Text style={styles.emptyTitle}>{search.trim() ? tr('empty') : tr('empty')}</Text>
+                <Text style={styles.muted}>{search.trim() ? tr('empty_hint') : tr('empty_hint')}</Text>
               </View>
-            ) : fridges.map(fridge => (
+            ) : filteredFridges.map(fridge => (
               <TouchableOpacity key={fridge.id} style={styles.card} onPress={() => openDetail(fridge)} activeOpacity={0.85}>
                 <View style={styles.cardTop}>
                   <View style={styles.fridgeIcon}><Ionicons name="snow" size={22} color="#2563eb" /></View>
@@ -457,7 +472,7 @@ export default function FrijiScreen() {
             <View style={styles.modalActions}>
               <TouchableOpacity style={styles.cancelBtn} onPress={() => setNameModal(false)}><Text style={styles.cancelText}>{tr('cancel')}</Text></TouchableOpacity>
               <TouchableOpacity style={styles.primaryBtn} onPress={saveName} disabled={saving}>
-                <Text style={styles.primaryText}>{saving ? '...' : tr('save')}</Text>
+                {saving ? <SmartCartLoader size="compact" color="#ffffff" /> : <Text style={styles.primaryText}>{tr('save')}</Text>}
               </TouchableOpacity>
             </View>
           </View>
@@ -576,7 +591,7 @@ export default function FrijiScreen() {
               {transferDirection === 'in' ? tr('transfer_in_hint') : tr('transfer_out_hint')}
             </Text>
             <TouchableOpacity style={[styles.primaryBtn, { marginTop: 18 }]} onPress={submitTransfer} disabled={transferring}>
-              <Text style={styles.primaryText}>{transferring ? '...' : tr('confirm')}</Text>
+              {transferring ? <SmartCartLoader size="compact" color="#ffffff" /> : <Text style={styles.primaryText}>{tr('confirm')}</Text>}
             </TouchableOpacity>
           </ScrollView>
         </SafeAreaView>
@@ -620,6 +635,8 @@ function Mini({ label, value }: { label: string; value: number }) {
 const makeStyles = (tc: ThemeColors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: tc.page },
   content: { padding: 16, paddingBottom: 48 },
+  searchBox: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: tc.card, borderRadius: 12, borderWidth: 1, borderColor: tc.line, paddingHorizontal: 12, paddingVertical: 8, marginBottom: 12 },
+  searchInput: { flex: 1, fontSize: 13, color: tc.ink },
   header: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },
   title: { fontSize: 24, fontWeight: '800', color: tc.ink },
   subtitle: { fontSize: 12, color: tc.muted, marginTop: 3 },
