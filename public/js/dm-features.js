@@ -92,6 +92,9 @@
         // usable. The API refuses every call, and this explains why.
         var onFridgePage = /^\/muuzaji\/friji\/?$/.test(window.location.pathname) || /^\/friji\/?$/.test(window.location.pathname);
         var onProductManagementPage = /^\/msimamizi\/bidhaa-mpya\/?$/.test(window.location.pathname) || /^\/bidhaa-mpya\/?$/.test(window.location.pathname);
+        // Only a seller visiting the shared product-management page should be
+        // blocked when the switch is off; administrators always manage products.
+        var sellerContext = !!document.querySelector('[data-feature-nav="product_management"]');
         if (onFridgePage && !fridge) {
             blockPage(
                 'Kipengele cha Friji kimezimwa',
@@ -100,7 +103,7 @@
             );
         }
 
-        if (onProductManagementPage && !productManagement) {
+        if (onProductManagementPage && !productManagement && sellerContext) {
             blockPage(
                 'Kipengele cha Usimamizi wa Bidhaa kimezimwa',
                 'Msimamizi wa biashara amezima kipengele cha usimamizi wa bidhaa. Bidhaa zilizopo zinabaki salama.',
