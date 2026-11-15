@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Mipangilio - Dukamkononi Msimamizi</title>
+    <title data-i18n="msimamizi_mipangilio.page_title_mipangilio">Mipangilio - Dukamkononi Msimamizi</title>
     <link rel="stylesheet" href="/css/themes.css?v={{ filemtime(public_path('css/themes.css')) }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -434,7 +434,7 @@
                 <div class="branch-list" id="branchList"></div>
                 <div class="empty" id="branchEmpty" style="display:none;" data-i18n="msimamizi_mipangilio.branches_empty">Hakuna matawi bado.</div>
 
-                <div class="hint" id="branchStructureNote" style="display:none;margin-top:14px;">
+                <div class="hint" id="branchStructureNote" style="display:none;margin-top:14px;" data-i18n="msimamizi_mipangilio.branch_structure_note">
                     Biashara hii inafanya kazi kwenye eneo moja. Usimamizi wa matawi unapatikana kwa biashara zilizosajiliwa na matawi.
                 </div>
             </div>
@@ -453,7 +453,7 @@
                 <div class="toggle-row">
                     <div class="toggle-copy">
                         <div class="toggle-title" data-i18n="msimamizi_mipangilio.toggle_fridge_title">Unataka kutumia kipengele cha Friji/Freezer?</div>
-                        <div class="toggle-desc">Kikwashwa, wauzaji wanaweza kusimamia stock iliyo ndani ya friji na kuhamisha stock kati ya friji na nje. Kikizimwa, kichupo cha Friji hufichwa na stock ya ndani haitumiki kwenye mauzo; stock, historia na tahadhari zote zinabaki salama.</div>
+                        <div class="toggle-desc" data-i18n="msimamizi_mipangilio.toggle_fridge_desc">Kikwashwa, wauzaji wanaweza kusimamia stock iliyo ndani ya friji na kuhamisha stock kati ya friji na nje. Kikizimwa, kichupo cha Friji hufichwa na stock ya ndani haitumiki kwenye mauzo; stock, historia na tahadhari zote zinabaki salama.</div>
                     </div>
                     <label class="switch">
                         <input type="checkbox" data-feature="fridge_enabled" aria-label="Washa kipengele cha Friji">
@@ -464,7 +464,7 @@
                 <div class="toggle-row">
                     <div class="toggle-copy">
                         <div class="toggle-title" data-i18n="msimamizi_mipangilio.toggle_scanner_title">Unataka kutumia kipengele cha Scanner?</div>
-                        <div class="toggle-desc">Huwasha uwanja wa barcode kwa msimamizi kupokea stock na kwa muuzaji kuchagua bidhaa wakati wa kuuza au kuhamisha stock. Scanner haiongezi stock yenyewe; msimamizi pekee anayeruhusiwa kupokea stock.</div>
+                        <div class="toggle-desc" data-i18n="msimamizi_mipangilio.toggle_scanner_desc">Huwasha uwanja wa barcode kwa msimamizi kupokea stock na kwa muuzaji kuchagua bidhaa wakati wa kuuza au kuhamisha stock. Scanner haiongezi stock yenyewe; msimamizi pekee anayeruhusiwa kupokea stock.</div>
                     </div>
                     <label class="switch">
                         <input type="checkbox" data-feature="scanner_enabled" aria-label="Washa kipengele cha Scanner">
@@ -475,7 +475,7 @@
                 <div class="toggle-row">
                     <div class="toggle-copy">
                         <div class="toggle-title" data-i18n="msimamizi_mipangilio.toggle_services_title">Unataka kutumia Huduma (Services)?</div>
-                        <div class="toggle-desc">Kikwashwa, unaweza kuunda huduma na wauzaji wanaweza kuziuza. Kikizimwa, uundaji wa huduma mpya na mauzo ya huduma huzuiwa, lakini huduma za zamani na ripoti zake zinabaki.</div>
+                        <div class="toggle-desc" data-i18n="msimamizi_mipangilio.toggle_services_desc">Kikwashwa, unaweza kuunda huduma na wauzaji wanaweza kuziuza. Kikizimwa, uundaji wa huduma mpya na mauzo ya huduma huzuiwa, lakini huduma za zamani na ripoti zake zinabaki.</div>
                     </div>
                     <label class="switch">
                         <input type="checkbox" data-feature="services_enabled" aria-label="Washa kipengele cha Huduma">
@@ -486,7 +486,7 @@
                 <div class="toggle-row">
                     <div class="toggle-copy">
                         <div class="toggle-title" data-i18n="msimamizi_mipangilio.toggle_product_mgmt_title">Muuzaji anaweza kusimamia bidhaa (stock)?</div>
-                        <div class="toggle-desc">Kikwashwa, muuzaji anaweza kufungua ukurasa wa Bidhaa Mpya, kusajili bidhaa, kupokea stock na kubadilisha bei/stock. Kikizimwa (chaguo-msingi), ni msimamizi pekee anayeweza kusimamia bidhaa; muuzaji anauza stock iliyopo tu.</div>
+                        <div class="toggle-desc" data-i18n="msimamizi_mipangilio.toggle_product_mgmt_desc">Kikwashwa, muuzaji anaweza kufungua ukurasa wa Bidhaa Mpya, kusajili bidhaa, kupokea stock na kubadilisha bei/stock. Kikizimwa (chaguo-msingi), ni msimamizi pekee anayeweza kusimamia bidhaa; muuzaji anauza stock iliyopo tu.</div>
                     </div>
                     <label class="switch">
                         <input type="checkbox" data-feature="product_management_enabled" aria-label="Muuzaji anaweza kusimamia bidhaa">
@@ -506,7 +506,7 @@
                 <div class="toggle-row">
                     <div class="toggle-copy">
                         <div class="toggle-title" data-i18n="msimamizi_mipangilio.toggle_low_stock_title">Stock ndogo ya biashara</div>
-                        <div class="toggle-desc">Arifa wakati stock ya nje ya friji au stock ya biashara inafikia kiwango cha chini. Ufuatiliaji unaendelea hata ikizimwa.</div>
+                        <div class="toggle-desc" data-i18n="msimamizi_mipangilio.toggle_low_stock_desc">Arifa wakati stock ya nje ya friji au stock ya biashara inafikia kiwango cha chini. Ufuatiliaji unaendelea hata ikizimwa.</div>
                     </div>
                     <label class="switch">
                         <input type="checkbox" data-feature="notify_low_stock" aria-label="Washa tahadhari za stock ndogo">
@@ -517,7 +517,7 @@
                 <div class="toggle-row">
                     <div class="toggle-copy">
                         <div class="toggle-title" data-i18n="msimamizi_mipangilio.toggle_fridge_stock_title">Stock ndogo ndani ya friji</div>
-                        <div class="toggle-desc">Arifa wakati stock iliyo ndani ya friji inafikia kiwango chake cha chini.</div>
+                        <div class="toggle-desc" data-i18n="msimamizi_mipangilio.toggle_fridge_stock_desc">Arifa wakati stock iliyo ndani ya friji inafikia kiwango chake cha chini.</div>
                     </div>
                     <label class="switch">
                         <input type="checkbox" data-feature="notify_fridge_stock" aria-label="Washa tahadhari za stock ya friji">
@@ -538,14 +538,14 @@
 
                 <div class="grid">
                     <div class="field full">
-                        <label>Hali ya sasa</label>
+                        <label data-i18n="msimamizi_mipangilio.structure_current">Hali ya sasa</label>
                         <div class="pref-value" id="structureValue">—</div>
                     </div>
                 </div>
 
                 <div class="actions">
-                    <button class="btn btn-primary" id="toBranchfulBtn" type="button" style="display:none;">Badilisha kuwa biashara ya matawi</button>
-                    <button class="btn btn-danger" id="toBranchlessBtn" type="button" style="display:none;">Badilisha kuwa biashara ya eneo moja</button>
+                    <button class="btn btn-primary" id="toBranchfulBtn" type="button" style="display:none;" data-i18n="msimamizi_mipangilio.btn_to_branchful">Badilisha kuwa biashara ya matawi</button>
+                    <button class="btn btn-danger" id="toBranchlessBtn" type="button" style="display:none;" data-i18n="msimamizi_mipangilio.btn_to_branchless">Badilisha kuwa biashara ya eneo moja</button>
                 </div>
             </div>
         </section>
@@ -674,6 +674,22 @@
 
         const $ = (id) => document.getElementById(id);
 
+        function tr(key, params, fallback) {
+            try {
+                if (window.DM && typeof window.DM.t === 'function') {
+                    const v = params ? window.DM.t(key, params) : window.DM.t(key);
+                    if (v && v !== key) return v;
+                }
+            } catch (e) {}
+            let value = (fallback != null) ? fallback : key;
+            if (params) {
+                Object.keys(params).forEach(function (name) {
+                    value = String(value).split('{' + name + '}').join(params[name] == null ? '' : params[name]);
+                });
+            }
+            return value;
+        }
+
         function authHeaders(json) {
             const headers = { 'Accept': 'application/json', 'Authorization': 'Bearer ' + token };
             if (json) headers['Content-Type'] = 'application/json';
@@ -774,8 +790,8 @@
             $('branchCard').style.display = isBranchBusiness ? '' : 'none';
             $('branchStructureNote').style.display = isBranchBusiness ? 'none' : '';
 
-            $('structureValue').textContent = isBranchBusiness ? 'Biashara ya matawi' : 'Biashara ya eneo moja';
-            $('structureBadge').textContent = isBranchBusiness ? 'Matawi' : 'Eneo moja';
+            $('structureValue').textContent = isBranchBusiness ? tr('msimamizi_mipangilio.structure_branchful') : tr('msimamizi_mipangilio.structure_branchless');
+            $('structureBadge').textContent = isBranchBusiness ? tr('msimamizi_mipangilio.badge_branches') : tr('msimamizi_mipangilio.badge_single');
             $('toBranchfulBtn').style.display = isBranchBusiness ? 'none' : '';
             $('toBranchlessBtn').style.display = isBranchBusiness ? '' : 'none';
 
@@ -837,13 +853,13 @@
                     badge.className = 'badge';
                     badge.style.background = '#f1f5f9';
                     badge.style.color = '#64748b';
-                    badge.textContent = 'Limezimwa';
+                    badge.textContent = tr('msimamizi_mipangilio.branch_inactive');
                     name.appendChild(badge);
                 }
 
                 const meta = document.createElement('div');
                 meta.className = 'branch-meta';
-                meta.textContent = branch.location || 'Eneo halijawekwa';
+                meta.textContent = branch.location || tr('msimamizi_mipangilio.branch_no_location');
 
                 info.appendChild(name);
                 info.appendChild(meta);
@@ -854,7 +870,7 @@
                 const edit = document.createElement('button');
                 edit.type = 'button';
                 edit.className = 'btn btn-ghost';
-                edit.textContent = 'Hariri';
+                edit.textContent = tr('msimamizi_mipangilio.branch_edit');
                 edit.addEventListener('click', () => openBranchModal(branch));
 
                 actions.appendChild(edit);
@@ -863,14 +879,14 @@
                     const off = document.createElement('button');
                     off.type = 'button';
                     off.className = 'btn btn-danger';
-                    off.textContent = 'Zima';
+                    off.textContent = tr('msimamizi_mipangilio.branch_deactivate');
                     off.addEventListener('click', () => deactivateBranch(branch));
                     actions.appendChild(off);
                 } else {
                     const on = document.createElement('button');
                     on.type = 'button';
                     on.className = 'btn btn-ghost';
-                    on.textContent = 'Rudisha';
+                    on.textContent = tr('msimamizi_mipangilio.branch_reactivate');
                     on.addEventListener('click', () => reactivateBranch(branch));
                     actions.appendChild(on);
                 }
@@ -886,9 +902,9 @@
                 setBusy($('saveUserBtn'), true, 'Inapakia...');
                 const data = await api('/api/settings');
                 populate(data);
-                toast('Mipangilio imepakiwa');
+                toast(tr('msimamizi_mipangilio.toast_loaded'));
             } catch (error) {
-                toast(error.message || 'Imeshindikana kupakia mipangilio', true);
+                toast(error.message || tr('msimamizi_mipangilio.toast_load_error'), true);
             } finally {
                 setBusy($('saveUserBtn'), false);
             }
@@ -910,9 +926,9 @@
                     stored.phone = result.user.phone;
                     localStorage.setItem('userData', JSON.stringify(stored));
                 }
-                toast('Taarifa zako zimehifadhiwa');
+                toast(tr('msimamizi_mipangilio.toast_user_saved'));
             } catch (error) {
-                toast(error.message || 'Imeshindikana kuhifadhi taarifa zako', true);
+                toast(error.message || tr('msimamizi_mipangilio.toast_save_error'), true);
             } finally {
                 setBusy(button, false);
             }
@@ -923,7 +939,7 @@
             const button = $('savePasswordBtn');
 
             if ($('newPassword').value !== $('confirmPassword').value) {
-                toast('Nenosiri jipya na uthibitisho havifanani', true);
+                toast(tr('msimamizi_mipangilio.toast_password_mismatch'), true);
                 return;
             }
 
@@ -939,9 +955,9 @@
                 });
 
                 $('passwordForm').reset();
-                toast('Nenosiri limebadilishwa');
+                toast(tr('msimamizi_mipangilio.toast_password_changed'));
             } catch (error) {
-                toast(error.message || 'Imeshindikana kubadilisha nenosiri', true);
+                toast(error.message || tr('msimamizi_mipangilio.toast_save_error'), true);
             } finally {
                 setBusy(button, false);
             }
@@ -963,9 +979,9 @@
                     themeWidget.apply(theme);
                 }
 
-                toast('Mandhari imehifadhiwa');
+                toast(tr('msimamizi_mipangilio.toast_theme_saved'));
             } catch (error) {
-                toast(error.message || 'Imeshindikana kuhifadhi mandhari', true);
+                toast(error.message || tr('msimamizi_mipangilio.toast_save_error'), true);
             }
         });
 
@@ -994,9 +1010,9 @@
                 stored.business_location = body.business_location;
                 localStorage.setItem('userData', JSON.stringify(stored));
 
-                toast('Taarifa za biashara zimehifadhiwa');
+                toast(tr('msimamizi_mipangilio.toast_business_saved'));
             } catch (error) {
-                toast(error.message || 'Imeshindikana kuhifadhi taarifa za biashara', true);
+                toast(error.message || tr('msimamizi_mipangilio.toast_save_error'), true);
             } finally {
                 setBusy(button, false);
             }
@@ -1008,7 +1024,7 @@
                 const value = input.checked;
 
                 if (!value && key === 'fridge_enabled') {
-                    const ok = window.confirm('Kuzima Friji kutaficha kichupo na kuzuia matumizi yake kwa wauzaji. Stock na historia hazitafutwa. Endelea?');
+                    const ok = window.confirm(tr('msimamizi_mipangilio.confirm_disable_fridge'));
                     if (!ok) {
                         input.checked = true;
                         return;
@@ -1021,10 +1037,10 @@
                     payload[key] = value;
                     const result = await api('/api/settings/features', { method: 'PUT', body: JSON.stringify(payload) });
                     applySettings(result.settings || result.features);
-                    toast('Mipangilio imehifadhiwa');
+                    toast(tr('msimamizi_mipangilio.toast_feature_saved'));
                 } catch (error) {
                     input.checked = !value;
-                    toast(error.message || 'Imeshindikana kuhifadhi mipangilio', true);
+                    toast(error.message || tr('msimamizi_mipangilio.toast_save_error'), true);
                 } finally {
                     input.disabled = false;
                 }
@@ -1038,9 +1054,9 @@
                 const stored = JSON.parse(localStorage.getItem('userData') || '{}');
                 stored.language = language;
                 localStorage.setItem('userData', JSON.stringify(stored));
-                toast('Lugha imehifadhiwa. Ukurasa utabadilika baada ya kupakia upya.');
+                toast(tr('msimamizi_mipangilio.toast_language_saved'));
             } catch (error) {
-                toast(error.message || 'Imeshindikana kuhifadhi lugha', true);
+                toast(error.message || tr('msimamizi_mipangilio.toast_save_error'), true);
             }
         });
 
@@ -1097,10 +1113,10 @@
                 });
 
                 applyConvertedSession(result);
-                toast('Biashara sasa inafanya kazi kwa matawi. Inapakia upya...');
+                toast(tr('msimamizi_mipangilio.toast_structure_branchful'));
                 setTimeout(() => window.location.reload(), 700);
             } catch (error) {
-                toast(error.message || 'Imeshindikana kubadili muundo wa biashara', true);
+                toast(error.message || tr('msimamizi_mipangilio.confirm_structure_error'), true);
                 setBusy(button, false);
             }
         });
@@ -1121,7 +1137,7 @@
                 });
 
                 applyConvertedSession(result);
-                toast('Biashara sasa inafanya kazi kwenye eneo moja. Inapakia upya...');
+                toast(tr('msimamizi_mipangilio.toast_structure_branchless'));
                 setTimeout(() => window.location.reload(), 700);
             } catch (error) {
                 toast(error.message || 'Imeshindikana kuunganisha biashara', true);
@@ -1130,7 +1146,7 @@
         });
 
         function openBranchModal(branch) {
-            $('branchModalTitle').textContent = branch ? 'Hariri Tawi' : 'Ongeza Tawi';
+            $('branchModalTitle').textContent = branch ? (tr('msimamizi_mipangilio.branch_edit') + ' ' + tr('msimamizi_mipangilio.label_branch')) : tr('msimamizi_mipangilio.modal_branch_title');
             $('branchId').value = branch ? branch.id : '';
             $('branchName').value = branch ? (branch.branch_name || '') : '';
             $('branchLocation').value = branch ? (branch.location || '') : '';
@@ -1177,16 +1193,16 @@
 
                 renderBranches();
                 closeBranchModal();
-                toast(id ? 'Tawi limehifadhiwa' : 'Tawi limeongezwa');
+                toast(id ? tr('msimamizi_mipangilio.toast_branch_saved') : tr('msimamizi_mipangilio.toast_branch_added'));
             } catch (error) {
-                toast(error.message || 'Imeshindikana kuhifadhi tawi', true);
+                toast(error.message || tr('msimamizi_mipangilio.toast_save_error'), true);
             } finally {
                 setBusy(button, false);
             }
         });
 
         async function deactivateBranch(branch) {
-            const ok = window.confirm('Kuzima tawi "' + branch.branch_name + '"? Wauzaji wake hawataweza kuingia hadi ulirudishe. Data yote inabaki.');
+            const ok = window.confirm(tr('msimamizi_mipangilio.confirm_deactivate_branch', { name: branch.branch_name }, 'Kuzima tawi "{name}"? Wauzaji wake hawataweza kuingia hadi ulirudishe. Data yote inabaki.'));
             if (!ok) return;
 
             try {
@@ -1196,9 +1212,9 @@
                     if (index >= 0) state.branches[index] = result.branch;
                 }
                 renderBranches();
-                toast('Tawi limezimwa');
+                toast(tr('msimamizi_mipangilio.toast_branch_deactivated'));
             } catch (error) {
-                toast(error.message || 'Imeshindikana kuzima tawi', true);
+                toast(error.message || tr('msimamizi_mipangilio.toast_branch_toggle_error'), true);
             }
         }
 
@@ -1213,9 +1229,9 @@
                     if (index >= 0) state.branches[index] = result.branch;
                 }
                 renderBranches();
-                toast('Tawi limerudishwa');
+                toast(tr('msimamizi_mipangilio.toast_branch_restored'));
             } catch (error) {
-                toast(error.message || 'Imeshindikana kurudisha tawi', true);
+                toast(error.message || tr('msimamizi_mipangilio.toast_branch_toggle_error'), true);
             }
         }
 
