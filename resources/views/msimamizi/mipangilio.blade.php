@@ -249,40 +249,41 @@
     </style>
 </head>
 <body>
+@include('partials.dm-lang-widget', ['dmLangHideButton' => true])
 <div class="settings-shell">
     <aside class="settings-side">
         <div class="brand">
             <div class="brand-icon">D</div>
             <div class="brand-text">
                 <div class="brand-name">DukaMkononi</div>
-                <div class="brand-sub">Mipangilio ya Msimamizi</div>
+                <div class="brand-sub" data-i18n="msimamizi_mipangilio.brand_sub">Mipangilio ya Msimamizi</div>
             </div>
         </div>
 
-        <div class="side-label">Sehemu</div>
+        <div class="side-label" data-i18n="msimamizi_mipangilio.section_label">Sehemu</div>
         <nav class="section-nav" aria-label="Sehemu za mipangilio">
             <button class="section-btn active" data-section="user" type="button">
-                <span class="nav-ico">👤</span><span>Taarifa Zako</span>
+                <span class="nav-ico">👤</span><span data-i18n="msimamizi_mipangilio.nav_user">Taarifa Zako</span>
             </button>
             <button class="section-btn" data-section="business" type="button">
-                <span class="nav-ico">🏪</span><span>Biashara na Matawi</span>
+                <span class="nav-ico">🏪</span><span data-i18n="msimamizi_mipangilio.nav_business">Biashara na Matawi</span>
             </button>
             <button class="section-btn" data-section="other" type="button">
-                <span class="nav-ico">⚙️</span><span>Mipangilio Mingine</span>
+                <span class="nav-ico">⚙️</span><span data-i18n="msimamizi_mipangilio.nav_other">Mipangilio Mingine</span>
             </button>
         </nav>
 
         <div class="side-spacer"></div>
 
         <a class="back-link" href="/msimamizi">
-            <span aria-hidden="true">←</span><span>Rudi Dashibodi</span>
+            <span aria-hidden="true">←</span><span data-i18n="msimamizi_mipangilio.back_dashboard">Rudi Dashibodi</span>
         </a>
     </aside>
 
     <main class="settings-main">
         <div class="page-head">
-            <h1 class="page-title">Mipangilio</h1>
-            <p class="page-sub">Simamia taarifa zako, biashara yako, matawi, na huduma za hiari mahali pamoja.</p>
+            <h1 class="page-title" data-i18n="msimamizi_mipangilio.page_title">Mipangilio</h1>
+            <p class="page-sub" data-i18n="msimamizi_mipangilio.page_sub">Simamia taarifa zako, biashara yako, matawi, na huduma za hiari mahali pamoja.</p>
         </div>
 
         <!-- ============ USER ============ -->
@@ -290,65 +291,65 @@
             <form class="card" id="userForm" autocomplete="off">
                 <div class="card-head">
                     <div>
-                        <h2 class="card-title" id="user-heading">Taarifa Zako</h2>
-                        <div class="card-desc">Taarifa hizi zinahusiana na akaunti yako binafsi. Jukumu, hali ya akaunti na biashara uliyonayo haziwezi kubadilishwa hapa.</div>
+                        <h2 class="card-title" id="user-heading" data-i18n="msimamizi_mipangilio.user_title">Taarifa Zako</h2>
+                        <div class="card-desc" data-i18n="msimamizi_mipangilio.user_desc">Taarifa hizi zinahusiana na akaunti yako binafsi. Jukumu, hali ya akaunti na biashara uliyonayo haziwezi kubadilishwa hapa.</div>
                     </div>
                 </div>
 
                 <div class="grid">
                     <div class="field full">
-                        <label for="userEmail">Barua pepe</label>
+                        <label for="userEmail" data-i18n="msimamizi_mipangilio.label_email">Barua pepe</label>
                         <input id="userEmail" type="email" readonly aria-describedby="emailHint">
-                        <div class="hint" id="emailHint">Barua pepe ni kitambulisho chako cha kuingia; haiwezi kubadilishwa hapa.</div>
+                        <div class="hint" id="emailHint" data-i18n="msimamizi_mipangilio.hint_email">Barua pepe ni kitambulisho chako cha kuingia; haiwezi kubadilishwa hapa.</div>
                     </div>
                     <div class="field">
-                        <label for="userFullName">Jina kamili</label>
+                        <label for="userFullName" data-i18n="msimamizi_mipangilio.label_full_name">Jina kamili</label>
                         <input id="userFullName" type="text" maxlength="120" required>
                     </div>
                     <div class="field">
-                        <label for="userPhone">Namba ya simu</label>
+                        <label for="userPhone" data-i18n="msimamizi_mipangilio.label_phone">Namba ya simu</label>
                         <input id="userPhone" type="tel" maxlength="30" inputmode="tel" placeholder="Mfano: 0757 000 000">
                     </div>
                     <div class="field">
-                        <label for="userRole">Jukumu</label>
+                        <label for="userRole" data-i18n="msimamizi_mipangilio.label_role">Jukumu</label>
                         <input id="userRole" type="text" readonly>
                     </div>
                     <div class="field">
-                        <label for="userBranch">Tawi</label>
+                        <label for="userBranch" data-i18n="msimamizi_mipangilio.label_branch">Tawi</label>
                         <input id="userBranch" type="text" readonly>
                     </div>
                 </div>
 
                 <div class="actions">
-                    <button class="btn btn-primary" id="saveUserBtn" type="submit">Hifadhi Taarifa Zako</button>
+                    <button class="btn btn-primary" id="saveUserBtn" type="submit" data-i18n="msimamizi_mipangilio.btn_save_user">Hifadhi Taarifa Zako</button>
                 </div>
             </form>
 
             <form class="card" id="passwordForm" autocomplete="off">
                 <div class="card-head">
                     <div>
-                        <h2 class="card-title">Badilisha Nenosiri</h2>
-                        <div class="card-desc">Nenosiri la sasa linathibitishwa kabla ya nenosiri jipya kuhifadhiwa, kwa mfumo ule ule wa usalama unaotumika kwenye dashibodi.</div>
+                        <h2 class="card-title" data-i18n="msimamizi_mipangilio.password_title">Badilisha Nenosiri</h2>
+                        <div class="card-desc" data-i18n="msimamizi_mipangilio.password_desc">Nenosiri la sasa linathibitishwa kabla ya nenosiri jipya kuhifadhiwa, kwa mfumo ule ule wa usalama unaotumika kwenye dashibodi.</div>
                     </div>
                 </div>
 
                 <div class="grid">
                     <div class="field full">
-                        <label for="currentPassword">Nenosiri la sasa</label>
+                        <label for="currentPassword" data-i18n="msimamizi_mipangilio.current_password">Nenosiri la sasa</label>
                         <input id="currentPassword" type="password" autocomplete="current-password" required>
                     </div>
                     <div class="field">
-                        <label for="newPassword">Nenosiri jipya</label>
+                        <label for="newPassword" data-i18n="msimamizi_mipangilio.new_password">Nenosiri jipya</label>
                         <input id="newPassword" type="password" autocomplete="new-password" minlength="6" required>
                     </div>
                     <div class="field">
-                        <label for="confirmPassword">Thibitisha nenosiri jipya</label>
+                        <label for="confirmPassword" data-i18n="msimamizi_mipangilio.confirm_password">Thibitisha nenosiri jipya</label>
                         <input id="confirmPassword" type="password" autocomplete="new-password" minlength="6" required>
                     </div>
                 </div>
 
                 <div class="actions">
-                    <button class="btn btn-primary" id="savePasswordBtn" type="submit">Badilisha Nenosiri</button>
+                    <button class="btn btn-primary" id="savePasswordBtn" type="submit" data-i18n="msimamizi_mipangilio.btn_change_password">Badilisha Nenosiri</button>
                 </div>
             </form>
         </section>
@@ -358,59 +359,59 @@
             <form class="card" id="businessForm" autocomplete="off">
                 <div class="card-head">
                     <div>
-                        <h2 class="card-title" id="business-heading">Taarifa za Biashara</h2>
-                        <div class="card-desc">Mabadiliko hapa hayabadili kitambulisho cha biashara. Wauzaji, bidhaa, mauzo, ripoti na matawi yote yanabaki wameunganishwa na biashara hii.</div>
+                        <h2 class="card-title" id="business-heading" data-i18n="msimamizi_mipangilio.business_title">Taarifa za Biashara</h2>
+                        <div class="card-desc" data-i18n="msimamizi_mipangilio.business_desc">Mabadiliko hapa hayabadili kitambulisho cha biashara. Wauzaji, bidhaa, mauzo, ripoti na matawi yote yanabaki wameunganishwa na biashara hii.</div>
                     </div>
                 </div>
 
                 <div class="grid">
                     <div class="field">
-                        <label for="businessName">Jina la biashara</label>
+                        <label for="businessName" data-i18n="msimamizi_mipangilio.label_business_name">Jina la biashara</label>
                         <input id="businessName" type="text" maxlength="150" required>
                     </div>
                     <div class="field">
-                        <label for="businessType">Aina ya biashara</label>
+                        <label for="businessType" data-i18n="msimamizi_mipangilio.label_business_type">Aina ya biashara</label>
                         <input id="businessType" type="text" maxlength="100" placeholder="Mfano: Duka la jumla">
                     </div>
                     <div class="field full">
-                        <label for="businessLocation">Eneo</label>
+                        <label for="businessLocation" data-i18n="msimamizi_mipangilio.label_business_location">Eneo</label>
                         <input id="businessLocation" type="text" maxlength="255" placeholder="Mfano: Kinondoni, Dar es Salaam">
                     </div>
                     <div class="field full">
-                        <label for="businessDescription">Maelezo</label>
+                        <label for="businessDescription" data-i18n="msimamizi_mipangilio.label_business_description">Maelezo</label>
                         <textarea id="businessDescription" maxlength="1000" placeholder="Maelezo mafupi yanayoonekana kwa wateja na wauzaji."></textarea>
                     </div>
                     <div class="field full">
-                        <label for="businessLogo">URL ya nembo</label>
+                        <label for="businessLogo" data-i18n="msimamizi_mipangilio.label_business_logo">URL ya nembo</label>
                         <input id="businessLogo" type="text" maxlength="2048" placeholder="https://...">
-                        <div class="hint">Bandika kiungo cha picha ya nembo. Acha wazi kama huna nembo.</div>
+                        <div class="hint" data-i18n="msimamizi_mipangilio.hint_logo">Bandika kiungo cha picha ya nembo. Acha wazi kama huna nembo.</div>
                     </div>
                     <div class="field">
-                        <label for="businessLatitude">Latitudo (hiari)</label>
+                        <label for="businessLatitude" data-i18n="msimamizi_mipangilio.label_latitude">Latitudo (hiari)</label>
                         <input id="businessLatitude" type="number" step="any" min="-90" max="90">
                     </div>
                     <div class="field">
-                        <label for="businessLongitude">Longitudo (hiari)</label>
+                        <label for="businessLongitude" data-i18n="msimamizi_mipangilio.label_longitude">Longitudo (hiari)</label>
                         <input id="businessLongitude" type="number" step="any" min="-180" max="180">
                     </div>
                 </div>
 
                 <div class="actions">
-                    <button class="btn btn-primary" id="saveBusinessBtn" type="submit">Hifadhi Taarifa za Biashara</button>
+                    <button class="btn btn-primary" id="saveBusinessBtn" type="submit" data-i18n="msimamizi_mipangilio.btn_save_business">Hifadhi Taarifa za Biashara</button>
                 </div>
             </form>
 
             <div class="card" id="branchCard">
                 <div class="card-head">
                     <div>
-                        <h2 class="card-title">Matawi</h2>
-                        <div class="card-desc">Ongeza au hariri matawi ya biashara hii. Kuzima tawi hakuondoi wauzaji, bidhaa, mauzo wala ripoti; unaweza kulirudisha baadaye.</div>
+                        <h2 class="card-title" data-i18n="msimamizi_mipangilio.branches_title">Matawi</h2>
+                        <div class="card-desc" data-i18n="msimamizi_mipangilio.branches_desc">Ongeza au hariri matawi ya biashara hii. Kuzima tawi hakuondoi wauzaji, bidhaa, mauzo wala ripoti; unaweza kulirudisha baadaye.</div>
                     </div>
-                    <button class="btn btn-primary" id="addBranchBtn" type="button">+ Ongeza Tawi</button>
+                    <button class="btn btn-primary" id="addBranchBtn" type="button" data-i18n="msimamizi_mipangilio.btn_add_branch">+ Ongeza Tawi</button>
                 </div>
 
                 <div class="branch-list" id="branchList"></div>
-                <div class="empty" id="branchEmpty" style="display:none;">Hakuna matawi bado.</div>
+                <div class="empty" id="branchEmpty" style="display:none;" data-i18n="msimamizi_mipangilio.branches_empty">Hakuna matawi bado.</div>
 
                 <div class="hint" id="branchStructureNote" style="display:none;margin-top:14px;">
                     Biashara hii inafanya kazi kwenye eneo moja. Usimamizi wa matawi unapatikana kwa biashara zilizosajiliwa na matawi.
@@ -423,14 +424,14 @@
             <div class="card">
                 <div class="card-head">
                     <div>
-                        <h2 class="card-title" id="other-heading">Huduma za Hiari</h2>
-                        <div class="card-desc">Washa au zima huduma kwa biashara yako yote. Kipengele kilichozimwa hakionyeshwi kwa wauzaji na maombi yake yanakataliwa na seva. Data iliyopo haifutwi kamwe.</div>
+                        <h2 class="card-title" id="other-heading" data-i18n="msimamizi_mipangilio.optional_services_title">Huduma za Hiari</h2>
+                        <div class="card-desc" data-i18n="msimamizi_mipangilio.optional_services_desc">Washa au zima huduma kwa biashara yako yote. Kipengele kilichozimwa hakionyeshwi kwa wauzaji na maombi yake yanakataliwa na seva. Data iliyopo haifutwi kamwe.</div>
                     </div>
                 </div>
 
                 <div class="toggle-row">
                     <div class="toggle-copy">
-                        <div class="toggle-title">Unataka kutumia kipengele cha Friji/Freezer?</div>
+                        <div class="toggle-title" data-i18n="msimamizi_mipangilio.toggle_fridge_title">Unataka kutumia kipengele cha Friji/Freezer?</div>
                         <div class="toggle-desc">Kikwashwa, wauzaji wanaweza kusimamia stock iliyo ndani ya friji na kuhamisha stock kati ya friji na nje. Kikizimwa, kichupo cha Friji hufichwa na stock ya ndani haitumiki kwenye mauzo; stock, historia na tahadhari zote zinabaki salama.</div>
                     </div>
                     <label class="switch">
@@ -441,7 +442,7 @@
 
                 <div class="toggle-row">
                     <div class="toggle-copy">
-                        <div class="toggle-title">Unataka kutumia kipengele cha Scanner?</div>
+                        <div class="toggle-title" data-i18n="msimamizi_mipangilio.toggle_scanner_title">Unataka kutumia kipengele cha Scanner?</div>
                         <div class="toggle-desc">Huwasha uwanja wa barcode kwa msimamizi kupokea stock na kwa muuzaji kuchagua bidhaa wakati wa kuuza au kuhamisha stock. Scanner haiongezi stock yenyewe; msimamizi pekee anayeruhusiwa kupokea stock.</div>
                     </div>
                     <label class="switch">
@@ -452,7 +453,7 @@
 
                 <div class="toggle-row">
                     <div class="toggle-copy">
-                        <div class="toggle-title">Unataka kutumia Huduma (Services)?</div>
+                        <div class="toggle-title" data-i18n="msimamizi_mipangilio.toggle_services_title">Unataka kutumia Huduma (Services)?</div>
                         <div class="toggle-desc">Kikwashwa, unaweza kuunda huduma na wauzaji wanaweza kuziuza. Kikizimwa, uundaji wa huduma mpya na mauzo ya huduma huzuiwa, lakini huduma za zamani na ripoti zake zinabaki.</div>
                     </div>
                     <label class="switch">
@@ -463,7 +464,7 @@
 
                 <div class="toggle-row">
                     <div class="toggle-copy">
-                        <div class="toggle-title">Muuzaji anaweza kusimamia bidhaa (stock)?</div>
+                        <div class="toggle-title" data-i18n="msimamizi_mipangilio.toggle_product_mgmt_title">Muuzaji anaweza kusimamia bidhaa (stock)?</div>
                         <div class="toggle-desc">Kikwashwa, muuzaji anaweza kufungua ukurasa wa Bidhaa Mpya, kusajili bidhaa, kupokea stock na kubadilisha bei/stock. Kikizimwa (chaguo-msingi), ni msimamizi pekee anayeweza kusimamia bidhaa; muuzaji anauza stock iliyopo tu.</div>
                     </div>
                     <label class="switch">
@@ -476,14 +477,14 @@
             <div class="card">
                 <div class="card-head">
                     <div>
-                        <h2 class="card-title">Tahadhari za Stock</h2>
-                        <div class="card-desc">Chagua aina ya tahadhari unazotaka kupokea. Kuzima tahadhari hakuachi kufuatilia stock; kunazuia tu arifa mpya za aina hiyo.</div>
+                        <h2 class="card-title" data-i18n="msimamizi_mipangilio.stock_alerts_title">Tahadhari za Stock</h2>
+                        <div class="card-desc" data-i18n="msimamizi_mipangilio.stock_alerts_desc">Chagua aina ya tahadhari unazotaka kupokea. Kuzima tahadhari hakuachi kufuatilia stock; kunazuia tu arifa mpya za aina hiyo.</div>
                     </div>
                 </div>
 
                 <div class="toggle-row">
                     <div class="toggle-copy">
-                        <div class="toggle-title">Stock ndogo ya biashara</div>
+                        <div class="toggle-title" data-i18n="msimamizi_mipangilio.toggle_low_stock_title">Stock ndogo ya biashara</div>
                         <div class="toggle-desc">Arifa wakati stock ya nje ya friji au stock ya biashara inafikia kiwango cha chini. Ufuatiliaji unaendelea hata ikizimwa.</div>
                     </div>
                     <label class="switch">
@@ -494,7 +495,7 @@
 
                 <div class="toggle-row">
                     <div class="toggle-copy">
-                        <div class="toggle-title">Stock ndogo ndani ya friji</div>
+                        <div class="toggle-title" data-i18n="msimamizi_mipangilio.toggle_fridge_stock_title">Stock ndogo ndani ya friji</div>
                         <div class="toggle-desc">Arifa wakati stock iliyo ndani ya friji inafikia kiwango chake cha chini.</div>
                     </div>
                     <label class="switch">
@@ -508,8 +509,8 @@
             <div class="card">
                 <div class="card-head">
                     <div>
-                        <h2 class="card-title">Muundo wa Biashara</h2>
-                        <div class="card-desc">Chagua kama biashara inafanya kazi kwenye eneo moja au kupitia matawi. Mabadiliko yanahamisha records zilizopo; hazifutwi.</div>
+                        <h2 class="card-title" data-i18n="msimamizi_mipangilio.business_structure_title">Muundo wa Biashara</h2>
+                        <div class="card-desc" data-i18n="msimamizi_mipangilio.business_structure_desc">Chagua kama biashara inafanya kazi kwenye eneo moja au kupitia matawi. Mabadiliko yanahamisha records zilizopo; hazifutwi.</div>
                     </div>
                     <span class="badge" id="structureBadge">—</span>
                 </div>
@@ -530,20 +531,20 @@
             <div class="card">
                 <div class="card-head">
                     <div>
-                        <h2 class="card-title">Mapendeleo Yako</h2>
-                        <div class="card-desc">Lugha na mandhari ni mapendeleo yako binafsi, si ya biashara. Yanatumia mifumo iliyopo ya lugha na mandhari.</div>
+                        <h2 class="card-title" data-i18n="msimamizi_mipangilio.preferences_title">Mapendeleo Yako</h2>
+                        <div class="card-desc" data-i18n="msimamizi_mipangilio.preferences_desc">Lugha na mandhari ni mapendeleo yako binafsi, si ya biashara. Yanatumia mifumo iliyopo ya lugha na mandhari.</div>
                     </div>
                 </div>
 
                 <div class="grid">
                     <div class="field">
-                        <label for="languageSelect">Lugha</label>
+                        <label for="languageSelect" data-i18n="msimamizi_mipangilio.label_language">Lugha</label>
                         <select id="languageSelect"></select>
                     </div>
                     <div class="field">
-                        <label for="themeSelect">Mandhari</label>
+                        <label for="themeSelect" data-i18n="msimamizi_mipangilio.label_theme">Mandhari</label>
                         <select id="themeSelect"></select>
-                        <div class="hint">Mandhari hii inatumika kwenye kifaa hiki na huhifadhiwa kwenye akaunti yako.</div>
+                        <div class="hint" data-i18n="msimamizi_mipangilio.hint_theme">Mandhari hii inatumika kwenye kifaa hiki na huhifadhiwa kwenye akaunti yako.</div>
                     </div>
                 </div>
             </div>
@@ -613,30 +614,30 @@
 <!-- Branch modal -->
 <div class="modal-overlay" id="branchModal" role="dialog" aria-modal="true" aria-labelledby="branchModalTitle">
     <div class="modal">
-        <div class="modal-title" id="branchModalTitle">Ongeza Tawi</div>
+        <div class="modal-title" id="branchModalTitle" data-i18n="msimamizi_mipangilio.modal_branch_title">Ongeza Tawi</div>
         <form id="branchForm" autocomplete="off">
             <input type="hidden" id="branchId">
             <div class="grid">
                 <div class="field full">
-                    <label for="branchName">Jina la tawi</label>
+                    <label for="branchName" data-i18n="msimamizi_mipangilio.label_branch_name">Jina la tawi</label>
                     <input id="branchName" type="text" maxlength="120" required placeholder="Mfano: Tawi la Mlimani">
                 </div>
                 <div class="field full">
-                    <label for="branchLocation">Eneo</label>
+                    <label for="branchLocation" data-i18n="msimamizi_mipangilio.label_branch_location">Eneo</label>
                     <input id="branchLocation" type="text" maxlength="255" placeholder="Mfano: Mlimani City">
                 </div>
                 <div class="field">
-                    <label for="branchLatitude">Latitudo (hiari)</label>
+                    <label for="branchLatitude" data-i18n="msimamizi_mipangilio.label_latitude">Latitudo (hiari)</label>
                     <input id="branchLatitude" type="number" step="any" min="-90" max="90">
                 </div>
                 <div class="field">
-                    <label for="branchLongitude">Longitudo (hiari)</label>
+                    <label for="branchLongitude" data-i18n="msimamizi_mipangilio.label_longitude">Longitudo (hiari)</label>
                     <input id="branchLongitude" type="number" step="any" min="-180" max="180">
                 </div>
             </div>
             <div class="actions">
-                <button class="btn btn-primary" id="saveBranchBtn" type="submit">Hifadhi Tawi</button>
-                <button class="btn btn-ghost" id="cancelBranchBtn" type="button">Ghairi</button>
+                <button class="btn btn-primary" id="saveBranchBtn" type="submit" data-i18n="msimamizi_mipangilio.btn_save_branch">Hifadhi Tawi</button>
+                <button class="btn btn-ghost" id="cancelBranchBtn" type="button" data-i18n="msimamizi_mipangilio.btn_cancel">Ghairi</button>
             </div>
         </form>
     </div>

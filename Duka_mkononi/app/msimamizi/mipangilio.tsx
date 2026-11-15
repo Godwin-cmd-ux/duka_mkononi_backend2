@@ -42,7 +42,11 @@ const THEME_LABELS: Record<ThemeId, string> = {
 export default function MipangilioScreen() {
   const router = useRouter();
   const { colors: tc, theme, setTheme } = useTheme();
-  const { lang, changeLang } = useLang();
+  const { lang, changeLang, t } = useLang();
+  const L = (key: string, fallback: string) => {
+    const value = t(key);
+    return value === key ? fallback : value;
+  };
   const { refresh: refreshFeatures } = useFeatures();
   const styles = useMemo(() => makeStyles(tc), [tc]);
 
@@ -59,6 +63,8 @@ export default function MipangilioScreen() {
     business_logo_url: '',
   });
   const [saving, setSaving] = useState<string | null>(null);
+  const [passwordForm, setPasswordForm] = useState({ current: '', newPass: '', confirm: '' });
+  const [changingPassword, setChangingPassword] = useState(false);
 
   const [branchModal, setBranchModal] = useState(false);
   const [branchEditId, setBranchEditId] = useState<string | null>(null);
@@ -149,6 +155,35 @@ export default function MipangilioScreen() {
       Alert.alert('Hitilafu', error?.message || 'Imeshindikana kuhifadhi taarifa zako.');
     } finally {
       setSaving(null);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    const { current, newPass, confirm } = passwordForm;
+    if (!current || !newPass || !confirm) {
+      Alert.alert('Hitilafu', 'Jaza sehemu zote za nenosiri.');
+      return;
+    }
+    if (newPass !== confirm) {
+      Alert.alert('Hitilafu', 'Nenosiri jipya na uthibitisho havifanani.');
+      return;
+    }
+    if (newPass.length < 6) {
+      Alert.alert('Hitilafu', 'Nenosiri jipya lazima liwe na angalau herufi 6.');
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      await api('/api/user/password', {
+        method: 'PUT',
+        body: JSON.stringify({ current_password: current, new_password: newPass, confirm_password: confirm }),
+      });
+      setPasswordForm({ current: '', newPass: '', confirm: '' });
+      Alert.alert('Imefanikiwa', 'Nenosiri lako limebadilishwa.');
+    } catch (error: any) {
+      Alert.alert('Hitilafu', error?.message || 'Imeshindikana kubadilisha nenosiri.');
+    } finally {
+      setChangingPassword(false);
     }
   };
 
@@ -465,6 +500,45 @@ export default function MipangilioScreen() {
 
                   <TouchableOpacity style={styles.primaryBtn} onPress={saveUser} disabled={saving === 'user'}>
                     {saving === 'user' ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryBtnText}>Hifadhi Taarifa Zako</Text>}
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.card}>
+                  <Text style={styles.cardTitle}>{L('settings_screen.change_password_title', 'Badilisha Nenosiri')}</Text>
+                  <Text style={styles.cardDesc}>{L('settings_screen.change_password_desc', 'Badilisha nenosiri la akaunti yako. Nenosiri jipya lazima liwe na angalau herufi 6.')}</Text>
+
+                  <Text style={styles.label}>{L('settings_screen.current_password', 'Nenosiri la sasa')}</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={passwordForm.current}
+                    onChangeText={(value) => setPasswordForm((prev) => ({ ...prev, current: value }))}
+                    secureTextEntry
+                    placeholder={L('settings_screen.current_password_placeholder', 'Nenosiri la sasa')}
+                    placeholderTextColor={tc.muted2}
+                  />
+
+                  <Text style={styles.label}>{L('settings_screen.new_password', 'Nenosiri jipya')}</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={passwordForm.newPass}
+                    onChangeText={(value) => setPasswordForm((prev) => ({ ...prev, newPass: value }))}
+                    secureTextEntry
+                    placeholder={L('settings_screen.new_password_placeholder', 'Nenosiri jipya')}
+                    placeholderTextColor={tc.muted2}
+                  />
+
+                  <Text style={styles.label}>{L('settings_screen.confirm_password', 'Thibitisha nenosiri jipya')}</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={passwordForm.confirm}
+                    onChangeText={(value) => setPasswordForm((prev) => ({ ...prev, confirm: value }))}
+                    secureTextEntry
+                    placeholder={L('settings_screen.confirm_password_placeholder', 'Thibitisha nenosiri jipya')}
+                    placeholderTextColor={tc.muted2}
+                  />
+
+                  <TouchableOpacity style={styles.primaryBtn} onPress={handleChangePassword} disabled={changingPassword}>
+                    {changingPassword ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryBtnText}>{L('settings_screen.change_password_button', 'Badilisha Nenosiri')}</Text>}
                   </TouchableOpacity>
                 </View>
 

@@ -398,6 +398,32 @@
             margin-top: 10px; font-size: 12px; color: #1e8449; background: #eafaf1;
             padding: 8px 12px; border-radius: 8px; display: inline-block;
         }
+        .date-picker-btn {
+            padding: 10px 12px; border: 1px solid #ecf0f1; border-radius: 10px;
+            font-size: 13px; color: #2c3e50; background: #f8f9fa; cursor: pointer;
+            display: flex; align-items: center; justify-content: space-between; gap: 8px;
+        }
+        .date-picker-btn:hover { background: #fff; border-color: #3498db; }
+        .cal-overlay {
+            position: fixed; inset: 0; background: rgba(15,23,42,.5); z-index: 2000;
+            display: flex; align-items: center; justify-content: center; padding: 16px;
+        }
+        .cal-card {
+            background: #fff; border-radius: 16px; padding: 16px; width: 100%; max-width: 360px;
+            box-shadow: 0 20px 60px rgba(15,23,42,.3);
+        }
+        .cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+        .cal-title { font-weight: 700; font-size: 15px; color: #2c3e50; }
+        .cal-nav { border: none; background: transparent; cursor: pointer; color: #5d6d7e; padding: 6px; }
+        .cal-year-row { display: flex; justify-content: center; gap: 8px; margin-bottom: 10px; }
+        .cal-year-btn { border: 1px solid #ecf0f1; background: #f8f9fa; border-radius: 8px; padding: 4px 10px; cursor: pointer; font-size: 12px; font-weight: 600; color: #2c3e50; }
+        .cal-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-bottom: 4px; }
+        .cal-weekdays div { text-align: center; font-size: 11px; font-weight: 700; color: #95a5a6; padding: 4px 0; }
+        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+        .cal-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; font-size: 13px; color: #2c3e50; }
+        .cal-cell:not(.empty):hover { background: #e8f4fd; color: #3498db; }
+        .cal-cell.empty { cursor: default; }
+        .cal-cancel { width: 100%; margin-top: 12px; padding: 8px; border: none; background: #f8f9fa; border-radius: 8px; cursor: pointer; font-weight: 600; color: #5d6d7e; }
 
         /* Taarifa (events) read state */
         .taarifa-header {
@@ -653,6 +679,10 @@
         // Applied date-range filter (YYYY-MM-DD); empty strings = no filter.
         let filterStart = '';
         let filterEnd = '';
+        let datePickerOpen = false;
+        let datePickerTarget = 'start';
+        let pickerYear = new Date().getFullYear();
+        let pickerMonth = new Date().getMonth();
 
         // "Zimesomwa" read-state for the Taarifa tab: server-backed with a
         // localStorage fallback so it survives reloads.
@@ -1141,20 +1171,80 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             } catch { /* offline: local read-state still applies */ }
         };
 
+        function openDatePicker(target) {
+            datePickerTarget = target;
+            const current = target === 'start' ? filterStart : filterEnd;
+            if (/^\d{4}-\d{2}-\d{2}$/.test(current)) {
+                const [y, m] = current.split('-');
+                pickerYear = parseInt(y, 10);
+                pickerMonth = parseInt(m, 10) - 1;
+            } else {
+                const now = new Date();
+                pickerYear = now.getFullYear();
+                pickerMonth = now.getMonth();
+            }
+            datePickerOpen = true;
+            render();
+        }
+
+        function closeDatePicker() { datePickerOpen = false; render(); }
+
+        function selectDate(day) {
+            const value = `${pickerYear}-${String(pickerMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            if (datePickerTarget === 'start') filterStart = value; else filterEnd = value;
+            // keep the draft inputs in sync too
+            if (datePickerTarget === 'start') filterStartInput = value; else filterEndInput = value;
+            datePickerOpen = false;
+            render();
+        }
+
+        function renderCalendar() {
+            const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+            const firstDay = new Date(pickerYear, pickerMonth, 1).getDay();
+            const daysInMonth = new Date(pickerYear, pickerMonth + 1, 0).getDate();
+            const cells = [];
+            for (let i = 0; i < firstDay; i++) cells.push(null);
+            for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+            const grid = cells.map(d => d === null
+                ? '<div class="cal-cell empty"></div>'
+                : `<div class="cal-cell" onclick="window.selectCalDate(${d})">${d}</div>`
+            ).join('');
+            return `
+                <div class="cal-overlay" onclick="window.closeCalPicker(event)">
+                    <div class="cal-card" onclick="event.stopPropagation()">
+                        <div class="cal-header">
+                            <button class="cal-nav" onclick="window.calPrevMonth()"><i class="fa-solid fa-chevron-left"></i></button>
+                            <div class="cal-title">${monthNames[pickerMonth]} ${pickerYear}</div>
+                            <button class="cal-nav" onclick="window.calNextMonth()"><i class="fa-solid fa-chevron-right"></i></button>
+                        </div>
+                        <div class="cal-year-row">
+                            <button class="cal-year-btn" onclick="window.calPrevYear()">-1</button>
+                            <button class="cal-year-btn" onclick="window.calNextYear()">+1</button>
+                        </div>
+                        <div class="cal-weekdays">${['Su','Mo','Tu','We','Th','Fr','Sa'].map(d=>`<div>${d}</div>`).join('')}</div>
+                        <div class="cal-grid">${grid}</div>
+                        <button class="cal-cancel" onclick="window.closeCalPicker()">${t('msimamizi_preview.filter_clear')}</button>
+                    </div>
+                </div>
+            `;
+        }
+
         function renderDateFilter() {
             const active = filterStart || filterEnd;
+            const startDisplay = filterStart || 'YYYY-MM-DD';
+            const endDisplay = filterEnd || 'YYYY-MM-DD';
             return `
                 <div class="date-filter-card">
                     <div class="date-filter-title">${ic('filter', 14)} ${t('msimamizi_preview.filter_title')}</div>
                     <div class="date-filter-row">
                         <div class="date-field">
                             <label>${t('msimamizi_preview.filter_from')}</label>
-                            <input type="date" id="dateFilterStart" value="${filterStart}">
+                            <div class="date-picker-btn" onclick="window.openCalPicker('start')">${startDisplay} <i class="fa-solid fa-calendar-days"></i></div>
                         </div>
                         <span class="date-sep">${t('msimamizi_preview.filter_to_lower')}</span>
                         <div class="date-field">
                             <label>${t('msimamizi_preview.filter_to')}</label>
-                            <input type="date" id="dateFilterEnd" value="${filterEnd}">
+                            <div class="date-picker-btn" onclick="window.openCalPicker('end')">${endDisplay} <i class="fa-solid fa-calendar-days"></i></div>
                         </div>
                         <div class="date-filter-actions">
                             <div class="date-btn primary" onclick="window.applyDateFilter()">${t('msimamizi_preview.filter_search')}</div>
@@ -1162,6 +1252,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                         </div>
                     </div>
                     ${active ? `<div class="date-filter-active">${t('msimamizi_preview.filter_showing')} <strong>${filterStart || t('msimamizi_preview.filter_beginning')}</strong> ${t('msimamizi_preview.filter_to_lower')} <strong>${filterEnd || t('msimamizi_preview.filter_today')}</strong></div>` : ''}
+                    ${datePickerOpen ? renderCalendar() : ''}
                 </div>
             `;
         }
@@ -1207,8 +1298,8 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         // Date-range filter: re-fetch from the API with date_from/date_to so
         // the DATABASE filters sales (fast) instead of the browser.
         window.applyDateFilter = async () => {
-            const start = document.getElementById('dateFilterStart')?.value || '';
-            const end = document.getElementById('dateFilterEnd')?.value || '';
+            const start = filterStart || '';
+            const end = filterEnd || '';
             if (start && end && start > end) {
                 showAlert(t('msimamizi_preview.alert_error_title'), t('msimamizi_preview.err_date_order'));
                 return;
@@ -1231,6 +1322,14 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             await fetchData(token);
             render();
         };
+
+        window.openCalPicker = (target) => { openDatePicker(target); };
+        window.closeCalPicker = () => { closeDatePicker(); };
+        window.calPrevMonth = () => { if (pickerMonth === 0) { pickerMonth = 11; pickerYear--; } else pickerMonth--; render(); };
+        window.calNextMonth = () => { if (pickerMonth === 11) { pickerMonth = 0; pickerYear++; } else pickerMonth++; render(); };
+        window.calPrevYear = () => { pickerYear--; render(); };
+        window.calNextYear = () => { pickerYear++; render(); };
+        window.selectCalDate = (day) => { selectDate(day); };
 
         window.showDayModal = (date) => {
             const day = dailySummaries.find(d => d.date === date);

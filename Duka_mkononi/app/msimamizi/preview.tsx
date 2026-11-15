@@ -188,6 +188,10 @@ export default function PreviewScreen() {
   const [filterStart, setFilterStart] = useState('');
   const [filterEnd, setFilterEnd] = useState('');
   const filterActive = !!filterStart || !!filterEnd;
+  const [datePickerVisible, setDatePickerVisible] = useState(false);
+  const [datePickerTarget, setDatePickerTarget] = useState<'start' | 'end'>('start');
+  const [pickerYear, setPickerYear] = useState(new Date().getFullYear());
+  const [pickerMonth, setPickerMonth] = useState(new Date().getMonth());
 
   useEffect(() => {
     loadUserData();
@@ -931,6 +935,31 @@ export default function PreviewScreen() {
     await loadBusinessData(userData.businessName, token, '', '');
   };
 
+  const openDatePicker = (target: 'start' | 'end') => {
+    setDatePickerTarget(target);
+    const current = target === 'start' ? filterStartInput : filterEndInput;
+    if (DATE_RE.test(current)) {
+      const [y, m] = current.split('-');
+      setPickerYear(parseInt(y, 10));
+      setPickerMonth(parseInt(m, 10) - 1);
+    } else {
+      const now = new Date();
+      setPickerYear(now.getFullYear());
+      setPickerMonth(now.getMonth());
+    }
+    setDatePickerVisible(true);
+  };
+
+  const selectDate = (day: number) => {
+    const y = pickerYear;
+    const m = String(pickerMonth + 1).padStart(2, '0');
+    const d = String(day).padStart(2, '0');
+    const value = `${y}-${m}-${d}`;
+    if (datePickerTarget === 'start') setFilterStartInput(value);
+    else setFilterEndInput(value);
+    setDatePickerVisible(false);
+  };
+
   const handleDayPress = (day: DailySummary) => {
     console.log('📱 Kubonyeza siku:', day.date, 'na expenses:', day.expenses?.length || 0);
     setSelectedDay(day);
@@ -1424,29 +1453,21 @@ export default function PreviewScreen() {
         <View style={styles.dateFilterRow}>
           <View style={styles.dateField}>
             <Text style={styles.dateFieldLabel}>{t('preview.filter_from')}</Text>
-            <TextInput
-              style={styles.dateInput}
-              value={filterStartInput}
-              onChangeText={setFilterStartInput}
-              placeholder="YYYY-MM-DD"
-              placeholderTextColor={tc.muted}
-              autoCapitalize="none"
-              autoCorrect={false}
-              maxLength={10}
-            />
+            <TouchableOpacity style={styles.dateInput} onPress={() => openDatePicker('start')} activeOpacity={0.8}>
+              <Text style={[styles.dateInputText, !filterStartInput && { color: tc.muted }]}>
+                {filterStartInput || 'YYYY-MM-DD'}
+              </Text>
+              <Ionicons name="calendar-outline" size={18} color={tc.muted} />
+            </TouchableOpacity>
           </View>
           <View style={styles.dateField}>
             <Text style={styles.dateFieldLabel}>{t('preview.filter_to')}</Text>
-            <TextInput
-              style={styles.dateInput}
-              value={filterEndInput}
-              onChangeText={setFilterEndInput}
-              placeholder="YYYY-MM-DD"
-              placeholderTextColor={tc.muted}
-              autoCapitalize="none"
-              autoCorrect={false}
-              maxLength={10}
-            />
+            <TouchableOpacity style={styles.dateInput} onPress={() => openDatePicker('end')} activeOpacity={0.8}>
+              <Text style={[styles.dateInputText, !filterEndInput && { color: tc.muted }]}>
+                {filterEndInput || 'YYYY-MM-DD'}
+              </Text>
+              <Ionicons name="calendar-outline" size={18} color={tc.muted} />
+            </TouchableOpacity>
           </View>
         </View>
         <View style={styles.dateFilterActions}>
@@ -1783,6 +1804,65 @@ export default function PreviewScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Calendar date picker */}
+      <Modal visible={datePickerVisible} transparent animationType="fade" onRequestClose={() => setDatePickerVisible(false)}>
+        <View style={styles.pickerOverlay}>
+          <View style={styles.pickerCard}>
+            <View style={styles.pickerHeader}>
+              <TouchableOpacity onPress={() => { if (pickerMonth === 0) { setPickerMonth(11); setPickerYear(pickerYear - 1); } else setPickerMonth(pickerMonth - 1); }}>
+                <Ionicons name="chevron-back" size={22} color={tc.ink} />
+              </TouchableOpacity>
+              <View style={styles.pickerTitleRow}>
+                <TouchableOpacity onPress={() => { /* month/year adjust via arrows */ }}>
+                  <Text style={styles.pickerTitle}>
+                    {new Date(pickerYear, pickerMonth).toLocaleString(undefined, { month: 'long' })} {pickerYear}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.pickerYearControls}>
+                <TouchableOpacity onPress={() => setPickerYear(pickerYear - 1)} style={styles.pickerYearBtn}>
+                  <Text style={styles.pickerYearBtnText}>-1</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setPickerYear(pickerYear + 1)} style={styles.pickerYearBtn}>
+                  <Text style={styles.pickerYearBtnText}>+1</Text>
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity onPress={() => { if (pickerMonth === 11) { setPickerMonth(0); setPickerYear(pickerYear + 1); } else setPickerMonth(pickerMonth + 1); }}>
+                <Ionicons name="chevron-forward" size={22} color={tc.ink} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.pickerWeekRow}>
+              {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d => (
+                <Text key={d} style={styles.pickerWeekDay}>{d}</Text>
+              ))}
+            </View>
+            <View style={styles.pickerGrid}>
+              {(() => {
+                const firstDay = new Date(pickerYear, pickerMonth, 1).getDay();
+                const daysInMonth = new Date(pickerYear, pickerMonth + 1, 0).getDate();
+                const cells: (number | null)[] = [];
+                for (let i = 0; i < firstDay; i++) cells.push(null);
+                for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+                return cells.map((d, idx) => (
+                  <TouchableOpacity
+                    key={idx}
+                    style={styles.pickerCell}
+                    disabled={d === null}
+                    onPress={() => d && selectDate(d)}
+                  >
+                    {d ? <Text style={styles.pickerCellText}>{d}</Text> : null}
+                  </TouchableOpacity>
+                ));
+              })()}
+            </View>
+            <TouchableOpacity style={styles.pickerCancel} onPress={() => setDatePickerVisible(false)}>
+              <Text style={styles.pickerCancelText}>{t('preview.filter_clear')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
     </ScrollView>
     </SafeAreaView>
   );
@@ -1924,6 +2004,93 @@ const makeStyles = (tc: ThemeColors) => StyleSheet.create({
     fontSize: 13,
     color: tc.ink,
     backgroundColor: tc.page,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  dateInputText: {
+    fontSize: 13,
+    color: tc.ink,
+  },
+  pickerOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  pickerCard: {
+    backgroundColor: tc.card,
+    borderRadius: 16,
+    padding: 16,
+    width: '100%',
+    maxWidth: 360,
+  },
+  pickerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  pickerTitleRow: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  pickerTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: tc.ink,
+  },
+  pickerYearControls: {
+    flexDirection: 'row',
+    gap: 6,
+    marginHorizontal: 8,
+  },
+  pickerYearBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: tc.line,
+  },
+  pickerYearBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: tc.ink,
+  },
+  pickerWeekRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  pickerWeekDay: {
+    width: '14.28%',
+    textAlign: 'center',
+    fontSize: 12,
+    fontWeight: '600',
+    color: tc.muted,
+  },
+  pickerGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  pickerCell: {
+    width: '14.28%',
+    aspectRatio: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pickerCellText: {
+    fontSize: 14,
+    color: tc.ink,
+  },
+  pickerCancel: {
+    marginTop: 12,
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  pickerCancelText: {
+    color: tc.muted,
+    fontWeight: '600',
   },
   dateFilterActions: {
     flexDirection: 'row',
