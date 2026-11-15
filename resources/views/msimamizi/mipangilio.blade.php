@@ -352,6 +352,27 @@
                     <button class="btn btn-primary" id="savePasswordBtn" type="submit" data-i18n="msimamizi_mipangilio.btn_change_password">Badilisha Nenosiri</button>
                 </div>
             </form>
+
+            <div class="card">
+                <div class="card-head">
+                    <div>
+                        <h2 class="card-title" data-i18n="msimamizi_mipangilio.preferences_title">Mapendeleo Yako</h2>
+                        <div class="card-desc" data-i18n="msimamizi_mipangilio.preferences_desc">Lugha na mandhari ni mapendeleo yako binafsi, si ya biashara. Yanatumia mifumo iliyopo ya lugha na mandhari.</div>
+                    </div>
+                </div>
+
+                <div class="grid">
+                    <div class="field">
+                        <label for="languageSelect" data-i18n="msimamizi_mipangilio.label_language">Lugha</label>
+                        <select id="languageSelect"></select>
+                    </div>
+                    <div class="field">
+                        <label for="themeSelect" data-i18n="msimamizi_mipangilio.label_theme">Mandhari</label>
+                        <select id="themeSelect"></select>
+                        <div class="hint" data-i18n="msimamizi_mipangilio.hint_theme">Mandhari hii inatumika kwenye kifaa hiki na huhifadhiwa kwenye akaunti yako.</div>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <!-- ============ BUSINESS ============ -->
@@ -525,27 +546,6 @@
                 <div class="actions">
                     <button class="btn btn-primary" id="toBranchfulBtn" type="button" style="display:none;">Badilisha kuwa biashara ya matawi</button>
                     <button class="btn btn-danger" id="toBranchlessBtn" type="button" style="display:none;">Badilisha kuwa biashara ya eneo moja</button>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-head">
-                    <div>
-                        <h2 class="card-title" data-i18n="msimamizi_mipangilio.preferences_title">Mapendeleo Yako</h2>
-                        <div class="card-desc" data-i18n="msimamizi_mipangilio.preferences_desc">Lugha na mandhari ni mapendeleo yako binafsi, si ya biashara. Yanatumia mifumo iliyopo ya lugha na mandhari.</div>
-                    </div>
-                </div>
-
-                <div class="grid">
-                    <div class="field">
-                        <label for="languageSelect" data-i18n="msimamizi_mipangilio.label_language">Lugha</label>
-                        <select id="languageSelect"></select>
-                    </div>
-                    <div class="field">
-                        <label for="themeSelect" data-i18n="msimamizi_mipangilio.label_theme">Mandhari</label>
-                        <select id="themeSelect"></select>
-                        <div class="hint" data-i18n="msimamizi_mipangilio.hint_theme">Mandhari hii inatumika kwenye kifaa hiki na huhifadhiwa kwenye akaunti yako.</div>
-                    </div>
                 </div>
             </div>
         </section>
