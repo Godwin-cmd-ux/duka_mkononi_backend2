@@ -636,27 +636,27 @@
                 </div>
             </div>
             <div class="nav-items">
-                <a href="index" class="nav-item active">
+                <a href="/msimamizi/index" class="nav-item active">
                     <div class="nav-icon"><i class="fa-solid fa-house"></i></div>
                     <span class="nav-label" data-i18n="msimamizi_index.nav_home">Nyumbani</span>
                 </a>
-                <a href="ripoti" class="nav-item">
+                <a href="/msimamizi/ripoti" class="nav-item">
                     <div class="nav-icon"><i class="fa-solid fa-chart-simple"></i></div>
                     <span class="nav-label" data-i18n="msimamizi_index.nav_reports">Ripoti</span>
                 </a>
-                <a href="preview" class="nav-item">
+                <a href="/msimamizi/preview" class="nav-item">
                     <div class="nav-icon"><i class="fa-solid fa-calendar-days"></i></div>
                     <span class="nav-label" data-i18n="msimamizi_index.nav_reviews">Rejea</span>
                 </a>
-                <a href="bidhaa-mpya" class="nav-item">
+                <a href="/msimamizi/bidhaa-mpya" class="nav-item">
                     <div class="nav-icon"><i class="fa-solid fa-circle-plus"></i></div>
                     <span class="nav-label" data-i18n="msimamizi_index.nav_new_products">Bidhaa Mpya</span>
                 </a>
-                <a href="tangaza" class="nav-item">
+                <a href="/msimamizi/tangaza" class="nav-item">
                     <div class="nav-icon"><i class="fa-solid fa-bullhorn"></i></div>
                     <span class="nav-label" data-i18n="msimamizi_index.nav_advertise">Tangaza</span>
                 </a>
-                <a href="nyingine" class="nav-item">
+                <a href="/msimamizi/nyingine" class="nav-item">
                     <div class="nav-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
                     <span class="nav-label" data-i18n="msimamizi_nyingine.nav_label">Nyingine</span>
                 </a>
