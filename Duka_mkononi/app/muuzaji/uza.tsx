@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useState, useMemo } from 'react';
+import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import {
     Alert,
     FlatList,
@@ -22,6 +22,7 @@ import { useFeatures } from '../../context/FeatureContext';
 import { useLang } from '../../context/LanguageContext';
 import { useSession } from '../../context/SessionContext';
 import LogoutButton from '../../components/logout-button';
+import QrScannerModal from '../../components/QrScannerModal';
 
 // ✅ API Base URL
 import { API_BASE_URL } from '../../constants/api';
@@ -40,6 +41,10 @@ interface CartItem {
   original_stock: number; // Stock asili kabla ya kuongeza kikapuni
   seller_id: string;
   seller_name: string;
+  // Populated when the line was filled by scanning unique physical units. A
+  // line with item_ids is scanner-controlled: manual +/- is disabled so the
+  // same unit can never be counted twice.
+  item_ids?: string[];
 }
 
 export default function UzaScreen() {
@@ -62,6 +67,23 @@ export default function UzaScreen() {
   const [customers, setCustomers] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [scanCode, setScanCode] = useState('');
+
+  // Sale scanning. One idempotency key per cart, shared with the API so the
+  // commit can only sell the units this cart actually claimed.
+  const saleRef = useRef<string | null>(null);
+  const [scanOpen, setScanOpen] = useState(false);
+  const [scanTarget, setScanTarget] = useState<any>(null);
+  const [scanFinished, setScanFinished] = useState(false);
+
+  const ensureSaleRef = () => {
+    if (!saleRef.current) {
+      saleRef.current = 'uza-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+    }
+    return saleRef.current;
+  };
+
+  const lineHasScannedUnits = (item: CartItem | undefined) => !!(item && item.item_ids && item.item_ids.length > 0);
+  const cartHasScannedUnits = () => cart.some(lineHasScannedUnits);
   
   // ✅ HII NI KIKAPU CHA BIDHAA
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -501,6 +523,10 @@ export default function UzaScreen() {
 
     // Angalia ikiwa bidhaa tayari ipo kwenye kikapu
     const existingItemIndex = cart.findIndex(item => item.product_id === selectedProduct.id);
+    if (existingItemIndex >= 0 && lineHasScannedUnits(cart[existingItemIndex])) {
+      Alert.alert(t('app.error'), 'Bidhaa hii inadhibitiwa na skena. Tumia kitufe cha Skani.');
+      return;
+    }
     
     if (existingItemIndex >= 0) {
       // Ongeza kiasi kwenye bidhaa iliyopo
@@ -523,7 +549,8 @@ export default function UzaScreen() {
         total_price: quantityNum * selectedProduct.expected_selling_price,
         original_stock: selectedProduct.stock, // Hifadhi stock asili
         seller_id: selectedProduct.seller_id,
-        seller_name: selectedProduct.seller_name
+        seller_name: selectedProduct.seller_name,
+        item_ids: []
       };
       setCart([...cart, newItem]);
     }
@@ -540,10 +567,114 @@ export default function UzaScreen() {
     );
   };
 
+  // ✅ SCANNER: SKANI VIPANDE HALISI KWENYE KIKAPU
+  const scannedIdsRef = useRef<Set<string>>(new Set());
+
+  const releaseScannedItems = (itemIds: string[]) => {
+    if (!itemIds || itemIds.length === 0) return;
+    AsyncStorage.getItem('userToken').then((token) => {
+      if (!token) return;
+      fetchWithTimeout(`${API_BASE_URL}/api/scanner/sale/release`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+        },
+        body: JSON.stringify({ item_ids: itemIds, client_ref: ensureSaleRef() }),
+      }).catch(() => {});
+    }).catch(() => {});
+  };
+
+  const openSaleScan = (product: any) => {
+    if (!product) {
+      Alert.alert(t('app.error'), t('seller_sell.select_product'));
+      return;
+    }
+    if (product.expected_selling_price === null || product.expected_selling_price === undefined) {
+      Alert.alert(t('seller_sell.selling_price_not_set'), t('seller_sell.selling_price_not_set_msg', { name: product.name }));
+      return;
+    }
+
+    const existing = cart.find(item => item.product_id === product.id);
+    scannedIdsRef.current = new Set(existing && existing.item_ids ? existing.item_ids : []);
+
+    if (!existing) {
+      setCart(prev => ([...prev, {
+        product_id: product.id,
+        name: product.name,
+        quantity: 0,
+        unit_price: product.expected_selling_price,
+        total_price: 0,
+        original_stock: product.stock,
+        seller_id: product.seller_id,
+        seller_name: product.seller_name,
+        item_ids: [],
+      }]));
+    }
+
+    setScanTarget(product);
+    setScanOpen(true);
+  };
+
+  const handleSaleScan = useCallback(async (token: string) => {
+    const product = scanTarget;
+    if (!product) return { ok: false, message: 'Chagua bidhaa kwanza' };
+
+    const authToken = await AsyncStorage.getItem('userToken');
+    if (!authToken) return { ok: false, message: t('seller_dashboard.error_auth') };
+
+    try {
+      const res = await fetchWithTimeout(`${API_BASE_URL}/api/scanner/sale/scan`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+          'ngrok-skip-browser-warning': 'true',
+        },
+        body: JSON.stringify({ product_id: product.id, qr_token: token, client_ref: ensureSaleRef() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.success) {
+        return { ok: false, message: data?.error || 'Kipande hakikubaliwa' };
+      }
+
+      const itemId: string | undefined = data.item?.item_id;
+      if (!itemId) return { ok: false, message: 'Kipande hakikutambulika' };
+      if (scannedIdsRef.current.has(itemId)) {
+        return { ok: false, message: 'Kipande hiki kiko tayari kwenye kikapu' };
+      }
+      scannedIdsRef.current.add(itemId);
+
+      setCart(prev => prev.map((line) => {
+        if (line.product_id !== product.id) return line;
+        const itemIds = [...(line.item_ids || []), itemId];
+        return { ...line, item_ids: itemIds, quantity: itemIds.length, total_price: itemIds.length * line.unit_price };
+      }));
+
+      return { ok: true, message: `Kipande kimeongezwa: ${data.item?.product_name || product.name}` };
+    } catch (error: any) {
+      return { ok: false, message: error?.message || 'Hitilafu ya mtandao' };
+    }
+  }, [scanTarget, t]);
+
+  const closeSaleScan = () => {
+    setScanOpen(false);
+    if (scanTarget) {
+      setCart(prev => prev.filter(line => line.product_id !== scanTarget.id || lineHasScannedUnits(line)));
+    }
+    setScanTarget(null);
+  };
+
   // ✅ FUNCTION: ONDOA BIDHAA KUTOKA KIKAPUNI
   const removeFromCart = (productId: string) => {
     const itemToRemove = cart.find(item => item.product_id === productId);
     if (!itemToRemove) return;
+
+    // Scanned units go back on the shelf immediately instead of waiting for
+    // the 30-minute reservation to expire.
+    releaseScannedItems(itemToRemove.item_ids || []);
+    if (itemToRemove.item_ids) itemToRemove.item_ids.forEach((id) => scannedIdsRef.current.delete(id));
 
     // Ondoa kutoka kikapu
     const updatedCart = cart.filter(item => item.product_id !== productId);
@@ -568,6 +699,10 @@ export default function UzaScreen() {
 
     const cartItemIndex = cart.findIndex(item => item.product_id === productId);
     if (cartItemIndex < 0) return;
+    if (lineHasScannedUnits(cart[cartItemIndex])) {
+      Alert.alert(t('app.error'), 'Bidhaa hii inadhibitiwa na skena. Tumia kitufe cha Skani.');
+      return;
+    }
 
     // ✅ HESABU STOCK ILIYOBAAKI KWA UHAKIKA
     const alreadyInCart = getTotalInCartForProduct(productId);
@@ -744,7 +879,10 @@ export default function UzaScreen() {
 
       const byProduct: Record<string, any> = {};
       productsAvailability.forEach(product => { byProduct[product.product_id] = product; });
-      const needsAllocation = cart.some(item => Number((byProduct[item.product_id] || {}).inside_stock || 0) > 0);
+      // A scanned cart needs no allocation prompt: qr_commit_sale derives each
+      // product's outside/fridge split from where the scanned units really are.
+      const needsAllocation = !cartHasScannedUnits()
+        && cart.some(item => Number((byProduct[item.product_id] || {}).inside_stock || 0) > 0);
 
       if (needsAllocation) {
         const draft: Record<string, { fridge_id: string | null; name: string; available: number; quantity: number }[]> = {};
@@ -769,7 +907,8 @@ export default function UzaScreen() {
       await submitSale(cart.map(item => ({
         product_id: item.product_id,
         quantity: item.quantity,
-        unit_price: item.unit_price
+        unit_price: item.unit_price,
+        item_ids: item.item_ids || []
       })));
     } catch (error: any) {
       Alert.alert(t('app.error'), error?.message || t('seller_sell.sale_error'));
@@ -803,6 +942,7 @@ export default function UzaScreen() {
         product_id: item.product_id,
         quantity: item.quantity,
         unit_price: item.unit_price,
+        item_ids: item.item_ids || [],
         allocations: sources.filter(source => Number(source.quantity) > 0).map(source => ({
           fridge_id: source.fridge_id,
           quantity: Number(source.quantity)
@@ -849,7 +989,8 @@ export default function UzaScreen() {
       // ORIGINAL sale instead of creating a second one — this is what stops a
       // double-tap or a retried request from deducting the stock twice (same
       // fix as the Blade page: SaleController::store).
-      const clientSaleKey = 'uza-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+      // Same value the scanned units were claimed with (see ensureSaleRef).
+      const clientSaleKey = ensureSaleRef();
 
       const saleData: any = {
         items: items,
@@ -1037,6 +1178,7 @@ export default function UzaScreen() {
     setSelectedProduct(null);
     setQuantity('1');
     setCart([]);
+    saleRef.current = null;
     setValidationErrors({});
     setSearchQuery('');
     // LoadProducts() sio lazima tena kwa sababu tumesasishia products tayari
@@ -1164,21 +1306,35 @@ export default function UzaScreen() {
           </Text>
         </View>
         <View style={styles.cartItemActions}>
-          <View style={styles.quantityControls}>
-            <TouchableOpacity 
-              style={styles.quantityButton}
-              onPress={() => updateCartQuantity(item.product_id, Math.max(1, item.quantity - 1))}
-            >
-              <Ionicons name="remove" size={18} color="#e74c3c" />
-            </TouchableOpacity>
-            <Text style={styles.quantityText}>{item.quantity}</Text>
-            <TouchableOpacity 
-              style={styles.quantityButton}
-              onPress={() => updateCartQuantity(item.product_id, item.quantity + 1)}
-            >
-              <Ionicons name="add" size={18} color="#2ecc71" />
-            </TouchableOpacity>
-          </View>
+          {lineHasScannedUnits(item) ? (
+            <View style={styles.quantityControls}>
+              <Text style={styles.scannedBadge}>Skena × {item.item_ids?.length || 0}</Text>
+              {scannerEnabled ? (
+                <TouchableOpacity
+                  style={styles.quantityButton}
+                  onPress={() => openSaleScan(products.find(p => p.id === item.product_id) || item)}
+                >
+                  <Ionicons name="qr-code-outline" size={18} color="#1e3a8a" />
+                </TouchableOpacity>
+              ) : null}
+            </View>
+          ) : (
+            <View style={styles.quantityControls}>
+              <TouchableOpacity 
+                style={styles.quantityButton}
+                onPress={() => updateCartQuantity(item.product_id, Math.max(1, item.quantity - 1))}
+              >
+                <Ionicons name="remove" size={18} color="#e74c3c" />
+              </TouchableOpacity>
+              <Text style={styles.quantityText}>{item.quantity}</Text>
+              <TouchableOpacity 
+                style={styles.quantityButton}
+                onPress={() => updateCartQuantity(item.product_id, item.quantity + 1)}
+              >
+                <Ionicons name="add" size={18} color="#2ecc71" />
+              </TouchableOpacity>
+            </View>
+          )}
           <TouchableOpacity 
             style={styles.removeButton}
             onPress={() => removeFromCart(item.product_id)}
@@ -1601,6 +1757,18 @@ export default function UzaScreen() {
                   <Ionicons name="add" size={16} color="#2ecc71" />
                 </TouchableOpacity>
               </View>
+              {scannerEnabled ? (
+                <TouchableOpacity
+                  style={styles.dockScan}
+                  onPress={() => {
+                    setSelectedProduct(null);
+                    openSaleScan(products.find(p => p.id === selectedProduct.id) || selectedProduct);
+                  }}
+                  accessibilityLabel="Skani kipande halisi"
+                >
+                  <Ionicons name="qr-code-outline" size={18} color="#1e3a8a" />
+                </TouchableOpacity>
+              ) : null}
               <TouchableOpacity
                 style={[styles.dockAdd, selectedProduct.availableStock === 0 && styles.dockAddDisabled]}
                 onPress={addToCart}
@@ -1778,6 +1946,16 @@ export default function UzaScreen() {
           </View>
         </View>
       </Modal>
+
+      {scannerEnabled ? (
+        <QrScannerModal
+          visible={scanOpen}
+          title={`Scanning Items for Sale - ${scanTarget?.name || ''}`}
+          hint="Kiasi cha mkono kimezimwa kwa bidhaa hii. Kila kipande halisi kinaongezwa mara moja tu."
+          onScan={handleSaleScan}
+          onClose={closeSaleScan}
+        />
+      ) : null}
 
     </KeyboardAvoidingView>
       </SafeAreaView>
@@ -2576,6 +2754,26 @@ const makeStyles = (tc: ThemeColors) => StyleSheet.create({
     padding: 5,
     backgroundColor: tc.page,
     borderRadius: 6,
+  },
+  scannedBadge: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#1e3a8a',
+    backgroundColor: '#eef5ff',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginRight: 6,
+  },
+  dockScan: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: '#eef5ff',
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   quantityText: {
     fontSize: 16,

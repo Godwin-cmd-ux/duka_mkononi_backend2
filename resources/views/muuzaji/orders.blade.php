@@ -125,6 +125,14 @@
         <div class="topbar">
             <button class="hamburger" id="dmMenuBtn" aria-label="Menu"><i class="fa-solid fa-bars"></i></button>
             <h1 data-i18n="muuzaji_orders.title">Customer Orders</h1>
+            {{-- Global order scanner: scan first, the backend identifies the
+                 product. Placed top-right, and hidden when the Scanner feature
+                 is off (the API refuses the scan either way). --}}
+            <button class="btn btn-ghost" id="dmOrderScanBtn" data-feature="scanner"
+                    style="margin-left:auto" title="Skani bidhaa kwa oda" aria-label="Skani bidhaa kwa oda">
+                <i class="fa-solid fa-qrcode" aria-hidden="true"></i>
+                <span class="dm-scan-label">Skani</span>
+            </button>
         </div>
         <div class="content">
             <div id="dmAlert"></div>
@@ -179,6 +187,30 @@
             <button class="btn btn-ghost btn-sm" data-dm-close="dmOrderOverlay" data-i18n="muuzaji_orders.close">Close</button>
         </div>
         <div class="modal-body" id="dmOrderDetail"></div>
+    </div>
+</div>
+
+{{-- Staged order cart filled by scanning. Closing the scanner never clears it:
+     the user can review, keep scanning or close the panel. Nothing here is
+     reserved or sold - stock only moves through the existing sale/fulfilment
+     flow (see SCANNER_SYSTEM_IMPLEMENTATION_AND_MIGRATION.md). --}}
+<div class="overlay" id="dmScanCartOverlay">
+    <div class="modal">
+        <div class="modal-head">
+            <h3 data-i18n="muuzaji_orders.scan_cart_title">Bidhaa zilizoskaniwa</h3>
+            <button class="btn btn-ghost btn-sm" data-dm-close="dmScanCartOverlay" data-i18n="muuzaji_orders.close">Close</button>
+        </div>
+        <div class="modal-body">
+            <div id="dmScanCartBody"></div>
+            <p style="font-size:12px;color:#64748b;line-height:1.6;margin:12px 0 0;">
+                Bidhaa hizi zimetambuliwa kwa skena pekee. Hazijahifadhiwa kama oda na hazijauzwa;
+                stock haijabadilika. Oda halisi hutumwa kwa mtiririko uliopo wa oda.
+            </p>
+        </div>
+        <div class="modal-foot" style="display:flex;gap:8px;justify-content:flex-end;padding:12px 16px;">
+            <button class="btn btn-primary" id="dmScanContinue">Endelea Kuskani</button>
+            <button class="btn btn-ghost" data-dm-close="dmScanCartOverlay">Funga</button>
+        </div>
     </div>
 </div>
 @endverbatim
@@ -341,6 +373,80 @@
             }).catch(function () { box.innerHTML = '<div class="alert alert-err">' + esc(t('muuzaji_orders.err_generic')) + '</div>'; });
     }
 
+    /* ------------------------------------------------------------------ */
+    /* Global order scanning                                               */
+    /* ------------------------------------------------------------------ */
+
+    var scanCart = [];
+
+    function renderScanCart() {
+        var body = document.getElementById('dmScanCartBody');
+        if (!body) return;
+        if (scanCart.length === 0) {
+            body.innerHTML = '<div class="empty" style="padding:18px 0"><i class="fa-solid fa-qrcode"></i><p>' + esc('Bado hakuna bidhaa iliyoskaniwa.') + '</p></div>';
+            return;
+        }
+        body.innerHTML = scanCart.map(function (line) {
+            return '<div style="display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #eef2f5;">' +
+                '<div><div style="font-weight:700;">' + esc(line.name) + '</div>' +
+                '<div style="font-size:11px;color:#64748b;">' + esc(line.locations.join(', ')) + '</div></div>' +
+                '<div style="font-weight:700;">x' + Number(line.quantity) + '</div></div>';
+        }).join('');
+    }
+
+    function openScanCart() {
+        renderScanCart();
+        document.getElementById('dmScanCartOverlay').classList.add('open');
+    }
+
+    function startOrderScan() {
+        if (!window.DMScanner) { alertBox('err', 'Scanner haijapakiwa. Sasisha ukurasa.'); return; }
+
+        window.DMScanner.open({
+            title: 'Scan Product to Add to Order',
+            hint: 'Hakuna bidhaa ya kuchagua kwanza: mfumo unatambua bidhaa yenyewe.',
+            finishLabel: 'Kikapu changu',
+            onScan: function (token) {
+                return fetch(API + '/api/scanner/order/scan', {
+                    method: 'POST',
+                    headers: Object.assign({ 'Content-Type': 'application/json' }, auth()),
+                    body: JSON.stringify({ qr_token: token, cart_item_ids: scanCart.map(function (line) { return line.item_id; }) })
+                }).then(function (r) {
+                    return r.json().catch(function () { return {}; }).then(function (d) {
+                        if (!r.ok || !d || !d.success) {
+                            return { ok: false, message: (d && d.error) || 'Bidhaa haikubaliwi' };
+                        }
+
+                        var product = d.product || {};
+                        var item = d.item || {};
+                        var line = null;
+                        scanCart.forEach(function (entry) { if (String(entry.product_id) === String(product.id)) line = entry; });
+                        var location = item.fridge_name ? item.fridge_name : 'Nje ya friji';
+
+                        if (line) {
+                            line.quantity += 1;
+                            line.item_ids.push(item.item_id);
+                            if (line.locations.indexOf(location) === -1) line.locations.push(location);
+                        } else {
+                            scanCart.push({
+                                product_id: product.id,
+                                name: product.name,
+                                item_id: item.item_id,
+                                quantity: 1,
+                                item_ids: [item.item_id],
+                                locations: [location]
+                            });
+                        }
+                        renderScanCart();
+
+                        return { ok: true, message: 'Imetambulika: ' + (product.name || '') };
+                    });
+                });
+            },
+            onClose: function () { openScanCart(); }
+        });
+    }
+
     document.addEventListener('click', function (e) {
         var v = e.target.closest('[data-view]');
         if (v) openDetail(v.getAttribute('data-view'));
@@ -355,6 +461,13 @@
         document.getElementById('dmMenuBtn').onclick = function () { document.getElementById('dmSidebar').classList.toggle('open'); };
         document.getElementById('dmLogout').onclick = function () { (window.DMTheme ? DMTheme.clearSession() : localStorage.clear()); window.location.href = '/login?role=muuzaji'; };
         document.getElementById('dmRefresh').onclick = function () { load(true); };
+        var scanBtn = document.getElementById('dmOrderScanBtn');
+        if (scanBtn) scanBtn.onclick = function () { startOrderScan(); };
+        var cont = document.getElementById('dmScanContinue');
+        if (cont) cont.onclick = function () {
+            document.getElementById('dmScanCartOverlay').classList.remove('open');
+            startOrderScan();
+        };
         var s = document.getElementById('dmStatusFilter'); s.value = state.status;
         s.onchange = function () { state.status = s.value; load(true); };
         var search = document.getElementById('dmSearch');

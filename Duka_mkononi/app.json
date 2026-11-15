@@ -46,7 +46,13 @@
           "locationWhenInUsePermission": "Allow Duka Mkononi to use your location to help customers navigate to your business."
         }
       ],
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Duka Mkononi to use the camera to scan product QR codes."
+        }
+      ]
     ],
     "runtimeVersion": {
       "policy": "sdkVersion"

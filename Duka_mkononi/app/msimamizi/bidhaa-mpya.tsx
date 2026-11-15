@@ -20,6 +20,7 @@ import {
     View,
 } from 'react-native';
 import SmartCartLoader from '../../components/SmartCartLoader';
+import QrScannerModal from '../../components/QrScannerModal';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFeatures } from '../../context/FeatureContext';
 import { useLang } from '../../context/LanguageContext';
@@ -75,6 +76,14 @@ export default function BidhaaMpyaScreen() {
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [isOwnerOfSelectedProduct, setIsOwnerOfSelectedProduct] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit' | 'delete'>('add');
+
+  // Administrator stock receiving: manual quantity OR one scanned unit per
+  // unique QR. The two modes are exclusive so units cannot be counted twice.
+  const [receiveMode, setReceiveMode] = useState<'manual' | 'scan'>('manual');
+  const [receiveScanOpen, setReceiveScanOpen] = useState(false);
+  const [receiveSessionId, setReceiveSessionId] = useState<string | null>(null);
+  const [receiveScannedCount, setReceiveScannedCount] = useState(0);
+  const receiveFinishingRef = useRef(false);
   
   // AI inventory import state
   const [mode, setMode] = useState<'manual' | 'ai'>('manual');
@@ -762,6 +771,165 @@ export default function BidhaaMpyaScreen() {
       Alert.alert(t('app.error'), t('products.error_add'));
       return false;
     }
+  };
+
+  /**
+   * Start a scanning receiving session for the selected (or newly created)
+   * product. Individual units stay PENDING until "Maliza" commits them through
+   * the existing authorized receiving endpoint: one unit per unique QR.
+   */
+  const startReceiveScan = async () => {
+    const errors = validateForm();
+    if (errors.length > 0) {
+      Alert.alert(t('app.error'), errors.join('\n'));
+      return;
+    }
+
+    const token = await AsyncStorage.getItem('userToken');
+    if (!token) { Alert.alert(t('app.error'), t('products.error_auth')); return; }
+    if (!(await requireNetwork())) return;
+
+    setLoading(true);
+    try {
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        'ngrok-skip-browser-warning': 'true',
+      };
+
+      let product = selectedProduct;
+      if (!product) {
+        const existing = existingProducts.find(
+          (p) => String(p.name || '').trim().toLowerCase() === formData.name.trim().toLowerCase()
+        );
+        if (existing) {
+          product = existing;
+          setIsOwnerOfSelectedProduct(true);
+        } else {
+          // Register the product ONCE with stock 0; scanned units are added by
+          // the receiving session, never by creating another product row.
+          const create = await fetchWithTimeout(`${API_BASE_URL}/api/products`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+              name: formData.name.trim(),
+              category: formData.category,
+              price: parseFloat(formData.price),
+              stock: 0,
+              expected_selling_price: parseFloat(formData.expected_selling_price),
+              barcode: formData.barcode || null,
+              image_url: productImageUrl || null,
+            }),
+          });
+          const created = await create.json().catch(() => ({}));
+          if (!create.ok || !created?.product) {
+            Alert.alert(t('app.error'), created?.error || t('products.error_add'));
+            return;
+          }
+          product = created.product;
+          await fetchExistingProducts(token);
+        }
+        setSelectedProduct(product);
+      }
+
+      const start = await fetchWithTimeout(`${API_BASE_URL}/api/scanner/receiving/start`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ product_id: product.id }),
+      });
+      const data = await start.json().catch(() => ({}));
+      if (!start.ok || !data?.session) {
+        Alert.alert(t('app.error'), data?.error || 'Imeshindikana kuanzisha upokeaji');
+        return;
+      }
+
+      setReceiveSessionId(data.session.id);
+      setReceiveScannedCount(0);
+      receiveFinishingRef.current = false;
+      setReceiveScanOpen(true);
+    } catch (error: any) {
+      Alert.alert(t('app.error'), error?.message || t('products.error_add'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReceiveScan = async (code: string) => {
+    if (!receiveSessionId) return { ok: false, message: 'Kipindi hakijaanza' };
+    const token = await AsyncStorage.getItem('userToken');
+    if (!token) return { ok: false, message: t('products.error_auth') };
+    try {
+      const res = await fetchWithTimeout(`${API_BASE_URL}/api/scanner/receiving/scan`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'ngrok-skip-browser-warning': 'true',
+        },
+        body: JSON.stringify({ session_id: receiveSessionId, qr_token: code }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.success) {
+        return { ok: false, message: data?.error || 'Kipande hakikusajiliwa' };
+      }
+      setReceiveScannedCount(Number(data.scanned_count || 0));
+      return { ok: true, message: `Kimesajiliwa (${data.scanned_count})` };
+    } catch (error: any) {
+      return { ok: false, message: error?.message || 'Hitilafu ya mtandao' };
+    }
+  };
+
+  const finishReceiveScan = async () => {
+    receiveFinishingRef.current = true;
+    if (!receiveSessionId) return;
+    const token = await AsyncStorage.getItem('userToken');
+    if (!token) return;
+    try {
+      const res = await fetchWithTimeout(`${API_BASE_URL}/api/scanner/receiving/complete`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'ngrok-skip-browser-warning': 'true',
+        },
+        body: JSON.stringify({ session_id: receiveSessionId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        Alert.alert(t('app.error'), data?.error || 'Stock haikupokelewa');
+        return;
+      }
+      Alert.alert(
+        t('products.stock_add_success_title'),
+        `Stock imepokewa: +${data.quantity} ${selectedProduct?.name || ''}\nJumla: ${data.stock_after}`
+      );
+      await fetchExistingProducts(token);
+      resetForm();
+      setReceiveMode('manual');
+    } finally {
+      setReceiveSessionId(null);
+    }
+  };
+
+  const closeReceiveScan = async () => {
+    setReceiveScanOpen(false);
+    if (!receiveFinishingRef.current && receiveSessionId) {
+      const token = await AsyncStorage.getItem('userToken');
+      if (token) {
+        fetchWithTimeout(`${API_BASE_URL}/api/scanner/receiving/cancel`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            'ngrok-skip-browser-warning': 'true',
+          },
+          body: JSON.stringify({ session_id: receiveSessionId }),
+        }).catch(() => {});
+      }
+      Alert.alert(t('app.ok') || 'OK', 'Kipindi kimeghairiwa. Hakuna stock iliyoongezwa.');
+    }
+    setReceiveSessionId(null);
+    setReceiveMode('manual');
   };
 
   // Admin scanner receiving: resolve an existing row, then receive exactly one
@@ -2205,13 +2373,43 @@ export default function BidhaaMpyaScreen() {
               </Text>
               <TextInput
                 ref={stockInputRef}
-                style={styles.input}
+                style={[styles.input, receiveMode === 'scan' && { opacity: 0.5 }]}
                 placeholder={selectedProduct && modalMode === 'add' ? t('products.stock_add_placeholder') : t('products.stock_placeholder')}
                 value={formData.stock}
                 onChangeText={(value) => handleInputChange('stock', value.replace(/[^0-9]/g, ''))}
                 keyboardType="numeric"
+                editable={receiveMode === 'manual'}
                 placeholderTextColor="#95a5a6"
               />
+              {isEnabled('scanner') && modalMode !== 'edit' && (
+                <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+                  <TouchableOpacity
+                    style={[styles.modeSwitch, receiveMode === 'manual' && styles.modeSwitchActive]}
+                    onPress={() => setReceiveMode('manual')}
+                  >
+                    <Text style={[styles.modeSwitchText, receiveMode === 'manual' && styles.modeSwitchTextActive]}>
+                      Kiasi kwa mkono
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.modeSwitch, receiveMode === 'scan' && styles.modeSwitchActive]}
+                    onPress={() => {
+                      setReceiveMode('scan');
+                      if (!formData.stock) handleInputChange('stock', '0');
+                    }}
+                  >
+                    <Text style={[styles.modeSwitchText, receiveMode === 'scan' && styles.modeSwitchTextActive]}>
+                      Skani moja moja
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+              {receiveMode === 'scan' && (
+                <Text style={styles.currentStockInfo}>
+                  Kiasi cha mkono kimezimwa. Kila QR halali inaongeza kipande kimoja baada ya mfumo kuthibitisha.
+                  {receiveScannedCount > 0 ? ` Zilizoskaniwa: ${receiveScannedCount}` : ''}
+                </Text>
+              )}
               {selectedProduct && modalMode === 'add' && (
                 <Text style={styles.currentStockInfo}>
                   {t('products.stock_current_info', {current: selectedProduct.stock || '0', add: formData.stock || '0', total: String(parseInt(selectedProduct.stock || '0') + parseInt(formData.stock || '0'))})}
@@ -2224,10 +2422,24 @@ export default function BidhaaMpyaScreen() {
               )}
             </View>
 
+            {receiveMode === 'scan' && (
+              <TouchableOpacity
+                style={[styles.submitButton, styles.addStockButton, { marginBottom: 10 }]}
+                onPress={startReceiveScan}
+                disabled={loading || !isFormValid}
+              >
+                <View style={styles.submitButtonContent}>
+                  <Ionicons name="qr-code-outline" size={22} color="#ffffff" />
+                  <Text style={styles.submitButtonText}>Anza Kuskani</Text>
+                </View>
+              </TouchableOpacity>
+            )}
+
             {/* Submit Button */}
             <TouchableOpacity 
               style={[
                 styles.submitButton,
+                receiveMode === 'scan' && { display: 'none' },
                 modalMode === 'edit' ? styles.updateButton : 
                 (selectedProduct && modalMode === 'add') ? styles.addStockButton : styles.addButton,
                 !isFormValid && styles.submitButtonDisabled
@@ -2330,12 +2542,36 @@ export default function BidhaaMpyaScreen() {
       </TouchableWithoutFeedback>
 
       {renderProductModal()}
+
+      {isEnabled('scanner') ? (
+        <QrScannerModal
+          visible={receiveScanOpen}
+          title={`Scanning Product Stock - ${selectedProduct?.name || formData.name}`}
+          hint="Kila QR ni ya kipande kimoja. Kiasi huongezeka baada ya mfumo kuthibitisha."
+          finishLabel="Maliza na Hifadhi"
+          onScan={handleReceiveScan}
+          onFinish={finishReceiveScan}
+          onClose={closeReceiveScan}
+        />
+      ) : null}
     </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const makeStyles = (tc: ThemeColors) => StyleSheet.create({
+  modeSwitch: {
+    flex: 1,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#dbe3ea',
+    paddingVertical: 10,
+    alignItems: 'center',
+    backgroundColor: tc.card,
+  },
+  modeSwitchActive: { backgroundColor: tc.primary, borderColor: tc.primary },
+  modeSwitchText: { fontSize: 12, fontWeight: '700', color: tc.muted },
+  modeSwitchTextActive: { color: '#ffffff' },
   screenSafe: {
     flex: 1,
     backgroundColor: tc.page,

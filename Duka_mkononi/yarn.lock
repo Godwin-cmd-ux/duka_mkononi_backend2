@@ -3523,6 +3523,13 @@ expo-background-fetch@~14.0.9:
   dependencies:
     expo-task-manager "~14.0.9"
 
+expo-camera@~17.0.10:
+  version "17.0.10"
+  resolved "https://registry.npmmirror.com/expo-camera/-/expo-camera-17.0.10.tgz#b3a217f0eb811a6e3522c2aff9f42be578aa6456"
+  integrity sha512-w1RBw83mAGVk4BPPwNrCZyFop0VLiVSRE3c2V9onWbdFwonpRhzmB4drygG8YOUTl1H3wQvALJHyMPTbgsK1Jg==
+  dependencies:
+    invariant "^2.2.4"
+
 expo-constants@~18.0.12, expo-constants@~18.0.13:
   version "18.0.13"
   resolved "https://registry.npmmirror.com/expo-constants/-/expo-constants-18.0.13.tgz"

@@ -294,6 +294,15 @@
                     <input id="transferMinStock" type="number" min="0" step="0.001" value="0">
                 </div>
             </div>
+            <div class="field" data-feature="scanner">
+                <label>Njia ya kuweka kiasi</label>
+                <div style="display:flex;gap:8px;">
+                    <button type="button" class="btn btn-light" id="transferModeManual" onclick="setTransferMode('manual')">Kiasi kwa mkono</button>
+                    <button type="button" class="btn btn-light" id="transferModeScan" onclick="setTransferMode('scan')">Skani moja baada ya nyingine</button>
+                </div>
+                <button type="button" class="btn btn-primary" id="transferScanBtn" style="display:none;width:100%;margin-top:8px;" onclick="startTransferScan()">Anza Kuskani</button>
+                <div class="muted" style="margin-top:5px">Kila kipande kilichoskaniwa kinahamishwa mara moja. Kiasi cha mkono kimezimwa kwenye hali ya skena.</div>
+            </div>
             <div class="field">
                 <label data-i18n="muuzaji_friji.notes">Maelezo (si lazima)</label>
                 <input id="transferNotes" maxlength="240">
@@ -535,6 +544,7 @@
             ? t('transfer_in_hint')
             : t('transfer_out_hint');
         document.getElementById('transferMinStock').parentElement.style.display = direction === 'in' ? '' : 'none';
+        setTransferMode('manual');
 
         try {
             const data = await api('/api/fridges/availability');
@@ -600,6 +610,68 @@
             if (document.getElementById('detailModal').classList.contains('open')) await openDetail(fridgeId);
         } catch (error) { toast(error.message, 'error'); }
         finally { buttonLoading(btn, false); }
+    }
+
+    /**
+     * Manual and scanner quantity entry are mutually exclusive for this
+     * operation: choosing one disables the other so the same units can never be
+     * transferred twice (once by typing, once by scanning).
+     */
+    function setTransferMode(mode) {
+        state.transferMode = mode === 'scan' ? 'scan' : 'manual';
+        const scanning = state.transferMode === 'scan';
+        const qty = document.getElementById('transferQuantity');
+        const confirm = document.getElementById('transferBtn');
+        const scanBtn = document.getElementById('transferScanBtn');
+        if (qty) { qty.disabled = scanning; qty.style.opacity = scanning ? '.5' : '1'; }
+        if (confirm) { confirm.style.display = scanning ? 'none' : ''; }
+        if (scanBtn) { scanBtn.style.display = scanning ? '' : 'none'; }
+        ['transferModeManual', 'transferModeScan'].forEach(id => {
+            const btn = document.getElementById(id);
+            if (!btn) return;
+            const active = (id === 'transferModeScan') === scanning;
+            btn.classList.toggle('btn-primary', active);
+            btn.classList.toggle('btn-light', !active);
+        });
+    }
+
+    async function startTransferScan() {
+        const fridgeId = document.getElementById('transferFridgeId').value;
+        const direction = document.getElementById('transferDirection').value;
+        const productId = document.getElementById('transferProduct').value;
+        const fridge = state.fridges.find(f => String(f.id) === String(fridgeId));
+        const product = state.products.find(p => String(p.product_id) === String(productId));
+        if (!productId) { toast(t('invalid_transfer'), 'error'); return; }
+        if (!window.DMScanner) { toast('Scanner haijapakiwa. Sasisha ukurasa.', 'error'); return; }
+
+        const fridgeName = (fridge && fridge.name) || t('fridge');
+        const productName = (product && product.name) || '';
+
+        window.DMScanner.open({
+            title: (direction === 'in' ? 'Entering into ' : 'Removing from ') + fridgeName + ' - ' + productName,
+            hint: direction === 'in'
+                ? 'Kipande lazima kiwe kwenye stock ya nje ya friji.'
+                : 'Kipande lazima kiwe ndani ya friji hii.',
+            onScan: async function (token) {
+                const auth = localStorage.getItem('userToken') || '';
+                const res = await fetch('/api/scanner/fridge/' + (direction === 'out' ? 'out' : 'in'), {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + auth, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fridge_id: fridgeId, product_id: productId, qr_token: token })
+                });
+                const data = await res.json().catch(function () { return {}; });
+                if (!res.ok || !data.success) {
+                    return { ok: false, message: (data && data.error) || 'Kipande hakikuhamishwa' };
+                }
+
+                return { ok: true, message: (data.message || 'Kipande kimehamishwa') };
+            },
+            onClose: async function () {
+                setTransferMode('manual');
+                await loadAll();
+                if (document.getElementById('detailModal').classList.contains('open')) await openDetail(fridgeId);
+            }
+        });
     }
 
     function openAddFridge() {

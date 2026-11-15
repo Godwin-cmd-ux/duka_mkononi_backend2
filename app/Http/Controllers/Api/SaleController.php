@@ -9,6 +9,7 @@ use App\Services\FridgeStockMath;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\User;
+use App\Services\QrScanner;
 use App\Services\Roles;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -149,6 +150,49 @@ class SaleController extends BaseController
                     'error' => 'Taarifa za bidhaa hazijakamilika au si sahihi',
                     'code' => 'INVALID_ITEMS',
                 ], 400);
+            }
+
+            // Scanned physical items: one line may carry the exact units the
+            // seller scanned. They are committed by a single database function
+            // so the sale and the item statuses cannot diverge (see
+            // qr_commit_sale). A cart that mixes manual and scanned quantities
+            // for the same product is rejected there - quantities must equal
+            // the scanned units, so nothing is ever counted twice.
+            $scannedItemIds = [];
+            foreach ($items as $item) {
+                if (! is_array($item['item_ids'] ?? null)) {
+                    continue;
+                }
+                foreach ($item['item_ids'] as $itemId) {
+                    if (is_string($itemId) && trim($itemId) !== '') {
+                        $scannedItemIds[] = trim($itemId);
+                    }
+                }
+            }
+            $scannedItemIds = array_values(array_unique($scannedItemIds));
+
+            if ($scannedItemIds !== []) {
+                if (! QrScanner::enabled($this->businessId($request))) {
+                    return $this->json([
+                        'success' => false,
+                        'error' => 'Kipengele cha Scanner kimezimwa na msimamizi wa biashara.',
+                        'code' => 'FEATURE_DISABLED',
+                        'feature' => 'scanner',
+                    ], 403);
+                }
+
+                return $this->storeWithScannedItems(
+                    $request,
+                    $items,
+                    $scannedItemIds,
+                    $userId,
+                    $writeBranchId,
+                    $customer_id,
+                    $sale_date,
+                    $payment_method,
+                    $notes,
+                    $clientSaleKey
+                );
             }
 
             $stockIssues = [];
@@ -929,6 +973,197 @@ class SaleController extends BaseController
             ]);
         } catch (\Throwable $e) {
         }
+    }
+
+    /**
+     * Commit a sale that contains individually scanned physical items.
+     *
+     * The database function derives each product's stock allocation from where
+     * the items physically are (Outside or a specific fridge), calls the
+     * existing create_pos_sale() writer, and only then marks those units sold -
+     * all inside one transaction. A failure (sold twice, wrong branch, reserved
+     * by another cart, insufficient stock) rolls back everything, so a scan can
+     * never deduct stock without a committed sale, and a sale can never leave
+     * an item available.
+     */
+    private function storeWithScannedItems(
+        Request $request,
+        array $items,
+        array $itemIds,
+        string $userId,
+        ?string $writeBranchId,
+        $customer_id,
+        $sale_date,
+        $payment_method,
+        $notes,
+        string $clientSaleKey
+    ) {
+        $businessId = $this->businessId($request);
+        if (! $businessId) {
+            return $this->json([
+                'success' => false,
+                'error' => 'Biashara haijulikani; vipande vilivyoskaniwa haviwezi kuthibitishwa.',
+                'code' => 'BUSINESS_REQUIRED',
+            ], 400);
+        }
+
+        // Idempotency: a retried submission (same key) returns the original
+        // sale instead of trying to sell the same physical units again.
+        if ($clientSaleKey !== '') {
+            try {
+                $existing = Sale::where('seller_id', $userId)
+                    ->where('notes', 'like', 'ai_dup_' . $clientSaleKey . '%')
+                    ->select(['id', 'invoice_number', 'total_amount'])
+                    ->first();
+                if ($existing) {
+                    return $this->json([
+                        'success' => true,
+                        'duplicate' => true,
+                        'message' => 'Mauzo haya yameshahifadhiwa tayari.',
+                        'invoice_number' => $existing->invoice_number,
+                        'sale' => $existing->toArray(),
+                    ], 200);
+                }
+            } catch (\Throwable $e) {
+            }
+        }
+
+        // Every product on the sale must belong to this business and branch.
+        // create_pos_sale() re-checks stock and branch, but business ownership
+        // is only known here.
+        $issue = $this->scannedProductIssue($request, $items, $writeBranchId, $userId);
+        if ($issue !== null) {
+            $this->log($userId, 'SALE_CREATE_FAILED', '/api/sales', [
+                'reason' => 'Scanned product access',
+                'issue' => $issue,
+            ], $this->ip($request), 'failed');
+
+            return $this->json([
+                'success' => false,
+                'error' => 'Bidhaa iliyoskaniwa haipatikani kwenye biashara au tawi lako',
+                'code' => 'PRODUCT_FORBIDDEN',
+                'stockIssues' => [$issue],
+            ], 403);
+        }
+
+        $saleId = Str::uuid()->toString();
+        $invoice_number = $this->generateInvoiceNumber($userId);
+        $clientRef = $clientSaleKey !== '' ? $clientSaleKey : ('sale-' . $saleId);
+
+        $rpcItems = [];
+        foreach ($items as $item) {
+            $rpcItems[] = [
+                'product_id' => $item['product_id'],
+                'quantity' => (float) $item['quantity'],
+                'unit_price' => (float) $item['unit_price'],
+            ];
+        }
+
+        $marker = $clientSaleKey !== '' ? ('ai_dup_' . $clientSaleKey) : '';
+        $rpcNotes = $marker !== ''
+            ? ($marker . ($notes ? ' | ' . $notes : ''))
+            : $notes;
+
+        try {
+            $result = QrScanner::commitSale(
+                $saleId,
+                $userId,
+                $businessId,
+                $writeBranchId,
+                $invoice_number,
+                $customer_id ?: null,
+                $sale_date ?: null,
+                $payment_method ?: null,
+                $rpcNotes ?: null,
+                $rpcItems,
+                $itemIds,
+                $clientRef
+            );
+        } catch (\Throwable $e) {
+            $this->log($userId, 'SALE_CREATE_FAILED', '/api/sales', [
+                'reason' => 'Scanned sale RPC failed',
+                'error' => $e->getMessage(),
+                'items' => $itemIds,
+            ], $this->ip($request), 'failed');
+
+            if (QrScanner::isUnavailable($e)) {
+                return $this->json([
+                    'success' => false,
+                    'error' => 'Mfumo wa skena haujasakinishwa. Msimamizi wa mfumo aendeshe migration ya scanner.',
+                    'code' => 'SCANNER_NOT_INSTALLED',
+                ], 503);
+            }
+
+            return $this->json([
+                'success' => false,
+                'error' => $e->getMessage() ?: 'Mauzo hayakuhifadhiwa',
+                'code' => QrScanner::errorCode($e->getMessage()),
+            ], 422);
+        }
+
+        $saleRow = Sale::where('id', $saleId)->first();
+        $hydrated = $saleRow ? $this->attachRelations([$saleRow->toArray()])[0] : ($result['sale'] ?? null);
+
+        $this->log($userId, 'SALE_CREATE', '/api/sales', [
+            'sale_id' => $saleId,
+            'invoice_number' => $invoice_number,
+            'items_count' => count($rpcItems),
+            'scanned_items' => count($itemIds),
+            'total_amount' => $result['total_amount'] ?? null,
+        ], $this->ip($request), 'success');
+
+        return $this->json([
+            'success' => true,
+            'message' => 'Mauzo yamekamilika kikamilifu!',
+            'invoice_number' => $invoice_number,
+            'unit_price_included' => true,
+            'scanned_items_sold' => (int) ($result['items_sold'] ?? count($itemIds)),
+            'sale' => $hydrated,
+        ], 201);
+    }
+
+    /**
+     * Access check for every product on a scanned sale. Returns the first
+     * problem, or null when all products are sellable by this caller.
+     *
+     * @return array<string,mixed>|null
+     */
+    private function scannedProductIssue(Request $request, array $items, ?string $writeBranchId, string $userId): ?array
+    {
+        $sellerUser = User::where('id', $userId)->select(['business_name', 'role'])->first();
+
+        foreach ($items as $item) {
+            $product = Product::where('id', $item['product_id'])
+                ->where('is_active', true)
+                ->select(['id', 'name', 'seller_id', 'branch_id', 'stock'])
+                ->first();
+
+            if (! $product) {
+                return ['product_id' => $item['product_id'], 'reason' => 'Product not found'];
+            }
+            if ($writeBranchId !== null && (string) ($product->branch_id ?? '') !== $writeBranchId) {
+                return ['product_id' => $item['product_id'], 'reason' => 'Product belongs to another branch'];
+            }
+
+            if ($product->seller_id !== $userId) {
+                $ownerOk = $sellerUser && $sellerUser->role === 'seller'
+                    && User::where('id', $product->seller_id)
+                        ->whereIn('role', Roles::BUSINESS_OWNERS)
+                        ->where('status', 'approved')
+                        ->where('business_name', $sellerUser->business_name)
+                        ->exists();
+
+                if (! $ownerOk) {
+                    return [
+                        'product_id' => $item['product_id'],
+                        'product_name' => $product->name,
+                        'reason' => 'Product access denied',
+                    ];
+                }
+            }
+        }
+
+        return null;
     }
 
     /**

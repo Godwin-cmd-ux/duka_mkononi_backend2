@@ -64,3 +64,8 @@
      Settings page hides the matching navigation everywhere without per-page
      conditions. The API remains the security boundary. --}}
 <script src="/js/dm-features.js?v={{ filemtime(public_path('js/dm-features.js')) }}" defer></script>
+{{-- The ONE reusable QR scanner used by receiving, selling, fridge transfers
+     and the order page. See SCANNER_SYSTEM_IMPLEMENTATION_AND_MIGRATION.md.
+     It only renders the camera/keyboard-wedge surface and reports a token; all
+     authorisation and quantity changes are decided by the API. --}}
+<script src="/js/dm-scanner.js?v={{ filemtime(public_path('js/dm-scanner.js')) }}" defer></script>

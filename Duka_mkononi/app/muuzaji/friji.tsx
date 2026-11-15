@@ -21,6 +21,7 @@ import { useLang } from '../../context/LanguageContext';
 import { fetchWithTimeout, requireNetwork } from '../../lib/network';
 import { useTheme, ThemeColors } from '../../lib/theme';
 import SmartCartLoader from '../../components/SmartCartLoader';
+import QrScannerModal from '../../components/QrScannerModal';
 
 interface Fridge {
   id: string;
@@ -106,6 +107,12 @@ export default function FrijiScreen() {
   const [minStock, setMinStock] = useState('0');
   const [notes, setNotes] = useState('');
   const [transferring, setTransferring] = useState(false);
+
+  // Manual and scanner quantity entry are mutually exclusive for one transfer
+  // operation, so the same units can never be moved twice.
+  const [scanMode, setScanMode] = useState(false);
+  const [scanOpen, setScanOpen] = useState(false);
+  const [scannedMoves, setScannedMoves] = useState(0);
 
   const [thresholdOpen, setThresholdOpen] = useState(false);
   const [thresholdValue, setThresholdValue] = useState('0');
@@ -242,6 +249,8 @@ export default function FrijiScreen() {
     setQuantity('1');
     setMinStock('0');
     setNotes('');
+    setScanMode(false);
+    setScannedMoves(0);
     setTransferOpen(true);
     try {
       const data = await api('/api/fridges/availability');
@@ -269,6 +278,41 @@ export default function FrijiScreen() {
       setQuantity('1');
     } catch (error: any) {
       Alert.alert(tr('title'), error?.message || 'Bidhaa haijapatikana kwa barcode hii');
+    }
+  };
+
+  /**
+   * One scanned unit = one existing item moved. The API re-validates product,
+   * fridge, business/branch and the item's current location on every scan.
+   */
+  const handleFridgeScan = async (token: string) => {
+    if (!transferFridge || !selectedProduct) {
+      return { ok: false, message: 'Chagua bidhaa kwanza' };
+    }
+    try {
+      const path = `/api/scanner/fridge/${transferDirection === 'out' ? 'out' : 'in'}`;
+      const data = await api(path, {
+        method: 'POST',
+        body: JSON.stringify({
+          fridge_id: transferFridge.id,
+          product_id: selectedProduct,
+          qr_token: token,
+        }),
+      });
+      setScannedMoves((n) => n + 1);
+      return { ok: true, message: data?.message || 'Kipande kimehamishwa' };
+    } catch (error: any) {
+      return { ok: false, message: error?.message || 'Kipande hakikuhamishwa' };
+    }
+  };
+
+  const closeFridgeScan = async () => {
+    setScanOpen(false);
+    setScanMode(false);
+    await load(false);
+    if (detailId) {
+      const fridge = fridges.find(f => f.id === detailId) || transferFridge;
+      if (fridge) await openDetail(fridge);
     }
   };
 
@@ -577,8 +621,33 @@ export default function FrijiScreen() {
                 </TouchableOpacity>
               );
             })}
+            {isEnabled('scanner') && (
+              <>
+                <Text style={styles.label}>Njia ya kuweka kiasi</Text>
+                <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
+                  <TouchableOpacity
+                    style={[styles.cancelBtn, { flex: 1, opacity: scanMode ? 0.5 : 1 }]}
+                    onPress={() => setScanMode(false)}
+                  >
+                    <Text style={styles.cancelText}>Kiasi kwa mkono</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.primaryBtn, { flex: 1, opacity: scanMode ? 1 : 0.5 }]}
+                    onPress={() => setScanMode(true)}
+                  >
+                    <Text style={styles.primaryText}>Skani moja kwa moja</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
             <Text style={styles.label}>{tr('quantity')}</Text>
-            <TextInput value={quantity} onChangeText={setQuantity} keyboardType="decimal-pad" style={styles.input} />
+            <TextInput
+              value={quantity}
+              onChangeText={setQuantity}
+              keyboardType="decimal-pad"
+              editable={!scanMode}
+              style={[styles.input, scanMode && { opacity: 0.5 }]}
+            />
             {transferDirection === 'in' && (
               <>
                 <Text style={styles.label}>{tr('min_stock')}</Text>
@@ -590,14 +659,41 @@ export default function FrijiScreen() {
             <Text style={[styles.muted, { marginTop: 8 }]}>
               {transferDirection === 'in' ? tr('transfer_in_hint') : tr('transfer_out_hint')}
             </Text>
-            <TouchableOpacity style={[styles.primaryBtn, { marginTop: 18 }]} onPress={submitTransfer} disabled={transferring}>
-              {transferring ? <SmartCartLoader size="compact" color="#ffffff" /> : <Text style={styles.primaryText}>{tr('confirm')}</Text>}
-            </TouchableOpacity>
+            {scanMode ? (
+              <>
+                <TouchableOpacity
+                  style={[styles.primaryBtn, { marginTop: 18 }]}
+                  onPress={() => {
+                    if (!selectedProduct) { Alert.alert(tr('title'), tr('invalid')); return; }
+                    setScannedMoves(0);
+                    setScanOpen(true);
+                  }}
+                >
+                  <Text style={styles.primaryText}>Anza Kuskani</Text>
+                </TouchableOpacity>
+                <Text style={[styles.muted, { marginTop: 8 }]}>Zilizohamishwa: {scannedMoves}</Text>
+              </>
+            ) : (
+              <TouchableOpacity style={[styles.primaryBtn, { marginTop: 18 }]} onPress={submitTransfer} disabled={transferring}>
+                {transferring ? <SmartCartLoader size="compact" color="#ffffff" /> : <Text style={styles.primaryText}>{tr('confirm')}</Text>}
+              </TouchableOpacity>
+            )}
           </ScrollView>
         </SafeAreaView>
       </Modal>
 
       {/* Threshold */}
+      {isEnabled('scanner') ? (
+        <QrScannerModal
+          visible={scanOpen}
+          title={`${transferDirection === 'in' ? 'Entering into' : 'Removing from'} ${transferFridge?.name || ''} - ${products.find(p => p.product_id === selectedProduct)?.name || ''}`}
+          hint={transferDirection === 'in' ? 'Kipande lazima kiwe kwenye stock ya nje ya friji.' : 'Kipande lazima kiwe ndani ya friji hii.'}
+          finishLabel="Maliza"
+          onScan={handleFridgeScan}
+          onClose={() => { closeFridgeScan(); }}
+        />
+      ) : null}
+
       <Modal visible={thresholdOpen} transparent animationType="fade" onRequestClose={() => setThresholdOpen(false)}>
         <View style={styles.modalBackdrop}>
           <View style={[styles.modalCard, { backgroundColor: tc.card }]}>

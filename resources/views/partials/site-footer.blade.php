@@ -33,6 +33,7 @@
         <div class="dm-footer-bottom">
             <span>&copy; {{ date('Y') }} Duka Mkononi.</span>
             <span data-i18n="site_common.footer_rights">All rights reserved.</span>
+            <span style="margin-left:8px">Powered by G-Tech Solution <a href="https://wa.me/255769010940" target="_blank" rel="noopener">+255616675940</a></span>
         </div>
     </div>
 </footer>

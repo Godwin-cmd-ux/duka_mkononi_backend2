@@ -48,6 +48,7 @@ use App\Http\Controllers\Api\ReactionController;
 use App\Http\Controllers\Api\ResetPasswordController;
 use App\Http\Controllers\Api\RevenueController;
 use App\Http\Controllers\Api\SaleController;
+use App\Http\Controllers\Api\ScannerController;
 use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\ServiceSaleController;
@@ -300,6 +301,24 @@ Route::middleware('auth.jwt')->group(function () {
     // putting a business name in the URL.
     Route::get('business/my/all-products', [ProductController::class, 'businessAllProducts']);
     Route::get('business/{businessName}/all-products', [ProductController::class, 'businessAllProducts']);
+
+    // Unique physical item (QR) scanning - ONE shared architecture, four
+    // separate workflows. Reads may be used by every business member; every
+    // mutation is an atomic database function that re-checks business, branch,
+    // product, item status and location. Scanner-disabled businesses get 403.
+    Route::get('scanner/identify', [ScannerController::class, 'identify']);
+    Route::get('scanner/items', [ScannerController::class, 'items']);
+    Route::get('scanner/verify', [ScannerController::class, 'verify']);
+    Route::post('scanner/receiving/start', [ScannerController::class, 'startReceiving']);
+    Route::post('scanner/receiving/scan', [ScannerController::class, 'scanReceiving']);
+    Route::post('scanner/receiving/complete', [ScannerController::class, 'completeReceiving']);
+    Route::post('scanner/receiving/cancel', [ScannerController::class, 'cancelReceiving']);
+    Route::get('scanner/receiving/{sessionId}', [ScannerController::class, 'showReceiving']);
+    Route::post('scanner/sale/scan', [ScannerController::class, 'scanSale']);
+    Route::post('scanner/sale/release', [ScannerController::class, 'releaseSale']);
+    Route::post('scanner/fridge/in', [ScannerController::class, 'scanFridgeIn']);
+    Route::post('scanner/fridge/out', [ScannerController::class, 'scanFridgeOut']);
+    Route::post('scanner/order/scan', [ScannerController::class, 'scanOrder']);
 
     Route::get('sales/my', [SaleController::class, 'my']);
     Route::post('sales', [SaleController::class, 'store']);

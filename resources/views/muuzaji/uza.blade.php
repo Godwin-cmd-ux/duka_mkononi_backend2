@@ -497,6 +497,25 @@
         let showCart = false;
         let businessData = null;
 
+        // One idempotency key per cart. The SAME key is sent when an item is
+        // scanned and when the sale is committed, so the database function
+        // accepts exactly the units this cart claimed (and a retried submit
+        // returns the original sale instead of selling twice).
+        let saleRef = null;
+        function ensureSaleRef() {
+            if (!saleRef) saleRef = 'uza-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+            return saleRef;
+        }
+
+        // Mode exclusivity: a cart line that contains scanned physical units is
+        // controlled by the scanner, so its manual +/- controls are disabled.
+        function lineHasScannedUnits(item) {
+            return !!(item && Array.isArray(item.item_ids) && item.item_ids.length > 0);
+        }
+        function cartHasScannedUnits() {
+            return cart.some(lineHasScannedUnits);
+        }
+
         function getCurrentUser() {
             const token = localStorage.getItem('userToken');
             const userStr = localStorage.getItem('userData');
@@ -631,6 +650,13 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             
             const existing = cart.find(i => i.product_id === selectedProduct.id);
             if (existing) {
+                // A scanned line's quantity is the number of scanned units; manual
+                // units may not be mixed in, or the same physical item could be
+                // counted twice at commit time.
+                if (lineHasScannedUnits(existing)) {
+                    showToast('Bidhaa hii inadhibitiwa na skena. Tumia kitufe cha Skani.', 'warning');
+                    return;
+                }
                 existing.quantity += qty;
                 existing.total_price = existing.quantity * existing.unit_price;
             } else {
@@ -638,6 +664,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     product_id: selectedProduct.id, name: selectedProduct.name, quantity: qty,
                     unit_price: selectedProduct.expected_selling_price,
                     total_price: qty * selectedProduct.expected_selling_price,
+                    item_ids: [],
                     original_stock: selectedProduct.stock, seller_id: selectedProduct.seller_id, seller_name: selectedProduct.seller_name
                 });
             }
@@ -647,10 +674,32 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             showToast(t('msg_added_to_cart', { count: cart.length }), 'success');
         }
 
-        function removeFromCart(productId) { cart = cart.filter(i => i.product_id !== productId); render(); }
+        function removeFromCart(productId) {
+            const item = cart.find(i => i.product_id === productId);
+            // Removing a scanned line releases its claims immediately: the units
+            // go straight back on the shelf instead of waiting for the TTL.
+            if (lineHasScannedUnits(item)) releaseScannedUnits(item.item_ids);
+            cart = cart.filter(i => i.product_id !== productId);
+            render();
+        }
+
+        function releaseScannedUnits(itemIds) {
+            if (!itemIds || itemIds.length === 0) return Promise.resolve();
+            const token = localStorage.getItem('userToken');
+            return fetch(`${API_BASE_URL}/api/scanner/sale/release`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ item_ids: itemIds, client_ref: ensureSaleRef() })
+            }).catch(() => {});
+        }
+
         function updateCartQty(productId, delta) {
             const item = cart.find(i => i.product_id === productId);
             if (!item) return;
+            if (lineHasScannedUnits(item)) {
+                showToast('Bidhaa hii inadhibitiwa na skena. Tumia kitufe cha Skani.', 'warning');
+                return;
+            }
             const product = products.find(p => p.id === productId);
             if (!product) return;
             const newQty = item.quantity + delta;
@@ -722,7 +771,11 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
 
                 allocationAvailability = {};
                 products.forEach(p => { allocationAvailability[p.product_id] = p; });
-                const needsAllocation = cart.some(i => Number((allocationAvailability[i.product_id] || {}).inside_stock || 0) > 0);
+                // A scanned cart does not ask the seller to allocate stock: the
+                // database function derives the allocation from where each scanned
+                // unit physically is (outside or a specific fridge).
+                const needsAllocation = !cartHasScannedUnits()
+                    && cart.some(i => Number((allocationAvailability[i.product_id] || {}).inside_stock || 0) > 0);
 
                 if (needsAllocation) {
                     buildAllocationDraft();
@@ -733,7 +786,12 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     return;
                 }
 
-                await submitSale(cart.map(i => ({ product_id: i.product_id, quantity: i.quantity, unit_price: i.unit_price })));
+                await submitSale(cart.map(i => ({
+                    product_id: i.product_id,
+                    quantity: i.quantity,
+                    unit_price: i.unit_price,
+                    item_ids: i.item_ids || []
+                })));
             } catch(e) {
                 showToast(e && e.message ? e.message : t('err_network'), 'error');
                 loading = false;
@@ -813,7 +871,9 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
         }
 
         async function submitSale(items) {
-            const clientSaleKey = 'uza-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+            // The cart's own key: identical to the client_ref used when the units
+            // were scanned, so the commit can only sell units this cart claimed.
+            const clientSaleKey = ensureSaleRef();
             const token = localStorage.getItem('userToken');
             try {
                 const saleData = { items, sale_date: saleDate, payment_method: 'cash', notes: t('sale_notes_seller', { name: userData?.full_name || userData?.email }), clientSaleKey };
@@ -847,7 +907,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 if (res.ok) {
                     const total = getCartTotal();
                     showToast(t('msg_sale_complete', { total: formatCurrency(total) }), 'success');
-                    cart = []; customerName = ''; customerPhone = ''; saleAllocations = null;
+                    cart = []; customerName = ''; customerPhone = ''; saleAllocations = null; saleRef = null;
                     await loadProducts();
                 } else if (result && result.error) {
                     showToast(result.error, 'error');
@@ -873,9 +933,14 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                         <div class="cart-item">
                             <div><div style="font-weight:700;">${escapeHtml(item.name)}</div><div>${formatCurrency(item.unit_price)} × ${item.quantity}</div></div>
                             <div class="cart-actions">
-                                <button class="cart-qty-btn" onclick="updateCartQty('${item.product_id}', -1)">-</button>
-                                <span style="min-width:30px;text-align:center;">${item.quantity}</span>
-                                <button class="cart-qty-btn" onclick="updateCartQty('${item.product_id}', 1)">+</button>
+                                ${lineHasScannedUnits(item) ? `
+                                    <span style="font-size:11px;font-weight:700;color:#1e3a8a;background:#eef5ff;border-radius:8px;padding:4px 8px;">Skena × ${item.item_ids.length}</span>
+                                    <button class="cart-qty-btn" title="Ongeza kwa skena" onclick="scanItemForSale('${item.product_id}')"><i class="fa-solid fa-qrcode" aria-hidden="true"></i></button>
+                                ` : `
+                                    <button class="cart-qty-btn" onclick="updateCartQty('${item.product_id}', -1)">-</button>
+                                    <span style="min-width:30px;text-align:center;">${item.quantity}</span>
+                                    <button class="cart-qty-btn" onclick="updateCartQty('${item.product_id}', 1)">+</button>
+                                `}
                                 <button class="cart-remove" onclick="removeFromCart('${item.product_id}')">${t('btn_delete')}</button>
                             </div>
                         </div>
@@ -969,6 +1034,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                                 <input type="number" id="qtyInput" class="qty-input" value="${quantity}" min="1" max="${availableStock}">
                                 <button class="qty-btn" onclick="changeQty(1)">+</button>
                             </div>
+                            ${scannerEnabled ? `<button class="qty-btn" style="width:auto;padding:0 12px;font-size:12px;font-weight:700;color:#1e3a8a;background:#eef5ff;border-color:#bfdbfe;" data-feature="scanner" title="Skani kipande halisi" onclick="scanItemForSale('${selectedProduct.id}')"><i class="fa-solid fa-qrcode" aria-hidden="true"></i> Skani</button>` : ''}
                             <button class="add-cart-btn dock-add ${isOut ? 'disabled' : ''}" onclick="addToCart()" ${isOut ? 'disabled' : ''}>${isOut ? t('out_of_stock') : '<i class="fa-solid fa-plus" style="font-size:13px"></i> ' + t('btn_add')}</button>
                         </div>
                     ` : ''}
@@ -1055,6 +1121,72 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             }
         }
         window.scanSaleBarcode = scanSaleBarcode;
+
+        /**
+         * Scan individual physical units into the selected product's cart line.
+         * Each accepted code adds exactly one unit, and only after the backend
+         * confirmed the claim: the displayed quantity IS the number of accepted
+         * items, never an optimistic counter.
+         */
+        window.scanItemForSale = function (productId) {
+            const product = products.find(p => String(p.id) === String(productId));
+            if (!product) { showToast(t('err_select_product_first'), 'warning'); return; }
+            if (!hasSellingPrice(product)) {
+                showToast(t('err_no_selling_price', { product: product.name }), 'warning');
+                return;
+            }
+            if (!window.DMScanner) { showToast('Scanner haijapakiwa. Sasisha ukurasa.', 'error'); return; }
+
+            const ref = ensureSaleRef();
+            let line = cart.find(i => i.product_id === product.id);
+            if (!line) {
+                line = {
+                    product_id: product.id, name: product.name, quantity: 0,
+                    unit_price: product.expected_selling_price, total_price: 0, item_ids: [],
+                    original_stock: product.stock, seller_id: product.seller_id, seller_name: product.seller_name
+                };
+                cart.push(line);
+            }
+
+            window.DMScanner.open({
+                title: 'Scanning Items for Sale - ' + product.name,
+                hint: 'Kila kipande halisi kinaongezwa mara moja tu. Kiasi cha mkono kimezimwa kwa bidhaa hii.',
+                onScan: async function (token) {
+                    const tokenValue = localStorage.getItem('userToken');
+                    const res = await fetch(`${API_BASE_URL}/api/scanner/sale/scan`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${tokenValue}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ product_id: product.id, qr_token: token, client_ref: ref })
+                    });
+                    const data = await res.json().catch(() => ({}));
+                    if (!res.ok || !data.success) {
+                        return { ok: false, message: data.error || 'Kipande hakikubaliwa' };
+                    }
+
+                    const itemId = data.item && data.item.item_id;
+                    const current = cart.find(i => i.product_id === product.id);
+                    if (!current) return { ok: false, message: 'Bidhaa imeondolewa kwenye kikapu' };
+                    if (!itemId || current.item_ids.indexOf(itemId) !== -1) {
+                        return { ok: false, message: 'Kipande hiki kiko tayari kwenye kikapu' };
+                    }
+
+                    current.item_ids.push(itemId);
+                    current.quantity = current.item_ids.length;
+                    current.total_price = current.quantity * current.unit_price;
+                    render();
+
+                    return { ok: true, message: 'Kipande kimeongezwa: ' + (data.item.product_name || product.name) };
+                },
+                onClose: function () {
+                    const current = cart.find(i => i.product_id === product.id);
+                    if (current && (!current.item_ids || current.item_ids.length === 0)) {
+                        cart = cart.filter(i => i.product_id !== product.id);
+                    }
+                    render();
+                }
+            });
+        };
+
         window.addEventListener('dm:features', function () { render(); });
         window.changeQty = (delta) => {
             let q = parseInt(quantity) || 1;

@@ -11,7 +11,8 @@ import {
   ScrollView,
   Animated,
   Easing,
-  FlatList
+  FlatList,
+  Linking
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -416,6 +417,11 @@ export default function HomeScreen() {
               <Text style={[styles.footerSubText, { color: colors.muted2 }]}>
                 {t('footer.security_note')}
               </Text>
+              <TouchableOpacity onPress={() => Linking.openURL('https://wa.me/255769010940')}>
+                <Text style={[styles.footerSubText, { color: colors.muted2 }]}>
+                  Powered by G-Tech Solution +255616675940
+                </Text>
+              </TouchableOpacity>
             </Animated.View>
           </View>
         </ScrollView>

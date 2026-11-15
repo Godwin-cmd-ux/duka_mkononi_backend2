@@ -16,6 +16,8 @@ import SmartCartLoader from '../../components/SmartCartLoader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLang } from '../../context/LanguageContext';
 import LogoutButton from '../../components/logout-button';
+import QrScannerModal from '../../components/QrScannerModal';
+import { useFeatures } from '../../context/FeatureContext';
 
 import { API_BASE_URL } from '../../constants/api';
 import { getCache, setCache } from '../../db/cache';
@@ -67,6 +69,63 @@ export default function OrdersScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [statusFilter, setStatusFilter] = useState('');
   const [search, setSearch] = useState('');
+
+  // Global order scanning: scan first, the backend identifies the product.
+  // `scanCart` is a staging list only - it never reserves or sells anything.
+  const { isEnabled } = useFeatures();
+  const scannerEnabled = isEnabled('scanner');
+  const [scanOpen, setScanOpen] = useState(false);
+  const [scanCartOpen, setScanCartOpen] = useState(false);
+  const [scanCart, setScanCart] = useState<any[]>([]);
+
+  const handleOrderScan = useCallback(async (token: string) => {
+    const authToken = await AsyncStorage.getItem('userToken');
+    if (!authToken) return { ok: false, message: t('orders.error_auth') };
+
+    try {
+      const res = await fetchWithTimeout(`${API_BASE_URL}/api/scanner/order/scan`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          Authorization: `Bearer ${authToken}`,
+          'ngrok-skip-browser-warning': 'true',
+        },
+        body: JSON.stringify({ qr_token: token, cart_item_ids: scanCart.map((line) => line.item_id) }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.success) {
+        return { ok: false, message: data?.error || 'Bidhaa haikubaliwi' };
+      }
+
+      const product = data.product || {};
+      const item = data.item || {};
+      const location = item.fridge_name || 'Nje ya friji';
+      setScanCart((prev) => {
+        const next = prev.map((line) => ({ ...line }));
+        const existing = next.find((line) => String(line.product_id) === String(product.id));
+        if (existing) {
+          existing.quantity += 1;
+          existing.item_ids.push(item.item_id);
+          if (!existing.locations.includes(location)) existing.locations.push(location);
+        } else {
+          next.push({
+            product_id: product.id,
+            name: product.name,
+            item_id: item.item_id,
+            quantity: 1,
+            item_ids: [item.item_id],
+            locations: [location],
+          });
+        }
+        return next;
+      });
+
+      return { ok: true, message: `Imetambulika: ${product.name || ''}` };
+    } catch (error: any) {
+      return { ok: false, message: error?.message || 'Hitilafu ya mtandao' };
+    }
+  }, [scanCart, t]);
 
   const [detailVisible, setDetailVisible] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
@@ -413,6 +472,15 @@ export default function OrdersScreen() {
           <View style={styles.headerTop}>
             <Text style={styles.title}>{t('orders.title')}</Text>
             <View style={styles.headerActions}>
+              {scannerEnabled ? (
+                <TouchableOpacity
+                  onPress={() => { setScanCartOpen(false); setScanOpen(true); }}
+                  style={styles.refreshButton}
+                  accessibilityLabel="Skani bidhaa kwa oda"
+                >
+                  <Ionicons name="qr-code-outline" size={22} color="#2ecc71" />
+                </TouchableOpacity>
+              ) : null}
               <TouchableOpacity onPress={() => loadOrders(true)} style={styles.refreshButton}>
                 <Ionicons name="refresh-outline" size={22} color="#2ecc71" />
               </TouchableOpacity>
@@ -672,6 +740,54 @@ export default function OrdersScreen() {
             </View>
           </View>
         </Modal>
+
+        {scannerEnabled ? (
+          <QrScannerModal
+            visible={scanOpen}
+            title="Scan Product to Add to Order"
+            hint="Hakuna bidhaa ya kuchagua kwanza: mfumo unatambua bidhaa yenyewe."
+            finishLabel="Kikapu changu"
+            onScan={handleOrderScan}
+            onClose={() => { setScanOpen(false); setScanCartOpen(true); }}
+          />
+        ) : null}
+
+        <Modal visible={scanCartOpen} animationType="slide" transparent onRequestClose={() => setScanCartOpen(false)}>
+          <View style={styles.scanCartBackdrop}>
+            <View style={styles.scanCartCard}>
+              <Text style={styles.scanCartTitle}>Bidhaa zilizoskaniwa</Text>
+              <ScrollView style={{ maxHeight: 320, marginTop: 10 }}>
+                {scanCart.length === 0 ? (
+                  <Text style={styles.scanCartEmpty}>Bado hakuna bidhaa iliyoskaniwa.</Text>
+                ) : (
+                  scanCart.map((line) => (
+                    <View key={line.product_id} style={styles.scanCartRow}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.scanCartName}>{line.name}</Text>
+                        <Text style={styles.scanCartMeta}>{line.locations.join(', ')}</Text>
+                      </View>
+                      <Text style={styles.scanCartQty}>x{line.quantity}</Text>
+                    </View>
+                  ))
+                )}
+              </ScrollView>
+              <Text style={styles.scanCartNote}>
+                Bidhaa hizi zimetambuliwa kwa skena pekee. Hazijahifadhiwa kama oda na hazijauzwa; stock haijabadilika.
+              </Text>
+              <View style={styles.scanCartActions}>
+                <TouchableOpacity
+                  style={styles.scanCartPrimary}
+                  onPress={() => { setScanCartOpen(false); setScanOpen(true); }}
+                >
+                  <Text style={styles.scanCartPrimaryText}>Endelea Kuskani</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.scanCartSecondary} onPress={() => setScanCartOpen(false)}>
+                  <Text style={styles.scanCartSecondaryText}>Funga</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </View>
     </SafeAreaView>
   );
@@ -696,6 +812,34 @@ const makeStyles = (tc: ThemeColors) => StyleSheet.create({
     marginBottom: 12,
   },
   headerActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  scanCartBackdrop: { flex: 1, backgroundColor: 'rgba(15,23,42,.6)', justifyContent: 'center', padding: 16 },
+  scanCartCard: { backgroundColor: '#fff', borderRadius: 18, padding: 18 },
+  scanCartTitle: { fontSize: 16, fontWeight: '800', color: '#0f172a' },
+  scanCartEmpty: { fontSize: 13, color: '#64748b', paddingVertical: 12 },
+  scanCartRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 9,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eef2f5',
+  },
+  scanCartName: { fontSize: 14, fontWeight: '700', color: '#0f172a' },
+  scanCartMeta: { fontSize: 11, color: '#64748b', marginTop: 2 },
+  scanCartQty: { fontSize: 14, fontWeight: '800', color: '#1e3a8a' },
+  scanCartNote: { fontSize: 11, color: '#64748b', lineHeight: 16, marginTop: 12 },
+  scanCartActions: { flexDirection: 'row', gap: 8, marginTop: 14 },
+  scanCartPrimary: { flex: 1, backgroundColor: '#1e3a8a', borderRadius: 11, paddingVertical: 12, alignItems: 'center' },
+  scanCartPrimaryText: { color: '#fff', fontSize: 13, fontWeight: '800' },
+  scanCartSecondary: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#dbe3ea',
+    borderRadius: 11,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  scanCartSecondaryText: { color: '#334155', fontSize: 13, fontWeight: '700' },
   title: { fontSize: 22, fontWeight: 'bold', color: tc.ink, flex: 1 },
   refreshButton: {
     padding: 8,
