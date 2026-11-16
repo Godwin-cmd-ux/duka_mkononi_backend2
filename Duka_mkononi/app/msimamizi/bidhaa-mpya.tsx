@@ -1717,7 +1717,9 @@ export default function BidhaaMpyaScreen() {
     );
   }
 
-  if (userData.role !== 'admin' && !productManagementEnabled) {
+  // Only sellers are restricted by the product-management switch; admins/msimamizi
+  // must always retain full access to this screen regardless of that setting.
+  if (userData.role === 'seller' && !productManagementEnabled) {
     return (
       <SafeAreaView style={styles.screenSafe} edges={['top']}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 28 }}>
