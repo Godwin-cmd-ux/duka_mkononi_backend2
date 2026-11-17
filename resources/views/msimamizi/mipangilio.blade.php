@@ -261,7 +261,7 @@
         </div>
 
         <div class="side-label" data-i18n="msimamizi_mipangilio.section_label">Sehemu</div>
-        <nav class="section-nav" aria-label="Sehemu za mipangilio">
+        <nav class="section-nav" aria-label="Sehemu za mipangilio" data-i18n="msimamizi_mipangilio.aria_settings_sections" data-i18n-attr="aria-label">
             <button class="section-btn active" data-section="user" type="button">
                 <span class="nav-ico">👤</span><span data-i18n="msimamizi_mipangilio.nav_user">Taarifa Zako</span>
             </button>
@@ -308,7 +308,7 @@
                     </div>
                     <div class="field">
                         <label for="userPhone" data-i18n="msimamizi_mipangilio.label_phone">Namba ya simu</label>
-                        <input id="userPhone" type="tel" maxlength="30" inputmode="tel" placeholder="Mfano: 0757 000 000">
+                        <input id="userPhone" type="tel" maxlength="30" inputmode="tel" placeholder="Mfano: 0757 000 000" data-i18n="msimamizi_mipangilio.placeholder_phone_example" data-i18n-attr="placeholder">
                     </div>
                     <div class="field">
                         <label for="userRole" data-i18n="msimamizi_mipangilio.label_role">Jukumu</label>
@@ -392,15 +392,15 @@
                     </div>
                     <div class="field">
                         <label for="businessType" data-i18n="msimamizi_mipangilio.label_business_type">Aina ya biashara</label>
-                        <input id="businessType" type="text" maxlength="100" placeholder="Mfano: Duka la jumla">
+                        <input id="businessType" type="text" maxlength="100" placeholder="Mfano: Duka la jumla" data-i18n="msimamizi_mipangilio.placeholder_business_type_example" data-i18n-attr="placeholder">
                     </div>
                     <div class="field full">
                         <label for="businessLocation" data-i18n="msimamizi_mipangilio.label_business_location">Eneo</label>
-                        <input id="businessLocation" type="text" maxlength="255" placeholder="Mfano: Kinondoni, Dar es Salaam">
+                        <input id="businessLocation" type="text" maxlength="255" placeholder="Mfano: Kinondoni, Dar es Salaam" data-i18n="msimamizi_mipangilio.placeholder_location_example" data-i18n-attr="placeholder">
                     </div>
                     <div class="field full">
                         <label for="businessDescription" data-i18n="msimamizi_mipangilio.label_business_description">Maelezo</label>
-                        <textarea id="businessDescription" maxlength="1000" placeholder="Maelezo mafupi yanayoonekana kwa wateja na wauzaji."></textarea>
+                        <textarea id="businessDescription" maxlength="1000" placeholder="Maelezo mafupi yanayoonekana kwa wateja na wauzaji." data-i18n="msimamizi_mipangilio.placeholder_business_description" data-i18n-attr="placeholder"></textarea>
                     </div>
                     <div class="field full">
                         <label for="businessLogo" data-i18n="msimamizi_mipangilio.label_business_logo">URL ya nembo</label>
@@ -456,7 +456,7 @@
                         <div class="toggle-desc" data-i18n="msimamizi_mipangilio.toggle_fridge_desc">Kikwashwa, wauzaji wanaweza kusimamia stock iliyo ndani ya friji na kuhamisha stock kati ya friji na nje. Kikizimwa, kichupo cha Friji hufichwa na stock ya ndani haitumiki kwenye mauzo; stock, historia na tahadhari zote zinabaki salama.</div>
                     </div>
                     <label class="switch">
-                        <input type="checkbox" data-feature="fridge_enabled" aria-label="Washa kipengele cha Friji">
+                        <input type="checkbox" data-feature="fridge_enabled" aria-label="Washa kipengele cha Friji" data-i18n="msimamizi_mipangilio.aria_fridge_feature" data-i18n-attr="aria-label">
                         <span class="slider"></span>
                     </label>
                 </div>
@@ -467,7 +467,7 @@
                         <div class="toggle-desc" data-i18n="msimamizi_mipangilio.toggle_scanner_desc">Huwasha uwanja wa barcode kwa msimamizi kupokea stock na kwa muuzaji kuchagua bidhaa wakati wa kuuza au kuhamisha stock. Scanner haiongezi stock yenyewe; msimamizi pekee anayeruhusiwa kupokea stock.</div>
                     </div>
                     <label class="switch">
-                        <input type="checkbox" data-feature="scanner_enabled" aria-label="Washa kipengele cha Scanner">
+                        <input type="checkbox" data-feature="scanner_enabled" aria-label="Washa kipengele cha Scanner" data-i18n="msimamizi_mipangilio.aria_scanner_feature" data-i18n-attr="aria-label">
                         <span class="slider"></span>
                     </label>
                 </div>
@@ -478,7 +478,7 @@
                         <div class="toggle-desc" data-i18n="msimamizi_mipangilio.toggle_services_desc">Kikwashwa, unaweza kuunda huduma na wauzaji wanaweza kuziuza. Kikizimwa, uundaji wa huduma mpya na mauzo ya huduma huzuiwa, lakini huduma za zamani na ripoti zake zinabaki.</div>
                     </div>
                     <label class="switch">
-                        <input type="checkbox" data-feature="services_enabled" aria-label="Washa kipengele cha Huduma">
+                        <input type="checkbox" data-feature="services_enabled" aria-label="Washa kipengele cha Huduma" data-i18n="msimamizi_mipangilio.aria_services_feature" data-i18n-attr="aria-label">
                         <span class="slider"></span>
                     </label>
                 </div>
@@ -489,7 +489,7 @@
                         <div class="toggle-desc" data-i18n="msimamizi_mipangilio.toggle_product_mgmt_desc">Kikwashwa, muuzaji anaweza kufungua ukurasa wa Bidhaa Mpya, kusajili bidhaa, kupokea stock na kubadilisha bei/stock. Kikizimwa (chaguo-msingi), ni msimamizi pekee anayeweza kusimamia bidhaa; muuzaji anauza stock iliyopo tu.</div>
                     </div>
                     <label class="switch">
-                        <input type="checkbox" data-feature="product_management_enabled" aria-label="Muuzaji anaweza kusimamia bidhaa">
+                        <input type="checkbox" data-feature="product_management_enabled" aria-label="Muuzaji anaweza kusimamia bidhaa" data-i18n="msimamizi_mipangilio.aria_product_mgmt_feature" data-i18n-attr="aria-label">
                         <span class="slider"></span>
                     </label>
                 </div>
@@ -509,7 +509,7 @@
                         <div class="toggle-desc" data-i18n="msimamizi_mipangilio.toggle_low_stock_desc">Arifa wakati stock ya nje ya friji au stock ya biashara inafikia kiwango cha chini. Ufuatiliaji unaendelea hata ikizimwa.</div>
                     </div>
                     <label class="switch">
-                        <input type="checkbox" data-feature="notify_low_stock" aria-label="Washa tahadhari za stock ndogo">
+                        <input type="checkbox" data-feature="notify_low_stock" aria-label="Washa tahadhari za stock ndogo" data-i18n="msimamizi_mipangilio.aria_low_stock_alert" data-i18n-attr="aria-label">
                         <span class="slider"></span>
                     </label>
                 </div>
@@ -520,7 +520,7 @@
                         <div class="toggle-desc" data-i18n="msimamizi_mipangilio.toggle_fridge_stock_desc">Arifa wakati stock iliyo ndani ya friji inafikia kiwango chake cha chini.</div>
                     </div>
                     <label class="switch">
-                        <input type="checkbox" data-feature="notify_fridge_stock" aria-label="Washa tahadhari za stock ya friji">
+                        <input type="checkbox" data-feature="notify_fridge_stock" aria-label="Washa tahadhari za stock ya friji" data-i18n="msimamizi_mipangilio.aria_fridge_stock_alert" data-i18n-attr="aria-label">
                         <span class="slider"></span>
                     </label>
                 </div>
@@ -555,30 +555,30 @@
 <!-- Structure conversion modals -->
 <div class="modal-overlay" id="toBranchfulModal" role="dialog" aria-modal="true" aria-labelledby="toBranchfulTitle">
     <div class="modal">
-        <div class="modal-title" id="toBranchfulTitle">Badilisha kuwa biashara ya matawi</div>
-        <p class="hint" style="margin-bottom:14px;">Biashara yako itaanza kufanya kazi kupitia matawi. Unahitaji kuandikisha tawi la kwanza ili kuendelea. Bidhaa, mauzo, huduma na ripoti zilizopo zitahamishiwa tawini hili.</p>
+        <div class="modal-title" id="toBranchfulTitle" data-i18n="msimamizi_mipangilio.btn_to_branchful">Badilisha kuwa biashara ya matawi</div>
+        <p class="hint" style="margin-bottom:14px;" data-i18n="msimamizi_mipangilio.modal_branchful_desc">Biashara yako itaanza kufanya kazi kupitia matawi. Unahitaji kuandikisha tawi la kwanza ili kuendelea. Bidhaa, mauzo, huduma na ripoti zilizopo zitahamishiwa tawini hili.</p>
         <form id="toBranchfulForm" autocomplete="off">
             <div class="grid">
                 <div class="field full">
-                    <label for="firstBranchName">Jina la tawi la kwanza</label>
-                    <input id="firstBranchName" type="text" maxlength="120" required minlength="2" placeholder="Mfano: Tawi Kuu">
+                    <label for="firstBranchName" data-i18n="msimamizi_mipangilio.label_first_branch_name">Jina la tawi la kwanza</label>
+                    <input id="firstBranchName" type="text" maxlength="120" required minlength="2" placeholder="Mfano: Tawi Kuu" data-i18n="msimamizi_mipangilio.placeholder_first_branch_name" data-i18n-attr="placeholder">
                 </div>
                 <div class="field full">
-                    <label for="firstBranchLocation">Eneo la tawi</label>
-                    <input id="firstBranchLocation" type="text" maxlength="255" placeholder="Mfano: Kinondoni, Dar es Salaam">
+                    <label for="firstBranchLocation" data-i18n="msimamizi_mipangilio.label_first_branch_location">Eneo la tawi</label>
+                    <input id="firstBranchLocation" type="text" maxlength="255" placeholder="Mfano: Kinondoni, Dar es Salaam" data-i18n="msimamizi_mipangilio.placeholder_location_example" data-i18n-attr="placeholder">
                 </div>
                 <div class="field">
-                    <label for="firstBranchLatitude">Latitudo (hiari)</label>
+                    <label for="firstBranchLatitude" data-i18n="msimamizi_mipangilio.label_latitude">Latitudo (hiari)</label>
                     <input id="firstBranchLatitude" type="number" step="any" min="-90" max="90">
                 </div>
                 <div class="field">
-                    <label for="firstBranchLongitude">Longitudo (hiari)</label>
-                    <input id="firstBranchLongitude" type="number" step="any" min="-180" max="180">
+                    <label for="firstBranchLongitude" data-i18n="msimamizi_mipangilio.label_longitude">Longitudo (hiari)</label>
+                    <input id="firstBranchLongitude" type="number" step="any" min="-90" max="90">
                 </div>
             </div>
             <div class="actions">
-                <button class="btn btn-primary" id="confirmToBranchful" type="submit">Thibitisha na uendelee</button>
-                <button class="btn btn-ghost" type="button" data-close-structure="toBranchfulModal">Ghairi</button>
+                <button class="btn btn-primary" id="confirmToBranchful" type="submit" data-i18n="msimamizi_mipangilio.btn_confirm_continue">Thibitisha na uendelee</button>
+                <button class="btn btn-ghost" type="button" data-close-structure="toBranchfulModal" data-i18n="msimamizi_mipangilio.btn_cancel">Ghairi</button>
             </div>
         </form>
     </div>
@@ -586,26 +586,26 @@
 
 <div class="modal-overlay" id="toBranchlessModal" role="dialog" aria-modal="true" aria-labelledby="toBranchlessTitle">
     <div class="modal">
-        <div class="modal-title" id="toBranchlessTitle">Badilisha kuwa biashara ya eneo moja</div>
-        <p class="hint" style="margin-bottom:14px;">Biashara itaacha kufanya kazi kwa matawi na kuunganishwa kuwa biashara moja. Historia ya mauzo, malipo, bidhaa, stock na ripoti inabaki. Bidhaa yenye jina/SKU sawa kwenye matawi zaidi ya moja itazuia mabadiliko haya hadi itakaposahihishwa.</p>
+        <div class="modal-title" id="toBranchlessTitle" data-i18n="msimamizi_mipangilio.btn_to_branchless">Badilisha kuwa biashara ya eneo moja</div>
+        <p class="hint" style="margin-bottom:14px;" data-i18n="msimamizi_mipangilio.modal_branchless_desc">Biashara itaacha kufanya kazi kwa matawi na kuunganishwa kuwa biashara moja. Historia ya mauzo, malipo, bidhaa, stock na ripoti inabaki. Bidhaa yenye jina/SKU sawa kwenye matawi zaidi ya moja itazuia mabadiliko haya hadi itakaposahihishwa.</p>
         <form id="toBranchlessForm" autocomplete="off">
             <div class="grid">
                 <div class="field full">
-                    <label for="unifiedBusinessName">Jina la biashara</label>
+                    <label for="unifiedBusinessName" data-i18n="msimamizi_mipangilio.label_unified_business_name">Jina la biashara</label>
                     <input id="unifiedBusinessName" type="text" maxlength="150" required minlength="2">
                 </div>
                 <div class="field full">
-                    <label for="unifiedBusinessLocation">Eneo la biashara</label>
+                    <label for="unifiedBusinessLocation" data-i18n="msimamizi_mipangilio.label_unified_business_location">Eneo la biashara</label>
                     <input id="unifiedBusinessLocation" type="text" maxlength="255">
                 </div>
                 <div class="field full">
-                    <label for="unifiedBusinessDescription">Maelezo ya biashara</label>
+                    <label for="unifiedBusinessDescription" data-i18n="msimamizi_mipangilio.label_unified_business_description">Maelezo ya biashara</label>
                     <textarea id="unifiedBusinessDescription" maxlength="1000"></textarea>
                 </div>
             </div>
             <div class="actions">
-                <button class="btn btn-danger" id="confirmToBranchless" type="submit">Thibitisha mabadiliko</button>
-                <button class="btn btn-ghost" type="button" data-close-structure="toBranchlessModal">Ghairi</button>
+                <button class="btn btn-danger" id="confirmToBranchless" type="submit" data-i18n="msimamizi_mipangilio.btn_confirm_changes">Thibitisha mabadiliko</button>
+                <button class="btn btn-ghost" type="button" data-close-structure="toBranchlessModal" data-i18n="msimamizi_mipangilio.btn_cancel">Ghairi</button>
             </div>
         </form>
     </div>
@@ -620,11 +620,11 @@
             <div class="grid">
                 <div class="field full">
                     <label for="branchName" data-i18n="msimamizi_mipangilio.label_branch_name">Jina la tawi</label>
-                    <input id="branchName" type="text" maxlength="120" required placeholder="Mfano: Tawi la Mlimani">
+                    <input id="branchName" type="text" maxlength="120" required placeholder="Mfano: Tawi la Mlimani" data-i18n="msimamizi_mipangilio.placeholder_branch_name_example" data-i18n-attr="placeholder">
                 </div>
                 <div class="field full">
                     <label for="branchLocation" data-i18n="msimamizi_mipangilio.label_branch_location">Eneo</label>
-                    <input id="branchLocation" type="text" maxlength="255" placeholder="Mfano: Mlimani City">
+                    <input id="branchLocation" type="text" maxlength="255" placeholder="Mfano: Mlimani City" data-i18n="msimamizi_mipangilio.placeholder_branch_location_example" data-i18n-attr="placeholder">
                 </div>
                 <div class="field">
                     <label for="branchLatitude" data-i18n="msimamizi_mipangilio.label_latitude">Latitudo (hiari)</label>
@@ -732,7 +732,7 @@
             if (busy) {
                 button.dataset.label = button.textContent;
                 button.disabled = true;
-                button.textContent = label || 'Inahifadhi...';
+                button.textContent = label || tr('msimamizi_mipangilio.busy_saving', null, 'Inahifadhi...');
             } else {
                 button.disabled = false;
                 button.textContent = button.dataset.label || button.textContent;
@@ -774,8 +774,8 @@
             $('userEmail').value = user.email || '';
             $('userFullName').value = user.full_name || '';
             $('userPhone').value = user.phone || '';
-            $('userRole').value = user.role === 'admin' ? 'Msimamizi' : (user.role || '');
-            $('userBranch').value = user.branch_name || (data.business && data.business.business_structure === 'branch' ? 'Matawi yote' : 'Haifai');
+            $('userRole').value = user.role === 'admin' ? tr('msimamizi_mipangilio.role_admin', null, 'Msimamizi') : (user.role || '');
+            $('userBranch').value = user.branch_name || (data.business && data.business.business_structure === 'branch' ? tr('msimamizi_mipangilio.branch_all', null, 'Matawi yote') : tr('msimamizi_mipangilio.branch_na', null, 'Haifai'));
 
             $('businessName').value = business.business_name || '';
             $('businessType').value = business.business_type || '';
@@ -847,7 +847,7 @@
                 const dot = document.createElement('span');
                 dot.className = 'status-dot' + (branch.status === 'inactive' ? ' off' : '');
                 name.appendChild(dot);
-                name.appendChild(document.createTextNode(branch.branch_name || 'Tawi'));
+                name.appendChild(document.createTextNode(branch.branch_name || tr('msimamizi_mipangilio.label_branch', null, 'Tawi')));
                 if (branch.status === 'inactive') {
                     const badge = document.createElement('span');
                     badge.className = 'badge';
@@ -899,7 +899,7 @@
 
         async function load() {
             try {
-                setBusy($('saveUserBtn'), true, 'Inapakia...');
+                setBusy($('saveUserBtn'), true, tr('msimamizi_mipangilio.busy_loading', null, 'Inapakia...'));
                 const data = await api('/api/settings');
                 populate(data);
                 toast(tr('msimamizi_mipangilio.toast_loaded'));
@@ -1078,7 +1078,7 @@
         }
 
         $('toBranchfulBtn').addEventListener('click', () => {
-            $('firstBranchName').value = ($('businessName').value || '') + ' - Tawi Kuu';
+            $('firstBranchName').value = ($('businessName').value || '') + ' - ' + tr('msimamizi_mipangilio.branch_main', null, 'Tawi Kuu');
             $('firstBranchLocation').value = $('businessLocation').value || '';
             $('toBranchfulModal').classList.add('open');
             setTimeout(() => $('firstBranchName').focus(), 30);
@@ -1097,7 +1097,7 @@
         $('toBranchfulForm').addEventListener('submit', async (event) => {
             event.preventDefault();
             const button = $('confirmToBranchful');
-            setBusy(button, true, 'Inabadilisha...');
+            setBusy(button, true, tr('msimamizi_mipangilio.busy_converting', null, 'Inabadilisha...'));
 
             try {
                 const payload = {
@@ -1124,7 +1124,7 @@
         $('toBranchlessForm').addEventListener('submit', async (event) => {
             event.preventDefault();
             const button = $('confirmToBranchless');
-            setBusy(button, true, 'Inabadilisha...');
+            setBusy(button, true, tr('msimamizi_mipangilio.busy_converting', null, 'Inabadilisha...'));
 
             try {
                 const result = await api('/api/settings/business-structure/branchless', {
@@ -1140,7 +1140,7 @@
                 toast(tr('msimamizi_mipangilio.toast_structure_branchless'));
                 setTimeout(() => window.location.reload(), 700);
             } catch (error) {
-                toast(error.message || 'Imeshindikana kuunganisha biashara', true);
+                toast(error.message || tr('msimamizi_mipangilio.toast_branchless_error', null, 'Imeshindikana kuunganisha biashara'), true);
                 setBusy(button, false);
             }
         });

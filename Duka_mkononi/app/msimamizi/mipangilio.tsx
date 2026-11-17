@@ -43,10 +43,10 @@ export default function MipangilioScreen() {
   const router = useRouter();
   const { colors: tc, theme, setTheme } = useTheme();
   const { lang, changeLang, t } = useLang();
-  const L = (key: string, fallback: string) => {
+  const L = useCallback((key: string, fallback: string) => {
     const value = t(key);
     return value === key ? fallback : value;
-  };
+  }, [t]);
   const { refresh: refreshFeatures } = useFeatures();
   const styles = useMemo(() => makeStyles(tc), [tc]);
 
@@ -127,11 +127,11 @@ export default function MipangilioScreen() {
         business_logo_url: business.business_logo_url || '',
       });
     } catch (error: any) {
-      Alert.alert('Mipangilio', error?.message || 'Imeshindikana kupakia mipangilio');
+      Alert.alert(L('settings_screen.alert_settings_title', 'Mipangilio'), error?.message || L('settings_screen.alert_load_error', 'Imeshindikana kupakia mipangilio'));
     } finally {
       setLoading(false);
     }
-  }, [api]);
+  }, [api, L]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -150,9 +150,9 @@ export default function MipangilioScreen() {
         stored.phone = body.user?.phone ?? userForm.phone;
         await AsyncStorage.setItem('userData', JSON.stringify(stored));
       }
-      Alert.alert('Imehifadhiwa', 'Taarifa zako zimehifadhiwa.');
+      Alert.alert(L('settings_screen.alert_saved_title', 'Imehifadhiwa'), L('settings_screen.alert_user_saved', 'Taarifa zako zimehifadhiwa.'));
     } catch (error: any) {
-      Alert.alert('Hitilafu', error?.message || 'Imeshindikana kuhifadhi taarifa zako.');
+      Alert.alert(L('settings_screen.alert_error_title', 'Hitilafu'), error?.message || L('settings_screen.alert_user_save_error', 'Imeshindikana kuhifadhi taarifa zako.'));
     } finally {
       setSaving(null);
     }
@@ -161,15 +161,15 @@ export default function MipangilioScreen() {
   const handleChangePassword = async () => {
     const { current, newPass, confirm } = passwordForm;
     if (!current || !newPass || !confirm) {
-      Alert.alert('Hitilafu', 'Jaza sehemu zote za nenosiri.');
+      Alert.alert(L('settings_screen.alert_error_title', 'Hitilafu'), L('settings_screen.alert_password_fields', 'Jaza sehemu zote za nenosiri.'));
       return;
     }
     if (newPass !== confirm) {
-      Alert.alert('Hitilafu', 'Nenosiri jipya na uthibitisho havifanani.');
+      Alert.alert(L('settings_screen.alert_error_title', 'Hitilafu'), L('settings_screen.alert_password_mismatch', 'Nenosiri jipya na uthibitisho havifanani.'));
       return;
     }
     if (newPass.length < 6) {
-      Alert.alert('Hitilafu', 'Nenosiri jipya lazima liwe na angalau herufi 6.');
+      Alert.alert(L('settings_screen.alert_error_title', 'Hitilafu'), L('settings_screen.alert_password_short', 'Nenosiri jipya lazima liwe na angalau herufi 6.'));
       return;
     }
     setChangingPassword(true);
@@ -179,9 +179,9 @@ export default function MipangilioScreen() {
         body: JSON.stringify({ current_password: current, new_password: newPass, confirm_password: confirm }),
       });
       setPasswordForm({ current: '', newPass: '', confirm: '' });
-      Alert.alert('Imefanikiwa', 'Nenosiri lako limebadilishwa.');
+      Alert.alert(L('settings_screen.alert_success_title', 'Imefanikiwa'), L('settings_screen.alert_password_changed', 'Nenosiri lako limebadilishwa.'));
     } catch (error: any) {
-      Alert.alert('Hitilafu', error?.message || 'Imeshindikana kubadilisha nenosiri.');
+      Alert.alert(L('settings_screen.alert_error_title', 'Hitilafu'), error?.message || L('settings_screen.alert_password_change_error', 'Imeshindikana kubadilisha nenosiri.'));
     } finally {
       setChangingPassword(false);
     }
@@ -209,9 +209,9 @@ export default function MipangilioScreen() {
         await AsyncStorage.setItem('userData', JSON.stringify(stored));
       }
       setData((prev: any) => ({ ...prev, business: { ...(prev?.business || {}), ...businessForm } }));
-      Alert.alert('Imehifadhiwa', 'Taarifa za biashara zimehifadhiwa.');
+      Alert.alert(L('settings_screen.alert_saved_title', 'Imehifadhiwa'), L('settings_screen.alert_business_saved', 'Taarifa za biashara zimehifadhiwa.'));
     } catch (error: any) {
-      Alert.alert('Hitilafu', error?.message || 'Imeshindikana kuhifadhi taarifa za biashara.');
+      Alert.alert(L('settings_screen.alert_error_title', 'Hitilafu'), error?.message || L('settings_screen.alert_business_save_error', 'Imeshindikana kuhifadhi taarifa za biashara.'));
     } finally {
       setSaving(null);
     }
@@ -220,11 +220,11 @@ export default function MipangilioScreen() {
   const updateFeature = async (key: string, value: boolean) => {
     if (!value && key === 'fridge_enabled') {
       Alert.alert(
-        'Kuzima Friji?',
-        'Kichupo cha Friji hataonekana kwa wauzaji na matumizi yake yatazuiwa. Stock na historia hazitafutwa.',
+        L('settings_screen.alert_disable_fridge_title', 'Kuzima Friji?'),
+        L('settings_screen.alert_disable_fridge_msg', 'Kichupo cha Friji hataonekana kwa wauzaji na matumizi yake yatazuiwa. Stock na historia hazitafutwa.'),
         [
-          { text: 'Ghairi', style: 'cancel' },
-          { text: 'Zima', style: 'destructive', onPress: () => persistFeature(key, false) },
+          { text: L('settings_screen.cancel', 'Ghairi'), style: 'cancel' },
+          { text: L('settings_screen.alert_disable_fridge_confirm', 'Zima'), style: 'destructive', onPress: () => persistFeature(key, false) },
         ]
       );
       return;
@@ -247,7 +247,7 @@ export default function MipangilioScreen() {
       refreshFeatures();
     } catch (error: any) {
       setData((prev: any) => ({ ...prev, settings: previous }));
-      Alert.alert('Hitilafu', error?.message || 'Imeshindikana kuhifadhi mipangilio.');
+      Alert.alert(L('settings_screen.alert_error_title', 'Hitilafu'), error?.message || L('settings_screen.alert_feature_save_error', 'Imeshindikana kuhifadhi mipangilio.'));
     }
   };
 
@@ -257,7 +257,7 @@ export default function MipangilioScreen() {
       await changeLang(next);
       setData((prev: any) => ({ ...prev, user: { ...(prev?.user || {}), language: next } }));
     } catch (error: any) {
-      Alert.alert('Hitilafu', error?.message || 'Imeshindikana kuhifadhi lugha.');
+      Alert.alert(L('settings_screen.alert_error_title', 'Hitilafu'), error?.message || L('settings_screen.alert_language_save_error', 'Imeshindikana kuhifadhi lugha.'));
     }
   };
 
@@ -269,7 +269,7 @@ export default function MipangilioScreen() {
 
   const saveBranch = async () => {
     if (branchForm.branch_name.trim().length < 2) {
-      Alert.alert('Tawi', 'Jina la tawi linahitajika.');
+      Alert.alert(L('settings_screen.alert_branch_title', 'Tawi'), L('settings_screen.alert_branch_name_required', 'Jina la tawi linahitajika.'));
       return;
     }
 
@@ -295,7 +295,7 @@ export default function MipangilioScreen() {
 
       setBranchModal(false);
     } catch (error: any) {
-      Alert.alert('Hitilafu', error?.message || 'Imeshindikana kuhifadhi tawi.');
+      Alert.alert(L('settings_screen.alert_error_title', 'Hitilafu'), error?.message || L('settings_screen.alert_branch_save_error', 'Imeshindikana kuhifadhi tawi.'));
     } finally {
       setSaving(null);
     }
@@ -321,17 +321,21 @@ export default function MipangilioScreen() {
           branches: (prev?.branches || []).map((b: any) => (String(b.id) === String(branch.id) ? saved : b)),
         }));
       } catch (error: any) {
-        Alert.alert('Hitilafu', error?.message || 'Imeshindikana kubadili tawi.');
+        Alert.alert(L('settings_screen.alert_error_title', 'Hitilafu'), error?.message || L('settings_screen.alert_branch_toggle_error', 'Imeshindikana kubadili tawi.'));
       } finally {
         setSaving(null);
       }
     };
 
     if (status === 'inactive') {
-      Alert.alert('Kuzima tawi?', 'Wauzaji wake hawataweza kuingia hadi ulirudishe. Data yote inabaki.', [
-        { text: 'Ghairi', style: 'cancel' },
-        { text: 'Zima', style: 'destructive', onPress: apply },
-      ]);
+      Alert.alert(
+        L('settings_screen.alert_deactivate_branch_title', 'Kuzima tawi?'),
+        L('settings_screen.alert_deactivate_branch_msg', 'Wauzaji wake hawataweza kuingia hadi ulirudishe. Data yote inabaki.'),
+        [
+          { text: L('settings_screen.cancel', 'Ghairi'), style: 'cancel' },
+          { text: L('settings_screen.branch_deactivate', 'Zima'), style: 'destructive', onPress: apply },
+        ]
+      );
     } else {
       apply();
     }
@@ -341,15 +345,17 @@ export default function MipangilioScreen() {
     if (!structureModal) return;
 
     const branchful = structureModal === 'branchful';
-    const title = branchful ? 'Badilisha kuwa biashara ya matawi?' : 'Badilisha kuwa biashara ya eneo moja?';
+    const title = branchful
+      ? L('settings_screen.alert_structure_branchful_title', 'Badilisha kuwa biashara ya matawi?')
+      : L('settings_screen.alert_structure_branchless_title', 'Badilisha kuwa biashara ya eneo moja?');
     const message = branchful
-      ? 'Biashara itaanza kufanya kazi kupitia matawi. Bidhaa, mauzo, huduma na ripoti zilizopo zitahamishiwa tawini la kwanza.'
-      : 'Matawi yatunganishwe kuwa biashara moja. Historia ya mauzo, malipo, bidhaa, stock na ripoti inabaki. Bidhaa zenye jina/SKU sawa kwenye matawi zaidi ya moja zitazuia mabadiliko.';
+      ? L('settings_screen.alert_structure_branchful_msg', 'Biashara itaanza kufanya kazi kupitia matawi. Bidhaa, mauzo, huduma na ripoti zilizopo zitahamishiwa tawini la kwanza.')
+      : L('settings_screen.alert_structure_branchless_msg', 'Matawi yatunganishwe kuwa biashara moja. Historia ya mauzo, malipo, bidhaa, stock na ripoti inabaki. Bidhaa zenye jina/SKU sawa kwenye matawi zaidi ya moja zitazuia mabadiliko.');
 
     Alert.alert(title, message, [
-      { text: 'Ghairi', style: 'cancel' },
+      { text: L('settings_screen.cancel', 'Ghairi'), style: 'cancel' },
       {
-        text: 'Thibitisha',
+        text: L('settings_screen.confirm', 'Thibitisha'),
         style: branchful ? 'default' : 'destructive',
         onPress: async () => {
           setSaving('structure');
@@ -389,9 +395,14 @@ export default function MipangilioScreen() {
             setStructureModal(null);
             await refreshFeatures();
             await load();
-            Alert.alert('Imefanikiwa', branchful ? 'Biashara sasa inafanya kazi kwa matawi.' : 'Biashara sasa inafanya kazi kwenye eneo moja.');
+            Alert.alert(
+              L('settings_screen.alert_success_title', 'Imefanikiwa'),
+              branchful
+                ? L('settings_screen.alert_structure_branchful_success', 'Biashara sasa inafanya kazi kwa matawi.')
+                : L('settings_screen.alert_structure_branchless_success', 'Biashara sasa inafanya kazi kwenye eneo moja.')
+            );
           } catch (error: any) {
-            Alert.alert('Hitilafu', error?.message || 'Imeshindikana kubadili muundo wa biashara.');
+            Alert.alert(L('settings_screen.alert_error_title', 'Hitilafu'), error?.message || L('settings_screen.alert_structure_error', 'Imeshindikana kubadili muundo wa biashara.'));
           } finally {
             setSaving(null);
           }
@@ -407,10 +418,10 @@ export default function MipangilioScreen() {
   const isBranchBusiness = business.business_structure === 'branch';
 
   const tabs: { key: Tab; label: string; icon: any }[] = [
-    { key: 'user', label: 'Mimi', icon: 'person-outline' },
-    { key: 'business', label: 'Biashara', icon: 'storefront-outline' },
-    { key: 'branches', label: 'Matawi', icon: 'business-outline' },
-    { key: 'other', label: 'Mengine', icon: 'options-outline' },
+    { key: 'user', label: L('settings_screen.tab_user', 'Mimi'), icon: 'person-outline' },
+    { key: 'business', label: L('settings_screen.tab_business', 'Biashara'), icon: 'storefront-outline' },
+    { key: 'branches', label: L('settings_screen.tab_branches', 'Matawi'), icon: 'business-outline' },
+    { key: 'other', label: L('settings_screen.tab_other', 'Mengine'), icon: 'options-outline' },
   ];
 
   const renderSwitch = (key: string, title: string, description: string, badge?: string) => (
@@ -434,19 +445,19 @@ export default function MipangilioScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton} accessibilityLabel="Rudi">
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton} accessibilityLabel={L('settings_screen.back', 'Rudi')}>
           <Ionicons name="chevron-back" size={24} color={tc.ink} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
-          <Text style={styles.headerTitle}>Mipangilio</Text>
-          <Text style={styles.headerSub}>Taarifa zako, biashara na huduma</Text>
+          <Text style={styles.headerTitle}>{L('settings_screen.header_title', 'Mipangilio')}</Text>
+          <Text style={styles.headerSub}>{L('settings_screen.header_sub', 'Taarifa zako, biashara na huduma')}</Text>
         </View>
       </View>
 
       {loading ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color={tc.primary} />
-          <Text style={styles.loadingText}>Inapakia mipangilio...</Text>
+          <Text style={styles.loadingText}>{L('settings_screen.loading', 'Inapakia mipangilio...')}</Text>
         </View>
       ) : (
         <>
@@ -471,35 +482,35 @@ export default function MipangilioScreen() {
             {tab === 'user' && (
               <>
                 <View style={styles.card}>
-                  <Text style={styles.cardTitle}>Taarifa Zako</Text>
-                  <Text style={styles.cardDesc}>Jina na simu yako. Jukumu, hali ya akaunti na biashara haziwezi kubadilishwa hapa.</Text>
+                  <Text style={styles.cardTitle}>{L('settings_screen.user_card_title', 'Taarifa Zako')}</Text>
+                  <Text style={styles.cardDesc}>{L('settings_screen.user_card_desc', 'Jina na simu yako. Jukumu, hali ya akaunti na biashara haziwezi kubadilishwa hapa.')}</Text>
 
-                  <Text style={styles.label}>Barua pepe</Text>
+                  <Text style={styles.label}>{L('settings_screen.label_email', 'Barua pepe')}</Text>
                   <View style={styles.readonly}><Text style={styles.readonlyText}>{user.email || '—'}</Text></View>
 
-                  <Text style={styles.label}>Jina kamili</Text>
+                  <Text style={styles.label}>{L('settings_screen.label_full_name', 'Jina kamili')}</Text>
                   <TextInput
                     style={styles.input}
                     value={userForm.full_name}
                     onChangeText={(value) => setUserForm((prev) => ({ ...prev, full_name: value }))}
                     maxLength={120}
-                    placeholder="Jina lako kamili"
+                    placeholder={L('settings_screen.full_name_placeholder', 'Jina lako kamili')}
                     placeholderTextColor={tc.muted2}
                   />
 
-                  <Text style={styles.label}>Namba ya simu</Text>
+                  <Text style={styles.label}>{L('settings_screen.label_phone', 'Namba ya simu')}</Text>
                   <TextInput
                     style={styles.input}
                     value={userForm.phone}
                     onChangeText={(value) => setUserForm((prev) => ({ ...prev, phone: value }))}
                     keyboardType="phone-pad"
                     maxLength={30}
-                    placeholder="0757 000 000"
+                    placeholder={L('settings_screen.phone_placeholder', '0757 000 000')}
                     placeholderTextColor={tc.muted2}
                   />
 
                   <TouchableOpacity style={styles.primaryBtn} onPress={saveUser} disabled={saving === 'user'}>
-                    {saving === 'user' ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryBtnText}>Hifadhi Taarifa Zako</Text>}
+                    {saving === 'user' ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryBtnText}>{L('settings_screen.save_user', 'Hifadhi Taarifa Zako')}</Text>}
                   </TouchableOpacity>
                 </View>
 
@@ -543,8 +554,8 @@ export default function MipangilioScreen() {
                 </View>
 
                 <View style={styles.card}>
-                  <Text style={styles.cardTitle}>Lugha</Text>
-                  <Text style={styles.cardDesc}>Lugha ni upendeleo wako binafsi na huhifadhiwa kwenye akaunti yako.</Text>
+                  <Text style={styles.cardTitle}>{L('settings_screen.language_title', 'Lugha')}</Text>
+                  <Text style={styles.cardDesc}>{L('settings_screen.language_desc', 'Lugha ni upendeleo wako binafsi na huhifadhiwa kwenye akaunti yako.')}</Text>
                   <View style={styles.chipWrap}>
                     {ALL_LANGUAGES.map((code) => (
                       <TouchableOpacity
@@ -559,8 +570,8 @@ export default function MipangilioScreen() {
                 </View>
 
                 <View style={styles.card}>
-                  <Text style={styles.cardTitle}>Mandhari</Text>
-                  <Text style={styles.cardDesc}>Mandhari ni upendeleo wako binafsi.</Text>
+                  <Text style={styles.cardTitle}>{L('settings_screen.theme_title', 'Mandhari')}</Text>
+                  <Text style={styles.cardDesc}>{L('settings_screen.theme_desc', 'Mandhari ni upendeleo wako binafsi.')}</Text>
                   <View style={styles.chipWrap}>
                     {THEME_IDS.map((id) => (
                       <TouchableOpacity
@@ -578,10 +589,10 @@ export default function MipangilioScreen() {
 
             {tab === 'business' && (
               <View style={styles.card}>
-                <Text style={styles.cardTitle}>Taarifa za Biashara</Text>
-                <Text style={styles.cardDesc}>Mabadiliko hayahamishi wauzaji, bidhaa, mauzo wala matawi; kitambulisho cha biashara kinabaki kimoja.</Text>
+                <Text style={styles.cardTitle}>{L('settings_screen.business_card_title', 'Taarifa za Biashara')}</Text>
+                <Text style={styles.cardDesc}>{L('settings_screen.business_card_desc', 'Mabadiliko hayahamishi wauzaji, bidhaa, mauzo wala matawi; kitambulisho cha biashara kinabaki kimoja.')}</Text>
 
-                <Text style={styles.label}>Jina la biashara</Text>
+                <Text style={styles.label}>{L('settings_screen.label_business_name', 'Jina la biashara')}</Text>
                 <TextInput
                   style={styles.input}
                   value={businessForm.business_name}
@@ -589,17 +600,17 @@ export default function MipangilioScreen() {
                   maxLength={150}
                 />
 
-                <Text style={styles.label}>Aina ya biashara</Text>
+                <Text style={styles.label}>{L('settings_screen.label_business_type', 'Aina ya biashara')}</Text>
                 <TextInput
                   style={styles.input}
                   value={businessForm.business_type}
                   onChangeText={(value) => setBusinessForm((prev) => ({ ...prev, business_type: value }))}
                   maxLength={100}
-                  placeholder="Mfano: Duka la jumla"
+                  placeholder={L('settings_screen.business_type_placeholder', 'Mfano: Duka la jumla')}
                   placeholderTextColor={tc.muted2}
                 />
 
-                <Text style={styles.label}>Eneo</Text>
+                <Text style={styles.label}>{L('settings_screen.label_location', 'Eneo')}</Text>
                 <TextInput
                   style={styles.input}
                   value={businessForm.business_location}
@@ -607,7 +618,7 @@ export default function MipangilioScreen() {
                   maxLength={255}
                 />
 
-                <Text style={styles.label}>Maelezo</Text>
+                <Text style={styles.label}>{L('settings_screen.label_description', 'Maelezo')}</Text>
                 <TextInput
                   style={[styles.input, styles.multiline]}
                   value={businessForm.business_description}
@@ -616,7 +627,7 @@ export default function MipangilioScreen() {
                   multiline
                 />
 
-                <Text style={styles.label}>URL ya nembo</Text>
+                <Text style={styles.label}>{L('settings_screen.label_logo_url', 'URL ya nembo')}</Text>
                 <TextInput
                   style={styles.input}
                   value={businessForm.business_logo_url}
@@ -627,22 +638,22 @@ export default function MipangilioScreen() {
                 />
 
                 <TouchableOpacity style={styles.primaryBtn} onPress={saveBusiness} disabled={saving === 'business'}>
-                  {saving === 'business' ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryBtnText}>Hifadhi Taarifa za Biashara</Text>}
+                  {saving === 'business' ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryBtnText}>{L('settings_screen.save_business', 'Hifadhi Taarifa za Biashara')}</Text>}
                 </TouchableOpacity>
               </View>
             )}
 
             {tab === 'branches' && (
               <View style={styles.card}>
-                <Text style={styles.cardTitle}>Matawi</Text>
+                <Text style={styles.cardTitle}>{L('settings_screen.branches_title', 'Matawi')}</Text>
                 {!isBranchBusiness ? (
-                  <Text style={styles.cardDesc}>Biashara hii inafanya kazi kwenye eneo moja. Usimamizi wa matawi unapatikana kwa biashara zilizosajiliwa na matawi.</Text>
+                  <Text style={styles.cardDesc}>{L('settings_screen.branches_single_location', 'Biashara hii inafanya kazi kwenye eneo moja. Usimamizi wa matawi unapatikana kwa biashara zilizosajiliwa na matawi.')}</Text>
                 ) : (
                   <>
-                    <Text style={styles.cardDesc}>Ongeza au hariri matawi. Kuzima tawi hakuondoi wauzaji, bidhaa, mauzo wala ripoti.</Text>
+                    <Text style={styles.cardDesc}>{L('settings_screen.branches_desc', 'Ongeza au hariri matawi. Kuzima tawi hakuondoi wauzaji, bidhaa, mauzo wala ripoti.')}</Text>
 
                     {branches.length === 0 ? (
-                      <Text style={styles.empty}>Hakuna matawi bado.</Text>
+                      <Text style={styles.empty}>{L('settings_screen.branches_empty', 'Hakuna matawi bado.')}</Text>
                     ) : (
                       branches.map((branch) => (
                         <View key={branch.id} style={styles.branchRow}>
@@ -650,21 +661,21 @@ export default function MipangilioScreen() {
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                               <View style={[styles.dot, branch.status === 'inactive' && { backgroundColor: tc.muted2 }]} />
                               <Text style={styles.branchName}>{branch.branch_name}</Text>
-                              {branch.status === 'inactive' ? <Text style={styles.badgeMuted}>Limezimwa</Text> : null}
+                              {branch.status === 'inactive' ? <Text style={styles.badgeMuted}>{L('settings_screen.branch_inactive', 'Limezimwa')}</Text> : null}
                             </View>
-                            <Text style={styles.branchMeta}>{branch.location || 'Eneo halijawekwa'}</Text>
+                            <Text style={styles.branchMeta}>{branch.location || L('settings_screen.branch_no_location', 'Eneo halijawekwa')}</Text>
                           </View>
 
                           <View style={{ flexDirection: 'row', gap: 6 }}>
                             <TouchableOpacity style={styles.smallBtn} onPress={() => openBranch(branch)}>
-                              <Text style={styles.smallBtnText}>Hariri</Text>
+                              <Text style={styles.smallBtnText}>{L('settings_screen.branch_edit', 'Hariri')}</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                               style={[styles.smallBtn, branch.status === 'inactive' && { backgroundColor: tc.tint }]}
                               onPress={() => setBranchStatus(branch, branch.status === 'inactive' ? 'active' : 'inactive')}
                               disabled={saving === `branch-${branch.id}`}
                             >
-                              <Text style={styles.smallBtnText}>{branch.status === 'inactive' ? 'Rudisha' : 'Zima'}</Text>
+                              <Text style={styles.smallBtnText}>{branch.status === 'inactive' ? L('settings_screen.branch_reactivate', 'Rudisha') : L('settings_screen.branch_deactivate', 'Zima')}</Text>
                             </TouchableOpacity>
                           </View>
                         </View>
@@ -672,7 +683,7 @@ export default function MipangilioScreen() {
                     )}
 
                     <TouchableOpacity style={[styles.primaryBtn, { marginTop: 14 }]} onPress={() => openBranch(null)}>
-                      <Text style={styles.primaryBtnText}>+ Ongeza Tawi</Text>
+                      <Text style={styles.primaryBtnText}>{L('settings_screen.btn_add_branch', '+ Ongeza Tawi')}</Text>
                     </TouchableOpacity>
                   </>
                 )}
@@ -682,22 +693,22 @@ export default function MipangilioScreen() {
             {tab === 'other' && (
               <>
                 <View style={styles.card}>
-                  <Text style={styles.cardTitle}>Muundo wa Biashara</Text>
+                  <Text style={styles.cardTitle}>{L('settings_screen.structure_title', 'Muundo wa Biashara')}</Text>
                   <Text style={styles.cardDesc}>
                     {isBranchBusiness
-                      ? 'Biashara inafanya kazi kwa matawi. Unaweza kuunganisha kuwa biashara moja ya eneo moja; historia yote inabaki.'
-                      : 'Biashara inafanya kazi kwenye eneo moja. Unaweza kuiwezesha kufanya kazi kwa matawi kwa kuandikisha tawi la kwanza.'}
+                      ? L('settings_screen.structure_desc_branchful', 'Biashara inafanya kazi kwa matawi. Unaweza kuunganisha kuwa biashara moja ya eneo moja; historia yote inabaki.')
+                      : L('settings_screen.structure_desc_branchless', 'Biashara inafanya kazi kwenye eneo moja. Unaweza kuiwezesha kufanya kazi kwa matawi kwa kuandikisha tawi la kwanza.')}
                   </Text>
 
                   <View style={[styles.readonly, { marginTop: 8 }]}>
-                    <Text style={styles.readonlyText}>{isBranchBusiness ? 'Biashara ya matawi' : 'Biashara ya eneo moja'}</Text>
+                    <Text style={styles.readonlyText}>{isBranchBusiness ? L('settings_screen.structure_branchful', 'Biashara ya matawi') : L('settings_screen.structure_branchless', 'Biashara ya eneo moja')}</Text>
                   </View>
 
                   <TouchableOpacity
                     style={[styles.primaryBtn, !isBranchBusiness && { backgroundColor: tc.primary }]}
                     onPress={() => {
                       setStructureForm({
-                        branch_name: `${business.business_name || ''} - Tawi Kuu`,
+                        branch_name: `${business.business_name || ''} - ${L('settings_screen.branch_main', 'Tawi Kuu')}`,
                         location: business.business_location || '',
                         business_name: business.business_name || '',
                         business_location: business.business_location || '',
@@ -707,27 +718,29 @@ export default function MipangilioScreen() {
                     }}
                   >
                     <Text style={styles.primaryBtnText}>
-                      {isBranchBusiness ? 'Badilisha kuwa biashara ya eneo moja' : 'Badilisha kuwa biashara ya matawi'}
+                      {isBranchBusiness
+                        ? L('settings_screen.btn_to_branchless', 'Badilisha kuwa biashara ya eneo moja')
+                        : L('settings_screen.btn_to_branchful', 'Badilisha kuwa biashara ya matawi')}
                     </Text>
                   </TouchableOpacity>
                 </View>
 
                 <View style={styles.card}>
-                  <Text style={styles.cardTitle}>Huduma za Hiari</Text>
-                  <Text style={styles.cardDesc}>Mipangilio hii inatumika kwa biashara yote, web na app. Kipengele kilichozimwa hakionyeshwi na maombi yake hukataliwa na seva. Data haifutwi.</Text>
+                  <Text style={styles.cardTitle}>{L('settings_screen.optional_services_title', 'Huduma za Hiari')}</Text>
+                  <Text style={styles.cardDesc}>{L('settings_screen.optional_services_desc', 'Mipangilio hii inatumika kwa biashara yote, web na app. Kipengele kilichozimwa hakionyeshwi na maombi yake hukataliwa na seva. Data haifutwi.')}</Text>
 
-                  {renderSwitch('fridge_enabled', 'Friji / Freezer', 'Washa ili wauzaji wasimamie stock ya ndani ya friji na kuihamisha.')}
-                  {renderSwitch('scanner_enabled', 'Scanner', 'Huwasha uwanja wa barcode kwa msimamizi kupokea stock na kwa muuzaji kuchagua bidhaa wakati wa kuuza au kuhamisha stock. Scanner haiongezi stock yenyewe; msimamizi pekee anayeruhusiwa kupokea stock.')}
-                  {renderSwitch('services_enabled', 'Huduma (Services)', 'Washa ili kuunda huduma na kuziuza. Historia ya huduma inabaki hata ikizimwa.')}
-                  {renderSwitch('product_management_enabled', 'Muuzaji anaweza kusimamia bidhaa', 'Kikwashwa, muuzaji anaweza kufungua ukurasa wa Bidhaa Mpya, kusajili bidhaa, kupokea stock na kubadilisha bei/stock. Kikizimwa (chaguo-msingi), ni msimamizi pekee anayeweza kusimamia bidhaa.')}
+                  {renderSwitch('fridge_enabled', L('settings_screen.fridge_title', 'Friji / Freezer'), L('settings_screen.fridge_desc', 'Washa ili wauzaji wasimamie stock ya ndani ya friji na kuihamisha.'))}
+                  {renderSwitch('scanner_enabled', L('settings_screen.scanner_title', 'Scanner'), L('settings_screen.scanner_desc', 'Huwasha uwanja wa barcode kwa msimamizi kupokea stock na kwa muuzaji kuchagua bidhaa wakati wa kuuza au kuhamisha stock. Scanner haiongezi stock yenyewe; msimamizi pekee anayeruhusiwa kupokea stock.'))}
+                  {renderSwitch('services_enabled', L('settings_screen.services_title', 'Huduma (Services)'), L('settings_screen.services_desc', 'Washa ili kuunda huduma na kuziuza. Historia ya huduma inabaki hata ikizimwa.'))}
+                  {renderSwitch('product_management_enabled', L('settings_screen.product_mgmt_title', 'Muuzaji anaweza kusimamia bidhaa'), L('settings_screen.product_mgmt_desc', 'Kikwashwa, muuzaji anaweza kufungua ukurasa wa Bidhaa Mpya, kusajili bidhaa, kupokea stock na kubadilisha bei/stock. Kikizimwa (chaguo-msingi), ni msimamizi pekee anayeweza kusimamia bidhaa.'))}
                 </View>
 
                 <View style={styles.card}>
-                  <Text style={styles.cardTitle}>Tahadhari za Stock</Text>
-                  <Text style={styles.cardDesc}>Kuzima tahadhari hakuachi kufuatilia stock; kunazuia tu arifa mpya za aina hiyo.</Text>
+                  <Text style={styles.cardTitle}>{L('settings_screen.stock_alerts_title', 'Tahadhari za Stock')}</Text>
+                  <Text style={styles.cardDesc}>{L('settings_screen.stock_alerts_desc', 'Kuzima tahadhari hakuachi kufuatilia stock; kunazuia tu arifa mpya za aina hiyo.')}</Text>
 
-                  {renderSwitch('notify_low_stock', 'Stock ndogo ya biashara', 'Bidhaa iliyo nje ya friji inafikia kiwango cha chini.')}
-                  {renderSwitch('notify_fridge_stock', 'Stock ndogo ndani ya friji', 'Stock ya ndani ya friji inafikia kiwango chake cha chini.')}
+                  {renderSwitch('notify_low_stock', L('settings_screen.low_stock_title', 'Stock ndogo ya biashara'), L('settings_screen.low_stock_desc', 'Bidhaa iliyo nje ya friji inafikia kiwango cha chini.'))}
+                  {renderSwitch('notify_fridge_stock', L('settings_screen.fridge_stock_title', 'Stock ndogo ndani ya friji'), L('settings_screen.fridge_stock_desc', 'Stock ya ndani ya friji inafikia kiwango chake cha chini.'))}
                 </View>
               </>
             )}
@@ -741,26 +754,28 @@ export default function MipangilioScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>
-              {structureModal === 'branchful' ? 'Tawi la Kwanza' : 'Taarifa ya Biashara Moja'}
+              {structureModal === 'branchful'
+                ? L('settings_screen.structure_modal_branchful_title', 'Tawi la Kwanza')
+                : L('settings_screen.structure_modal_branchless_title', 'Taarifa ya Biashara Moja')}
             </Text>
             <Text style={styles.cardDesc}>
               {structureModal === 'branchful'
-                ? 'Andikisha tawi la kwanza. Records zote zilizopo zitahamishiwa tawini hili, bila kubadili kiasi cha stock wala historia.'
-                : 'Weka taarifa ya biashara moja. Matawi yatageuzwa kuwa historia; bidhaa na mauzo yote yatabaki.'}
+                ? L('settings_screen.structure_modal_branchful_desc', 'Andikisha tawi la kwanza. Records zote zilizopo zitahamishiwa tawini hili, bila kubadili kiasi cha stock wala historia.')
+                : L('settings_screen.structure_modal_branchless_desc', 'Weka taarifa ya biashara moja. Matawi yatageuzwa kuwa historia; bidhaa na mauzo yote yatabaki.')}
             </Text>
 
             {structureModal === 'branchful' ? (
               <>
-                <Text style={styles.label}>Jina la tawi</Text>
+                <Text style={styles.label}>{L('settings_screen.label_branch_name', 'Jina la tawi')}</Text>
                 <TextInput
                   style={styles.input}
                   value={structureForm.branch_name}
                   onChangeText={(value) => setStructureForm((prev) => ({ ...prev, branch_name: value }))}
                   maxLength={120}
-                  placeholder="Mfano: Tawi Kuu"
+                  placeholder={L('settings_screen.branch_name_placeholder_modal', 'Mfano: Tawi Kuu')}
                   placeholderTextColor={tc.muted2}
                 />
-                <Text style={styles.label}>Eneo la tawi</Text>
+                <Text style={styles.label}>{L('settings_screen.label_branch_location', 'Eneo la tawi')}</Text>
                 <TextInput
                   style={styles.input}
                   value={structureForm.location}
@@ -771,21 +786,21 @@ export default function MipangilioScreen() {
               </>
             ) : (
               <>
-                <Text style={styles.label}>Jina la biashara</Text>
+                <Text style={styles.label}>{L('settings_screen.label_business_name', 'Jina la biashara')}</Text>
                 <TextInput
                   style={styles.input}
                   value={structureForm.business_name}
                   onChangeText={(value) => setStructureForm((prev) => ({ ...prev, business_name: value }))}
                   maxLength={150}
                 />
-                <Text style={styles.label}>Eneo</Text>
+                <Text style={styles.label}>{L('settings_screen.label_location', 'Eneo')}</Text>
                 <TextInput
                   style={styles.input}
                   value={structureForm.business_location}
                   onChangeText={(value) => setStructureForm((prev) => ({ ...prev, business_location: value }))}
                   maxLength={255}
                 />
-                <Text style={styles.label}>Maelezo</Text>
+                <Text style={styles.label}>{L('settings_screen.label_description', 'Maelezo')}</Text>
                 <TextInput
                   style={[styles.input, styles.multiline]}
                   value={structureForm.business_description}
@@ -798,10 +813,10 @@ export default function MipangilioScreen() {
 
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 18 }}>
               <TouchableOpacity style={[styles.primaryBtn, { flex: 1 }]} onPress={submitStructure} disabled={saving === 'structure'}>
-                {saving === 'structure' ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryBtnText}>Thibitisha</Text>}
+                {saving === 'structure' ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryBtnText}>{L('settings_screen.confirm', 'Thibitisha')}</Text>}
               </TouchableOpacity>
               <TouchableOpacity style={[styles.ghostBtn, { flex: 1 }]} onPress={() => setStructureModal(null)}>
-                <Text style={styles.ghostBtnText}>Ghairi</Text>
+                <Text style={styles.ghostBtnText}>{L('settings_screen.cancel', 'Ghairi')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -811,34 +826,34 @@ export default function MipangilioScreen() {
       <Modal visible={branchModal} transparent animationType="fade" onRequestClose={() => setBranchModal(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>{branchEditId ? 'Hariri Tawi' : 'Ongeza Tawi'}</Text>
+            <Text style={styles.modalTitle}>{branchEditId ? L('settings_screen.branch_modal_edit', 'Hariri Tawi') : L('settings_screen.branch_modal_add', 'Ongeza Tawi')}</Text>
 
-            <Text style={styles.label}>Jina la tawi</Text>
+            <Text style={styles.label}>{L('settings_screen.label_branch_name', 'Jina la tawi')}</Text>
             <TextInput
               style={styles.input}
               value={branchForm.branch_name}
               onChangeText={(value) => setBranchForm((prev) => ({ ...prev, branch_name: value }))}
               maxLength={120}
-              placeholder="Mfano: Tawi la Mlimani"
+              placeholder={L('settings_screen.branch_name_placeholder', 'Mfano: Tawi la Mlimani')}
               placeholderTextColor={tc.muted2}
             />
 
-            <Text style={styles.label}>Eneo</Text>
+            <Text style={styles.label}>{L('settings_screen.label_location', 'Eneo')}</Text>
             <TextInput
               style={styles.input}
               value={branchForm.location}
               onChangeText={(value) => setBranchForm((prev) => ({ ...prev, location: value }))}
               maxLength={255}
-              placeholder="Mfano: Mlimani City"
+              placeholder={L('settings_screen.branch_location_placeholder', 'Mfano: Mlimani City')}
               placeholderTextColor={tc.muted2}
             />
 
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 18 }}>
               <TouchableOpacity style={[styles.primaryBtn, { flex: 1 }]} onPress={saveBranch} disabled={saving === 'branch'}>
-                {saving === 'branch' ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryBtnText}>Hifadhi</Text>}
+                {saving === 'branch' ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryBtnText}>{L('settings_screen.save', 'Hifadhi')}</Text>}
               </TouchableOpacity>
               <TouchableOpacity style={[styles.ghostBtn, { flex: 1 }]} onPress={() => setBranchModal(false)}>
-                <Text style={styles.ghostBtnText}>Ghairi</Text>
+                <Text style={styles.ghostBtnText}>{L('settings_screen.cancel', 'Ghairi')}</Text>
               </TouchableOpacity>
             </View>
           </View>
