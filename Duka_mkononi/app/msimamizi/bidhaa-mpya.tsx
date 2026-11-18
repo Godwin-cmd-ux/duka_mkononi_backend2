@@ -56,6 +56,13 @@ export default function BidhaaMpyaScreen() {
   const [loading, setLoading] = useState(false);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [userData, setUserData] = useState<any>(null);
+  // The API gives admins the whole business catalogue and gives sellers the
+  // same rights when product_management is enabled. seller_id is an ownership
+  // badge, not a permission check, so it must not hide the edit controls.
+  const canManageProducts = !!userData && (
+    ['admin', 'super_admin', 'system_admin'].includes(String(userData.role || '').toLowerCase())
+    || (userData.role === 'seller' && productManagementEnabled)
+  );
   const [formData, setFormData] = useState({
     name: '',
     category: '',
@@ -996,11 +1003,10 @@ export default function BidhaaMpyaScreen() {
         body: JSON.stringify(updatedData),
       });
 
+      const result = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(`Server imerudisha ${response.status}`);
+        throw new Error(result.error || `Server imerudisha ${response.status}`);
       }
-
-      const result = await response.json();
       console.log('✅ Product updated:', result);
       
       if (userData?.business_name) {
@@ -1008,9 +1014,9 @@ export default function BidhaaMpyaScreen() {
       }
       
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Kosa wakati wa kuhariri bidhaa:', error);
-      Alert.alert(t('app.error'), t('products.error_edit'));
+      Alert.alert(t('app.error'), error?.message || t('products.error_edit'));
       return false;
     }
   };
@@ -1076,9 +1082,13 @@ export default function BidhaaMpyaScreen() {
   }, [userData]);
 
   const handleEditProduct = useCallback((product: any) => {
+    if (!canManageProducts) {
+      Alert.alert(t('app.error'), t('products.not_authorized'));
+      return;
+    }
     Keyboard.dismiss();
     setSelectedProduct(product);
-    setIsOwnerOfSelectedProduct(true);
+    setIsOwnerOfSelectedProduct(product.seller_id === userData?.id);
     
     setModalMode('edit');
     setProductImageUrl(product.image_url || '');
@@ -1095,10 +1105,13 @@ export default function BidhaaMpyaScreen() {
     setTimeout(() => {
       nameInputRef.current?.focus();
     }, 100);
-  }, [userData]);
+  }, [userData, canManageProducts, t]);
 
   const handleDeleteProduct = useCallback((product: any) => {
-    
+    if (!canManageProducts) {
+      Alert.alert(t('app.error'), t('products.not_authorized'));
+      return;
+    }
     Alert.alert(
       t('products.confirm_delete'),
       t('products.confirm_delete_text', { name: product.name }),
@@ -1116,7 +1129,7 @@ export default function BidhaaMpyaScreen() {
         }
       ]
     );
-  }, [userData]);
+  }, [canManageProducts, t, deleteProduct]);
 
   const handleAddProduct = async () => {
     Keyboard.dismiss();
@@ -1166,17 +1179,36 @@ export default function BidhaaMpyaScreen() {
 
       // Check if we're in edit mode
       if (selectedProduct && modalMode === 'edit') {
+        const oldStock = parseInt(selectedProduct.stock || '0');
+        const newStock = parseInt(formData.stock || '0');
+        if (newStock < oldStock) {
+          Alert.alert(
+            t('app.error'),
+            'Hisa haiwezi kupunguzwa kwa kuhariri bidhaa. Punguza hisa kupitia mauzo au uhamisho wa friji.'
+          );
+          setLoading(false);
+          return;
+        }
+
+        // The API refuses a plain PUT that changes stock: increases must go
+        // through the receiving ledger and decreases through sales/fridge moves.
         const updateData = {
           name: formData.name.trim(),
           category: formData.category,
           price: parseFloat(formData.price),
-          stock: parseInt(formData.stock),
           expected_selling_price: parseFloat(formData.expected_selling_price),
           barcode: formData.barcode || null,
           image_url: productImageUrl || null,
         };
         
         const success = await editProduct(selectedProduct, updateData);
+        if (success && newStock > oldStock) {
+          const stockOk = await addStockToProduct(selectedProduct, newStock - oldStock);
+          if (!stockOk) {
+            setLoading(false);
+            return;
+          }
+        }
         
         if (success) {
           Alert.alert(
@@ -1487,6 +1519,7 @@ export default function BidhaaMpyaScreen() {
 
   const renderProductItem = useCallback((product: any) => {
     const isOwner = product.seller_id === userData?.id;
+    const canEdit = canManageProducts;
     
     return (
       <View key={product.id} style={[styles.productItem, isOwner && styles.ownerProductItem]}>
@@ -1534,7 +1567,7 @@ export default function BidhaaMpyaScreen() {
                 <Ionicons name="add-circle" size={28} color="#2ecc71" />
               </TouchableOpacity>
 
-              {isOwner && (
+              {canEdit && (
                 <>
                   <TouchableOpacity
                     style={styles.actionButton}
@@ -1562,7 +1595,7 @@ export default function BidhaaMpyaScreen() {
         </TouchableOpacity>
       </View>
     );
-  }, [userData, formatCurrency, selectExistingProduct, handleAddStock, handleEditProduct, handleDeleteProduct]);
+  }, [userData, formatCurrency, selectExistingProduct, handleAddStock, handleEditProduct, handleDeleteProduct, canManageProducts]);
 
   const renderExistingProductSelector = useCallback(() => (
     <View style={styles.existingProductsContainer}>
@@ -1743,8 +1776,8 @@ export default function BidhaaMpyaScreen() {
   const isPriceEditable = () => {
     // If no product is selected (adding new product) - editable
     if (!selectedProduct) return true;
-    // If editing own product - editable
-    if (modalMode === 'edit' && isOwnerOfSelectedProduct) return true;
+    // An admin (or an enabled seller) may edit any product in the catalogue.
+    if (modalMode === 'edit' && canManageProducts) return true;
     // If adding stock - not editable
     if (modalMode === 'add' && selectedProduct) return false;
     // Default - not editable
@@ -2418,9 +2451,14 @@ export default function BidhaaMpyaScreen() {
                 </Text>
               )}
               {selectedProduct && modalMode === 'edit' && (
-                <Text style={styles.currentStockInfo}>
-                  {t('products.stock_edit_info', {new: formData.stock || '0', old: selectedProduct.stock || '0'})}
-                </Text>
+                <>
+                  <Text style={styles.currentStockInfo}>
+                    {t('products.stock_edit_info', {new: formData.stock || '0', old: selectedProduct.stock || '0'})}
+                  </Text>
+                  <Text style={styles.currentStockInfo}>
+                    Hisa ikiongezeka hapa inarekodiwa kama upokeaji; kupunguza hisa tumia mauzo au friji.
+                  </Text>
+                </>
               )}
             </View>
 
