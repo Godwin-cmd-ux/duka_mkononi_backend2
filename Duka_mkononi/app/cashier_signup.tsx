@@ -1,10 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
     Alert,
     KeyboardAvoidingView,
-    Modal,
     Platform,
     ScrollView,
     StyleSheet,
@@ -20,246 +19,262 @@ import OtpVerificationModal from '../components/otp-verification-modal';
 import { API_BASE_URL } from '../constants/api';
 import { requireNetwork, fetchWithTimeout } from '../lib/network';
 
+type SignupStep = 1 | 2 | 3;
+
+type SellerFormData = {
+    email: string;
+    password: string;
+    confirmPassword: string;
+    full_name: string;
+    phone: string;
+};
+
+type Invitation = {
+    code: string;
+    business: {
+        id: string;
+        business_name: string;
+        business_structure: string;
+        business_location?: string | null;
+    };
+    branch: {
+        id: string;
+        branch_name: string;
+        location?: string | null;
+    } | null;
+};
+
+const JSON_HEADERS = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    'ngrok-skip-browser-warning': 'true',
+};
+
+async function readResponse(response: Response): Promise<any> {
+    try {
+        return await response.json();
+    } catch {
+        return {};
+    }
+}
+
+function StepIndicator({ step, labels }: { step: number; labels: string[] }) {
+    return (
+        <View style={styles.stepIndicator} accessibilityLabel={`${step}/${labels.length}`}>
+            {labels.map((label, index) => {
+                const stepNumber = index + 1;
+                const isActive = stepNumber === step;
+                const isComplete = stepNumber < step;
+                return (
+                    <View key={label} style={styles.stepItem}>
+                        <View
+                            style={[
+                                styles.stepCircle,
+                                isActive && styles.stepCircleActive,
+                                isComplete && styles.stepCircleComplete,
+                            ]}
+                        >
+                            <Text
+                                style={[
+                                    styles.stepNumber,
+                                    (isActive || isComplete) && styles.stepNumberActive,
+                                ]}
+                            >
+                                {stepNumber}
+                            </Text>
+                        </View>
+                        <Text
+                            style={[styles.stepLabel, isActive && styles.stepLabelActive]}
+                            numberOfLines={2}
+                        >
+                            {label}
+                        </Text>
+                    </View>
+                );
+            })}
+        </View>
+    );
+}
+
 export default function CashierSignup() {
     const router = useRouter();
     const params = useLocalSearchParams();
-    const lang = (params.lang as string) || 'sw';
-    const { t } = useLang();
+    const { t, lang: currentLang } = useLang();
+    const lang = (params.lang as string) || currentLang;
     const [loading, setLoading] = useState(false);
-    // OTP email verification state
+    const [invitationLoading, setInvitationLoading] = useState(false);
+    const [invitationError, setInvitationError] = useState('');
+    const [step, setStep] = useState<SignupStep>(1);
+    const [invitationCode, setInvitationCode] = useState('');
+    const [invitation, setInvitation] = useState<Invitation | null>(null);
+    const [registrationComplete, setRegistrationComplete] = useState(false);
     const [otpVisible, setOtpVisible] = useState(false);
     const [pendingOtp, setPendingOtp] = useState<{
         email: string;
         role: string;
     } | null>(null);
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<SellerFormData>({
         email: '',
         password: '',
         confirmPassword: '',
         full_name: '',
         phone: '',
-        business_name: '',
-        business_location: ''
     });
 
-    // Seller registration joins an existing eligible business and, for a branch
-    // business, exactly one active branch. The selectors are convenience only:
-    // the API re-validates business ownership and branch membership on submit.
-    type BusinessOption = { id: string; business_name: string; business_structure: string };
-    type BranchOption = { id: string; branch_name: string; location: string | null };
+    const text = (key: string, fallback: string) => {
+        const translated = t(key);
+        return translated === key ? fallback : translated;
+    };
 
-    const [businessOptions, setBusinessOptions] = useState<BusinessOption[]>([]);
-    const [selectedBusiness, setSelectedBusiness] = useState<BusinessOption | null>(null);
-    const [branchOptions, setBranchOptions] = useState<BranchOption[]>([]);
-    const [selectedBranch, setSelectedBranch] = useState<BranchOption | null>(null);
-    const [businessModalVisible, setBusinessModalVisible] = useState(false);
-    const [branchModalVisible, setBranchModalVisible] = useState(false);
+    const stepLabels = [
+        text('registration_wizard.invitation', 'Mwaliko'),
+        text('registration_wizard.personal', 'Taarifa Binafsi'),
+        text('registration_wizard.email_verification', 'Uthibitisho wa Barua'),
+    ];
 
-    useEffect(() => {
-        (async () => {
-            try {
-                const response = await fetchWithTimeout(`${API_BASE_URL}/api/seller-registration/businesses`, {
-                    headers: { Accept: 'application/json', 'ngrok-skip-browser-warning': 'true' },
-                });
-                const data = await response.json();
-                if (response.ok && Array.isArray(data.businesses)) {
-                    setBusinessOptions(data.businesses);
-                }
-            } catch (error) {
-                console.warn('Seller business list unavailable', error);
-            }
-        })();
-    }, []);
+    const updateFormData = (field: keyof SellerFormData, value: string) => {
+        setFormData((prev) => ({ ...prev, [field]: value }));
+    };
 
-    const chooseBusiness = async (business: BusinessOption) => {
-        setSelectedBusiness(business);
-        setBusinessModalVisible(false);
-        setSelectedBranch(null);
-        setBranchOptions([]);
+    const updateInvitationCode = (value: string) => {
+        setInvitationCode(value.toUpperCase());
+        setInvitation(null);
+        setInvitationError('');
+    };
 
-        setFormData((prev) => ({
-            ...prev,
-            business_name: business.business_name,
-        }));
+    const lookupInvitation = async () => {
+        const code = invitationCode.trim();
+        if (!code) {
+            setInvitationError(text('seller_signup.invitation_required', 'Weka msimbo wa mwaliko uliopokea kwa msimamizi.'));
+            return;
+        }
+        if (!(await requireNetwork())) return;
 
-        if (business.business_structure !== 'branch') return;
-
+        setInvitationLoading(true);
+        setInvitation(null);
+        setInvitationError('');
         try {
             const response = await fetchWithTimeout(
-                `${API_BASE_URL}/api/seller-registration/businesses/${encodeURIComponent(business.id)}/branches`,
-                { headers: { Accept: 'application/json', 'ngrok-skip-browser-warning': 'true' } }
+                `${API_BASE_URL}/api/seller-registration/invitations/${encodeURIComponent(code)}`,
+                { headers: JSON_HEADERS }
             );
-            const data = await response.json();
-            if (response.ok && Array.isArray(data.branches)) {
-                setBranchOptions(data.branches);
-                setBranchModalVisible(true);
+            const data = await readResponse(response);
+
+            if (response.ok && data?.success === true && data?.business?.business_name) {
+                setInvitation({
+                    code: data?.invitation?.code || code,
+                    business: data.business,
+                    branch: data?.branch || null,
+                });
+            } else {
+                const message = data?.error || text('seller_signup.invitation_invalid', 'Msimko wa mwaliko si sahihi, umeisha muda, au umetumika.');
+                setInvitationError(message);
+                Alert.alert(t('app.error'), message);
             }
         } catch (error) {
-            Alert.alert(t('app.error'), 'Imeshindikana kupata matawi ya biashara hii.');
+            const message = error instanceof Error ? error.message : '';
+            const errorMessage = /Network request failed|Aborted|timeout/i.test(message)
+                ? t('seller_signup.error_network')
+                : t('seller_signup.error_general');
+            setInvitationError(errorMessage);
+            Alert.alert(t('app.error'), errorMessage);
+        } finally {
+            setInvitationLoading(false);
         }
     };
 
-    const chooseBranch = (branch: BranchOption) => {
-        setSelectedBranch(branch);
-        setBranchModalVisible(false);
-        setFormData((prev) => ({
-            ...prev,
-            business_location: prev.business_location || branch.location || '',
-        }));
+    const confirmInvitation = () => {
+        if (!invitation || invitationLoading) return;
+        setStep(2);
     };
 
-    const handleSignup = async () => {
-        if (!(await requireNetwork())) return;
+    const handlePersonalContinue = async () => {
+        if (!invitation) {
+            setInvitationError(text('seller_signup.invitation_required', 'Weka msimbo wa mwaliko uliopokea kwa msimamizi.'));
+            setStep(1);
+            return;
+        }
 
-        // 1. Validation ya msingi
-        if (!formData.email || !formData.password || !formData.full_name || 
-            !formData.business_name || !formData.business_location) {
+        if (!formData.email.trim() || !formData.password || !formData.full_name.trim()) {
             Alert.alert(t('app.error'), t('seller_signup.error_required'));
             return;
         }
 
-        if (selectedBusiness?.business_structure === 'branch' && !selectedBranch) {
-            Alert.alert(t('app.error'), 'Chagua tawi la biashara unayojiunga nayo.');
-            return;
-        }
-
-        // 2. Validate email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(formData.email)) {
+        if (!emailRegex.test(formData.email.trim())) {
             Alert.alert(t('app.error'), t('seller_signup.error_invalid_email'));
             return;
         }
 
-        // 3. Angalia kama nenosiri zinapatana
         if (formData.password !== formData.confirmPassword) {
             Alert.alert(t('app.error'), t('seller_signup.error_password_mismatch'));
             return;
         }
 
-        // 4. Angalia urefu wa nenosiri
         if (formData.password.length < 6) {
             Alert.alert(t('app.error'), t('seller_signup.error_password_mismatch'));
             return;
         }
 
+        if (!(await requireNetwork())) return;
+
         setLoading(true);
-
         try {
-            // 5. Kwanza angalia kama biashara ipo na ina msimamizi
-            console.log(`🔍 Checking business: ${formData.business_name}`);
-            
-            const checkResponse = await fetchWithTimeout(`${API_BASE_URL}/api/check-business`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    business_name: formData.business_name.trim()
-                }),
-            });
-
-            const checkData = await checkResponse.json();
-            console.log('📊 Business check result:', checkData);
-
-            if (!checkResponse.ok) {
-                Alert.alert(t('app.error'), checkData.error || t('seller_signup.error_business_check'));
-                setLoading(false);
-                return;
-            }
-
-            // Kama biashara haipo kabisa
-            if (!checkData.exists) {
-                Alert.alert(
-                    t('seller_signup.business_not_found_title'), 
-                    `Biashara "${formData.business_name}" ${t('seller_signup.error_business_not_found')}`
-                );
-                setLoading(false);
-                return;
-            }
-
-            // Kama biashara ipo lakini haina msimamizi aliyethibitishwa
-            if (!checkData.hasAdmin) {
-                Alert.alert(
-                    t('seller_signup.business_no_admin_title'), 
-                    `Biashara "${formData.business_name}" ${t('seller_signup.error_business_no_admin')}`
-                );
-                setLoading(false);
-                return;
-            }
-
-            // 6. Endelea na usajili wa muuzaji (biashara ipo na ina msimamizi)
-            console.log(`✅ Business check passed, proceeding with seller registration...`);
-            
+            // The invitation is the only business assignment sent by the app.
+            // The server resolves and revalidates the business and branch.
             const response = await fetchWithTimeout(`${API_BASE_URL}/api/register/initiate`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: JSON_HEADERS,
                 body: JSON.stringify({
-                    email: formData.email,
+                    email: formData.email.trim(),
                     password: formData.password,
                     role: 'seller',
-                    full_name: formData.full_name,
-                    phone: formData.phone,
-                    business_id: selectedBusiness?.id,
-                    branch_id: selectedBranch?.id,
-                    business_name: formData.business_name,
-                    business_location: formData.business_location,
-                    language: lang // Pass selected language
+                    full_name: formData.full_name.trim(),
+                    phone: formData.phone.trim() || null,
+                    invitation_code: invitation.code,
+                    language: lang,
                 }),
             });
+            const data = await readResponse(response);
 
-            const data = await response.json();
-            console.log('📨 Registration response:', data);
-
-            if (response.ok && data.requiresOtp) {
-                // ✅ OTP step — a 6-digit code was emailed to the user.
-                // The account is created only after the code is verified.
-                setPendingOtp({
-                    email: formData.email,
-                    role: 'seller'
-                });
+            if (response.ok && data?.requiresOtp) {
+                setRegistrationComplete(false);
+                setStep(3);
+                setPendingOtp({ email: formData.email.trim(), role: 'seller' });
                 setOtpVisible(true);
                 if (data.email_sent === false) {
                     Alert.alert(t('otp.sent_title'), t('otp.email_failed'));
                 }
             } else {
-                // 7. Kukagua hitilafu maalum kutoka kwa backend
-                const errorMessage = data.error || 'Hitilafu imetokea wakati wa kujisajili';
-                
-                if (errorMessage.includes('Biashara hii haina msimamizi')) {
-                    Alert.alert(
-                        t('seller_signup.business_no_admin_title'), 
-                        t('seller_signup.error_business_no_admin')
-                    );
-                } else if (errorMessage.includes('Akaunti na barua pepe hii tayari ipo')) {
-                    Alert.alert(t('app.error'), t('seller_signup.error_email_taken'));
-                } else if (errorMessage.includes('Jina la biashara tayari limeshasajiliwa')) {
-                    Alert.alert(t('app.error'), t('seller_signup.error_business_check'));
-                } else {
-                    Alert.alert(t('app.error'), errorMessage);
+                let errorMessage = data?.error || t('seller_signup.error_general');
+                if (String(data?.code || '').startsWith('INVITATION_') || /mwaliko/i.test(String(errorMessage))) {
+                    setInvitation(null);
+                    setInvitationError(errorMessage);
+                    setStep(1);
+                } else if (String(data?.code) === 'EMAIL_TAKEN' || /tayari ipo/i.test(String(errorMessage))) {
+                    errorMessage = t('seller_signup.error_email_taken');
                 }
+                Alert.alert(t('app.error'), errorMessage);
             }
-        } catch (error: any) {
-            console.error('❌ Signup error:', error);
-            
-            if (error.message && error.message.includes('Network request failed')) {
-                Alert.alert(t('app.error'), t('seller_signup.error_network'));
-            } else {
-                Alert.alert(t('app.error'), t('seller_signup.error_general'));
-            }
+        } catch (error) {
+            const message = error instanceof Error ? error.message : '';
+            Alert.alert(
+                t('app.error'),
+                /Network request failed|Aborted|timeout/i.test(message)
+                    ? t('seller_signup.error_network')
+                    : t('seller_signup.error_general')
+            );
         } finally {
             setLoading(false);
         }
     };
 
-    // ✅ Called when the email OTP verifies — creates the account with the
-    // verified token minted by /api/register/verify-otp. On failure it throws
-    // so the modal can show the error and let the user retry.
-    const handleOtpVerified = async (data: any) => {
+    const handleOtpVerified = async (data: unknown) => {
         if (!(await requireNetwork())) return;
 
-        const token = data?.registrationToken;
+        const token = data && typeof data === 'object'
+            ? (data as { registrationToken?: string }).registrationToken
+            : undefined;
         if (!token) {
             throw new Error(t('seller_signup.error_general'));
         }
@@ -267,74 +282,109 @@ export default function CashierSignup() {
         try {
             const response = await fetchWithTimeout(`${API_BASE_URL}/api/register`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'ngrok-skip-browser-warning': 'true'
-                },
+                headers: JSON_HEADERS,
                 body: JSON.stringify({
                     verificationToken: token,
-                    email: formData.email // Cross-check with the verified email
+                    email: pendingOtp?.email || formData.email.trim(),
                 }),
             });
-
-            const result = await response.json().catch(() => ({}));
+            const result = await readResponse(response);
 
             if (!response.ok) {
                 let errorMessage = result?.error || t('seller_signup.error_general');
-                if (String(errorMessage).includes('tayari ipo')) {
+                if (String(result?.code) === 'EMAIL_TAKEN' || /tayari ipo/i.test(String(errorMessage))) {
                     errorMessage = t('seller_signup.error_email_taken');
-                } else if (String(errorMessage).includes('Biashara hii haina msimamizi')) {
-                    errorMessage = t('seller_signup.error_business_no_admin');
                 }
                 throw new Error(errorMessage);
             }
 
-            // ✅ Account created — close the modal and open the optional
-            // onboarding slideshow (profile photo) before sending the seller to login.
+            // Seller accounts are created with pending status. Keep the seller
+            // on a clear approval-confirmation screen instead of onboarding.
             setOtpVisible(false);
-
-            router.replace({
-                pathname: '/onboarding',
-                params: {
-                    email: formData.email,
-                    role: 'seller',
-                    setupToken: result?.setupToken || '',
-                    lang,
-                    business_name: formData.business_name,
-                    business_location: formData.business_location,
-                },
-            } as any);
-        } catch (error: any) {
-            console.error('❌ Account creation error:', error);
-            if (error?.message?.includes('Network request failed')) {
+            setRegistrationComplete(true);
+            setFormData((prev) => ({ ...prev, password: '', confirmPassword: '' }));
+        } catch (error) {
+            const message = error instanceof Error ? error.message : '';
+            if (/Network request failed|Aborted|timeout/i.test(message)) {
                 throw new Error(t('seller_signup.error_network'));
             }
             throw error;
         }
     };
 
-    const updateFormData = (field: string, value: string) => {
-        setFormData(prev => ({
-            ...prev,
-            [field]: value
-        }));
+    const closeOtp = () => {
+        setOtpVisible(false);
+        if (!registrationComplete) setStep(2);
+    };
+
+    const handleBack = () => {
+        if (registrationComplete) {
+            goToLogin();
+        } else if (step === 1) {
+            router.back();
+        } else {
+            setStep((current) => (Math.max(1, current - 1) as SignupStep));
+        }
+    };
+
+    const goToLogin = () => {
+        router.replace({ pathname: '/login', params: { role: 'muuzaji', lang } } as any);
+    };
+
+    const renderInvitationCard = () => {
+        if (!invitation) return null;
+        return (
+            <View style={styles.invitationCard}>
+                <View style={styles.invitationCardHeader}>
+                    <Ionicons name="checkmark-circle" size={22} color="#27ae60" />
+                    <Text style={styles.invitationCardTitle}>
+                        {text('seller_signup.invitation_confirmed', 'Mwaliko Umethibitishwa')}
+                    </Text>
+                </View>
+                <View style={styles.invitationDetailRow}>
+                    <Text style={styles.invitationDetailLabel}>
+                        {text('seller_signup.invitation_business', 'Biashara')}
+                    </Text>
+                    <Text style={styles.invitationDetailValue}>{invitation.business.business_name}</Text>
+                </View>
+                <View style={styles.invitationDetailRow}>
+                    <Text style={styles.invitationDetailLabel}>
+                        {text('seller_signup.invitation_branch', 'Tawi')}
+                    </Text>
+                    <Text style={styles.invitationDetailValue}>
+                        {invitation.branch
+                            ? `${invitation.branch.branch_name}${invitation.branch.location ? ` — ${invitation.branch.location}` : ''}`
+                            : text('seller_signup.invitation_no_branch', 'Eneo kuu (bila matawi)')}
+                    </Text>
+                </View>
+                {invitation.business.business_location ? (
+                    <View style={styles.invitationDetailRow}>
+                        <Text style={styles.invitationDetailLabel}>
+                            {text('registration_wizard.business_location', 'Eneo la Biashara')}
+                        </Text>
+                        <Text style={styles.invitationDetailValue}>{invitation.business.business_location}</Text>
+                    </View>
+                ) : null}
+            </View>
+        );
     };
 
     return (
-        <KeyboardAvoidingView 
+        <KeyboardAvoidingView
             style={styles.keyboardAvoid}
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
-            <ScrollView 
+            <ScrollView
                 contentContainerStyle={styles.container}
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
             >
                 <View style={styles.headerContainer}>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={styles.topBackButton}
-                        onPress={() => router.back()}
+                        onPress={handleBack}
+                        disabled={loading || invitationLoading}
+                        accessibilityLabel={t('app.back')}
                     >
                         <Ionicons name="arrow-back" size={24} color="#2c3e50" />
                     </TouchableOpacity>
@@ -342,217 +392,221 @@ export default function CashierSignup() {
                     <Text style={styles.subtitle}>{t('seller_signup.subtitle')}</Text>
                 </View>
 
+                <StepIndicator step={step} labels={stepLabels} />
+                <Text style={styles.stepCounter}>
+                    {text('registration_wizard.step_counter', 'Hatua {current} ya {total}')
+                        .replace('{current}', String(step))
+                        .replace('{total}', String(stepLabels.length))}
+                </Text>
+
                 <View style={styles.formContainer}>
-                    <TextInput
-                        style={styles.input}
-                        placeholder={t('seller_signup.full_name_placeholder')}
-                        value={formData.full_name}
-                        onChangeText={(value) => updateFormData('full_name', value)}
-                        placeholderTextColor="#95a5a6"
-                        cursorColor="#2ecc71"
-                        selectionColor="rgba(46, 204, 113, 0.3)"
-                        textAlignVertical="center"
-                    />
-
-                    <TouchableOpacity
-                        style={[styles.input, { justifyContent: 'center' }]}
-                        onPress={() => setBusinessModalVisible(true)}
-                        activeOpacity={0.8}
-                    >
-                        <Text style={{ color: selectedBusiness ? '#2c3e50' : '#95a5a6', fontSize: 16 }}>
-                            {selectedBusiness ? selectedBusiness.business_name : 'Chagua Biashara Unayojiunga Nayo *'}
-                        </Text>
-                    </TouchableOpacity>
-
-                    {selectedBusiness && selectedBusiness.business_structure === 'branch' && (
-                        <TouchableOpacity
-                            style={[styles.input, { justifyContent: 'center' }]}
-                            onPress={() => setBranchModalVisible(true)}
-                            activeOpacity={0.8}
-                        >
-                            <Text style={{ color: selectedBranch ? '#2c3e50' : '#95a5a6', fontSize: 16 }}>
-                                {selectedBranch
-                                    ? `${selectedBranch.branch_name}${selectedBranch.location ? ' — ' + selectedBranch.location : ''}`
-                                    : 'Chagua Tawi Lako *'}
+                    {step === 1 ? (
+                        <>
+                            <Text style={styles.sectionTitle}>
+                                {text('seller_signup.invitation_title', 'Msimko wa Mwaliko')}
                             </Text>
-                        </TouchableOpacity>
-                    )}
+                            <Text style={styles.sectionDescription}>
+                                {text('seller_signup.invitation_only_info', 'Usajili wa muuzaji unahitaji mwaliko. Omba msimbo halali kwa msimamizi wa biashara yako.')}
+                            </Text>
+                            <TextInput
+                                style={styles.input}
+                                placeholder={text('seller_signup.invitation_placeholder', 'Weka msimbo wa mwaliko')}
+                                value={invitationCode}
+                                onChangeText={updateInvitationCode}
+                                autoCapitalize="characters"
+                                autoCorrect={false}
+                                editable={!invitationLoading}
+                                placeholderTextColor="#95a5a6"
+                                cursorColor="#2ecc71"
+                                selectionColor="rgba(46, 204, 113, 0.3)"
+                                textAlignVertical="center"
+                                onSubmitEditing={lookupInvitation}
+                                returnKeyType="search"
+                            />
 
-                    <TextInput
-                        style={styles.input}
-                        placeholder={t('seller_signup.business_location_placeholder')}
-                        value={formData.business_location}
-                        onChangeText={(value) => updateFormData('business_location', value)}
-                        placeholderTextColor="#95a5a6"
-                        cursorColor="#2ecc71"
-                        selectionColor="rgba(46, 204, 113, 0.3)"
-                        textAlignVertical="center"
-                    />
+                            <TouchableOpacity
+                                style={[styles.lookupButton, invitationLoading && styles.disabledButton]}
+                                onPress={lookupInvitation}
+                                disabled={invitationLoading}
+                            >
+                                {invitationLoading ? (
+                                    <SmartCartLoader size="compact" color="#2ecc71" />
+                                ) : (
+                                    <Text style={styles.lookupButtonText}>
+                                        {text('seller_signup.invitation_lookup', 'Tafuta Mwaliko')}
+                                    </Text>
+                                )}
+                            </TouchableOpacity>
 
-                    <TextInput
-                        style={styles.input}
-                        placeholder={t('seller_signup.email_placeholder')}
-                        value={formData.email}
-                        onChangeText={(value) => updateFormData('email', value)}
-                        keyboardType="email-address"
-                        autoCapitalize="none"
-                        autoComplete="email"
-                        placeholderTextColor="#95a5a6"
-                        cursorColor="#2ecc71"
-                        selectionColor="rgba(46, 204, 113, 0.3)"
-                        textAlignVertical="center"
-                    />
+                            {invitationError ? (
+                                <View style={styles.errorBox}>
+                                    <Ionicons name="alert-circle" size={16} color="#e74c3c" />
+                                    <Text style={styles.errorText}>{invitationError}</Text>
+                                </View>
+                            ) : null}
 
-                    <TextInput
-                        style={styles.input}
-                        placeholder={t('seller_signup.phone_placeholder')}
-                        value={formData.phone}
-                        onChangeText={(value) => updateFormData('phone', value)}
-                        keyboardType="phone-pad"
-                        placeholderTextColor="#95a5a6"
-                        cursorColor="#2ecc71"
-                        selectionColor="rgba(46, 204, 113, 0.3)"
-                        textAlignVertical="center"
-                    />
+                            {renderInvitationCard()}
 
-                    <TextInput
-                        style={styles.input}
-                        placeholder={t('seller_signup.password_placeholder')}
-                        value={formData.password}
-                        onChangeText={(value) => updateFormData('password', value)}
-                        secureTextEntry
-                        placeholderTextColor="#95a5a6"
-                        cursorColor="#2ecc71"
-                        selectionColor="rgba(46, 204, 113, 0.3)"
-                        textAlignVertical="center"
-                    />
+                            <TouchableOpacity
+                                style={[styles.signupButton, (!invitation || invitationLoading) && styles.disabledButton]}
+                                onPress={confirmInvitation}
+                                disabled={!invitation || invitationLoading}
+                            >
+                                <Text style={styles.signupButtonText}>
+                                    {text('seller_signup.invitation_continue', 'Thibitisha na Endelea')}
+                                </Text>
+                            </TouchableOpacity>
+                        </>
+                    ) : null}
 
-                    <TextInput
-                        style={styles.input}
-                        placeholder={t('seller_signup.confirm_password_placeholder')}
-                        value={formData.confirmPassword}
-                        onChangeText={(value) => updateFormData('confirmPassword', value)}
-                        secureTextEntry
-                        placeholderTextColor="#95a5a6"
-                        cursorColor="#2ecc71"
-                        selectionColor="rgba(46, 204, 113, 0.3)"
-                        textAlignVertical="center"
-                    />
+                    {step === 2 ? (
+                        <>
+                            {renderInvitationCard()}
+                            <TextInput
+                                style={styles.input}
+                                placeholder={t('seller_signup.full_name_placeholder')}
+                                value={formData.full_name}
+                                onChangeText={(value) => updateFormData('full_name', value)}
+                                autoCapitalize="words"
+                                editable={!loading}
+                                placeholderTextColor="#95a5a6"
+                                cursorColor="#2ecc71"
+                                selectionColor="rgba(46, 204, 113, 0.3)"
+                                textAlignVertical="center"
+                            />
+                            <TextInput
+                                style={styles.input}
+                                placeholder={t('seller_signup.email_placeholder')}
+                                value={formData.email}
+                                onChangeText={(value) => updateFormData('email', value)}
+                                keyboardType="email-address"
+                                autoCapitalize="none"
+                                autoComplete="email"
+                                editable={!loading}
+                                placeholderTextColor="#95a5a6"
+                                cursorColor="#2ecc71"
+                                selectionColor="rgba(46, 204, 113, 0.3)"
+                                textAlignVertical="center"
+                            />
+                            <TextInput
+                                style={styles.input}
+                                placeholder={t('seller_signup.phone_placeholder')}
+                                value={formData.phone}
+                                onChangeText={(value) => updateFormData('phone', value)}
+                                keyboardType="phone-pad"
+                                editable={!loading}
+                                placeholderTextColor="#95a5a6"
+                                cursorColor="#2ecc71"
+                                selectionColor="rgba(46, 204, 113, 0.3)"
+                                textAlignVertical="center"
+                            />
+                            <TextInput
+                                style={styles.input}
+                                placeholder={t('seller_signup.password_placeholder')}
+                                value={formData.password}
+                                onChangeText={(value) => updateFormData('password', value)}
+                                secureTextEntry
+                                editable={!loading}
+                                placeholderTextColor="#95a5a6"
+                                cursorColor="#2ecc71"
+                                selectionColor="rgba(46, 204, 113, 0.3)"
+                                textAlignVertical="center"
+                            />
+                            <TextInput
+                                style={styles.input}
+                                placeholder={t('seller_signup.confirm_password_placeholder')}
+                                value={formData.confirmPassword}
+                                onChangeText={(value) => updateFormData('confirmPassword', value)}
+                                secureTextEntry
+                                editable={!loading}
+                                placeholderTextColor="#95a5a6"
+                                cursorColor="#2ecc71"
+                                selectionColor="rgba(46, 204, 113, 0.3)"
+                                textAlignVertical="center"
+                            />
 
-                    <TouchableOpacity 
-                        style={[styles.signupButton, { backgroundColor: '#2ecc71' }]}
-                        onPress={handleSignup}
-                        disabled={loading}
-                    >
-                        {loading ? (
-                            <SmartCartLoader size="compact" color="#ffffff" />
+                            <TouchableOpacity
+                                style={[styles.signupButton, loading && styles.disabledButton]}
+                                onPress={handlePersonalContinue}
+                                disabled={loading}
+                            >
+                                {loading ? (
+                                    <SmartCartLoader size="compact" color="#ffffff" />
+                                ) : (
+                                    <Text style={styles.signupButtonText}>
+                                        {text('seller_signup.personal_continue', 'Endelea kwa Uthibitisho')}
+                                    </Text>
+                                )}
+                            </TouchableOpacity>
+                        </>
+                    ) : null}
+
+                    {step === 3 ? (
+                        registrationComplete ? (
+                            <View style={styles.successCard}>
+                                <Ionicons name="time-outline" size={42} color="#2ecc71" />
+                                <Text style={styles.successTitle}>{t('seller_signup.success_title')}</Text>
+                                <Text style={styles.successMessage}>{t('seller_signup.success_message')}</Text>
+                                <TouchableOpacity style={styles.signupButton} onPress={goToLogin}>
+                                    <Text style={styles.signupButtonText}>
+                                        {text('seller_signup.go_to_login', 'Nenda kwenye Ingia')}
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
                         ) : (
-                            <Text style={styles.signupButtonText}>{t('seller_signup.signup_button')}</Text>
-                        )}
-                    </TouchableOpacity>
+                            <>
+                                <Text style={styles.sectionTitle}>
+                                    {text('registration_wizard.email_verification', 'Uthibitisho wa Barua Pepe')}
+                                </Text>
+                                <Text style={styles.sectionDescription}>
+                                    {text('seller_signup.otp_step_description', 'Ingiza msimbo wa tarakimu 6 uliotumwa kwenye {email}.')
+                                        .replace('{email}', formData.email.trim())}
+                                </Text>
+                                {renderInvitationCard()}
+                                <TouchableOpacity
+                                    style={styles.signupButton}
+                                    onPress={() => setOtpVisible(true)}
+                                    disabled={!pendingOtp}
+                                >
+                                    <Text style={styles.signupButtonText}>
+                                        {text('seller_signup.otp_open', 'Fungua Msimko wa Uthibitisho')}
+                                    </Text>
+                                </TouchableOpacity>
+                            </>
+                        )
+                    ) : null}
 
-                    <TouchableOpacity 
-                        style={styles.backButton}
-                        onPress={() => router.back()}
-                    >
-                        <Text style={styles.backButtonText}>{t('seller_signup.back_button')}</Text>
-                    </TouchableOpacity>
+                    {!registrationComplete ? (
+                        <TouchableOpacity
+                            style={[styles.backButton, (loading || invitationLoading) && styles.disabledButton]}
+                            onPress={handleBack}
+                            disabled={loading || invitationLoading}
+                        >
+                            <Text style={styles.backButtonText}>{t('seller_signup.back_button')}</Text>
+                        </TouchableOpacity>
+                    ) : null}
                 </View>
 
-                <View style={styles.infoContainer}>
-                    <Text style={styles.infoText}>
-                        🔒 {t('seller_signup.info_title')}
-                    </Text>
-                    <Text style={styles.infoPoint}>
-                        • {t('seller_signup.info_point1')}
-                    </Text>
-                    <Text style={styles.infoPoint}>
-                        • {t('seller_signup.info_point2')}
-                    </Text>
-                    <Text style={styles.infoPoint}>
-                        • {t('seller_signup.info_point3')}
-                    </Text>
-                    <Text style={styles.infoPoint}>
-                        • {t('seller_signup.info_point4')}
-                    </Text>
-                </View>
+                {step <= 2 && !registrationComplete ? (
+                    <View style={styles.infoContainer}>
+                        <Text style={styles.infoText}>{t('seller_signup.info_title')}</Text>
+                        <Text style={styles.infoPoint}>
+                            • {text('seller_signup.invitation_only_info', 'Usajili wa muuzaji unahitaji mwaliko. Omba msimbo halali kwa msimamizi wa biashara yako.')}
+                        </Text>
+                        <Text style={styles.infoPoint}>• {t('seller_signup.info_point3')}</Text>
+                        <Text style={styles.infoPoint}>• {t('seller_signup.info_point4')}</Text>
+                    </View>
+                ) : null}
             </ScrollView>
 
-            {/* Email OTP verification modal */}
             <OtpVerificationModal
                 visible={otpVisible}
                 email={pendingOtp?.email || ''}
                 role={pendingOtp?.role || 'seller'}
                 accentColor="#2ecc71"
                 onVerified={handleOtpVerified}
-                onClose={() => setOtpVisible(false)}
+                onClose={closeOtp}
             />
-
-            {/* Business picker */}
-            <Modal visible={businessModalVisible} transparent animationType="slide" onRequestClose={() => setBusinessModalVisible(false)}>
-                <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
-                    <View style={{ backgroundColor: '#ffffff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: '70%' }}>
-                        <Text style={{ fontSize: 17, fontWeight: '800', color: '#2c3e50', marginBottom: 4 }}>Chagua Biashara</Text>
-                        <Text style={{ fontSize: 12, color: '#7f8c8d', marginBottom: 12 }}>
-                            Biashara zinazoonyeshwa zina msimamizi aliyethibitishwa.
-                        </Text>
-                        <ScrollView>
-                            {businessOptions.map((business) => (
-                                <TouchableOpacity
-                                    key={business.id}
-                                    style={{ paddingVertical: 13, borderBottomWidth: 1, borderBottomColor: '#eef2f7' }}
-                                    onPress={() => chooseBusiness(business)}
-                                >
-                                    <Text style={{ fontSize: 15, fontWeight: '700', color: '#2c3e50' }}>{business.business_name}</Text>
-                                    <Text style={{ fontSize: 11, color: '#7f8c8d' }}>
-                                        {business.business_structure === 'branch' ? 'Biashara yenye matawi' : 'Biashara bila matawi'}
-                                    </Text>
-                                </TouchableOpacity>
-                            ))}
-                            {businessOptions.length === 0 && (
-                                <Text style={{ fontSize: 13, color: '#7f8c8d', paddingVertical: 16 }}>
-                                    Hakuna biashara inayopatikana kwa sasa.
-                                </Text>
-                            )}
-                        </ScrollView>
-                        <TouchableOpacity style={{ paddingVertical: 12, alignItems: 'center' }} onPress={() => setBusinessModalVisible(false)}>
-                            <Text style={{ color: '#e74c3c', fontWeight: '700' }}>Funga</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </Modal>
-
-            {/* Branch picker */}
-            <Modal visible={branchModalVisible} transparent animationType="slide" onRequestClose={() => setBranchModalVisible(false)}>
-                <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
-                    <View style={{ backgroundColor: '#ffffff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: '70%' }}>
-                        <Text style={{ fontSize: 17, fontWeight: '800', color: '#2c3e50', marginBottom: 4 }}>Chagua Tawi</Text>
-                        <Text style={{ fontSize: 12, color: '#7f8c8d', marginBottom: 12 }}>
-                            Utahudumu katika tawi hili tu. Msimamizi anaweza kubadilisha baadaye.
-                        </Text>
-                        <ScrollView>
-                            {branchOptions.map((branch) => (
-                                <TouchableOpacity
-                                    key={branch.id}
-                                    style={{ paddingVertical: 13, borderBottomWidth: 1, borderBottomColor: '#eef2f7' }}
-                                    onPress={() => chooseBranch(branch)}
-                                >
-                                    <Text style={{ fontSize: 15, fontWeight: '700', color: '#2c3e50' }}>{branch.branch_name}</Text>
-                                    <Text style={{ fontSize: 11, color: '#7f8c8d' }}>{branch.location || 'Eneo halijachukuliwa'}</Text>
-                                </TouchableOpacity>
-                            ))}
-                            {branchOptions.length === 0 && (
-                                <Text style={{ fontSize: 13, color: '#7f8c8d', paddingVertical: 16 }}>
-                                    Biashara hii haina tawi hai. Wasiliana na msimamizi.
-                                </Text>
-                            )}
-                        </ScrollView>
-                        <TouchableOpacity style={{ paddingVertical: 12, alignItems: 'center' }} onPress={() => setBranchModalVisible(false)}>
-                            <Text style={{ color: '#e74c3c', fontWeight: '700' }}>Funga</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </Modal>
         </KeyboardAvoidingView>
     );
 }
@@ -585,7 +639,7 @@ const styles = StyleSheet.create({
         position: 'relative',
         width: '100%',
         alignItems: 'center',
-        marginBottom: 30,
+        marginBottom: 20,
         paddingTop: 10,
     },
     header: {
@@ -599,13 +653,80 @@ const styles = StyleSheet.create({
     subtitle: {
         fontSize: 12,
         color: '#7f8c8d',
-        marginBottom: 30,
         textAlign: 'center',
+    },
+    stepIndicator: {
+        width: '100%',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 8,
+    },
+    stepItem: {
+        flex: 1,
+        alignItems: 'center',
+        paddingHorizontal: 3,
+    },
+    stepCircle: {
+        width: 30,
+        height: 30,
+        borderRadius: 15,
+        borderWidth: 1,
+        borderColor: '#d5dbe1',
+        backgroundColor: '#ffffff',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    stepCircleActive: {
+        borderColor: '#2ecc71',
+        backgroundColor: '#2ecc71',
+    },
+    stepCircleComplete: {
+        borderColor: '#27ae60',
+        backgroundColor: '#27ae60',
+    },
+    stepNumber: {
+        color: '#95a5a6',
+        fontSize: 12,
+        fontWeight: '700',
+    },
+    stepNumberActive: {
+        color: '#ffffff',
+    },
+    stepLabel: {
+        marginTop: 5,
+        color: '#95a5a6',
+        fontSize: 10,
+        fontWeight: '600',
+        textAlign: 'center',
+    },
+    stepLabelActive: {
+        color: '#27ae60',
+    },
+    stepCounter: {
+        width: '100%',
+        color: '#7f8c8d',
+        fontSize: 11,
+        textAlign: 'center',
+        marginBottom: 20,
     },
     formContainer: {
         width: '100%',
         alignItems: 'center',
         gap: 15,
+    },
+    sectionTitle: {
+        width: '100%',
+        color: '#2c3e50',
+        fontSize: 18,
+        fontWeight: '800',
+        marginBottom: 4,
+    },
+    sectionDescription: {
+        width: '100%',
+        color: '#7f8c8d',
+        fontSize: 12,
+        lineHeight: 18,
+        marginBottom: 4,
     },
     input: {
         width: '100%',
@@ -622,6 +743,99 @@ const styles = StyleSheet.create({
         shadowRadius: 2,
         elevation: 2,
     },
+    lookupButton: {
+        width: '100%',
+        height: 46,
+        borderRadius: 12,
+        borderWidth: 2,
+        borderColor: '#2ecc71',
+        backgroundColor: '#ffffff',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    lookupButtonText: {
+        color: '#27ae60',
+        fontSize: 14,
+        fontWeight: '800',
+        textTransform: 'uppercase',
+    },
+    invitationCard: {
+        width: '100%',
+        backgroundColor: '#e8f6ef',
+        borderWidth: 1,
+        borderColor: '#bde8cf',
+        borderRadius: 14,
+        padding: 14,
+    },
+    invitationCardHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
+    invitationCardTitle: {
+        color: '#27ae60',
+        fontSize: 14,
+        fontWeight: '800',
+        marginLeft: 8,
+    },
+    invitationDetailRow: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        paddingVertical: 6,
+        borderTopWidth: StyleSheet.hairlineWidth,
+        borderTopColor: '#ccebd9',
+    },
+    invitationDetailLabel: {
+        width: '34%',
+        color: '#6b8f7c',
+        fontSize: 12,
+        paddingRight: 8,
+    },
+    invitationDetailValue: {
+        flex: 1,
+        color: '#2c3e50',
+        fontSize: 13,
+        fontWeight: '600',
+    },
+    errorBox: {
+        width: '100%',
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#fdecea',
+        borderRadius: 10,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+    },
+    errorText: {
+        flex: 1,
+        color: '#c0392b',
+        fontSize: 13,
+        marginLeft: 6,
+    },
+    successCard: {
+        width: '100%',
+        backgroundColor: '#e8f6ef',
+        borderWidth: 1,
+        borderColor: '#bde8cf',
+        borderRadius: 16,
+        padding: 22,
+        alignItems: 'center',
+    },
+    successTitle: {
+        color: '#27ae60',
+        fontSize: 20,
+        fontWeight: '800',
+        marginTop: 12,
+        marginBottom: 8,
+        textAlign: 'center',
+    },
+    successMessage: {
+        color: '#2c3e50',
+        fontSize: 14,
+        lineHeight: 21,
+        marginBottom: 20,
+        textAlign: 'center',
+    },
     signupButton: {
         width: '100%',
         height: 60,
@@ -629,6 +843,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         borderRadius: 12,
         marginTop: 10,
+        backgroundColor: '#2ecc71',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,
@@ -636,10 +851,14 @@ const styles = StyleSheet.create({
         elevation: 5,
     },
     signupButtonText: {
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: 'bold',
         color: 'white',
+        textAlign: 'center',
         textTransform: 'uppercase',
+    },
+    disabledButton: {
+        opacity: 0.6,
     },
     backButton: {
         width: '100%',

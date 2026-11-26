@@ -529,6 +529,8 @@
             border-radius: 24px;
             width: 90%;
             max-width: 450px;
+            max-height: 90vh;
+            overflow-y: auto;
             padding: 24px;
         }
         .modal-header {
@@ -694,6 +696,7 @@
         // ============================================
         
         const API_BASE_URL = '';
+        const $ = id => document.getElementById(id);
         // ---- i18n ----
         // Swahili source strings, used until the shared runtime has fetched the
         // catalog. t() prefers window.DM (all 8 locales) and falls back to these.
@@ -812,7 +815,28 @@
             branch_no_location: "Eneo halijachukuliwa",
             branch_count: "{count} matawi",
             branch_none: "Hakuna tawi",
-            branch_sellers_note: "Wauzaji wa tawi hili"
+            branch_sellers_note: "Wauzaji wa tawi hili",
+            btn_invite_seller: "Alika Muuzaji",
+            invite_title: "Alika Muuzaji",
+            invite_description: "Unda msimbo wa matumizi moja unaoambatanishwa na biashara na tawi.",
+            invite_branch: "Tawi",
+            invite_expiry: "Muda wa Mwaliko",
+            invite_days: "Siku {count}",
+            invite_generate: "Zindua Msimbo",
+            invite_generated: "Msimbo wa Mwaliko",
+            invite_copy: "Nakili Msimbo",
+            invite_copied: "Msimbo umenakiliwa.",
+            invite_list: "Mialiko ya Hivi Karibuni",
+            invite_none: "Hakuna mialiko bado.",
+            invite_active: "Inatumika",
+            invite_used: "Imetumika",
+            invite_revoked: "Imeghairiwa",
+            invite_revoke: "Ghairi",
+            invite_confirm_revoke: "Ungependa kughairi msimbo huu? Muuzaji hataweza kuitumia.",
+            invite_revoked_success: "Msimbo wa mwaliko umeghairiwa.",
+            invite_load_failed: "Imeshindikana kupakia mialiko.",
+            invite_create_failed: "Imeshindikana kuunda msimbo wa mwaliko.",
+            invite_saved_missing: "Server haikurudisha eneo lililohifadhiwa. Pakia upya ukajaribu tena."
         };
         function t(key, params) {
             const full = key.indexOf('msimamizi_index.') === 0 ? key : 'msimamizi_index.' + key;
@@ -867,6 +891,8 @@
         let editFormData = { name: '', phone: '', businessName: '', businessLocation: '', businessType: '', businessDescription: '' };
         let logoUploading = false;
         let locationTracking = false;
+        let invitations = [];
+        let inviteBusy = false;
         // Real values come from the Blade-processed partial (this file's
         // script is inside @verbatim, so {{ }} here would never interpolate).
         const CLOUDINARY_CONFIG = (window.CLOUDINARY_CONFIG || { cloudName: '', uploadPreset: 'react_native_uploads' });
@@ -1472,7 +1498,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 let areaName = '';
                 try {
                     const geoRes = await fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng);
-                    if (geoRes.ok) { const geo = await geoRes.json(); areaName = geo.display_name || ''; }
+                    if (geoRes.ok) { const geo = await geoRes.json(); areaName = String(geo.display_name || '').slice(0, 255); }
                 } catch(e) {}
 
                 if (!confirm(t('msimamizi_index.confirm_location', {area_name: areaName || lat.toFixed(5) + ', ' + lng.toFixed(5)}))) {
@@ -1487,24 +1513,157 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                     headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ business_latitude: lat, business_longitude: lng, ...(areaName ? { business_location: areaName } : {}) })
                 });
-                if (!res.ok) throw new Error('Save failed');
-                const updated = await res.json();
+                const updated = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(updated.error || t('msimamizi_index.err_get_location', {message: res.status}));
 
-                userData.businessLatitude = updated.user?.business_latitude ?? lat;
-                userData.businessLongitude = updated.user?.business_longitude ?? lng;
-                if (areaName) userData.businessLocation = areaName;
+                const savedLat = updated.user?.business_latitude;
+                const savedLng = updated.user?.business_longitude;
+                if (savedLat == null || savedLng == null || !Number.isFinite(Number(savedLat)) || !Number.isFinite(Number(savedLng))) {
+                    throw new Error(t('msimamizi_index.invite_saved_missing'));
+                }
+
+                userData.businessLatitude = Number(savedLat);
+                userData.businessLongitude = Number(savedLng);
+                userData.businessLocation = updated.user?.business_location || userData.businessLocation;
 
                 const cached = JSON.parse(localStorage.getItem('userData') || '{}');
                 cached.business_latitude = userData.businessLatitude;
                 cached.business_longitude = userData.businessLongitude;
-                if (areaName) cached.business_location = areaName;
+                cached.business_location = userData.businessLocation;
+                cached.businessLocation = userData.businessLocation;
                 localStorage.setItem('userData', JSON.stringify(cached));
 
-                showAlert(t('msimamizi_index.alert_success_title'), t('msimamizi_index.msg_location_saved', {area_name: areaName || lat.toFixed(5) + ', ' + lng.toFixed(5)}));
-                renderDashboard();
+                showAlert(t('msimamizi_index.alert_success_title'), t('msimamizi_index.msg_location_saved', {area_name: userData.businessLocation || lat.toFixed(5) + ', ' + lng.toFixed(5)}));
                 loadRegistrationScore();
             } catch(e) { showAlert(t('msimamizi_index.alert_error_title'), t('msimamizi_index.err_get_location', {message: e.message || e})); }
             finally { locationTracking = false; renderDashboard(); }
+        }
+
+        function openInviteModal() {
+            if (inviteBusy) return;
+            $('inviteSellerModal').style.display = 'flex';
+            $('inviteBusinessName').textContent = userData.businessName;
+            $('inviteGeneratedPanel').style.display = 'none';
+            $('inviteGeneratedCode').value = '';
+            const branchWrap = $('inviteBranchWrap');
+            branchWrap.style.display = businessStructure === 'branch' ? 'block' : 'none';
+            $('inviteBranchSelect').innerHTML = '<option value="">' + escapeHtml(t('branch_none')) + '</option>'
+                + branchOptions.map(branch => `<option value="${escapeHtml(branch.id)}">${escapeHtml(branch.branch_name)}</option>`).join('');
+            loadInvitations();
+        }
+
+        function closeInviteModal() {
+            if (inviteBusy) return;
+            $('inviteSellerModal').style.display = 'none';
+        }
+
+        function invitationStatusLabel(status) {
+            if (status === 'active') return t('msimamizi_index.invite_active');
+            if (status === 'used') return t('msimamizi_index.invite_used');
+            return t('msimamizi_index.invite_revoked');
+        }
+
+        function renderInvitations() {
+            const list = $('invitationsList');
+            if (!invitations.length) {
+                list.innerHTML = `<div style="font-size:13px;color:#7f8c8d;padding:12px 0;">${escapeHtml(t('msimamizi_index.invite_none'))}</div>`;
+                return;
+            }
+            list.innerHTML = invitations.map(item => {
+                const expiry = item.expires_at ? new Date(item.expires_at).toLocaleDateString() : '—';
+                return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #eef2f7;">
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-weight:800;color:#2c3e50;letter-spacing:.5px;">${escapeHtml(item.code)}</div>
+                        <div style="font-size:11px;color:#7f8c8d;">${escapeHtml(item.branch_name || 'Biashara bila matawi')} · ${escapeHtml(expiry)}</div>
+                    </div>
+                    <span style="font-size:11px;font-weight:700;color:${item.status === 'active' ? '#27ae60' : '#7f8c8d'};">${escapeHtml(invitationStatusLabel(item.status))}</span>
+                    ${item.status === 'active' ? `<button type="button" data-revoke-invite="${escapeHtml(item.id)}" style="border:none;background:#fdecea;color:#c0392b;border-radius:8px;padding:7px 9px;font-size:11px;font-weight:700;cursor:pointer;">${escapeHtml(t('msimamizi_index.invite_revoke'))}</button>` : ''}
+                </div>`;
+            }).join('');
+            list.querySelectorAll('[data-revoke-invite]').forEach(button => button.addEventListener('click', () => revokeInvitation(button.dataset.revokeInvite)));
+        }
+
+        async function loadInvitations() {
+            try {
+                const response = await fetch(API_BASE_URL + '/api/admin/invitations', {
+                    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('userToken') }
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || t('msimamizi_index.invite_load_failed'));
+                invitations = Array.isArray(data.invitations) ? data.invitations : [];
+                renderInvitations();
+            } catch (error) {
+                invitations = [];
+                renderInvitations();
+                showAlert(t('msimamizi_index.alert_error_title'), error.message || t('msimamizi_index.invite_load_failed'));
+            }
+        }
+
+        async function generateInvitation() {
+            if (inviteBusy) return;
+            if (businessStructure === 'branch' && !$('inviteBranchSelect').value) {
+                showAlert(t('msimamizi_index.alert_error_title'), 'Chagua tawi ambalo mwaliko utatumika.');
+                return;
+            }
+            inviteBusy = true;
+            $('inviteGenerateBtn').disabled = true;
+            $('inviteGenerateBtn').textContent = t('msimamizi_index.saving');
+            try {
+                const response = await fetch(API_BASE_URL + '/api/admin/invitations', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('userToken'), 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        branch_id: businessStructure === 'branch' ? $('inviteBranchSelect').value : null,
+                        expires_in_days: Number($('inviteExpirySelect').value)
+                    })
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || t('msimamizi_index.invite_create_failed'));
+                invitations.unshift(data.invitation);
+                renderInvitations();
+                $('inviteGeneratedCode').value = data.invitation.code;
+                $('inviteGeneratedPanel').style.display = 'block';
+            } catch (error) {
+                showAlert(t('msimamizi_index.alert_error_title'), error.message || t('msimamizi_index.invite_create_failed'));
+            } finally {
+                inviteBusy = false;
+                $('inviteGenerateBtn').disabled = false;
+                $('inviteGenerateBtn').textContent = t('msimamizi_index.invite_generate');
+            }
+        }
+
+        async function copyInvitationCode() {
+            const code = $('inviteGeneratedCode').value;
+            if (!code) return;
+            try {
+                await navigator.clipboard.writeText(code);
+                showAlert(t('msimamizi_index.alert_success_title'), t('msimamizi_index.invite_copied'));
+            } catch (error) {
+                $('inviteGeneratedCode').focus();
+                $('inviteGeneratedCode').select();
+                showAlert(t('msimamizi_index.alert_error_title'), 'Nakili msimbo kwa mkono kwa kutumia Ctrl+C.');
+            }
+        }
+
+        async function revokeInvitation(id) {
+            showConfirm(t('msimamizi_index.invite_title'), t('msimamizi_index.invite_confirm_revoke'), async () => {
+                inviteBusy = true;
+                try {
+                    const response = await fetch(API_BASE_URL + '/api/admin/invitations/' + encodeURIComponent(id) + '/revoke', {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('userToken') }
+                    });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.error || t('msimamizi_index.invite_load_failed'));
+                    invitations = invitations.map(item => item.id === id ? {...item, status:'revoked'} : item);
+                    renderInvitations();
+                    showAlert(t('msimamizi_index.alert_success_title'), t('msimamizi_index.invite_revoked_success'));
+                } catch (error) {
+                    showAlert(t('msimamizi_index.alert_error_title'), error.message || t('msimamizi_index.invite_load_failed'));
+                } finally {
+                    inviteBusy = false;
+                }
+            });
         }
 
         function goToSystemAdmin() {
@@ -1647,7 +1806,10 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
 
                 <div class="section-header">
                     <h2 class="section-title">${t('msimamizi_index.sellers_of_business')}</h2>
-                    <div class="seller-count">${sellersData.length}</div>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <button type="button" id="inviteSellerBtn" style="padding:9px 12px;background:#2ecc71;color:white;border:none;border-radius:10px;font-weight:700;font-size:13px;cursor:pointer;">${ic('user', 13)} ${t('msimamizi_index.btn_invite_seller')}</button>
+                        <div class="seller-count">${sellersData.length}</div>
+                    </div>
                 </div>
                 
                 ${sellersData.length > 0 ? allSellersHtml : `
@@ -1670,6 +1832,7 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
                 }
             });
             document.getElementById('registrationScoreCard')?.addEventListener('click', () => openEditModal());
+            document.getElementById('inviteSellerBtn')?.addEventListener('click', openInviteModal);
             document.getElementById('logoutArea')?.addEventListener('click', handleLogout);
         }
         
@@ -1888,6 +2051,47 @@ avatarEl.innerHTML = `<img src="${escapeHtml(user.business_logo_url)}" style="wi
             <div class="modal-buttons">
                 <div class="modal-btn btn-cancel" onclick="closeEditModal()" data-i18n="msimamizi_index.btn_cancel">Ghairi</div>
                 <div class="modal-btn btn-save" id="editSaveBtn" onclick="saveEditModal()" data-i18n="msimamizi_index.btn_save">Hifadhi</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invite Seller Modal -->
+    <div id="inviteSellerModal" class="modal-overlay" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Alika Muuzaji</h3>
+                <span style="cursor:pointer;font-size:24px;" onclick="closeInviteModal()" aria-label="Funga">✖</span>
+            </div>
+            <div style="font-size:13px;color:#7f8c8d;line-height:1.5;margin-bottom:16px;">Unda msimbo wa matumizi moja unaoambatanishwa na biashara na tawi.</div>
+            <div style="background:#eef4fa;border-radius:10px;padding:10px 12px;margin-bottom:16px;">
+                <div style="font-size:11px;color:#7a8ba0;">Biashara</div>
+                <div id="inviteBusinessName" style="font-size:14px;font-weight:700;color:#2c3e50;"></div>
+            </div>
+            <div id="inviteBranchWrap" class="input-group" style="display:none;">
+                <label class="input-label" for="inviteBranchSelect">Tawi</label>
+                <select id="inviteBranchSelect" class="input-field"></select>
+            </div>
+            <div class="input-group">
+                <label class="input-label" for="inviteExpirySelect">Muda wa Mwaliko</label>
+                <select id="inviteExpirySelect" class="input-field">
+                    <option value="7">Siku 7</option>
+                    <option value="30" selected>Siku 30</option>
+                    <option value="60">Siku 60</option>
+                    <option value="90">Siku 90</option>
+                </select>
+            </div>
+            <button type="button" id="inviteGenerateBtn" class="modal-btn btn-save" style="width:100%;border:none;" onclick="generateInvitation()">Zindua Msimbo</button>
+            <div id="inviteGeneratedPanel" style="display:none;background:#edf9f2;border:1px solid #b7e4c8;border-radius:12px;padding:14px;margin-top:16px;">
+                <div style="font-size:12px;font-weight:700;color:#1e8449;margin-bottom:8px;">Msimbo wa Mwaliko</div>
+                <div style="display:flex;gap:8px;">
+                    <input id="inviteGeneratedCode" readonly style="flex:1;min-width:0;padding:10px;border:1px solid #b7e4c8;border-radius:9px;font-weight:800;letter-spacing:1px;background:white;">
+                    <button type="button" style="border:none;background:#27ae60;color:white;border-radius:9px;padding:10px 12px;font-weight:700;cursor:pointer;" onclick="copyInvitationCode()">Nakili</button>
+                </div>
+            </div>
+            <div style="font-size:14px;font-weight:800;color:#2c3e50;margin:22px 0 6px;">Mialiko ya Hivi Karibuni</div>
+            <div id="invitationsList"></div>
+            <div class="modal-buttons">
+                <div class="modal-btn btn-cancel" onclick="closeInviteModal()">Funga</div>
             </div>
         </div>
     </div>

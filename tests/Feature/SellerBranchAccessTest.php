@@ -16,12 +16,14 @@ use Tests\TestCase;
  *
  * A seller belongs to exactly one branch of an existing business:
  *
- *   TEST A  - a seller registering with a business id and an active branch id
- *             persists both, and (once approved) logs straight into that branch;
+ *   TEST A  - an invited seller is bound to the invitation's active branch,
+ *             ignores client-supplied assignments, and (once approved) logs
+ *             straight into that branch;
  *   TEST B  - a seller whose assigned branch is inactive is refused at login;
  *   TEST C  - a seller never sees another branch's rows;
  *   TEST D  - a shared (branch_id NULL) row is not a bypass into other branches;
- *   TEST G  - the whole flow never breaks an existing non-branch seller.
+ *   TEST G  - invitation-only registration does not break an existing
+ *             non-branch seller.
  *
  * The fake below reproduces PostgREST's query contract (eq./ilike./in.(...)),
  * not just bare values, so a production filter that stops working shows up as
@@ -35,6 +37,8 @@ class SellerBranchAccessTest extends TestCase
     private const KINONDI = 'kin-doni';
     private const MLIMANI = 'mlimani';
     private const NON_BRANCH_BUSINESS = 'b-2';
+    private const KINONDI_INVITATION = 'DMKINONDON';
+    private const NON_BRANCH_INVITATION = 'DMNONBR123';
 
     /** @var list<array<string,mixed>> */
     private array $userRows = [];
@@ -195,6 +199,22 @@ class SellerBranchAccessTest extends TestCase
                 return Http::response([], 204);
             }
 
+            if ($table === 'seller_invitations' && $request->method() === 'PATCH') {
+                $updates = json_decode((string) $request->body(), true) ?? [];
+                $updated = [];
+
+                foreach ($this->tableRows[$table] ?? [] as $index => $row) {
+                    if ($this->applyPostgrestFilters([$row], $query) !== [$row]) {
+                        continue;
+                    }
+
+                    $this->tableRows[$table][$index] = array_merge($row, $updates);
+                    $updated[] = $this->tableRows[$table][$index];
+                }
+
+                return Http::response($updated, 200);
+            }
+
             $rows = match ($table) {
                 'users' => $this->userRows,
                 'businesses' => $this->businessRows,
@@ -296,9 +316,37 @@ class SellerBranchAccessTest extends TestCase
     }
 
     #[Test]
-    public function a_new_seller_is_bound_to_one_active_branch_of_an_existing_business(): void
+    public function seller_registration_requires_an_invitation(): void
     {
         $this->fakeSupabase();
+
+        $response = $this->postJson('/api/register/initiate', [
+            'email' => 'new-seller@kinondoni.test',
+            'password' => 'StrongPass1',
+            'role' => 'seller',
+            'full_name' => 'New Kin',
+            'business_id' => self::THE_BUSINESS,
+            'branch_id' => self::KINONDI,
+        ]);
+
+        $response->assertStatus(400)
+            ->assertJsonPath('code', 'INVITATION_REQUIRED');
+        $this->assertNull(Cache::get('registration_otp:new-seller@kinondoni.test:seller'));
+    }
+
+    #[Test]
+    public function a_new_seller_is_bound_to_one_active_branch_of_an_existing_business(): void
+    {
+        $this->fakeSupabase([
+            'seller_invitations' => [[
+                'id' => 'invite-kinondoni',
+                'code' => self::KINONDI_INVITATION,
+                'business_id' => self::THE_BUSINESS,
+                'branch_id' => self::KINONDI,
+                'status' => 'active',
+                'expires_at' => null,
+            ]],
+        ]);
 
         $initiate = $this->postJson('/api/register/initiate', [
             'email' => 'new-seller@kinondoni.test',
@@ -306,10 +354,11 @@ class SellerBranchAccessTest extends TestCase
             'role' => 'seller',
             'full_name' => 'New Kin',
             'phone' => '255700000001',
-            'business_id' => self::THE_BUSINESS,
-            'branch_id' => self::KINONDI,
-            'business_name' => 'Kinondoni Supermarket',
-            'business_structure' => 'branch',
+            'invitation_code' => self::KINONDI_INVITATION,
+            'business_id' => self::NON_BRANCH_BUSINESS,
+            'branch_id' => self::MLIMANI,
+            'business_name' => 'Non Branch Shop',
+            'business_structure' => 'non_branch',
         ]);
 
         $initiate->assertStatus(200)->assertJsonFragment(['requiresOtp' => true]);
@@ -337,6 +386,11 @@ class SellerBranchAccessTest extends TestCase
         $this->assertNotNull($persisted, 'Registration should persist the seller row');
         $this->assertSame(self::THE_BUSINESS, $persisted['business_id']);
         $this->assertSame(self::KINONDI, $persisted['branch_id']);
+        $this->assertSame('pending', $persisted['status']);
+
+        $invitation = collect($this->tableRows['seller_invitations'])->firstWhere('code', self::KINONDI_INVITATION);
+        $this->assertSame('used', $invitation['status']);
+        $this->assertSame($persisted['id'], $invitation['used_by']);
 
         // A new seller is pending until their administrator approves them.
         $this->postJson('/api/login', [
@@ -471,7 +525,16 @@ class SellerBranchAccessTest extends TestCase
     #[Test]
     public function an_existing_non_branch_account_is_not_touched_by_branch_rules(): void
     {
-        $this->fakeSupabase();
+        $this->fakeSupabase([
+            'seller_invitations' => [[
+                'id' => 'invite-non-branch',
+                'code' => self::NON_BRANCH_INVITATION,
+                'business_id' => self::NON_BRANCH_BUSINESS,
+                'branch_id' => null,
+                'status' => 'active',
+                'expires_at' => null,
+            ]],
+        ]);
 
         $response = $this->postJson('/api/register/initiate', [
             'email' => 'new-legacy-seller@example.com',
@@ -479,8 +542,7 @@ class SellerBranchAccessTest extends TestCase
             'role' => 'seller',
             'full_name' => 'Legacy',
             'phone' => '',
-            'business_name' => 'Non Branch Shop',
-            'business_structure' => 'non_branch',
+            'invitation_code' => self::NON_BRANCH_INVITATION,
         ]);
 
         $response->assertStatus(200)->assertJsonFragment(['requiresOtp' => true]);

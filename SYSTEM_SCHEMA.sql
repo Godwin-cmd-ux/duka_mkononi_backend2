@@ -83,6 +83,28 @@ CREATE TABLE public.users (
     updated_at TIMESTAMP
 );
 
+CREATE TABLE public.seller_invitations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    code TEXT NOT NULL UNIQUE,
+    business_id UUID NOT NULL,
+    branch_id UUID,
+    created_by UUID,
+    status TEXT NOT NULL DEFAULT 'active',
+    used_by UUID,
+    used_at TIMESTAMP WITH TIME ZONE,
+    expires_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    CONSTRAINT seller_invitations_status_check CHECK (status IN ('active', 'used', 'revoked'))
+);
+
+CREATE INDEX seller_invitations_business_created_idx
+    ON public.seller_invitations (business_id, created_at DESC);
+
+CREATE INDEX seller_invitations_code_idx
+    ON public.seller_invitations (code);
+
+ALTER TABLE public.seller_invitations ENABLE ROW LEVEL SECURITY;
+
 CREATE TABLE public.products (
     id UUID PRIMARY KEY,
     seller_id TEXT,

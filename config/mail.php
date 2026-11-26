@@ -17,6 +17,24 @@ if (is_string($fromAddress) && preg_match('/^\s*(.*?)\s*<([^>]+)>\s*$/', $fromAd
 
 $fromAddress = $fromAddress ?: 'no-reply@dukamkononi.com';
 
+// Gmail authenticates the mailbox in EMAIL_USER, not the domain in
+// MAIL_FROM_ADDRESS. Sending OTP mail with a From on a domain the SMTP account
+// cannot send for fails SPF/DMARC alignment and is routinely dropped or sent
+// to spam by Gmail. Align the From with the authenticated mailbox and keep the
+// branded address as Reply-To so replies still behave as before.
+$smtpHost = strtolower((string) env('EMAIL_HOST', env('MAIL_HOST', '')));
+$smtpUser = (string) (env('EMAIL_USER') ?: env('MAIL_USERNAME') ?: '');
+$isGmailRelay = str_contains($smtpHost, 'gmail') || str_contains($smtpHost, 'googlemail');
+$replyToAddress = $fromAddress;
+
+if ($isGmailRelay && filter_var($smtpUser, FILTER_VALIDATE_EMAIL)) {
+    if (strtolower($smtpUser) !== strtolower($fromAddress)) {
+        $fromAddress = $smtpUser;
+    }
+    // MAIL_REPLY_TO lets a deployment point replies somewhere else explicitly.
+    $replyToAddress = env('MAIL_REPLY_TO') ?: env('MAIL_FROM_ADDRESS') ?: 'no-reply@dukamkononi.com';
+}
+
 return [
 
     'default' => env('MAIL_MAILER', 'smtp'),
@@ -48,6 +66,11 @@ return [
 
     'from' => [
         'address' => $fromAddress,
+        'name' => $fromName,
+    ],
+
+    'reply_to' => [
+        'address' => $replyToAddress,
         'name' => $fromName,
     ],
 

@@ -963,16 +963,33 @@ export default function MsimamiziHomeScreen() {
       });
 
       if (!response.ok) {
-        throw new Error(t('admin_dashboard.track_location_error'));
+        const errorText = await response.text();
+        console.error('❌ Profile update failed:', response.status, errorText);
+        let message = t('admin_dashboard.track_location_error');
+        try {
+          const data = JSON.parse(errorText);
+          if (typeof data?.error === 'string' && data.error.trim()) {
+            message = data.error;
+          }
+        } catch { /* non-JSON error body */ }
+        throw new Error(message);
       }
 
       const updated = await response.json();
+      const savedLatitude = updated.user?.business_latitude;
+      const savedLongitude = updated.user?.business_longitude;
+      if (savedLatitude == null || savedLongitude == null) {
+        throw new Error(t('admin_dashboard.track_location_error'));
+      }
+      const latitude = Number(savedLatitude);
+      const longitude = Number(savedLongitude);
+      const savedLocation = updated.user?.business_location || areaName;
 
       setUserData((prev) => ({
         ...prev,
-        businessLatitude: updated.user?.business_latitude ?? lat,
-        businessLongitude: updated.user?.business_longitude ?? lng,
-        businessLocation: areaName || prev.businessLocation,
+        businessLatitude: latitude,
+        businessLongitude: longitude,
+        businessLocation: savedLocation || prev.businessLocation,
       }));
 
       const cached = await AsyncStorage.getItem('userData');
@@ -980,9 +997,10 @@ export default function MsimamiziHomeScreen() {
         const user = JSON.parse(cached);
         await AsyncStorage.setItem('userData', JSON.stringify({
           ...user,
-          business_latitude: updated.user?.business_latitude ?? lat,
-          business_longitude: updated.user?.business_longitude ?? lng,
-          ...(areaName ? { business_location: areaName } : {}),
+          business_latitude: latitude,
+          business_longitude: longitude,
+          business_location: savedLocation || user.business_location,
+          businessLocation: savedLocation || user.businessLocation,
         }));
       }
 

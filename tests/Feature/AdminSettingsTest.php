@@ -179,6 +179,8 @@ class AdminSettingsTest extends TestCase
 
                 if ($table === 'users') {
                     $this->patchRows($this->users, $query, $body);
+                } elseif ($table === 'businesses') {
+                    $this->patchRows($this->businesses, $query, $body);
                 } elseif ($table === 'branches') {
                     $this->patchRows($this->branches, $query, $body);
                 } elseif ($table === 'business_settings') {
@@ -516,6 +518,33 @@ class AdminSettingsTest extends TestCase
         $this->assertSame(self::BUSINESS, $admin['business_id']);
         $this->assertSame('admin@shop.test', $admin['email']);
         $this->assertNull($admin['branch_id']);
+    }
+
+    #[Test]
+    public function changing_location_updates_the_business_and_legacy_user_columns(): void
+    {
+        $this->fakeSupabase();
+
+        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token())
+            ->putJson('/api/user/profile', [
+                'business_latitude' => -6.7924,
+                'business_longitude' => 39.2083,
+                'business_location' => 'Dar es Salaam',
+            ]);
+
+        $response->assertOk()
+            ->assertJsonPath('user.business_latitude', -6.7924)
+            ->assertJsonPath('user.business_longitude', 39.2083)
+            ->assertJsonPath('user.business_location', 'Dar es Salaam');
+
+        $this->assertSame(-6.7924, $this->businesses[0]['business_latitude']);
+        $this->assertSame(39.2083, $this->businesses[0]['business_longitude']);
+        $this->assertSame('Dar es Salaam', $this->businesses[0]['business_location']);
+
+        $admin = collect($this->users)->firstWhere('id', 'admin-1');
+        $this->assertSame(-6.7924, $admin['business_latitude']);
+        $this->assertSame(39.2083, $admin['business_longitude']);
+        $this->assertSame('Dar es Salaam', $admin['business_location']);
     }
 
     #[Test]

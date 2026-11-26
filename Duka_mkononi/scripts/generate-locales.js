@@ -188,7 +188,6 @@ const sw = {
     business_location_placeholder: 'Mahali pa Biashara *',
     email_placeholder: 'Barua Pepe *',
     phone_placeholder: 'Namba ya Simu',
-    admin_code_placeholder: 'Admin Code *',
     password_placeholder: 'Nenosiri *',
     confirm_password_placeholder: 'Rudia Nenosiri *',
     signup_button: 'JISAJILI SASA',
@@ -197,11 +196,10 @@ const sw = {
     info_point1: 'Jina la biashara lazima liwe la kipekee',
     info_point2: 'Utakuwa na mamlaka kamili ya kuidhinisha',
     info_point3: 'Unaweza kuanza kutumia mfumo mara moja',
-    info_point4: 'Admin Code: ADMIN2024',
+    info_point4: 'Barua pepe itathibitishwa kabla ya usajili kukamilika',
     error_required: 'Tafadhali jaza sehemu zote required',
     error_password_mismatch: 'Nenosiri hazifanani',
     error_invalid_email: 'Tafadhali ingiza barua pepe sahihi',
-    error_wrong_admin_code: 'Admin code si sahihi',
     error_network: 'Hakuna muunganisho wa mtandao.',
     success_title: 'Mafanikio',
     success_message: 'Akaunti ya Msimamizi imeundwa kikamilifu!',
@@ -588,7 +586,6 @@ Object.assign(en.admin_signup, {
   title: 'REGISTER AS MANAGER', subtitle: 'Indicates required field',
   signup_button: 'REGISTER NOW', back_button: 'GO BACK',
   info_title: 'Important information for Managers:',
-  error_wrong_admin_code: 'Admin code is incorrect',
   success_title: 'Success', success_button: 'Login Now'
 });
 Object.assign(en.forgot_password, {

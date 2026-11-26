@@ -71,6 +71,9 @@ Route::post('register', [AuthController::class, 'register']);
 Route::post('register/initiate', [AuthController::class, 'registerInitiate']);
 Route::post('register/verify-otp', [AuthController::class, 'verifyOtp']);
 Route::post('register/resend-otp', [AuthController::class, 'resendOtp']);
+Route::post('register/check-business', [AuthController::class, 'checkBusinessStep'])->middleware('throttle:60,1');
+Route::post('register/check-personal', [AuthController::class, 'checkPersonalStep'])->middleware('throttle:60,1');
+Route::post('register/precheck', [AuthController::class, 'precheckRegistration'])->middleware('throttle:60,1');
 Route::post('login', [AuthController::class, 'login']);
 
 // Password reset
@@ -90,6 +93,7 @@ Route::get('check-business-name', [BusinessController::class, 'checkBusinessName
 // branches. Read-only and intentionally narrow (no private business data).
 Route::get('seller-registration/businesses', [\App\Http\Controllers\Api\SellerRegistrationController::class, 'businesses']);
 Route::get('seller-registration/businesses/{businessId}/branches', [\App\Http\Controllers\Api\SellerRegistrationController::class, 'branches']);
+Route::get('seller-registration/invitations/{code}', [\App\Http\Controllers\Api\SellerInvitationController::class, 'lookup'])->middleware('throttle:60,1');
 Route::get('businesses', [BusinessController::class, 'index']);
 Route::get('businesses/{businessId}/products', [BusinessController::class, 'businessProducts']);
 Route::get('test/businesses', [BusinessController::class, 'testBusinesses']);
@@ -445,6 +449,9 @@ Route::middleware('auth.jwt')->group(function () {
     Route::put('system-admin/businesses/{id}/certify', [SystemAdminController::class, 'certify']);
 
     Route::get('admin/users', [AdminController::class, 'users']);
+    Route::get('admin/invitations', [\App\Http\Controllers\Api\SellerInvitationController::class, 'index']);
+    Route::post('admin/invitations', [\App\Http\Controllers\Api\SellerInvitationController::class, 'store']);
+    Route::post('admin/invitations/{id}/revoke', [\App\Http\Controllers\Api\SellerInvitationController::class, 'revoke']);
     Route::get('admin/products', [AdminController::class, 'products']);
     Route::get('admin/sales', [AdminController::class, 'sales']);
     Route::get('admin/service-sales', [ServiceSaleController::class, 'adminIndex']);

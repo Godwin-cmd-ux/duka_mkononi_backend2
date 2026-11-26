@@ -9,12 +9,15 @@ use App\Services\BranchContext;
 use App\Services\BusinessBlock;
 use App\Services\BusinessResolver;
 use App\Services\JwtToken;
+use App\Services\Roles;
+use App\Services\SellerInvitationService;
 use App\Services\Supabase;
 use App\Services\ThemePreference;
 use Firebase\JWT\ExpiredException;
 use UnexpectedValueException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
@@ -87,13 +90,13 @@ class AuthController extends BaseController
             ], 400);
         }
 
-        $email = $verified->email;
+        $email = trim((string) $verified->email);
         $role = $verified->role;
         $passwordHash = $verified->passwordHash;
 
         // Defense in depth: even a signed verification token may only carry
         // a self-registerable role (the allow-list was enforced at initiate).
-        if (!\App\Services\Roles::isRegisterable($role)) {
+        if (!Roles::isRegisterable($role)) {
             $this->log(null, 'REGISTER_FAILED', '/api/register', ['reason' => 'Role not self-registerable', 'role' => $role], $ip, 'failed');
             return $this->json(['error' => 'Role hii haijajiandikishwa'], 403);
         }
@@ -107,12 +110,17 @@ class AuthController extends BaseController
         $branches = $verified->branches ?? [];
         $seller_business_id = $verified->business_id ?? null;
         $seller_branch_id = $verified->branch_id ?? null;
+        $invitationId = $verified->invitation_id ?? null;
+        $invitationCode = $this->normalizeInvitationCode($verified->invitation_code ?? '');
+        $invitation = null;
         $language = $verified->language ?? 'sw';
 
         if ($request->input('email') && strtolower(trim($request->input('email'))) !== strtolower(trim($email))) {
             $this->log(null, 'REGISTER_FAILED', '/api/register', ['reason' => 'Email mismatch with verified token'], $ip, 'failed');
             return $this->json(['error' => 'Barua pepe hailingani na iliyothibitishwa.'], 400);
         }
+
+        $claimedInvitationId = null;
 
         try {
             $existingUsers = User::select('id')->whereRaw('LOWER(email) = ?', [mb_strtolower(trim($email))])->where('role', $role)->get();
@@ -126,25 +134,40 @@ class AuthController extends BaseController
                 // Re-validate against the database, not the OTP cache: the
                 // business must exist and the branch must still be active and
                 // owned by that business at the moment the account is created.
-                $assignment = $this->resolveSellerAssignment(
-                    is_string($seller_business_id) ? $seller_business_id : null,
-                    is_string($business_name) ? $business_name : null,
-                    is_string($seller_branch_id) ? $seller_branch_id : null
-                );
+                if (is_string($invitationId) && $invitationId !== '') {
+                    $invitation = $this->resolveInvitation($invitationCode);
 
-                if (isset($assignment['error'])) {
-                    $this->log(null, 'REGISTER_FAILED', '/api/register', [
-                        'reason' => 'Invalid seller business/branch',
-                        'email' => $email,
-                    ], $ip, 'failed');
+                    if (isset($invitation['error'])) {
+                        $this->log(null, 'REGISTER_FAILED', '/api/register', [
+                            'reason' => 'Seller invitation no longer valid',
+                            'code' => $invitation['error_code'] ?? 'INVITATION_INVALID',
+                            'email' => $email,
+                        ], $ip, 'failed');
 
-                    return $this->json(['error' => $assignment['error'], 'code' => $assignment['code'] ?? 'BRANCH_REQUIRED'], 400);
+                        return $this->json([
+                            'error' => $invitation['error'],
+                            'code' => $invitation['error_code'] ?? 'INVITATION_INVALID',
+                        ], $invitation['status'] ?? 400);
+                    }
+
+                    if ((string) ($invitation['invitation_id'] ?? '') !== (string) $invitationId) {
+                        return $this->json([
+                            'error' => 'Mwaliko huu umebadilishwa. Tafadhali anza usajili upya.',
+                            'code' => 'INVITATION_MISMATCH',
+                        ], 409);
+                    }
+
+                    $business_name = $invitation['business_name'];
+                    $seller_business_id = $invitation['business_id'];
+                    $seller_branch_id = $invitation['branch_id'];
+                    $business_structure = $invitation['business_structure'];
+                    $business_location = $invitation['business_location'] ?? $business_location;
+                } else {
+                    return $this->json([
+                        'error' => 'Usajili wa muuzaji unahitaji msimbo wa mwaliko kutoka kwa msimamizi.',
+                        'code' => 'INVITATION_REQUIRED',
+                    ], 400);
                 }
-
-                $business_name = $assignment['business_name'];
-                $seller_business_id = $assignment['business_id'];
-                $seller_branch_id = $assignment['branch_id'];
-                $business_structure = $assignment['business_structure'];
             }
 
             if ($role === 'admin' || $role === 'seller') {
@@ -155,7 +178,7 @@ class AuthController extends BaseController
 
                 $adminUsers = User::select('id', 'email', 'role', 'status')
                     ->whereRaw('LOWER(business_name) = ?', [mb_strtolower(trim($business_name))])
-                    ->whereIn('role', \App\Services\Roles::BUSINESS_OWNERS)
+                    ->whereIn('role', Roles::BUSINESS_OWNERS)
                     ->where('status', 'approved')
                     ->get();
 
@@ -254,6 +277,26 @@ class AuthController extends BaseController
             ];
 
             $id = $userData['id'];
+
+            if ($invitation !== null) {
+                // A seller invitation is single-use. Claim it before inserting
+                // the user and release it again if the account insert fails.
+                if (! $this->claimInvitation((string) $invitation['invitation_id'], $id)) {
+                    $this->log(null, 'REGISTER_FAILED', '/api/register', [
+                        'reason' => 'Seller invitation already used',
+                        'invitation_id' => $invitation['invitation_id'],
+                        'email' => $email,
+                    ], $ip, 'failed');
+
+                    return $this->json([
+                        'error' => 'Msimbo wa mwaliko umetumika tayari. Omba msimbo mpya kwa msimamizi.',
+                        'code' => 'INVITATION_USED',
+                    ], 409);
+                }
+
+                $claimedInvitationId = (string) $invitation['invitation_id'];
+            }
+
             User::create($userData);
             $newUser = User::where('id', $id)->first();
 
@@ -288,16 +331,275 @@ class AuthController extends BaseController
                 ]
             ], 201);
         } catch (\Throwable $error) {
+            if ($claimedInvitationId !== null) {
+                $this->releaseInvitation($claimedInvitationId, $userData['id'] ?? null);
+            }
+
             $this->log(null, 'REGISTER_ERROR', '/api/register', ['error' => $error->getMessage(), 'email' => $email, 'role' => $role], $ip, 'failed');
             return $this->json(['error' => 'Hitilafu ya ndani ya server: ' . $error->getMessage()], 500);
         }
+    }
+
+    /**
+     * POST /api/register/check-business
+     *
+     * The first step of the admin signup wizard. It validates the business
+     * details exactly like initiate does and reports a name conflict before the
+     * visitor moves on, so a duplicate is caught on step 1 rather than after
+     * the whole form and an OTP round-trip.
+     */
+    public function checkBusinessStep(Request $request)
+    {
+        $check = $this->businessStepValidation($request);
+
+        if (! $check['ok']) {
+            return $this->json([
+                'success' => false,
+                'error' => $check['error'],
+                'code' => $check['code'],
+            ] + (isset($check['existing_user']) ? ['existingUser' => $check['existing_user']] : []), $check['status']);
+        }
+
+        return $this->json([
+            'success' => true,
+            'available' => true,
+            'business' => $check['business'],
+        ]);
+    }
+
+    /**
+     * POST /api/register/check-personal
+     *
+     * The second step of the wizard: name, email, phone and password are
+     * checked for shape and for an existing account before the review page.
+     */
+    public function checkPersonalStep(Request $request)
+    {
+        $check = $this->personalStepValidation($request);
+
+        if (! $check['ok']) {
+            return $this->json([
+                'success' => false,
+                'error' => $check['error'],
+                'code' => $check['code'],
+            ], $check['status']);
+        }
+
+        return $this->json(['success' => true, 'available' => true]);
+    }
+
+    /**
+     * POST /api/register/precheck
+     *
+     * The "Verify" button on the review page: re-checks every value that is
+     * about to be sent to initiate. A conflict here is shown on the review page
+     * and no OTP is sent.
+     */
+    public function precheckRegistration(Request $request)
+    {
+        $role = (string) $request->input('role', 'admin');
+
+        if (! Roles::isRegisterable($role)) {
+            return $this->json(['success' => false, 'error' => 'Role hii haijajiandikishwa.'], 400);
+        }
+
+        if ($role === 'admin') {
+            $business = $this->businessStepValidation($request);
+
+            if (! $business['ok']) {
+                return $this->json([
+                    'success' => false,
+                    'step' => 'business',
+                    'error' => $business['error'],
+                    'code' => $business['code'],
+                ] + (isset($business['existing_user']) ? ['existingUser' => $business['existing_user']] : []), $business['status']);
+            }
+        } else {
+            $invitationCode = $this->normalizeInvitationCode($request->input('invitation_code'));
+
+            if ($invitationCode === '') {
+                return $this->json([
+                    'success' => false,
+                    'step' => 'invitation',
+                    'error' => 'Msimbo wa mwaliko unahitajika.',
+                    'code' => 'INVITATION_REQUIRED',
+                ], 400);
+            }
+
+            $invitation = $this->resolveInvitation($invitationCode);
+
+            if (isset($invitation['error'])) {
+                return $this->json([
+                    'success' => false,
+                    'step' => 'invitation',
+                    'error' => $invitation['error'],
+                    'code' => $invitation['error_code'] ?? 'INVITATION_INVALID',
+                ], $invitation['status'] ?? 400);
+            }
+        }
+
+        $personal = $this->personalStepValidation($request);
+
+        if (! $personal['ok']) {
+            return $this->json([
+                'success' => false,
+                'step' => 'personal',
+                'error' => $personal['error'],
+                'code' => $personal['code'],
+            ], $personal['status']);
+        }
+
+        return $this->json(['success' => true, 'verified' => true]);
+    }
+
+    /**
+     * Validate the business fields a registration would write.
+     *
+     * @return array{ok:bool,business?:array<string,mixed>,error?:string,code?:string,status?:int,existing_user?:string}
+     */
+    private function businessStepValidation(Request $request): array
+    {
+        $businessName = trim((string) $request->input('business_name', ''));
+        $businessLocation = trim((string) $request->input('business_location', ''));
+        $businessType = trim((string) $request->input('business_type', ''));
+        $businessDescription = trim((string) $request->input('business_description', ''));
+        $businessStructure = trim((string) $request->input('business_structure', ''));
+
+        if ($businessName === '' || mb_strlen($businessName) < 2 || mb_strlen($businessName) > 150) {
+            return ['ok' => false, 'error' => 'Jina la biashara linahitajika (herufi 2 hadi 150).', 'code' => 'BUSINESS_NAME_REQUIRED', 'status' => 422];
+        }
+
+        if ($businessLocation === '' || mb_strlen($businessLocation) < 2 || mb_strlen($businessLocation) > 255) {
+            return ['ok' => false, 'error' => 'Mahali pa biashara linahitajika.', 'code' => 'BUSINESS_LOCATION_REQUIRED', 'status' => 422];
+        }
+
+        if (! in_array($businessType, self::BUSINESS_TYPE_ALLOWED, true)) {
+            return ['ok' => false, 'error' => 'Aina ya biashara inahitajika.', 'code' => 'BUSINESS_TYPE_REQUIRED', 'status' => 422];
+        }
+
+        if ($businessDescription !== '' && mb_strlen($businessDescription) > 1000) {
+            return ['ok' => false, 'error' => 'Maelezo ya biashara yasizidi herufi 1000.', 'code' => 'BUSINESS_DESCRIPTION_TOO_LONG', 'status' => 422];
+        }
+
+        if ($businessStructure === '') {
+            $businessStructure = 'non_branch';
+        }
+
+        if (! in_array($businessStructure, BranchContext::STRUCTURES, true)) {
+            return ['ok' => false, 'error' => 'Aina ya biashara (matawi) si sahihi.', 'code' => 'BUSINESS_STRUCTURE_INVALID', 'status' => 422];
+        }
+
+        $parsed = $this->normalizeBranches($request->input('branches'));
+
+        if (isset($parsed['error'])) {
+            return ['ok' => false, 'error' => $parsed['error'], 'code' => 'BRANCHES_INVALID', 'status' => 422];
+        }
+
+        $branches = $parsed['branches'];
+
+        if ($businessStructure === 'branch' && count($branches) === 0) {
+            return ['ok' => false, 'error' => 'Biashara yenye matawi inahitaji tawi moja au zaidi.', 'code' => 'BRANCH_REQUIRED', 'status' => 422];
+        }
+
+        $conflict = $this->businessNameConflict($businessName);
+
+        if ($conflict !== null) {
+            return [
+                'ok' => false,
+                'error' => 'Jina la biashara tayari limeshasajiliwa.',
+                'code' => 'BUSINESS_NAME_TAKEN',
+                'status' => 409,
+                'existing_user' => $conflict,
+            ];
+        }
+
+        return [
+            'ok' => true,
+            'business' => [
+                'business_name' => $businessName,
+                'business_location' => $businessLocation,
+                'business_type' => $businessType,
+                'business_description' => $businessDescription,
+                'business_structure' => $businessStructure,
+                'branches' => $branches,
+            ],
+        ];
+    }
+
+    /**
+     * Validate the personal fields (and account uniqueness) for a signup.
+     *
+     * @return array{ok:bool,error?:string,code?:string,status?:int}
+     */
+    private function personalStepValidation(Request $request): array
+    {
+        $role = (string) $request->input('role', 'admin');
+        $fullName = trim((string) $request->input('full_name', ''));
+        $email = trim((string) $request->input('email', ''));
+        $phone = trim((string) $request->input('phone', ''));
+        $password = (string) $request->input('password', '');
+        $confirmPassword = (string) $request->input('confirm_password', $request->input('confirmPassword', ''));
+
+        if ($confirmPassword === '') {
+            return ['ok' => false, 'error' => 'Hakiki nenosiri lako.', 'code' => 'PASSWORD_CONFIRMATION_REQUIRED', 'status' => 422];
+        }
+
+        if (mb_strlen($fullName) < 2 || mb_strlen($fullName) > 120) {
+            return ['ok' => false, 'error' => 'Jina kamili linahitajika.', 'code' => 'FULL_NAME_REQUIRED', 'status' => 422];
+        }
+
+        if (! preg_match('/^[^\s@]+@[^\s@]+\.[^\s@]+$/', $email)) {
+            return ['ok' => false, 'error' => 'Barua pepe si sahihi.', 'code' => 'EMAIL_INVALID', 'status' => 422];
+        }
+
+        if ($phone !== '' && (mb_strlen($phone) > 30 || ! preg_match('/^[0-9+\-\s()]*$/', $phone))) {
+            return ['ok' => false, 'error' => 'Namba ya simu si sahihi.', 'code' => 'PHONE_INVALID', 'status' => 422];
+        }
+
+        if (mb_strlen($password) < 6) {
+            return ['ok' => false, 'error' => 'Nenosiri lazima liwe na herufi 6 au zaidi.', 'code' => 'PASSWORD_TOO_SHORT', 'status' => 422];
+        }
+
+        if ($password !== $confirmPassword) {
+            return ['ok' => false, 'error' => 'Nenosiri hazifanani.', 'code' => 'PASSWORD_MISMATCH', 'status' => 422];
+        }
+
+        if ($this->registrationAlreadyExists($email, $role)) {
+            return ['ok' => false, 'error' => 'Akaunti na barua pepe hii tayari ipo.', 'code' => 'EMAIL_TAKEN', 'status' => 409];
+        }
+
+        return ['ok' => true];
+    }
+
+    /**
+     * The existing signup error when a business name is already in use by an
+     * admin or seller. Returns the first existing email, or null when free.
+     */
+    private function businessNameConflict(string $businessName): ?string
+    {
+        $business = Business::whereRaw('LOWER(business_name) = ?', [mb_strtolower(trim($businessName))])->first();
+
+        if ($business) {
+            return '';
+        }
+
+        $existing = User::select('id', 'email', 'role')
+            ->whereRaw('LOWER(business_name) = ?', [mb_strtolower(trim($businessName))])
+            ->whereIn('role', ['admin', 'seller'])
+            ->get();
+
+        if ($existing && $existing->count() > 0) {
+            return (string) ($existing[0]->email ?? '');
+        }
+
+        return null;
     }
 
     public function registerInitiate(Request $request)
     {
         $ip = $request->header('x-forwarded-for') ?: $request->ip();
 
-        $email = $request->input('email');
+        $email = trim((string) $request->input('email'));
         $password = $request->input('password');
         $role = $request->input('role');
         $full_name = $request->input('full_name');
@@ -311,6 +613,8 @@ class AuthController extends BaseController
         $seller_business_id = $request->input('business_id');
         $seller_branch_id = $request->input('branch_id');
         $language = $request->input('language');
+        $invitationCode = $this->normalizeInvitationCode($request->input('invitation_code'));
+        $invitation = null;
 
         if (!$email || !$password || !$role) {
             $this->log(null, 'REGISTER_INITIATE_FAILED', '/api/register/initiate', ['reason' => 'Missing required fields', 'email' => $email, 'role' => $role], $ip, 'failed');
@@ -320,7 +624,7 @@ class AuthController extends BaseController
         // Self-service signup may ONLY produce an ordinary role. Platform
         // roles (super_admin, legacy system_admin) are granted exclusively by
         // a technician updating the database - never through the API.
-        if (!\App\Services\Roles::isRegisterable($role)) {
+        if (!Roles::isRegisterable($role)) {
             $this->log(null, 'REGISTER_INITIATE_FAILED', '/api/register/initiate', ['reason' => 'Role not self-registerable', 'role' => $role], $ip, 'failed');
             return $this->json(['error' => 'Role hii haijajiandikishwa. Chagua client, seller au admin.'], 400);
         }
@@ -355,32 +659,34 @@ class AuthController extends BaseController
             $branches = [];
         }
 
-        // A seller joins an existing, eligible business and (for a branch
-        // business) exactly one active branch. The values are accepted here for
-        // the OTP round-trip but re-validated against the database when the
-        // account is actually created. They must NOT be cleared first: the
-        // branch selector sends business_id + branch_id, and discarding them
-        // here made every branch seller fail with BRANCH_REQUIRED.
         if ($role === 'seller') {
-            $assignment = $this->resolveSellerAssignment(
-                is_string($seller_business_id) ? $seller_business_id : null,
-                is_string($business_name) ? $business_name : null,
-                is_string($seller_branch_id) ? $seller_branch_id : null
-            );
+            if ($invitationCode === '') {
+                return $this->json([
+                    'error' => 'Usajili wa muuzaji unahitaji msimbo wa mwaliko kutoka kwa msimamizi.',
+                    'code' => 'INVITATION_REQUIRED',
+                ], 400);
+            }
 
-            if (isset($assignment['error'])) {
+            $invitation = $this->resolveInvitation($invitationCode);
+
+            if (isset($invitation['error'])) {
                 $this->log(null, 'REGISTER_INITIATE_FAILED', '/api/register/initiate', [
-                    'reason' => 'Invalid seller business/branch',
+                    'reason' => 'Invalid seller invitation',
+                    'code' => $invitation['error_code'] ?? 'INVITATION_INVALID',
                     'email' => $email,
                 ], $ip, 'failed');
 
-                return $this->json(['error' => $assignment['error'], 'code' => $assignment['code'] ?? 'BRANCH_REQUIRED'], 400);
+                return $this->json([
+                    'error' => $invitation['error'],
+                    'code' => $invitation['error_code'] ?? 'INVITATION_INVALID',
+                ], $invitation['status'] ?? 400);
             }
 
-            $business_name = $assignment['business_name'];
-            $business_structure = $assignment['business_structure'];
-            $seller_business_id = $assignment['business_id'];
-            $seller_branch_id = $assignment['branch_id'];
+            $business_name = $invitation['business_name'];
+            $business_structure = $invitation['business_structure'];
+            $seller_business_id = $invitation['business_id'];
+            $seller_branch_id = $invitation['branch_id'];
+            $business_location = $invitation['business_location'] ?? $business_location;
         }
 
         if (strlen($password) < 6) {
@@ -417,7 +723,7 @@ class AuthController extends BaseController
 
                 $adminUsers = User::select('id', 'email', 'role', 'status')
                     ->whereRaw('LOWER(business_name) = ?', [mb_strtolower(trim($business_name))])
-                    ->whereIn('role', \App\Services\Roles::BUSINESS_OWNERS)
+                    ->whereIn('role', Roles::BUSINESS_OWNERS)
                     ->where('status', 'approved')
                     ->get();
 
@@ -436,20 +742,17 @@ class AuthController extends BaseController
                 }
 
                 if ($role === 'admin') {
-                    $existingBusiness = User::select('id', 'email', 'role')
-                        ->whereRaw('LOWER(business_name) = ?', [mb_strtolower(trim($business_name))])
-                        ->whereIn('role', ['admin', 'seller'])
-                        ->get();
+                    $conflict = $this->businessNameConflict($business_name);
 
-                    if ($existingBusiness && $existingBusiness->count() > 0) {
+                    if ($conflict !== null) {
                         $this->log(null, 'REGISTER_INITIATE_FAILED', '/api/register/initiate', [
                             'reason' => 'Business name already taken',
                             'business_name' => $business_name,
-                            'existing_user' => $existingBusiness[0]->email
+                            'existing_user' => $conflict
                         ], $ip, 'failed');
                         return $this->json([
                             'error' => 'Jina la biashara tayari limeshasajiliwa',
-                            'existingUser' => $existingBusiness[0]->email
+                            'existingUser' => $conflict
                         ], 400);
                     }
                 }
@@ -474,6 +777,8 @@ class AuthController extends BaseController
                     'branches' => $branches,
                     'business_id' => $seller_business_id,
                     'branch_id' => $seller_branch_id,
+                    'invitation_id' => $invitation['invitation_id'] ?? null,
+                    'invitation_code' => $invitation['code'] ?? null,
                     'language' => $language
                 ],
                 'expiresAt' => (int) (microtime(true) * 1000) + self::OTP_EXPIRY_MS,
@@ -515,7 +820,7 @@ class AuthController extends BaseController
     {
         $ip = $request->header('x-forwarded-for') ?: $request->ip();
 
-        $email = $request->input('email');
+        $email = trim((string) $request->input('email'));
         $role = $request->input('role');
         $otp = $request->input('otp');
 
@@ -572,6 +877,8 @@ class AuthController extends BaseController
                 'branches' => $payload['branches'] ?? [],
                 'business_id' => $payload['business_id'] ?? null,
                 'branch_id' => $payload['branch_id'] ?? null,
+                'invitation_id' => $payload['invitation_id'] ?? null,
+                'invitation_code' => $payload['invitation_code'] ?? null,
                 'language' => $payload['language'] ?: 'sw',
                 'type' => 'registration_verified',
                 'verifiedAt' => (int) (microtime(true) * 1000),
@@ -605,7 +912,7 @@ class AuthController extends BaseController
     {
         $ip = $request->header('x-forwarded-for') ?: $request->ip();
 
-        $email = $request->input('email');
+        $email = trim((string) $request->input('email'));
         $role = $request->input('role');
 
         if (!$email || !$role) {
@@ -663,7 +970,7 @@ class AuthController extends BaseController
     {
         $ip = $request->header('x-forwarded-for') ?: $request->ip();
 
-        $email = $request->input('email');
+        $email = trim((string) $request->input('email'));
         $password = $request->input('password');
         $role = $request->input('role');
         $language = $request->input('language');
@@ -696,7 +1003,7 @@ class AuthController extends BaseController
             // account existed and its password was correct.
             $user = User::whereRaw('LOWER(email) = ?', [mb_strtolower(trim($email))])
                 ->get()
-                ->first(fn ($candidate) => \App\Services\Roles::loginSatisfies($candidate->role, $role));
+                ->first(fn ($candidate) => Roles::loginSatisfies($candidate->role, $role));
 
             if (!$user) {
                 $this->log(null, 'LOGIN_FAILED', '/api/login', ['reason' => 'Account not found or role mismatch', 'email' => $email, 'role' => $role], $ip, 'failed');
@@ -882,82 +1189,39 @@ class AuthController extends BaseController
     }
 
     /**
-     * Resolve the business a seller is joining and, for a branch business,
-     * verify the selected branch belongs to that business and is active.
-     *
-     * The seller never creates a business. When an id is supplied it must
-     * already exist and have an approved administrator; the legacy name-based
-     * flow is kept for clients that do not send an id yet, and is subject to
-     * the same branch rule so it cannot bypass branch assignment.
-     *
-     * @return array{business_id?:string,business_name?:string,business_structure?:string,branch_id?:?string,error?:string,code?:string}
+     * Invitation codes are copy/pasted between devices. Accept spaces, dashes
+     * and lower case, but always compare/store one canonical form.
      */
-    private function resolveSellerAssignment(?string $businessId, ?string $businessName, ?string $branchId): array
+    private function normalizeInvitationCode($code): string
     {
-        $business = null;
+        return SellerInvitationService::normalizeCode($code);
+    }
 
-        if ($businessId !== null && trim($businessId) !== '') {
-            try {
-                $business = Business::where('id', trim($businessId))->first();
-            } catch (\Throwable $e) {
-                $business = null;
-            }
-        }
+    /**
+     * Resolve an active invitation and re-check the business, approved admin
+     * and branch against the database. Client-supplied business/branch ids are
+     * never consulted.
+     *
+     * @return array{invitation_id?:string,code?:string,business_id?:string,business_name?:string,business_structure?:string,business_location?:?string,branch_id?:?string,branch_name?:?string,error?:string,error_code?:string,status?:int}
+     */
+    private function resolveInvitation(string $code): array
+    {
+        return SellerInvitationService::resolve($code);
+    }
 
-        if (! $business && $businessName !== null && trim($businessName) !== '') {
-            $business = BusinessResolver::findByName(trim($businessName));
-        }
+    /**
+     * Atomically-enough single-use claim for the REST-backed model. The update
+     * is filtered to active rows; the follow-up read verifies that this exact
+     * user id won, so two simultaneous registrations cannot both proceed.
+     */
+    private function claimInvitation(string $invitationId, string $userId): bool
+    {
+        return SellerInvitationService::claim($invitationId, $userId);
+    }
 
-        if (! $business) {
-            return ['error' => 'Biashara hii haipatikani kwenye mfumo.', 'code' => 'BUSINESS_NOT_FOUND'];
-        }
-
-        $canonicalName = trim((string) ($business->business_name ?? ''));
-
-        $hasApprovedAdmin = User::where('business_id', (string) $business->id)
-            ->whereIn('role', \App\Services\Roles::BUSINESS_OWNERS)
-            ->where('status', 'approved')
-            ->count() > 0;
-
-        if (! $hasApprovedAdmin) {
-            $hasApprovedAdmin = User::whereRaw('LOWER(business_name) = ?', [mb_strtolower($canonicalName)])
-                ->whereIn('role', \App\Services\Roles::BUSINESS_OWNERS)
-                ->where('status', 'approved')
-                ->count() > 0;
-        }
-
-        if (! $hasApprovedAdmin) {
-            return ['error' => 'Biashara hii haina msimamizi. Tafadhali jisajili kama msimamizi kwanza.', 'code' => 'BUSINESS_NO_ADMIN'];
-        }
-
-        $structure = in_array((string) ($business->business_structure ?? ''), BranchContext::STRUCTURES, true)
-            ? (string) $business->business_structure
-            : BranchContext::NON_BRANCH;
-
-        $resolvedBranchId = null;
-
-        if ($structure === 'branch') {
-            $requested = $branchId !== null ? trim($branchId) : '';
-
-            if ($requested === '') {
-                return ['error' => 'Chagua tawi la biashara unayojiunga nayo.', 'code' => 'BRANCH_REQUIRED'];
-            }
-
-            $branch = BranchContext::activeBranch($requested, (string) $business->id);
-
-            if (! $branch) {
-                return ['error' => 'Tawi ulilochagua halipatikani kwenye biashara hii au limezimwa.', 'code' => 'BRANCH_NOT_FOUND'];
-            }
-
-            $resolvedBranchId = (string) $branch->id;
-        }
-
-        return [
-            'business_id' => (string) $business->id,
-            'business_name' => $canonicalName,
-            'business_structure' => $structure,
-            'branch_id' => $resolvedBranchId,
-        ];
+    private function releaseInvitation(string $invitationId, ?string $userId): void
+    {
+        SellerInvitationService::release($invitationId, $userId);
     }
 
     /**
@@ -1118,9 +1382,10 @@ class AuthController extends BaseController
     private function sendRegistrationOtpEmail($to, $fullName, $otpCode): array
     {
         $subject = 'Msimbo wa Uthibitisho wa Usajili - DukaMkononi / Registration Code';
+        $safeName = htmlspecialchars((string) ($fullName ?: 'Mteja'), ENT_QUOTES, 'UTF-8');
         $html = '
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <h2 style="color: #2c3e50;">Habari ' . ($fullName ?: 'Mteja') . '!</h2>
+                <h2 style="color: #2c3e50;">Habari ' . $safeName . '!</h2>
                 <p>Asante kwa kujisajili kwenye DukaMkononi.</p>
                 <p>Msimbo wako wa uthibitisho wa barua pepe ni:</p>
                 <div style="background-color: #f8f9fa; padding: 20px; text-align: center; border-radius: 10px; margin: 20px 0;">
@@ -1144,15 +1409,35 @@ class AuthController extends BaseController
             try {
                 Mail::html($html, function ($m) use ($to, $subject) {
                     $m->to($to)->subject($subject);
+
+                    $replyTo = config('mail.reply_to.address');
+                    if ($replyTo && filter_var($replyTo, FILTER_VALIDATE_EMAIL)) {
+                        $m->replyTo($replyTo, (string) config('mail.reply_to.name'));
+                    }
                 });
                 return ['success' => true, 'messageId' => '', 'attempt' => $attempt];
             } catch (\Throwable $e) {
                 $lastError = $e;
+                Log::warning('Registration email attempt failed', [
+                    'to' => $to,
+                    'subject' => $subject,
+                    'attempt' => $attempt,
+                    'error' => $e->getMessage(),
+                ]);
+
                 if ($attempt < $maxRetries) {
                     usleep($attempt * 1000000);
                 }
             }
         }
+
+        Log::error('Registration email failed after retries', [
+            'to' => $to,
+            'subject' => $subject,
+            'attempts' => $maxRetries,
+            'error' => $lastError ? $lastError->getMessage() : 'Unknown error',
+        ]);
+
         return ['success' => false, 'error' => $lastError ? $lastError->getMessage() : 'Unknown error', 'attempts' => $maxRetries];
     }
 }

@@ -187,7 +187,22 @@ class ProfileController extends BaseController
                     $businessUpdate['business_description'] = $business_description ?: null;
                 }
 
-                \App\Models\Business::where('id', $updatedBusinessId)->update($businessUpdate);
+                $businessUpdated = Business::where('id', $updatedBusinessId)->update($businessUpdate);
+
+                if ($businessUpdated > 0) {
+                    $savedBusiness = Business::where('id', $updatedBusinessId)->first();
+
+                    if ($savedBusiness) {
+                        // Keep the legacy user columns in sync with the
+                        // authoritative business row, but only for fields
+                        // this request actually changed.
+                        foreach (['business_name', 'business_location', 'business_logo_url', 'business_latitude', 'business_longitude', 'business_type', 'business_description'] as $field) {
+                            if (array_key_exists($field, $businessUpdate)) {
+                                $updateData[$field] = $savedBusiness->{$field};
+                            }
+                        }
+                    }
+                }
             } elseif ($hasBusinessEdit && !$updatedBusinessId) {
                 // A customer (or an unmigrated account) has no business to edit.
                 $this->log($userId, 'PROFILE_UPDATE_NO_BUSINESS', '/api/user/profile', [
@@ -197,7 +212,13 @@ class ProfileController extends BaseController
             }
 
             if (count($updateData) > 2) {
-                \App\Models\User::where('id', $userId)->update($updateData);
+                $userUpdated = User::where('id', $userId)->update($updateData);
+
+                if ($userUpdated === 0 && $hasBusinessEdit && $updatedBusinessId) {
+                    return $this->json([
+                        'error' => 'Eneo la biashara halikuhifadhiwa. Jaribu tena.',
+                    ], 500);
+                }
             }
 
             $updatedUser = $this->readProfile($userId);
@@ -412,7 +433,9 @@ class ProfileController extends BaseController
             return $user;
         }
 
-        $businessId = $user->business_id ?: null;
+        // Legacy users may not have business_id yet; resolve their business
+        // from the existing name instead of returning stale user columns.
+        $businessId = $user->business_id ?: BusinessResolver::idForUser($userId);
         $business = $businessId ? \App\Models\Business::where('id', $businessId)->first() : null;
 
         if ($business) {
